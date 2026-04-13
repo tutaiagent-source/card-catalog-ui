@@ -120,6 +120,7 @@ export default function AddCardPage() {
   const [uploading, setUploading] = useState<"front" | "back" | null>(null);
   const [uploadError, setUploadError] = useState<string>("");
   const [postSaveModalOpen, setPostSaveModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const playerNameRef = useRef<HTMLInputElement | null>(null);
   const cardNumberRef = useRef<HTMLInputElement | null>(null);
@@ -205,84 +206,151 @@ export default function AddCardPage() {
   }, [step, card, editingId]);
 
   const onSave = async () => {
-    const m = validate(card);
-    if (m.length) {
-      alert(`Missing required fields (or they are n/a): ${m.join(", ")}`);
-      return;
-    }
+    if (saving) return;
+    setSaving(true);
 
-    const cleaned: Card = {
-      id: card.id ?? crypto.randomUUID(),
+    try {
+      const m = validate(card);
+      if (m.length) {
+        alert(`Missing required fields (or they are n/a): ${m.join(", ")}`);
+        return;
+      }
 
-      player_name: String(card.player_name || ""),
-      year: String(card.year || ""),
-      brand: String(card.brand || ""),
-      set_name: String(card.set_name || ""),
-      parallel: normalizeParallelLabel(String(card.parallel || "n/a")),
+      const cleaned: Card = {
+        id: card.id ?? crypto.randomUUID(),
 
-      card_number: String(card.card_number || ""),
-      team: String(card.team || ""),
-      sport: String(card.sport || ""),
+        player_name: String(card.player_name || ""),
+        year: String(card.year || ""),
+        brand: String(card.brand || ""),
+        set_name: String(card.set_name || ""),
+        parallel: normalizeParallelLabel(String(card.parallel || "n/a")),
 
-      rookie: (card.rookie as YesNo) || "no",
-      is_autograph: (card.is_autograph as YesNo) || "no",
-      has_memorabilia: (card.has_memorabilia as YesNo) || "no",
+        card_number: String(card.card_number || ""),
+        team: String(card.team || ""),
+        sport: String(card.sport || ""),
 
-      serial_number_text: String(card.serial_number_text || ""),
-      quantity: Number(card.quantity || 1),
+        rookie: (card.rookie as YesNo) || "no",
+        is_autograph: (card.is_autograph as YesNo) || "no",
+        has_memorabilia: (card.has_memorabilia as YesNo) || "no",
 
-      image_url: (card.image_url || "").trim() ? String(card.image_url) : undefined,
-      back_image_url: (card.back_image_url || "").trim() ? String(card.back_image_url) : undefined,
+        serial_number_text: String(card.serial_number_text || ""),
+        quantity: Number(card.quantity || 1),
 
-      status: String(card.status || "Incoming"),
-      notes: String(card.notes || ""),
-      date_added: String(card.date_added || ""),
-    };
+        image_url: (card.image_url || "").trim() ? String(card.image_url) : undefined,
+        back_image_url: (card.back_image_url || "").trim() ? String(card.back_image_url) : undefined,
 
-    if (!supabaseConfigured || !supabase) {
-      alert("Supabase isn’t configured yet.");
-      return;
-    }
+        status: String(card.status || "Incoming"),
+        notes: String(card.notes || ""),
+        date_added: String(card.date_added || ""),
+      };
 
-    if (!testerKey) {
-      alert("Missing tester key.");
-      return;
-    }
+      if (!supabaseConfigured || !supabase) {
+        alert("Supabase isn’t configured yet.");
+        return;
+      }
 
-    const row = {
-      tester_key: testerKey,
+      if (!testerKey) {
+        alert("Missing tester key.");
+        return;
+      }
 
-      player_name: cleaned.player_name,
-      year: cleaned.year,
-      brand: cleaned.brand,
-      set_name: cleaned.set_name,
-      parallel: cleaned.parallel,
+      const row = {
+        tester_key: testerKey,
 
-      card_number: cleaned.card_number,
-      team: cleaned.team,
-      sport: cleaned.sport,
+        player_name: cleaned.player_name,
+        year: cleaned.year,
+        brand: cleaned.brand,
+        set_name: cleaned.set_name,
+        parallel: cleaned.parallel,
 
-      rookie: cleaned.rookie,
-      is_autograph: cleaned.is_autograph,
-      has_memorabilia: cleaned.has_memorabilia,
+        card_number: cleaned.card_number,
+        team: cleaned.team,
+        sport: cleaned.sport,
 
-      serial_number_text: cleaned.serial_number_text,
-      quantity: cleaned.quantity,
+        rookie: cleaned.rookie,
+        is_autograph: cleaned.is_autograph,
+        has_memorabilia: cleaned.has_memorabilia,
 
-      image_url: cleaned.image_url ?? null,
-      back_image_url: cleaned.back_image_url ?? null,
+        serial_number_text: cleaned.serial_number_text,
+        quantity: cleaned.quantity,
 
-      status: cleaned.status,
-      notes: cleaned.notes,
-      date_added: cleaned.date_added,
-    };
+        image_url: cleaned.image_url ?? null,
+        back_image_url: cleaned.back_image_url ?? null,
 
-    if (editingId) {
-      const { error } = await supabase
+        status: cleaned.status,
+        notes: cleaned.notes,
+        date_added: cleaned.date_added,
+      };
+
+      if (editingId) {
+        const { error } = await supabase
+          .from("cards")
+          .update(row)
+          .eq("id", editingId)
+          .eq("tester_key", testerKey);
+
+        if (error) {
+          alert(`Save failed: ${error.message}`);
+          return;
+        }
+
+        localStorage.removeItem(draftKey);
+        window.location.href = `/catalog?tester_key=${encodeURIComponent(testerKey)}`;
+        return;
+      }
+
+      // If the same card identity already exists, offer to update quantity instead of inserting a duplicate.
+      const { data: existingMatches, error: matchErr } = await supabase
         .from("cards")
-        .update(row)
-        .eq("id", editingId)
-        .eq("tester_key", testerKey);
+        .select("id, quantity")
+        .eq("tester_key", testerKey)
+        .eq("player_name", cleaned.player_name)
+        .eq("year", cleaned.year)
+        .eq("brand", cleaned.brand)
+        .eq("set_name", cleaned.set_name)
+        .eq("parallel", cleaned.parallel)
+        .eq("card_number", cleaned.card_number)
+        .eq("team", cleaned.team)
+        .eq("sport", cleaned.sport)
+        .eq("rookie", cleaned.rookie)
+        .eq("is_autograph", cleaned.is_autograph)
+        .eq("has_memorabilia", cleaned.has_memorabilia)
+        .eq("serial_number_text", cleaned.serial_number_text)
+        .limit(1);
+
+      if (!matchErr && existingMatches && existingMatches.length > 0) {
+        const existing = existingMatches[0] as any;
+        const existingQty = Number(existing?.quantity ?? 0);
+        const addQty = Number(cleaned.quantity ?? 1);
+
+        const ok = confirm(
+          `That card already exists (current quantity: ${existingQty}). Add ${addQty} more to it instead of creating a duplicate?`
+        );
+
+        if (ok) {
+          const updatePayload: any = { quantity: existingQty + addQty };
+
+          if (cleaned.image_url !== undefined) updatePayload.image_url = cleaned.image_url;
+          if (cleaned.back_image_url !== undefined) updatePayload.back_image_url = cleaned.back_image_url;
+
+          const { error: upErr } = await supabase
+            .from("cards")
+            .update(updatePayload)
+            .eq("id", existing.id)
+            .eq("tester_key", testerKey);
+
+          if (upErr) {
+            alert(`Save failed: ${upErr.message}`);
+            return;
+          }
+
+          localStorage.removeItem(draftKey);
+          setPostSaveModalOpen(true);
+          return;
+        }
+      }
+
+      const { error } = await supabase.from("cards").insert(row);
 
       if (error) {
         alert(`Save failed: ${error.message}`);
@@ -290,19 +358,10 @@ export default function AddCardPage() {
       }
 
       localStorage.removeItem(draftKey);
-      window.location.href = `/catalog?tester_key=${encodeURIComponent(testerKey)}`;
-      return;
+      setPostSaveModalOpen(true);
+    } finally {
+      setSaving(false);
     }
-
-    const { error } = await supabase.from("cards").insert(row);
-
-    if (error) {
-      alert(`Save failed: ${error.message}`);
-      return;
-    }
-
-    localStorage.removeItem(draftKey);
-    setPostSaveModalOpen(true);
   };
 
   const uploadToSupabase = async (file: File, kind: "front" | "back") => {
@@ -695,9 +754,10 @@ export default function AddCardPage() {
 
                   <button
                     type="submit"
-                    className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]"
+                    disabled={saving}
+                    className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000] disabled:opacity-60"
                   >
-                    Save Card
+                    {saving ? "Saving..." : "Save Card"}
                   </button>
                 </div>
               </div>
