@@ -699,7 +699,11 @@ export default function AddCardPage() {
                       if (uploading !== "front") uploadToSupabase(f, "front");
                     }}
                   >
-                    {frontFile ? "Change front image" : "Choose front image"}
+                    {draggingFront
+                      ? "Drop front image to upload"
+                      : frontFile
+                        ? "Change front image (click or drag)"
+                        : "Click or drag a front image to upload"}
                     <input
                       ref={frontFileRef}
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
@@ -714,7 +718,11 @@ export default function AddCardPage() {
                   </label>
 
                   <div className="mt-2 text-xs text-slate-400">
-                    {frontFile ? `Selected: ${frontFile.name}` : "Choose a front image to enable upload."}
+                    {draggingFront
+                      ? "Drop to upload front image"
+                      : frontFile
+                        ? `Selected: ${frontFile.name}`
+                        : "Click or drag a front image to upload."}
                   </div>
 
                   {uploading === "front" ? (
@@ -763,7 +771,11 @@ export default function AddCardPage() {
                       if (uploading !== "back") uploadToSupabase(f, "back");
                     }}
                   >
-                    {backFile ? "Change back image" : "Choose back image"}
+                    {draggingBack
+                      ? "Drop back image to upload"
+                      : backFile
+                        ? "Change back image (click or drag)"
+                        : "Click or drag a back image to upload"}
                     <input
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       type="file"
@@ -777,7 +789,11 @@ export default function AddCardPage() {
                   </label>
 
                   <div className="mt-2 text-xs text-slate-400">
-                    {backFile ? `Selected: ${backFile.name}` : "Choose a back image to enable upload."}
+                    {draggingBack
+                      ? "Drop to upload back image"
+                      : backFile
+                        ? `Selected: ${backFile.name}`
+                        : "Click or drag a back image to upload."}
                   </div>
 
                   {uploading === "back" ? (
