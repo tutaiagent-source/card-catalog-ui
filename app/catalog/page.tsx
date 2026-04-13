@@ -89,6 +89,25 @@ function driveToImageSrc(url?: string) {
   return u;
 }
 
+function buildEbaySearchUrl(card: Card) {
+  const parts = [
+    card.player_name,
+    card.year,
+    card.brand,
+    card.set_name,
+    card.parallel,
+    card.card_number,
+    card.team,
+    card.sport,
+    card.serial_number_text,
+  ]
+    .map((p) => String(p ?? "").trim())
+    .filter(Boolean);
+
+  const query = parts.join(" ");
+  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`;
+}
+
 function parseDen(serial: string): number | null {
   const s = (serial || "").trim();
   if (!s || s.toLowerCase() === "n/a") return null;
@@ -374,6 +393,14 @@ export default function CatalogPage() {
                         >
                           Edit
                         </a>
+                        <a
+                          href={buildEbaySearchUrl(previewCard)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700 text-center"
+                        >
+                          eBay
+                        </a>
                         <button
                           className="rounded bg-red-700 px-3 py-1 text-xs font-semibold hover:bg-red-600"
                           onClick={() => onDelete(previewCard.id)}
@@ -480,12 +507,20 @@ export default function CatalogPage() {
                       <div className="flex w-full gap-2">
                         <a
                           href={c.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(c.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
-                          className="inline-flex w-full items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]"
+                          className="inline-flex flex-1 items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]"
                         >
                           Edit
                         </a>
+                        <a
+                          href={buildEbaySearchUrl(c)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex flex-1 items-center justify-center leading-none rounded bg-slate-800 px-2 py-1.5 text-xs font-semibold hover:bg-slate-700"
+                        >
+                          eBay
+                        </a>
                         <button
-                          className="rounded bg-red-700 px-3 py-1 text-xs font-semibold hover:bg-red-600"
+                          className="rounded bg-red-700 flex-1 px-3 py-1 text-xs font-semibold hover:bg-red-600"
                           onClick={() => onDelete(c.id)}
                         >
                           Delete
