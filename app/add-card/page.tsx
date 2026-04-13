@@ -680,7 +680,11 @@ export default function AddCardPage() {
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       type="file"
                       accept="image/*"
-                      onChange={(e) => setFrontFile(e.target.files?.[0] ?? null)}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        setFrontFile(f);
+                        if (f && uploading !== "front") uploadToSupabase(f, "front");
+                      }}
                     />
                   </label>
 
@@ -688,14 +692,13 @@ export default function AddCardPage() {
                     {frontFile ? `Selected: ${frontFile.name}` : "Choose a front image to enable upload."}
                   </div>
 
-                  <button
-                    type="button"
-                    className="mt-2 rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000] disabled:opacity-60"
-                    disabled={!frontFile || uploading === "front"}
-                    onClick={() => frontFile && uploadToSupabase(frontFile, "front")}
-                  >
-                    {uploading === "front" ? "Uploading..." : "Upload front to Supabase"}
-                  </button>
+                  {uploading === "front" ? (
+                    <div className="mt-2 text-xs text-slate-400">Uploading front…</div>
+                  ) : card.image_url ? (
+                    <div className="mt-2 text-xs text-slate-400">Front uploaded ✓</div>
+                  ) : (
+                    frontFile && <div className="mt-2 text-xs text-slate-400">Uploading will start automatically</div>
+                  )}
 
                   <div className="mt-3 text-xs text-slate-400">Or paste a URL (optional)</div>
                   <input
@@ -717,7 +720,11 @@ export default function AddCardPage() {
                       className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                       type="file"
                       accept="image/*"
-                      onChange={(e) => setBackFile(e.target.files?.[0] ?? null)}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        setBackFile(f);
+                        if (f && uploading !== "back") uploadToSupabase(f, "back");
+                      }}
                     />
                   </label>
 
@@ -725,14 +732,13 @@ export default function AddCardPage() {
                     {backFile ? `Selected: ${backFile.name}` : "Choose a back image to enable upload."}
                   </div>
 
-                  <button
-                    type="button"
-                    className="mt-2 rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000] disabled:opacity-60"
-                    disabled={!backFile || uploading === "back"}
-                    onClick={() => backFile && uploadToSupabase(backFile, "back")}
-                  >
-                    {uploading === "back" ? "Uploading..." : "Upload back to Supabase"}
-                  </button>
+                  {uploading === "back" ? (
+                    <div className="mt-2 text-xs text-slate-400">Uploading back…</div>
+                  ) : card.back_image_url ? (
+                    <div className="mt-2 text-xs text-slate-400">Back uploaded ✓</div>
+                  ) : (
+                    backFile && <div className="mt-2 text-xs text-slate-400">Uploading will start automatically</div>
+                  )}
 
                   <div className="mt-3 text-xs text-slate-400">Or paste a URL (optional)</div>
                   <input
