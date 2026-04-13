@@ -144,6 +144,7 @@ export default function CatalogPage() {
   const [testerKey, setTesterKey] = useState<string>("");
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
+  const [imageModal, setImageModal] = useState<{ src: string; alt: string } | null>(null);
 
   const fetchCards = async () => {
     if (!supabaseConfigured || !supabase) return;
@@ -370,34 +371,32 @@ export default function CatalogPage() {
                     <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div>
                         {previewCard.image_url ? (
-                          <a
-                            href={driveToImageSrc(previewCard.image_url)}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => setImageModal({ src: driveToImageSrc(previewCard.image_url), alt: "front" })}
                           >
                             <img
                               alt="front"
                               src={driveToImageSrc(previewCard.image_url)}
                               className="h-64 w-full rounded border border-slate-800 bg-slate-950 object-contain"
                             />
-                          </a>
+                          </button>
                         ) : (
                           <div className="rounded bg-slate-800 p-3 text-xs text-slate-400">No front URL</div>
                         )}
                       </div>
                       <div>
                         {previewCard.back_image_url ? (
-                          <a
-                            href={driveToImageSrc(previewCard.back_image_url)}
-                            target="_blank"
-                            rel="noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => setImageModal({ src: driveToImageSrc(previewCard.back_image_url), alt: "back" })}
                           >
                             <img
                               alt="back"
                               src={driveToImageSrc(previewCard.back_image_url)}
                               className="h-64 w-full rounded border border-slate-800 bg-slate-950 object-contain"
                             />
-                          </a>
+                          </button>
                         ) : (
                           <div className="rounded bg-slate-800 p-3 text-xs text-slate-400">No back URL</div>
                         )}
@@ -457,13 +456,34 @@ export default function CatalogPage() {
                     </div>
                   </div>
 
-                  {c.image_url && (
-                    <div className="mt-3">
-                      <img
-                        alt="front"
-                        src={driveToImageSrc(c.image_url)}
-                        className="h-24 w-auto rounded border border-slate-800 object-contain bg-slate-950"
-                      />
+                  {(c.image_url || c.back_image_url) && (
+                    <div className="mt-3 flex gap-2">
+                      {c.image_url && (
+                        <button
+                          type="button"
+                          onClick={() => setImageModal({ src: driveToImageSrc(c.image_url as string), alt: "front" })}
+                          className="flex-1"
+                        >
+                          <img
+                            alt="front"
+                            src={driveToImageSrc(c.image_url as string)}
+                            className="h-24 w-full rounded border border-slate-800 object-contain bg-slate-950 cursor-zoom-in"
+                          />
+                        </button>
+                      )}
+                      {c.back_image_url && (
+                        <button
+                          type="button"
+                          onClick={() => setImageModal({ src: driveToImageSrc(c.back_image_url as string), alt: "back" })}
+                          className="flex-1"
+                        >
+                          <img
+                            alt="back"
+                            src={driveToImageSrc(c.back_image_url as string)}
+                            className="h-24 w-full rounded border border-slate-800 object-contain bg-slate-950 cursor-zoom-in"
+                          />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -472,6 +492,30 @@ export default function CatalogPage() {
           </div>
         </section>
       </div>
+    {imageModal && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        onClick={() => setImageModal(null)}
+      >
+        <div
+          className="relative w-full max-w-3xl rounded-xl border border-slate-700 bg-slate-900 p-3"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="absolute right-2 top-2 rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700"
+            onClick={() => setImageModal(null)}
+          >
+            Close
+          </button>
+          <img
+            src={imageModal.src}
+            alt={imageModal.alt}
+            className="max-h-[75vh] w-full rounded border border-slate-800 bg-slate-950 object-contain"
+          />
+        </div>
+      </div>
+    )}
     </main>
   );
 }
