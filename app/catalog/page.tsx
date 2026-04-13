@@ -143,6 +143,7 @@ export default function CatalogPage() {
   const [cards, setCards] = useState<Card[]>([]);
   const [testerKey, setTesterKey] = useState<string>("");
   const [q, setQ] = useState("");
+  const [previewCard, setPreviewCard] = useState<Card | null>(null);
 
   const fetchCards = async () => {
     if (!supabaseConfigured || !supabase) return;
@@ -201,8 +202,20 @@ export default function CatalogPage() {
   }, [cards, q]);
 
   const valuable = useMemo(() => {
-    return [...cards].sort((a, b) => score(b) - score(a)).slice(0, 10);
+    return [...cards].sort((a, b) => score(b) - score(a)).slice(0, 5);
   }, [cards]);
+
+  useEffect(() => {
+    if (valuable.length === 0) {
+      setPreviewCard(null);
+      return;
+    }
+
+    setPreviewCard((prev) => {
+      if (prev?.id && valuable.some((v) => v.id === prev.id)) return prev;
+      return valuable[0];
+    });
+  }, [valuable]);
 
   const onDelete = async (id?: string) => {
     if (!id) return;
@@ -224,6 +237,8 @@ export default function CatalogPage() {
     }
 
     sync();
+
+    setPreviewCard((prev) => (prev?.id === id ? null : prev));
   };
 
   return (
@@ -281,50 +296,118 @@ export default function CatalogPage() {
             Ranking of candidates based on the information you provided.
           </p>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            {valuable.length === 0 ? (
-              <div className="rounded border border-slate-800 bg-slate-900 p-4 text-slate-400">
-                No cards yet. Click “Add Card”.
+          {valuable.length === 0 ? (
+            <div className="mt-4 rounded border border-slate-800 bg-slate-900 p-4 text-slate-400">
+              No cards yet. Click “Add Card”.
+            </div>
+          ) : (
+            <>
+              <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
+                {valuable.map((c, i) => (
+                  <button
+                    key={`${c.player_name}-${c.card_number}-${i}`}
+                    type="button"
+                    className="min-w-[240px] rounded border border-slate-800 bg-slate-900 p-3 text-left hover:border-slate-700"
+                    onClick={() => setPreviewCard(c)}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="font-semibold">{c.player_name}</div>
+                        <div className="mt-0.5 text-xs text-slate-400">
+                          {c.year} · {c.brand} · {c.set_name}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-300">
+                          {c.parallel} · #{c.card_number}
+                        </div>
+                      </div>
+                      <div className="rounded bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-100">View</div>
+                    </div>
+                  </button>
+                ))}
               </div>
-            ) : (
-              valuable.map((c, i) => (
-                <div key={`${c.player_name}-${c.card_number}-${i}`} className="rounded border border-slate-800 bg-slate-900 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="font-semibold">{c.player_name}</div>
-                      <div className="text-sm text-slate-300">
-                        {c.year} · {c.brand} · {c.set_name}
-                      </div>
-                      <div className="text-sm text-slate-300">
-                        {c.parallel} · #{c.card_number} · {c.serial_number_text || "(no serial)"}
-                      </div>
-                    </div>
-                    <div className="flex w-full flex-col gap-2">
-                      <a
-                        href={c.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(c.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
-                        className="inline-flex w-full items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]"
-                      >
-                        Edit
-                      </a>
-                      <button
-                        className="rounded bg-red-700 px-3 py-1 text-xs font-semibold hover:bg-red-600"
-                        onClick={() => onDelete(c.id)}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
 
-                  <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                    {c.is_autograph === "yes" && <span className="rounded bg-[#d50000] px-2 py-1">Auto</span>}
-                    {c.has_memorabilia === "yes" && <span className="rounded bg-[#d50000] px-2 py-1">Mem</span>}
-                    {c.rookie === "yes" && <span className="rounded bg-amber-500 px-2 py-1 text-black">RC</span>}
-                    {!c.image_url && <span className="rounded bg-slate-800 px-2 py-1">No front URL</span>}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+              <div className="mt-4 rounded border border-slate-800 bg-slate-900 p-4">
+                {previewCard ? (
+                  <>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="text-lg font-semibold">{previewCard.player_name}</div>
+                        <div className="mt-1 text-sm text-slate-300">
+                          {previewCard.year} · {previewCard.brand} · {previewCard.set_name}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-300">
+                          {previewCard.parallel} · #{previewCard.card_number} · {previewCard.serial_number_text || "(no serial)"}
+                        </div>
+                        <div className="mt-1 text-sm text-slate-300">
+                          {previewCard.team} · {previewCard.sport}
+                        </div>
+
+                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                          {previewCard.is_autograph === "yes" && <span className="rounded bg-[#d50000] px-2 py-1">Auto</span>}
+                          {previewCard.has_memorabilia === "yes" && <span className="rounded bg-[#d50000] px-2 py-1">Mem</span>}
+                          {previewCard.rookie === "yes" && <span className="rounded bg-amber-500 px-2 py-1 text-black">RC</span>}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-2">
+                        <a
+                          href={previewCard.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(previewCard.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
+                          className="rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000] text-center"
+                        >
+                          Edit
+                        </a>
+                        <button
+                          className="rounded bg-red-700 px-3 py-1 text-xs font-semibold hover:bg-red-600"
+                          onClick={() => onDelete(previewCard.id)}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        {previewCard.image_url ? (
+                          <a
+                            href={driveToImageSrc(previewCard.image_url)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <img
+                              alt="front"
+                              src={driveToImageSrc(previewCard.image_url)}
+                              className="h-64 w-full rounded border border-slate-800 bg-slate-950 object-contain"
+                            />
+                          </a>
+                        ) : (
+                          <div className="rounded bg-slate-800 p-3 text-xs text-slate-400">No front URL</div>
+                        )}
+                      </div>
+                      <div>
+                        {previewCard.back_image_url ? (
+                          <a
+                            href={driveToImageSrc(previewCard.back_image_url)}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            <img
+                              alt="back"
+                              src={driveToImageSrc(previewCard.back_image_url)}
+                              className="h-64 w-full rounded border border-slate-800 bg-slate-950 object-contain"
+                            />
+                          </a>
+                        ) : (
+                          <div className="rounded bg-slate-800 p-3 text-xs text-slate-400">No back URL</div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-sm text-slate-400">Tap “View” to preview a candidate.</div>
+                )}
+              </div>
+            </>
+          )}
         </section>
 
         <section className="mt-10">
