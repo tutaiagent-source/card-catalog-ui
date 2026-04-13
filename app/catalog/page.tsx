@@ -143,7 +143,6 @@ export default function CatalogPage() {
   const [cards, setCards] = useState<Card[]>([]);
   const [testerKey, setTesterKey] = useState<string>("");
   const [q, setQ] = useState("");
-  const [filterRookie, setFilterRookie] = useState<"all" | "yes" | "no">("all");
 
   const fetchCards = async () => {
     if (!supabaseConfigured || !supabase) return;
@@ -197,10 +196,9 @@ export default function CatalogPage() {
           .toLowerCase()
           .includes(s);
 
-      const matchesRookie = filterRookie === "all" ? true : c.rookie === filterRookie;
-      return matchesQ && matchesRookie;
+      return matchesQ;
     });
-  }, [cards, q, filterRookie]);
+  }, [cards, q]);
 
   const valuable = useMemo(() => {
     return [...cards].sort((a, b) => score(b) - score(a)).slice(0, 10);
@@ -261,22 +259,13 @@ export default function CatalogPage() {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
           <input
             className="rounded bg-slate-900 px-3 py-2"
             placeholder="Search player, team, set, serial..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
-          <select
-            className="rounded bg-slate-900 px-3 py-2"
-            value={filterRookie}
-            onChange={(e) => setFilterRookie(e.target.value as any)}
-          >
-            <option value="all">Rookie: all</option>
-            <option value="yes">Rookie: yes</option>
-            <option value="no">Rookie: no</option>
-          </select>
           <button
             className="rounded bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
             onClick={sync}
@@ -285,10 +274,11 @@ export default function CatalogPage() {
           </button>
         </div>
 
+        <h2 className="text-xl font-semibold">Cards in Collection: {valuable.length}</h2>
         <section className="mt-8">
           <h2 className="text-xl font-semibold">Valuable Candidates</h2>
           <p className="mt-1 text-sm text-slate-400">
-            Heuristic ranking from your entered fields.
+            Ranking of candidates based on the information you provided.
           </p>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -309,10 +299,10 @@ export default function CatalogPage() {
                         {c.parallel} · #{c.card_number} · {c.serial_number_text || "(no serial)"}
                       </div>
                     </div>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex w-full flex-col gap-2">
                       <a
                         href={c.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(c.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
-                        className="rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000]"
+                        className="inline-flex w-full items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]"
                       >
                         Edit
                       </a>
@@ -365,10 +355,10 @@ export default function CatalogPage() {
 
                     <div className="mt-2 sm:mt-0 flex flex-col gap-2">
                       <div className="text-xs text-slate-400">Qty: {c.quantity}</div>
-                      <div className="flex gap-2">
+                      <div className="flex w-full gap-2">
                         <a
                           href={c.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(c.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
-                          className="rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000]"
+                          className="inline-flex w-full items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]"
                         >
                           Edit
                         </a>
