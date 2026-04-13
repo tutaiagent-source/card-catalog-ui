@@ -121,6 +121,8 @@ export default function AddCardPage() {
   const [uploadError, setUploadError] = useState<string>("");
   const [postSaveModalOpen, setPostSaveModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [draggingFront, setDraggingFront] = useState(false);
+  const [draggingBack, setDraggingBack] = useState(false);
 
   const playerNameRef = useRef<HTMLInputElement | null>(null);
   const cardNumberRef = useRef<HTMLInputElement | null>(null);
@@ -672,7 +674,30 @@ export default function AddCardPage() {
                   <div className="text-sm font-semibold">Front</div>
 
                   <label
-                    className="mt-2 relative block cursor-pointer overflow-hidden rounded bg-slate-800 px-3 py-2 text-center text-sm font-semibold hover:bg-slate-700"
+                    className={`mt-2 relative block cursor-pointer overflow-hidden rounded bg-slate-800 px-3 py-2 text-center text-sm font-semibold hover:bg-slate-700 border-2 border-dashed ${
+                      draggingFront ? "border-[#d50000] ring-2 ring-[#d50000]/30" : "border-slate-600"
+                    }`}
+                    onDragEnter={(e) => {
+                      e.preventDefault();
+                      setDraggingFront(true);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDraggingFront(true);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      setDraggingFront(false);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDraggingFront(false);
+                      const f = e.dataTransfer.files?.[0] ?? null;
+                      if (!f) return;
+                      if (!f.type.startsWith("image/")) return;
+                      setFrontFile(f);
+                      if (uploading !== "front") uploadToSupabase(f, "front");
+                    }}
                   >
                     {frontFile ? "Change front image" : "Choose front image"}
                     <input
@@ -713,7 +738,30 @@ export default function AddCardPage() {
                   <div className="text-sm font-semibold">Back</div>
 
                   <label
-                    className="mt-2 relative block cursor-pointer overflow-hidden rounded bg-slate-800 px-3 py-2 text-center text-sm font-semibold hover:bg-slate-700"
+                    className={`mt-2 relative block cursor-pointer overflow-hidden rounded bg-slate-800 px-3 py-2 text-center text-sm font-semibold hover:bg-slate-700 border-2 border-dashed ${
+                      draggingBack ? "border-[#d50000] ring-2 ring-[#d50000]/30" : "border-slate-600"
+                    }`}
+                    onDragEnter={(e) => {
+                      e.preventDefault();
+                      setDraggingBack(true);
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setDraggingBack(true);
+                    }}
+                    onDragLeave={(e) => {
+                      e.preventDefault();
+                      setDraggingBack(false);
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setDraggingBack(false);
+                      const f = e.dataTransfer.files?.[0] ?? null;
+                      if (!f) return;
+                      if (!f.type.startsWith("image/")) return;
+                      setBackFile(f);
+                      if (uploading !== "back") uploadToSupabase(f, "back");
+                    }}
                   >
                     {backFile ? "Change back image" : "Choose back image"}
                     <input
