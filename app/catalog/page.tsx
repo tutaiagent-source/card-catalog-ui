@@ -386,7 +386,7 @@ export default function CatalogPage() {
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
                         <a
                           href={previewCard.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(previewCard.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
                           className="rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000] text-center"
@@ -410,9 +410,9 @@ export default function CatalogPage() {
                       </div>
                     </div>
 
-                    <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        {previewCard.image_url ? (
+                    {previewCard.image_url && previewCard.back_image_url ? (
+                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
                           <button
                             type="button"
                             onClick={() => setImageModal({ src: driveToImageSrc(previewCard.image_url), alt: "front" })}
@@ -420,15 +420,11 @@ export default function CatalogPage() {
                             <img
                               alt="front"
                               src={driveToImageSrc(previewCard.image_url)}
-                              className="h-64 w-full rounded border border-slate-800 bg-slate-950 object-contain"
+                              className="h-80 w-full rounded border border-slate-800 bg-slate-950 object-contain"
                             />
                           </button>
-                        ) : (
-                          <div className="rounded bg-slate-800 p-3 text-xs text-slate-400">No front URL</div>
-                        )}
-                      </div>
-                      <div>
-                        {previewCard.back_image_url ? (
+                        </div>
+                        <div>
                           <button
                             type="button"
                             onClick={() => setImageModal({ src: driveToImageSrc(previewCard.back_image_url), alt: "back" })}
@@ -436,14 +432,43 @@ export default function CatalogPage() {
                             <img
                               alt="back"
                               src={driveToImageSrc(previewCard.back_image_url)}
-                              className="h-64 w-full rounded border border-slate-800 bg-slate-950 object-contain"
+                              className="h-80 w-full rounded border border-slate-800 bg-slate-950 object-contain"
                             />
                           </button>
-                        ) : (
-                          <div className="rounded bg-slate-800 p-3 text-xs text-slate-400">No back URL</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-4 grid grid-cols-1 gap-3">
+                        {previewCard.image_url && (
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setImageModal({ src: driveToImageSrc(previewCard.image_url), alt: "front" })}
+                            >
+                              <img
+                                alt="front"
+                                src={driveToImageSrc(previewCard.image_url)}
+                                className="h-96 w-full rounded border border-slate-800 bg-slate-950 object-contain"
+                              />
+                            </button>
+                          </div>
+                        )}
+                        {previewCard.back_image_url && (
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setImageModal({ src: driveToImageSrc(previewCard.back_image_url), alt: "back" })}
+                            >
+                              <img
+                                alt="back"
+                                src={driveToImageSrc(previewCard.back_image_url)}
+                                className="h-96 w-full rounded border border-slate-800 bg-slate-950 object-contain"
+                              />
+                            </button>
+                          </div>
                         )}
                       </div>
-                    </div>
+                    )}
                   </>
                 ) : (
                   <div className="text-sm text-slate-400">Tap “View” to preview a candidate.</div>
