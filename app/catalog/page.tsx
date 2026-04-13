@@ -314,6 +314,36 @@ export default function CatalogPage() {
     sync();
   };
 
+  const qLower = q.trim().toLowerCase();
+  const rcOn = /\b(rc|rookie)\b/.test(qLower);
+  const autoOn = /\b(auto|autograph|autographs)\b/.test(qLower);
+  const memOn = /\b(mem|memorabilia)\b/.test(qLower);
+
+  const toggleToken = (token: "rc" | "auto" | "mem") => {
+    const raw = q.trim();
+    const synonymsByToken: Record<"rc" | "auto" | "mem", string[]> = {
+      rc: ["rc", "rookie"],
+      auto: ["auto", "autograph", "autographs"],
+      mem: ["mem", "memorabilia"],
+    };
+
+    const synonyms = synonymsByToken[token];
+    const onRe = new RegExp(`\\b(${synonyms.join("|")})\\b`, "i");
+    const removeRe = new RegExp(`\\b(${synonyms.join("|")})\\b`, "gi");
+
+    if (!raw) {
+      setQ(token);
+      return;
+    }
+
+    if (onRe.test(raw)) {
+      setQ(raw.replace(removeRe, " ").replace(/\s+/g, " ").trim());
+      return;
+    }
+
+    setQ(`${raw} ${token}`);
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-5xl px-4 py-8">
@@ -367,22 +397,28 @@ export default function CatalogPage() {
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700"
-            onClick={() => setQ((prev) => (prev.trim() ? `${prev.trim()} rc` : "rc"))}
+            className={`rounded px-3 py-1 text-xs font-semibold ${
+              rcOn ? "bg-[#b80000] hover:bg-[#d50000]" : "bg-slate-800 hover:bg-slate-700"
+            }`}
+            onClick={() => toggleToken("rc")}
           >
             RC
           </button>
           <button
             type="button"
-            className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700"
-            onClick={() => setQ((prev) => (prev.trim() ? `${prev.trim()} auto` : "auto"))}
+            className={`rounded px-3 py-1 text-xs font-semibold ${
+              autoOn ? "bg-[#b80000] hover:bg-[#d50000]" : "bg-slate-800 hover:bg-slate-700"
+            }`}
+            onClick={() => toggleToken("auto")}
           >
             Auto
           </button>
           <button
             type="button"
-            className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700"
-            onClick={() => setQ((prev) => (prev.trim() ? `${prev.trim()} mem` : "mem"))}
+            className={`rounded px-3 py-1 text-xs font-semibold ${
+              memOn ? "bg-[#b80000] hover:bg-[#d50000]" : "bg-slate-800 hover:bg-slate-700"
+            }`}
+            onClick={() => toggleToken("mem")}
           >
             Mem
           </button>
