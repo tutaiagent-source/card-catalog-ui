@@ -258,6 +258,8 @@ export default function CatalogPage() {
               onClick={async () => {
                 if (!supabaseConfigured || !supabase) return;
                 if (!testerKey) return;
+                const ok = confirm("Are you sure you want to clear demo data? This will delete all cards in this collection (for the current tester key). ");
+                if (!ok) return;
                 const { error } = await supabase
                   .from("cards")
                   .delete()
