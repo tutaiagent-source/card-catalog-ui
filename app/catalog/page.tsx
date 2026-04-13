@@ -274,7 +274,7 @@ export default function CatalogPage() {
           </button>
         </div>
 
-        <h2 className="text-xl font-semibold">Cards in Collection: {valuable.length}</h2>
+        <h2 className="text-xl font-semibold">Cards in Collection: {cards.length}</h2>
         <section className="mt-8">
           <h2 className="text-xl font-semibold">Valuable Candidates</h2>
           <p className="mt-1 text-sm text-slate-400">
