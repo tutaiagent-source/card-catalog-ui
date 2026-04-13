@@ -335,7 +335,7 @@ export default function CatalogPage() {
 
           {valuable.length === 0 ? (
             <div className="mt-4 rounded border border-slate-800 bg-slate-900 p-4 text-slate-400">
-              No cards yet. Click “Add Card”.
+              No cards yet. Click "Add Card".
             </div>
           ) : (
             <>
@@ -461,7 +461,7 @@ export default function CatalogPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="text-sm text-slate-400">Tap “View” to preview a candidate.</div>
+                  <div className="text-sm text-slate-400">Tap "View" to preview a candidate.</div>
                 )}
               </div>
             </>
@@ -503,77 +503,90 @@ export default function CatalogPage() {
                   key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`}
                   className="rounded border border-slate-800 bg-slate-900 p-4"
                 >
-                  <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <div className="font-semibold">{c.player_name}</div>
-                      <div className="text-sm text-slate-300">
-                        {c.year} · {c.brand} · {c.set_name}
-                      </div>
-                      <div className="text-sm text-slate-300">
-                        {c.parallel} · #{c.card_number} · {c.serial_number_text || "(no serial)"}
-                      </div>
-                      <div className="text-sm text-slate-300">
-                        {c.team} · {c.sport}
-                      </div>
-                    </div>
-
-                    <div className="mt-2 sm:mt-0 flex flex-col gap-2">
-                      <div className="text-xs text-slate-400">Qty: {c.quantity}</div>
-                      <div className="flex w-full gap-2">
-                        <a
-                          href={c.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(c.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
-                          className="inline-flex flex-1 items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]"
-                        >
-                          Edit
-                        </a>
-                        <a
-                          href={buildEbaySearchUrl(c)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex flex-1 items-center justify-center leading-none rounded bg-slate-800 px-2 py-1.5 text-xs font-semibold hover:bg-slate-700"
-                        >
-                          eBay
-                        </a>
-                        <button
-                          className="rounded bg-red-700 flex-1 px-3 py-1 text-xs font-semibold hover:bg-red-600"
-                          onClick={() => onDelete(c.id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {(c.image_url || c.back_image_url) && (
-                    <div className="mt-3 flex gap-2">
-                      {c.image_url && (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                    <div className="w-full sm:w-32">
+                      {c.image_url ? (
                         <button
                           type="button"
-                          onClick={() => setImageModal({ src: driveToImageSrc(c.image_url as string), alt: "front" })}
-                          className="flex-1"
+                          onClick={() =>
+                            setImageModal({
+                              src: driveToImageSrc(c.image_url as string),
+                              alt: "front",
+                              backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url as string) : undefined,
+                              backAlt: "back",
+                            })
+                          }
+                          className="block w-full"
                         >
                           <img
                             alt="front"
                             src={driveToImageSrc(c.image_url as string)}
-                            className="h-24 w-full rounded border border-slate-800 object-contain bg-slate-950 cursor-zoom-in"
+                            className="h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"
                           />
                         </button>
-                      )}
-                      {c.back_image_url && (
+                      ) : c.back_image_url ? (
                         <button
                           type="button"
-                          onClick={() => setImageModal({ src: driveToImageSrc(c.back_image_url as string), alt: "back" })}
-                          className="flex-1"
+                          onClick={() =>
+                            setImageModal({
+                              src: driveToImageSrc(c.back_image_url as string),
+                              alt: "back",
+                            })
+                          }
+                          className="block w-full"
                         >
                           <img
                             alt="back"
                             src={driveToImageSrc(c.back_image_url as string)}
-                            className="h-24 w-full rounded border border-slate-800 object-contain bg-slate-950 cursor-zoom-in"
+                            className="h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"
                           />
                         </button>
-                      )}
+                      ) : null}
                     </div>
-                  )}
+
+                    <div className="flex-1">
+                      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <div className="font-semibold">{c.player_name}</div>
+                          <div className="text-sm text-slate-300">
+                            {c.year} · {c.brand} · {c.set_name}
+                          </div>
+                          <div className="text-sm text-slate-300">
+                            {c.parallel} · #{c.card_number} · {c.serial_number_text || "(no serial)"}
+                          </div>
+                          <div className="text-sm text-slate-300">
+                            {c.team} · {c.sport}
+                          </div>
+                        </div>
+
+                        <div className="mt-2 sm:mt-0 flex flex-col gap-2">
+                          <div className="text-xs text-slate-400">Qty: {c.quantity}</div>
+                          <div className="flex w-full gap-2">
+                            <a
+                              href={c.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(c.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
+                              className="inline-flex flex-1 items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]"
+                            >
+                              Edit
+                            </a>
+                            <a
+                              href={buildEbaySearchUrl(c)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex flex-1 items-center justify-center leading-none rounded bg-slate-800 px-2 py-1.5 text-xs font-semibold hover:bg-slate-700"
+                            >
+                              eBay
+                            </a>
+                            <button
+                              className="rounded bg-red-700 flex-1 px-3 py-1 text-xs font-semibold hover:bg-red-600"
+                              onClick={() => onDelete(c.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))
             )}
