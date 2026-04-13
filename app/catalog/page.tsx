@@ -507,7 +507,7 @@ export default function CatalogPage() {
                   key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`}
                   className="rounded border border-slate-800 bg-slate-900 p-4"
                 >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+                  <div className={cardsView === "grid" ? "flex flex-col gap-3" : "flex flex-col gap-3 sm:flex-row sm:items-start"}>
                     <div className="w-full sm:w-32">
                       {c.image_url ? (
                         <button
@@ -525,7 +525,7 @@ export default function CatalogPage() {
                           <img
                             alt="front"
                             src={driveToImageSrc(c.image_url as string)}
-                            className="h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"
+                            className={cardsView === "grid" ? "h-32 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in" : "h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"}
                           />
                         </button>
                       ) : c.back_image_url ? (
@@ -542,7 +542,7 @@ export default function CatalogPage() {
                           <img
                             alt="back"
                             src={driveToImageSrc(c.back_image_url as string)}
-                            className="h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"
+                            className={cardsView === "grid" ? "h-32 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in" : "h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"}
                           />
                         </button>
                       ) : null}
