@@ -169,6 +169,7 @@ export default function CatalogPage() {
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
   const [cardsView, setCardsView] = useState<"list" | "grid">("list");
+  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
 
   const fetchCards = async () => {
     if (!supabaseConfigured || !supabase) return;
@@ -278,6 +279,39 @@ export default function CatalogPage() {
     sync();
 
     setPreviewCard((prev) => (prev?.id === id ? null : prev));
+    setSelectedCardIds((prev) => prev.filter((x) => x !== id));
+  };
+
+  const toggleSelected = (id: string, checked: boolean) => {
+    setSelectedCardIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return Array.from(next);
+    });
+  };
+
+  const bulkDeleteSelected = async () => {
+    if (!selectedCardIds.length) return;
+    const ok = confirm(`Delete ${selectedCardIds.length} selected card(s)?`);
+    if (!ok) return;
+
+    if (!supabaseConfigured || !supabase) return;
+    if (!testerKey) return;
+
+    const { error } = await supabase
+      .from("cards")
+      .delete()
+      .eq("tester_key", testerKey)
+      .in("id", selectedCardIds);
+
+    if (error) {
+      alert(`Delete failed: ${error.message}`);
+      return;
+    }
+
+    setSelectedCardIds([]);
+    sync();
   };
 
   return (
@@ -327,6 +361,37 @@ export default function CatalogPage() {
             onClick={sync}
           >
             Refresh
+          </button>
+        </div>
+
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700"
+            onClick={() => setQ((prev) => (prev.trim() ? `${prev.trim()} rc` : "rc"))}
+          >
+            RC
+          </button>
+          <button
+            type="button"
+            className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700"
+            onClick={() => setQ((prev) => (prev.trim() ? `${prev.trim()} auto` : "auto"))}
+          >
+            Auto
+          </button>
+          <button
+            type="button"
+            className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700"
+            onClick={() => setQ((prev) => (prev.trim() ? `${prev.trim()} mem` : "mem"))}
+          >
+            Mem
+          </button>
+          <button
+            type="button"
+            className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700"
+            onClick={() => setQ("")}
+          >
+            Clear
           </button>
         </div>
 
@@ -492,6 +557,28 @@ export default function CatalogPage() {
             </button>
           </div>
 
+          {selectedCardIds.length > 0 && (
+            <div className="mt-4 flex items-center justify-between gap-3">
+              <div className="text-sm text-slate-300">{selectedCardIds.length} selected</div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className="rounded bg-red-700 px-3 py-1 text-xs font-semibold hover:bg-red-600"
+                  onClick={bulkDeleteSelected}
+                >
+                  Delete selected
+                </button>
+                <button
+                  type="button"
+                  className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700"
+                  onClick={() => setSelectedCardIds([])}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
+
           <div
             className={
               cardsView === "grid"
@@ -551,6 +638,15 @@ export default function CatalogPage() {
                     <div className="flex-1">
                       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                         <div>
+                          {c.id && (
+                            <input
+                              type="checkbox"
+                              aria-label={`Select ${c.player_name}`}
+                              className="mb-1 h-4 w-4 rounded border border-slate-700 bg-slate-950"
+                              checked={selectedCardIds.includes(c.id)}
+                              onChange={(e) => toggleSelected(c.id as string, e.target.checked)}
+                            />
+                          )}
                           <div className="font-semibold">{c.player_name}</div>
                           <div className="text-sm text-slate-300">
                             {c.year} · {c.brand} · {c.set_name}
