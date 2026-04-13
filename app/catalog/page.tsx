@@ -145,6 +145,7 @@ export default function CatalogPage() {
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [imageModal, setImageModal] = useState<{ src: string; alt: string } | null>(null);
+  const [cardsView, setCardsView] = useState<"list" | "grid">("list");
 
   const fetchCards = async () => {
     if (!supabaseConfigured || !supabase) return;
@@ -414,7 +415,30 @@ export default function CatalogPage() {
         <section className="mt-10">
           <h2 className="text-xl font-semibold">All Cards</h2>
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              className={`rounded px-3 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "list" ? "bg-slate-800" : "bg-slate-900"}`}
+              onClick={() => setCardsView("list")}
+            >
+              List
+            </button>
+            <button
+              type="button"
+              className={`rounded px-3 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "grid" ? "bg-slate-800" : "bg-slate-900"}`}
+              onClick={() => setCardsView("grid")}
+            >
+              Grid
+            </button>
+          </div>
+
+          <div
+            className={
+              cardsView === "grid"
+                ? "mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                : "mt-4 space-y-3"
+            }
+          >
             {filtered.length === 0 ? (
               <div className="rounded border border-slate-800 bg-slate-900 p-4 text-slate-400">No matches.</div>
             ) : (
