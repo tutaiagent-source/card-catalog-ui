@@ -163,7 +163,7 @@ export default function CatalogPage() {
   const [testerKey, setTesterKey] = useState<string>("");
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
-  const [imageModal, setImageModal] = useState<{ src: string; alt: string } | null>(null);
+  const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
   const [cardsView, setCardsView] = useState<"list" | "grid">("list");
 
   const fetchCards = async () => {
@@ -366,109 +366,99 @@ export default function CatalogPage() {
               <div className="mt-4 rounded border border-slate-800 bg-slate-900 p-4">
                 {previewCard ? (
                   <>
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <div className="text-lg font-semibold">{previewCard.player_name}</div>
-                        <div className="mt-1 text-sm text-slate-300">
-                          {previewCard.year} · {previewCard.brand} · {previewCard.set_name}
-                        </div>
-                        <div className="mt-1 text-sm text-slate-300">
-                          {previewCard.parallel} · #{previewCard.card_number} · {previewCard.serial_number_text || "(no serial)"}
-                        </div>
-                        <div className="mt-1 text-sm text-slate-300">
-                          {previewCard.team} · {previewCard.sport}
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                          {previewCard.is_autograph === "yes" && <span className="rounded bg-[#d50000] px-2 py-1">Auto</span>}
-                          {previewCard.has_memorabilia === "yes" && <span className="rounded bg-[#d50000] px-2 py-1">Mem</span>}
-                          {previewCard.rookie === "yes" && <span className="rounded bg-amber-500 px-2 py-1 text-black">RC</span>}
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
-                        <a
-                          href={previewCard.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(previewCard.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
-                          className="rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000] text-center"
-                        >
-                          Edit
-                        </a>
-                        <a
-                          href={buildEbaySearchUrl(previewCard)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700 text-center"
-                        >
-                          eBay
-                        </a>
-                        <button
-                          className="rounded bg-red-700 px-3 py-1 text-xs font-semibold hover:bg-red-600"
-                          onClick={() => onDelete(previewCard.id)}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-
-                    {previewCard.image_url && previewCard.back_image_url ? (
-                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <div>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                      <div className="w-full sm:w-80">
+                        {previewCard.image_url ? (
                           <button
                             type="button"
-                            onClick={() => setImageModal({ src: driveToImageSrc(previewCard.image_url), alt: "front" })}
+                            onClick={() =>
+                              setImageModal({
+                                src: driveToImageSrc(previewCard.image_url),
+                                alt: "front",
+                                backSrc: previewCard.back_image_url
+                                  ? driveToImageSrc(previewCard.back_image_url)
+                                  : undefined,
+                                backAlt: "back",
+                              })
+                            }
                           >
                             <img
                               alt="front"
                               src={driveToImageSrc(previewCard.image_url)}
-                              className="h-80 w-full rounded border border-slate-800 bg-slate-950 object-contain"
+                              className="h-80 w-full rounded border border-slate-800 bg-slate-900 object-contain"
                             />
                           </button>
-                        </div>
-                        <div>
+                        ) : previewCard.back_image_url ? (
                           <button
                             type="button"
-                            onClick={() => setImageModal({ src: driveToImageSrc(previewCard.back_image_url), alt: "back" })}
+                            onClick={() =>
+                              setImageModal({
+                                src: driveToImageSrc(previewCard.back_image_url),
+                                alt: "back",
+                              })
+                            }
                           >
                             <img
                               alt="back"
                               src={driveToImageSrc(previewCard.back_image_url)}
-                              className="h-80 w-full rounded border border-slate-800 bg-slate-950 object-contain"
+                              className="h-80 w-full rounded border border-slate-800 bg-slate-900 object-contain"
                             />
                           </button>
+                        ) : null}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <div className="text-lg font-semibold">{previewCard.player_name}</div>
+                            <div className="mt-1 text-sm text-slate-300">
+                              {previewCard.year} · {previewCard.brand} · {previewCard.set_name}
+                            </div>
+                            <div className="mt-1 text-sm text-slate-300">
+                              {previewCard.parallel} · #{previewCard.card_number} · {previewCard.serial_number_text || "(no serial)"}
+                            </div>
+                            <div className="mt-1 text-sm text-slate-300">
+                              {previewCard.team} · {previewCard.sport}
+                            </div>
+
+                            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                              {previewCard.is_autograph === "yes" && (
+                                <span className="rounded bg-[#d50000] px-2 py-1">Auto</span>
+                              )}
+                              {previewCard.has_memorabilia === "yes" && (
+                                <span className="rounded bg-[#d50000] px-2 py-1">Mem</span>
+                              )}
+                              {previewCard.rookie === "yes" && (
+                                <span className="rounded bg-amber-500 px-2 py-1 text-black">RC</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+                            <a
+                              href={previewCard.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(previewCard.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
+                              className="rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000] text-center"
+                            >
+                              Edit
+                            </a>
+                            <a
+                              href={buildEbaySearchUrl(previewCard)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700 text-center"
+                            >
+                              eBay
+                            </a>
+                            <button
+                              className="rounded bg-red-700 px-3 py-1 text-xs font-semibold hover:bg-red-600"
+                              onClick={() => onDelete(previewCard.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    ) : (
-                      <div className="mt-4 grid grid-cols-1 gap-3">
-                        {previewCard.image_url && (
-                          <div>
-                            <button
-                              type="button"
-                              onClick={() => setImageModal({ src: driveToImageSrc(previewCard.image_url), alt: "front" })}
-                            >
-                              <img
-                                alt="front"
-                                src={driveToImageSrc(previewCard.image_url)}
-                                className="h-96 w-full rounded border border-slate-800 bg-slate-950 object-contain"
-                              />
-                            </button>
-                          </div>
-                        )}
-                        {previewCard.back_image_url && (
-                          <div>
-                            <button
-                              type="button"
-                              onClick={() => setImageModal({ src: driveToImageSrc(previewCard.back_image_url), alt: "back" })}
-                            >
-                              <img
-                                alt="back"
-                                src={driveToImageSrc(previewCard.back_image_url)}
-                                className="h-96 w-full rounded border border-slate-800 bg-slate-950 object-contain"
-                              />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    </div>
                   </>
                 ) : (
                   <div className="text-sm text-slate-400">Tap “View” to preview a candidate.</div>
@@ -606,11 +596,20 @@ export default function CatalogPage() {
           >
             Close
           </button>
-          <img
-            src={imageModal.src}
-            alt={imageModal.alt}
-            className="max-h-[75vh] w-full rounded border border-slate-800 bg-slate-950 object-contain"
-          />
+          <div className="max-h-[75vh] overflow-y-auto space-y-3">
+            <img
+              src={imageModal.src}
+              alt={imageModal.alt}
+              className="max-h-[70vh] w-full rounded border border-slate-800 bg-slate-950 object-contain"
+            />
+            {imageModal.backSrc ? (
+              <img
+                src={imageModal.backSrc}
+                alt={imageModal.backAlt || "back"}
+                className="max-h-[70vh] w-full rounded border border-slate-800 bg-slate-950 object-contain"
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     )}
