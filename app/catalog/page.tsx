@@ -90,7 +90,7 @@ function driveToImageSrc(url?: string) {
 }
 
 function buildEbaySearchUrl(card: Card) {
-  const parts = [
+  const parts: string[] = [
     card.player_name,
     card.year,
     card.brand,
@@ -103,6 +103,10 @@ function buildEbaySearchUrl(card: Card) {
   ]
     .map((p) => String(p ?? "").trim())
     .filter(Boolean);
+
+  if (card.rookie === "yes") parts.push("rookie");
+  if (card.is_autograph === "yes") parts.push("autograph");
+  if (card.has_memorabilia === "yes") parts.push("memorabilia");
 
   const query = parts.join(" ");
   return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`;
