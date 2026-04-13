@@ -190,7 +190,17 @@ export default function CatalogPage() {
   const sync = () => fetchCards();
 
   const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
+    const raw = q.trim().toLowerCase();
+
+    const wantsRookie = /\b(rc|rookie)\b/.test(raw);
+    const wantsAuto = /\b(auto|autograph|autographs)\b/.test(raw);
+    const wantsMem = /\b(mem|memorabilia)\b/.test(raw);
+
+    // Remove special keywords so normal text search still works.
+    const s = raw
+      .replace(/\b(rc|rookie|auto|autograph|autographs|mem|memorabilia)\b/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
     return cards.filter((c) => {
       const matchesQ =
@@ -199,7 +209,11 @@ export default function CatalogPage() {
           .toLowerCase()
           .includes(s);
 
-      return matchesQ;
+      const matchesRookie = !wantsRookie || c.rookie === "yes";
+      const matchesAuto = !wantsAuto || c.is_autograph === "yes";
+      const matchesMem = !wantsMem || c.has_memorabilia === "yes";
+
+      return matchesQ && matchesRookie && matchesAuto && matchesMem;
     });
   }, [cards, q]);
 
@@ -281,7 +295,7 @@ export default function CatalogPage() {
         <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
           <input
             className="rounded bg-slate-900 px-3 py-2"
-            placeholder="Search player, team, set, serial..."
+            placeholder="Search player, team, set, serial... (try: rc, auto, mem)"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
