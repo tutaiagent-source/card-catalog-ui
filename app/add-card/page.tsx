@@ -29,6 +29,8 @@ type Card = {
   serial_number_text: string;
   quantity: number;
 
+  estimated_price?: number | null;
+
   image_url?: string;
   back_image_url?: string;
 
@@ -242,6 +244,7 @@ export default function AddCardPage() {
 
         graded: (card.graded as YesNo) || "no",
         grade: ((card.graded as YesNo) || "no") === "yes" ? Number(card.grade || 1) : null,
+        estimated_price: card.estimated_price == null ? null : Number(card.estimated_price),
 
         serial_number_text: String(card.serial_number_text || ""),
         quantity: Number(card.quantity || 1),
@@ -283,6 +286,7 @@ export default function AddCardPage() {
 
         graded: cleaned.graded,
         grade: cleaned.grade,
+        estimated_price: cleaned.estimated_price,
 
         serial_number_text: cleaned.serial_number_text,
         quantity: cleaned.quantity,
@@ -346,6 +350,7 @@ export default function AddCardPage() {
             quantity: existingQty + addQty,
             graded: cleaned.graded,
             grade: cleaned.grade,
+            estimated_price: cleaned.estimated_price,
           };
 
           if (cleaned.image_url !== undefined) updatePayload.image_url = cleaned.image_url;
@@ -649,17 +654,58 @@ export default function AddCardPage() {
 
                   {String(card.graded || "no") === "yes" && (
                     <div className="mt-3">
-                      <div className="text-slate-300 text-sm">Grade (1–9)</div>
+                      <div className="text-slate-300 text-sm">Grade (1–10)</div>
                       <input
                         type="number"
                         min={1}
-                        max={9}
+                        max={10}
                         className="mt-1 w-full rounded bg-slate-950 px-3 py-2"
                         value={Number(card.grade ?? 1)}
-                        onChange={(e) => set("grade", Math.min(9, Math.max(1, Number(e.target.value || 1))))}
+                        onChange={(e) => set("grade", Math.min(10, Math.max(1, Number(e.target.value || 1))))}
                       />
                     </div>
                   )}
+                </div>
+
+                <div className="rounded border border-slate-800 p-3">
+                  <div className="text-slate-300">Estimated price (USD)</div>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      className="flex-1 rounded bg-slate-950 px-3 py-2"
+                      value={card.estimated_price ?? ""}
+                      onChange={(e) => set("estimated_price", e.target.value === "" ? null : Number(e.target.value))}
+                      placeholder="e.g. 12.50"
+                    />
+
+                    <button
+                      type="button"
+                      className="rounded bg-slate-800 px-3 py-2 text-xs font-semibold hover:bg-slate-700"
+                      onClick={() => {
+                        const parts = [
+                          card.player_name,
+                          card.year,
+                          card.brand,
+                          card.set_name,
+                          card.parallel,
+                          card.card_number,
+                          card.team,
+                          card.sport,
+                          card.serial_number_text,
+                        ]
+                          .map((p) => String(p ?? "").trim())
+                          .filter(Boolean);
+
+                        const query = parts.join(" ");
+                        const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`;
+                        window.open(url, "_blank", "noreferrer");
+                      }}
+                    >
+                      eBay
+                    </button>
+                  </div>
                 </div>
 
                 <label className="block">
