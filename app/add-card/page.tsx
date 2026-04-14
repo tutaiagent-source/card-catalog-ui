@@ -177,6 +177,8 @@ function saveCards(cards: Card[]) {
   localStorage.setItem(storageKey(), JSON.stringify(cards));
 }
 
+const stepLabels = ["Identity", "Details", "Value", "Images"];
+
 export default function AddCardPage() {
   const { user, loading: authLoading } = useSupabaseUser();
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -556,7 +558,27 @@ export default function AddCardPage() {
         </div>
 
         <div className="mt-6">
-          <div className="text-sm text-slate-300">Step {step} of 4</div>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm text-slate-300">Step {step} of 4</div>
+              <div className="text-xs text-slate-400">{stepLabels[step - 1]}</div>
+            </div>
+            <div className="hidden gap-2 sm:flex">
+              {stepLabels.map((label, index) => {
+                const stepNumber = index + 1;
+                const active = stepNumber === step;
+                const complete = stepNumber < step;
+                return (
+                  <div
+                    key={label}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${active ? "bg-amber-500/15 text-amber-200" : complete ? "bg-emerald-500/12 text-emerald-200" : "bg-slate-900 text-slate-400"}`}
+                  >
+                    {stepNumber}. {label}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-900">
             <div className="h-full rounded-full bg-gradient-to-r from-[#d50000] via-red-500 to-amber-400" style={{ width: `${(step / 4) * 100}%` }} />
           </div>

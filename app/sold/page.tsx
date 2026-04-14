@@ -131,8 +131,13 @@ export default function SoldPage() {
         </div>
 
         {cards.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-slate-800 bg-slate-900 p-5 text-slate-400">
-            No sold cards yet. When a card is marked Sold, it will show up here with sales metrics.
+          <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-slate-300">
+            <div className="text-lg font-semibold">No sold cards yet</div>
+            <div className="mt-2 text-sm text-slate-400">When a card is marked Sold, it will show up here with sales metrics and history.</div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <a href="/catalog" className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700">Back to catalog</a>
+              <a href="/add-card" className="rounded-lg bg-[#d50000] px-3 py-2 text-sm font-semibold hover:bg-[#b80000]">Add card</a>
+            </div>
           </div>
         ) : (
           <>

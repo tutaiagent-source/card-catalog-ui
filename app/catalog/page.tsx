@@ -70,6 +70,12 @@ function normalizeParallelLabel(p: string | undefined | null) {
   return v;
 }
 
+function statusBadgeClass(status: CardStatus) {
+  if (status === "Sold") return "border-emerald-500/30 bg-emerald-500/10 text-emerald-200";
+  if (status === "Listed") return "border-blue-500/30 bg-blue-500/10 text-blue-200";
+  return "border-amber-500/30 bg-amber-500/10 text-amber-200";
+}
+
 function normalizeCards(cards: Card[]) {
   let changed = false;
   const fixed = cards.map((c) => {
@@ -543,33 +549,53 @@ export default function CatalogPage() {
           </div>
         )}
 
-        <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <input
-            className="rounded bg-slate-900 px-3 py-2"
-            placeholder="Search player, team, set, serial... (try: rc, auto, mem)"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          <button
-            className="rounded bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
-            onClick={sync}
-          >
-            Refresh
-          </button>
-        </div>
+        <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
+            <input
+              className="rounded-xl bg-slate-900 px-3 py-2"
+              placeholder="Search player, team, set, serial... (try: rc, auto, mem)"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+            <button
+              className="rounded-xl bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+              onClick={sync}
+            >
+              Refresh
+            </button>
+          </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            className="rounded bg-slate-800 px-3 py-2 text-xs font-semibold hover:bg-slate-700 sm:hidden"
-            onClick={() => setShowFilters((prev) => !prev)}
-          >
-            {showFilters ? "Hide filters" : "Show filters"}
-          </button>
-          <div className="text-sm text-slate-400">Showing {sortedCards.length} of {activeCards.length} active card rows</div>
-        </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-slate-400">
+              <span className="uppercase tracking-[0.18em]">View</span>
+              <button
+                type="button"
+                className={`rounded px-2.5 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "inventory" ? "bg-slate-800 text-white" : "bg-slate-900"}`}
+                onClick={() => setCardsView("inventory")}
+              >
+                Inventory
+              </button>
+              <button
+                type="button"
+                className={`rounded px-2.5 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "grid" ? "bg-slate-800 text-white" : "bg-slate-900"}`}
+                onClick={() => setCardsView("grid")}
+              >
+                Grid
+              </button>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                className="rounded bg-slate-800 px-3 py-2 text-xs font-semibold hover:bg-slate-700 sm:hidden"
+                onClick={() => setShowFilters((prev) => !prev)}
+              >
+                {showFilters ? "Hide filters" : "Show filters"}
+              </button>
+              <div className="text-sm text-slate-400">Showing {sortedCards.length} of {activeCards.length} active card rows</div>
+            </div>
+          </div>
 
-        <div className={`${showFilters ? "mt-3" : "mt-3 hidden"} sm:block`}>
+          <div className={`${showFilters ? "mt-3" : "mt-3 hidden"} sm:block`}>
           <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -652,7 +678,8 @@ export default function CatalogPage() {
             <option value="value_desc">Sort: value high-low</option>
           </select>
           </div>
-        </div>
+          </div>
+        </section>
 
         <div className="mt-1 grid gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
@@ -766,9 +793,11 @@ export default function CatalogPage() {
                             <div className="mt-1 text-sm text-slate-300">
                               {previewCard.team} · {previewCard.sport}
                             </div>
-                            <div className="mt-1 text-sm text-slate-300">
-                              Status: {normalizeStatusValue(previewCard.status)}
-                              {normalizeStatusValue(previewCard.status) === "Listed" && previewCard.asking_price != null ? ` · Asking $${Number(previewCard.asking_price).toFixed(2)}` : ""}
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-300">
+                              <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(normalizeStatusValue(previewCard.status))}`}>
+                                {normalizeStatusValue(previewCard.status)}
+                              </span>
+                              {normalizeStatusValue(previewCard.status) === "Listed" && previewCard.asking_price != null ? `Asking $${Number(previewCard.asking_price).toFixed(2)}` : ""}
                             </div>
                             <div className="mt-1 text-sm text-slate-300">
                               Est. value: ${Number(previewCard.estimated_price || 0).toFixed(2)}
@@ -827,26 +856,31 @@ export default function CatalogPage() {
         <section className="mt-10">
           <h2 className="text-xl font-semibold">All Cards</h2>
 
-          <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-            <span className="uppercase tracking-[0.18em]">View</span>
-            <button
-              type="button"
-              className={`rounded px-2.5 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "inventory" ? "bg-slate-800 text-white" : "bg-slate-900"}`}
-              onClick={() => setCardsView("inventory")}
-            >
-              Inventory
-            </button>
-            <button
-              type="button"
-              className={`rounded px-2.5 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "grid" ? "bg-slate-800 text-white" : "bg-slate-900"}`}
-              onClick={() => setCardsView("grid")}
-            >
-              Grid
-            </button>
-          </div>
-
           {sortedCards.length === 0 ? (
-            <div className="mt-4 rounded border border-slate-800 bg-slate-900 p-4 text-slate-400">No matches.</div>
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-slate-300">
+              <div className="text-lg font-semibold">No matching cards</div>
+              <div className="mt-2 text-sm text-slate-400">Try clearing a filter or add a new card to CardCat.</div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+                  onClick={() => {
+                    setQ("");
+                    setFilterSport("all");
+                    setFilterYear("all");
+                    setFilterBrand("all");
+                    setFilterStatus("all");
+                    setFilterGraded("all");
+                    setSortBy("newest");
+                  }}
+                >
+                  Clear filters
+                </button>
+                <a href="/add-card" className="rounded-lg bg-[#d50000] px-3 py-2 text-sm font-semibold hover:bg-[#b80000]">
+                  Add card
+                </a>
+              </div>
+            </div>
           ) : cardsView === "inventory" ? (
             <>
               <div className="mt-4 space-y-3 md:hidden">
@@ -878,8 +912,13 @@ export default function CatalogPage() {
                         <div className="font-semibold">{c.player_name}</div>
                         <div className="text-sm text-slate-300">{c.year} · {c.brand} · #{c.card_number || "n/a"}</div>
                         <div className="text-sm text-slate-400">{c.set_name}{c.parallel && c.parallel !== "n/a" ? ` · ${c.parallel}` : ""}</div>
-                        <div className="mt-2 text-sm text-slate-300">
-                          {normalizeStatusValue(c.status)}{normalizeStatusValue(c.status) === "Listed" && c.asking_price != null ? ` · Asking $${Number(c.asking_price).toFixed(2)}` : ""}
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(normalizeStatusValue(c.status))}`}>
+                            {normalizeStatusValue(c.status)}
+                          </span>
+                          {normalizeStatusValue(c.status) === "Listed" && c.asking_price != null ? (
+                            <span className="text-sm text-slate-300">Asking ${Number(c.asking_price).toFixed(2)}</span>
+                          ) : null}
                         </div>
                         <div className="text-sm text-slate-300">Qty {c.quantity} · Est. ${(Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2)}</div>
                         {c.graded === "yes" && c.grade != null && <div className="text-xs text-amber-300">Graded {c.grade}</div>}
@@ -1059,8 +1098,11 @@ export default function CatalogPage() {
                           <div className="text-sm text-slate-300">
                             {c.team} · {c.sport}
                           </div>
-                          <div className="text-sm text-slate-300">
-                            Status: {normalizeStatusValue(c.status)}{normalizeStatusValue(c.status) === "Listed" && c.asking_price != null ? ` · Asking $${Number(c.asking_price).toFixed(2)}` : ""}
+                          <div className="flex items-center justify-center gap-2 text-sm text-slate-300">
+                            <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(normalizeStatusValue(c.status))}`}>
+                              {normalizeStatusValue(c.status)}
+                            </span>
+                            {normalizeStatusValue(c.status) === "Listed" && c.asking_price != null ? `Asking $${Number(c.asking_price).toFixed(2)}` : ""}
                           </div>
                           <div className="text-sm text-slate-300">
                             Qty: {c.quantity} · Est. value: ${Number(c.estimated_price || 0).toFixed(2)}
