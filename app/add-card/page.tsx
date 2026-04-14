@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
+import { useSupabaseUser } from "@/lib/useSupabaseUser";
 
 type YesNo = "yes" | "no";
 
@@ -105,8 +106,8 @@ function saveCards(cards: Card[]) {
 }
 
 export default function AddCardPage() {
+  const { user, loading: authLoading } = useSupabaseUser();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [testerKey, setTesterKey] = useState<string>("");
   const [step, setStep] = useState(1);
 
   const [card, setCard] = useState<Partial<Card>>({
@@ -149,27 +150,12 @@ export default function AddCardPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tk = params.get("tester_key");
-
-    if (tk) {
-      setTesterKey(tk);
-    } else {
-      const existing = localStorage.getItem("tester_key");
-      if (existing) {
-        setTesterKey(existing);
-      } else {
-        const newKey = crypto.randomUUID();
-        localStorage.setItem("tester_key", newKey);
-        setTesterKey(newKey);
-      }
-    }
-
     setEditingId(params.get("edit"));
   }, []);
 
   useEffect(() => {
     if (!editingId) return;
-    if (!testerKey) return;
+    if (!user?.id) return;
     if (!supabaseConfigured || !supabase) return;
 
     (async () => {
@@ -177,7 +163,7 @@ export default function AddCardPage() {
         .from("cards")
         .select("*")
         .eq("id", editingId)
-        .eq("tester_key", testerKey)
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) {
@@ -190,7 +176,7 @@ export default function AddCardPage() {
         setStep(1);
       }
     })();
-  }, [editingId, testerKey]);
+  }, [editingId, user?.id]);
 
   useEffect(() => {
     if (editingId) return;
@@ -262,13 +248,13 @@ export default function AddCardPage() {
         return;
       }
 
-      if (!testerKey) {
-        alert("Missing tester key.");
+      if (!user?.id) {
+        alert("You need to sign in before saving cards.");
         return;
       }
 
       const row = {
-        tester_key: testerKey,
+        user_id: user.id,
 
         player_name: cleaned.player_name,
         year: cleaned.year,
@@ -304,7 +290,7 @@ export default function AddCardPage() {
           .from("cards")
           .update(row)
           .eq("id", editingId)
-          .eq("tester_key", testerKey);
+          .eq("user_id", user.id);
 
         if (error) {
           alert(`Save failed: ${error.message}`);
@@ -312,7 +298,7 @@ export default function AddCardPage() {
         }
 
         localStorage.removeItem(draftKey);
-        window.location.href = `/catalog?tester_key=${encodeURIComponent(testerKey)}`;
+        window.location.href = "/catalog";
         return;
       }
 
@@ -320,7 +306,7 @@ export default function AddCardPage() {
       const { data: existingMatches, error: matchErr } = await supabase
         .from("cards")
         .select("id, quantity")
-        .eq("tester_key", testerKey)
+        .eq("user_id", user.id)
         .eq("player_name", cleaned.player_name)
         .eq("year", cleaned.year)
         .eq("brand", cleaned.brand)
@@ -360,7 +346,7 @@ export default function AddCardPage() {
             .from("cards")
             .update(updatePayload)
             .eq("id", existing.id)
-            .eq("tester_key", testerKey);
+            .eq("user_id", user.id);
 
           if (upErr) {
             alert(`Save failed: ${upErr.message}`);
@@ -425,14 +411,55 @@ export default function AddCardPage() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-3xl px-4 py-16 text-slate-300">Loading card editor...</div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-3xl px-4 py-16">
+          <h1 className="text-3xl font-bold">Sign in required</h1>
+          <p className="mt-3 text-slate-300">Please sign in before adding or editing cards.</p>
+          <a
+            href="/login"
+            className="mt-6 inline-flex rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]"
+          >
+            Go to sign in
+          </a>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold">{editingId ? "Edit Card" : "Add Card"}</h1>
-          <a className="text-red-300 hover:underline" href={`/catalog?tester_key=${encodeURIComponent(testerKey)}`}>
-            Back to Catalog
-          </a>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">{editingId ? "Edit Card" : "Add Card"}</h1>
+            <div className="mt-1 text-sm text-slate-400">Signed in as {user.email}</div>
+          </div>
+          <div className="flex gap-3">
+            <a className="text-red-300 hover:underline" href="/catalog">
+              Back to Catalog
+            </a>
+            <button
+              type="button"
+              className="rounded bg-slate-800 px-3 py-1 text-sm font-semibold hover:bg-slate-700"
+              onClick={async () => {
+                if (!supabaseConfigured || !supabase) return;
+                await supabase.auth.signOut();
+                window.location.href = "/login";
+              }}
+            >
+              Sign out
+            </button>
+          </div>
         </div>
 
         <div className="mt-6 text-sm text-slate-300">Step {step} of 4</div>
@@ -965,7 +992,7 @@ export default function AddCardPage() {
                 className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
                 onClick={() => {
                   setPostSaveModalOpen(false);
-                  window.location.href = `/catalog?tester_key=${encodeURIComponent(testerKey)}`;
+                  window.location.href = "/catalog";
                 }}
               >
                 Go to collection

@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
+import { useSupabaseUser } from "@/lib/useSupabaseUser";
 
 type YesNo = "yes" | "no";
 
@@ -168,8 +169,8 @@ function score(card: Card) {
 }
 
 export default function CatalogPage() {
+  const { user, loading: authLoading } = useSupabaseUser();
   const [cards, setCards] = useState<Card[]>([]);
-  const [testerKey, setTesterKey] = useState<string>("");
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
@@ -177,12 +178,12 @@ export default function CatalogPage() {
 
   const fetchCards = async () => {
     if (!supabaseConfigured || !supabase) return;
-    if (!testerKey) return;
+    if (!user?.id) return;
 
     const { data, error } = await supabase
       .from("cards")
       .select("*")
-      .eq("tester_key", testerKey);
+      .eq("user_id", user.id);
 
     if (error) {
       console.error("Failed to fetch cards:", error);
@@ -193,27 +194,8 @@ export default function CatalogPage() {
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tk = params.get("tester_key");
-
-    if (tk) {
-      setTesterKey(tk);
-      return;
-    }
-
-    const existing = localStorage.getItem("tester_key");
-    if (existing) {
-      setTesterKey(existing);
-    } else {
-      const newKey = crypto.randomUUID();
-      localStorage.setItem("tester_key", newKey);
-      setTesterKey(newKey);
-    }
-  }, []);
-
-  useEffect(() => {
     fetchCards();
-  }, [testerKey]);
+  }, [user?.id]);
 
   const sync = () => fetchCards();
 
@@ -275,13 +257,13 @@ export default function CatalogPage() {
     if (!ok) return;
 
     if (!supabaseConfigured || !supabase) return;
-    if (!testerKey) return;
+    if (!user?.id) return;
 
     const { error } = await supabase
       .from("cards")
       .delete()
       .eq("id", id)
-      .eq("tester_key", testerKey);
+      .eq("user_id", user.id);
 
     if (error) {
       alert(`Delete failed: ${error.message}`);
@@ -323,14 +305,42 @@ export default function CatalogPage() {
     setQ(`${raw} ${token}`);
   };
 
+  if (authLoading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-3xl px-4 py-16 text-slate-300">Loading your collection...</div>
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-3xl px-4 py-16">
+          <h1 className="text-3xl font-bold">Sign in required</h1>
+          <p className="mt-3 text-slate-300">Please sign in to view and save your card collection.</p>
+          <a
+            href="/login"
+            className="mt-6 inline-flex rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]"
+          >
+            Go to sign in
+          </a>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-5xl px-4 py-8">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold">Catalog</h1>
-          <div className="flex gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Catalog</h1>
+            <div className="mt-1 text-sm text-slate-400">Signed in as {user.email}</div>
+          </div>
+          <div className="flex flex-wrap gap-3">
             <a
-              href={`/add-card?tester_key=${encodeURIComponent(testerKey)}`}
+              href="/add-card"
               className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]"
             >
               Add Card
@@ -339,13 +349,13 @@ export default function CatalogPage() {
               className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
               onClick={async () => {
                 if (!supabaseConfigured || !supabase) return;
-                if (!testerKey) return;
-                const ok = confirm("Are you sure you want to clear demo data? This will delete all cards in this collection (for the current tester key). ");
+                if (!user?.id) return;
+                const ok = confirm("Are you sure you want to delete every card in your collection?");
                 if (!ok) return;
                 const { error } = await supabase
                   .from("cards")
                   .delete()
-                  .eq("tester_key", testerKey);
+                  .eq("user_id", user.id);
                 if (error) {
                   alert(`Clear failed: ${error.message}`);
                   return;
@@ -353,7 +363,17 @@ export default function CatalogPage() {
                 sync();
               }}
             >
-              Clear Demo Data
+              Clear Collection
+            </button>
+            <button
+              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+              onClick={async () => {
+                if (!supabaseConfigured || !supabase) return;
+                await supabase.auth.signOut();
+                window.location.href = "/login";
+              }}
+            >
+              Sign out
             </button>
           </div>
         </div>
@@ -529,7 +549,7 @@ export default function CatalogPage() {
 
                           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
                             <a
-                              href={previewCard.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(previewCard.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
+                              href={previewCard.id ? `/add-card?edit=${encodeURIComponent(previewCard.id)}` : "/add-card"}
                               className="rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000] text-center"
                             >
                               Edit
@@ -664,7 +684,7 @@ export default function CatalogPage() {
                           {cardsView !== "grid" && <div className="text-xs text-slate-400">Actions</div>}
                           <div className="flex w-full gap-2">
                             <a
-                              href={c.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(c.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
+                              href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"}
                               className="inline-flex flex-1 items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]"
                             >
                               Edit
