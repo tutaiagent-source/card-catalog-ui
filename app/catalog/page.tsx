@@ -196,7 +196,8 @@ export default function CatalogPage() {
     date: string;
     platform: string;
   } | null>(null);
-  const [cardsView, setCardsView] = useState<"list" | "grid" | "inventory">("inventory");
+  const [showValuable, setShowValuable] = useState(false);
+  const [cardsView, setCardsView] = useState<"grid" | "inventory">("inventory");
   const [filterSport, setFilterSport] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
   const [filterBrand, setFilterBrand] = useState("all");
@@ -641,13 +642,22 @@ export default function CatalogPage() {
           <h2 className="text-xl font-semibold">Active Inventory: {activeCards.length}</h2>
           <div className="text-sm text-slate-300">Estimated value: ${estimatedTotal.toFixed(2)}</div>
         </div>
-        <section className="mt-8">
-          <h2 className="text-xl font-semibold">Valuable Candidates</h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Ranking of candidates based on the information you provided.
-          </p>
+        <section className="mt-8 rounded-xl border border-slate-800 bg-slate-900 p-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">Valuable Candidates</h2>
+              <p className="mt-1 text-sm text-slate-400">Optional shortlist of interesting cards.</p>
+            </div>
+            <button
+              type="button"
+              className="rounded bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+              onClick={() => setShowValuable((prev) => !prev)}
+            >
+              {showValuable ? "Hide" : `Show ${valuable.length}`}
+            </button>
+          </div>
 
-          {valuable.length === 0 ? (
+          {showValuable && (valuable.length === 0 ? (
             <div className="mt-4 rounded border border-slate-800 bg-slate-900 p-4 text-slate-400">
               No cards yet. Click "Add Card".
             </div>
@@ -789,7 +799,7 @@ export default function CatalogPage() {
                 )}
               </div>
             </>
-          )}
+          ))}
         </section>
 
         <section className="mt-10">
@@ -805,13 +815,6 @@ export default function CatalogPage() {
             </button>
             <button
               type="button"
-              className={`rounded px-3 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "list" ? "bg-slate-800" : "bg-slate-900"}`}
-              onClick={() => setCardsView("list")}
-            >
-              List
-            </button>
-            <button
-              type="button"
               className={`rounded px-3 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "grid" ? "bg-slate-800" : "bg-slate-900"}`}
               onClick={() => setCardsView("grid")}
             >
@@ -822,128 +825,11 @@ export default function CatalogPage() {
           {sortedCards.length === 0 ? (
             <div className="mt-4 rounded border border-slate-800 bg-slate-900 p-4 text-slate-400">No matches.</div>
           ) : cardsView === "inventory" ? (
-            <div className="mt-4 overflow-x-auto rounded border border-slate-800 bg-slate-900">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-950 text-left text-slate-400">
-                  <tr>
-                    <th className="px-3 py-2">Img</th>
-                    <th className="px-3 py-2">Player</th>
-                    <th className="px-3 py-2">Card</th>
-                    <th className="px-3 py-2">Team</th>
-                    <th className="px-3 py-2">Qty</th>
-                    <th className="px-3 py-2">Est.</th>
-                    <th className="px-3 py-2">Grade</th>
-                    <th className="px-3 py-2">Status</th>
-                    <th className="px-3 py-2">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedCards.map((c, i) => (
-                    <tr key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`} className="border-t border-slate-800 align-top">
-                      <td className="px-3 py-2">
-                        {c.image_url ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setImageModal({
-                                src: driveToImageSrc(c.image_url as string),
-                                alt: "front",
-                                backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url as string) : undefined,
-                                backAlt: "back",
-                              })
-                            }
-                          >
-                            <img
-                              alt="front"
-                              src={driveToImageSrc(c.image_url as string)}
-                              className="h-14 w-10 rounded border border-slate-800 object-contain bg-slate-950"
-                            />
-                          </button>
-                        ) : (
-                          <div className="h-14 w-10 rounded border border-slate-800 bg-slate-950" />
-                        )}
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="font-semibold">{c.player_name}</div>
-                        <div className="text-xs text-slate-400">{c.year} · {c.sport}</div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div>{c.brand} · {c.set_name}</div>
-                        <div className="text-xs text-slate-400">{c.parallel} · #{c.card_number}</div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div>{c.team}</div>
-                        <div className="text-xs text-slate-400">{c.serial_number_text || "(no serial)"}</div>
-                      </td>
-                      <td className="px-3 py-2">{c.quantity}</td>
-                      <td className="px-3 py-2">${(Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2)}</td>
-                      <td className="px-3 py-2">{c.graded === "yes" && c.grade != null ? c.grade : "-"}</td>
-                      <td className="px-3 py-2">{c.status || "-"}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex flex-wrap gap-2">
-                          {normalizeStatusValue(c.status) !== "Listed" ? (
-                            <button
-                              className="rounded bg-blue-900 px-2 py-1 text-xs font-semibold hover:bg-blue-800"
-                              onClick={() => openStatusModal(c, "Listed")}
-                            >
-                              List
-                            </button>
-                          ) : (
-                            <button
-                              className="rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700"
-                              onClick={() => updateCardStatus(c, "Collection")}
-                            >
-                              Collection
-                            </button>
-                          )}
-                          <button
-                            className="rounded bg-emerald-900 px-2 py-1 text-xs font-semibold hover:bg-emerald-800"
-                            onClick={() => openStatusModal(c, "Sold")}
-                          >
-                            Sold
-                          </button>
-                          <a
-                            href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"}
-                            className="rounded bg-[#b80000] px-2 py-1 text-xs font-semibold hover:bg-[#d50000]"
-                          >
-                            Edit
-                          </a>
-                          <a
-                            href={buildEbaySearchUrl(c)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700"
-                          >
-                            eBay
-                          </a>
-                          <button
-                            className="rounded bg-red-700 px-2 py-1 text-xs font-semibold hover:bg-red-600"
-                            onClick={() => onDelete(c.id)}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div
-              className={
-                cardsView === "grid"
-                  ? "mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                  : "mt-4 space-y-3"
-              }
-            >
-              {sortedCards.map((c, i) => (
-                <div
-                  key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`}
-                  className="rounded border border-slate-800 bg-slate-900 p-4"
-                >
-                  <div className={cardsView === "grid" ? "flex flex-col gap-3" : "flex flex-col gap-3 sm:flex-row sm:items-start"}>
-                    <div className={cardsView === "grid" ? "w-full aspect-square overflow-hidden rounded bg-slate-950 flex items-center justify-center" : "w-full sm:w-32"}>
+            <>
+              <div className="mt-4 space-y-3 md:hidden">
+                {sortedCards.map((c, i) => (
+                  <div key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`} className="rounded border border-slate-800 bg-slate-900 p-4">
+                    <div className="flex gap-3">
                       {c.image_url ? (
                         <button
                           type="button"
@@ -955,12 +841,166 @@ export default function CatalogPage() {
                               backAlt: "back",
                             })
                           }
-                          className={cardsView === "grid" ? "block h-full w-full" : "block w-full"}
                         >
                           <img
                             alt="front"
                             src={driveToImageSrc(c.image_url as string)}
-                            className={cardsView === "grid" ? "h-full w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in" : "h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"}
+                            className="h-20 w-14 rounded border border-slate-800 object-contain bg-slate-950"
+                          />
+                        </button>
+                      ) : (
+                        <div className="h-20 w-14 rounded border border-slate-800 bg-slate-950" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold">{c.player_name}</div>
+                        <div className="text-sm text-slate-300">{c.year} · {c.brand} · {c.set_name}</div>
+                        <div className="text-sm text-slate-300">{c.parallel} · #{c.card_number}</div>
+                        <div className="text-sm text-slate-300">{c.team} · {c.sport}</div>
+                        <div className="mt-1 text-sm text-slate-300">
+                          Status: {normalizeStatusValue(c.status)}{normalizeStatusValue(c.status) === "Listed" && c.asking_price != null ? ` · Asking $${Number(c.asking_price).toFixed(2)}` : ""}
+                        </div>
+                        <div className="text-sm text-slate-300">Qty: {c.quantity} · Est. ${ (Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2) }</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {normalizeStatusValue(c.status) !== "Listed" ? (
+                        <button className="rounded bg-blue-900 px-2 py-2 text-xs font-semibold hover:bg-blue-800" onClick={() => openStatusModal(c, "Listed")}>
+                          List
+                        </button>
+                      ) : (
+                        <button className="rounded bg-slate-800 px-2 py-2 text-xs font-semibold hover:bg-slate-700" onClick={() => updateCardStatus(c, "Collection")}>
+                          Collection
+                        </button>
+                      )}
+                      <button className="rounded bg-emerald-900 px-2 py-2 text-xs font-semibold hover:bg-emerald-800" onClick={() => openStatusModal(c, "Sold")}>
+                        Sold
+                      </button>
+                      <a href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"} className="inline-flex items-center justify-center rounded bg-[#b80000] px-2 py-2 text-xs font-semibold hover:bg-[#d50000]">
+                        Edit
+                      </a>
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      <a href={buildEbaySearchUrl(c)} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded bg-slate-800 px-2 py-2 text-xs font-semibold hover:bg-slate-700">
+                        eBay
+                      </a>
+                      <button className="rounded bg-red-700 px-2 py-2 text-xs font-semibold hover:bg-red-600" onClick={() => onDelete(c.id)}>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 hidden overflow-x-auto rounded border border-slate-800 bg-slate-900 md:block">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-slate-950 text-left text-slate-400">
+                    <tr>
+                      <th className="px-3 py-2">Img</th>
+                      <th className="px-3 py-2">Player</th>
+                      <th className="px-3 py-2">Card</th>
+                      <th className="px-3 py-2">Team</th>
+                      <th className="px-3 py-2">Qty</th>
+                      <th className="px-3 py-2">Est.</th>
+                      <th className="px-3 py-2">Grade</th>
+                      <th className="px-3 py-2">Status</th>
+                      <th className="px-3 py-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedCards.map((c, i) => (
+                      <tr key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`} className="border-t border-slate-800 align-top">
+                        <td className="px-3 py-2">
+                          {c.image_url ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setImageModal({
+                                  src: driveToImageSrc(c.image_url as string),
+                                  alt: "front",
+                                  backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url as string) : undefined,
+                                  backAlt: "back",
+                                })
+                              }
+                            >
+                              <img alt="front" src={driveToImageSrc(c.image_url as string)} className="h-14 w-10 rounded border border-slate-800 object-contain bg-slate-950" />
+                            </button>
+                          ) : (
+                            <div className="h-14 w-10 rounded border border-slate-800 bg-slate-950" />
+                          )}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="font-semibold">{c.player_name}</div>
+                          <div className="text-xs text-slate-400">{c.year} · {c.sport}</div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div>{c.brand} · {c.set_name}</div>
+                          <div className="text-xs text-slate-400">{c.parallel} · #{c.card_number}</div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div>{c.team}</div>
+                          <div className="text-xs text-slate-400">{c.serial_number_text || "(no serial)"}</div>
+                        </td>
+                        <td className="px-3 py-2">{c.quantity}</td>
+                        <td className="px-3 py-2">${(Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2)}</td>
+                        <td className="px-3 py-2">{c.graded === "yes" && c.grade != null ? c.grade : "-"}</td>
+                        <td className="px-3 py-2">{c.status || "-"}</td>
+                        <td className="px-3 py-2">
+                          <div className="flex flex-wrap gap-2">
+                            {normalizeStatusValue(c.status) !== "Listed" ? (
+                              <button className="rounded bg-blue-900 px-2 py-1 text-xs font-semibold hover:bg-blue-800" onClick={() => openStatusModal(c, "Listed")}>
+                                List
+                              </button>
+                            ) : (
+                              <button className="rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700" onClick={() => updateCardStatus(c, "Collection")}>
+                                Collection
+                              </button>
+                            )}
+                            <button className="rounded bg-emerald-900 px-2 py-1 text-xs font-semibold hover:bg-emerald-800" onClick={() => openStatusModal(c, "Sold")}>
+                              Sold
+                            </button>
+                            <a href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"} className="rounded bg-[#b80000] px-2 py-1 text-xs font-semibold hover:bg-[#d50000]">
+                              Edit
+                            </a>
+                            <a href={buildEbaySearchUrl(c)} target="_blank" rel="noreferrer" className="rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700">
+                              eBay
+                            </a>
+                            <button className="rounded bg-red-700 px-2 py-1 text-xs font-semibold hover:bg-red-600" onClick={() => onDelete(c.id)}>
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          ) : (
+            <div className="mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {sortedCards.map((c, i) => (
+                <div
+                  key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`}
+                  className="rounded border border-slate-800 bg-slate-900 p-4"
+                >
+                  <div className="flex flex-col gap-3">
+                    <div className="w-full aspect-square overflow-hidden rounded bg-slate-950 flex items-center justify-center">
+                      {c.image_url ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setImageModal({
+                              src: driveToImageSrc(c.image_url as string),
+                              alt: "front",
+                              backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url as string) : undefined,
+                              backAlt: "back",
+                            })
+                          }
+                          className="block h-full w-full"
+                        >
+                          <img
+                            alt="front"
+                            src={driveToImageSrc(c.image_url as string)}
+                            className="h-full w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"
                           />
                         </button>
                       ) : c.back_image_url ? (
@@ -972,20 +1012,20 @@ export default function CatalogPage() {
                               alt: "back",
                             })
                           }
-                          className={cardsView === "grid" ? "block h-full w-full" : "block w-full"}
+                          className="block h-full w-full"
                         >
                           <img
                             alt="back"
                             src={driveToImageSrc(c.back_image_url as string)}
-                            className={cardsView === "grid" ? "h-full w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in" : "h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"}
+                            className="h-full w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"
                           />
                         </button>
                       ) : null}
                     </div>
 
                     <div className="flex-1">
-                      <div className={cardsView === "grid" ? "flex flex-col gap-3 text-center" : "flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between"}>
-                        <div className={cardsView === "grid" ? "space-y-1" : ""}>
+                      <div className="flex flex-col gap-3 text-center">
+                        <div className="space-y-1">
                           <div className="font-semibold">{c.player_name}</div>
                           <div className="text-sm text-slate-300">
                             {c.year} · {c.brand} · {c.set_name}
@@ -1007,30 +1047,16 @@ export default function CatalogPage() {
                           )}
                         </div>
 
-                        <div className={cardsView === "grid" ? "flex w-full gap-2" : "mt-2 sm:mt-0 flex flex-col gap-2"}>
-                          {cardsView !== "grid" && <div className="text-xs text-slate-400">Actions</div>}
-                          <div className="flex w-full gap-2">
-                            <a
-                              href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"}
-                              className="inline-flex flex-1 items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]"
-                            >
-                              Edit
-                            </a>
-                            <a
-                              href={buildEbaySearchUrl(c)}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex flex-1 items-center justify-center leading-none rounded bg-slate-800 px-2 py-1.5 text-xs font-semibold hover:bg-slate-700"
-                            >
-                              eBay
-                            </a>
-                            <button
-                              className="rounded bg-red-700 flex-1 px-3 py-1 text-xs font-semibold hover:bg-red-600"
-                              onClick={() => onDelete(c.id)}
-                            >
-                              Delete
-                            </button>
-                          </div>
+                        <div className="flex w-full gap-2">
+                          <a href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"} className="inline-flex flex-1 items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]">
+                            Edit
+                          </a>
+                          <a href={buildEbaySearchUrl(c)} target="_blank" rel="noreferrer" className="inline-flex flex-1 items-center justify-center leading-none rounded bg-slate-800 px-2 py-1.5 text-xs font-semibold hover:bg-slate-700">
+                            eBay
+                          </a>
+                          <button className="rounded bg-red-700 flex-1 px-3 py-1 text-xs font-semibold hover:bg-red-600" onClick={() => onDelete(c.id)}>
+                            Delete
+                          </button>
                         </div>
                       </div>
                     </div>
