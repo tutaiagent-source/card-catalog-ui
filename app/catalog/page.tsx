@@ -174,9 +174,6 @@ export default function CatalogPage() {
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
   const [cardsView, setCardsView] = useState<"list" | "grid">("list");
-  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
-  const [priceCard, setPriceCard] = useState<Card | null>(null);
-  const [priceInput, setPriceInput] = useState<string>("");
 
   const fetchCards = async () => {
     if (!supabaseConfigured || !supabase) return;
@@ -274,7 +271,7 @@ export default function CatalogPage() {
 
   const onDelete = async (id?: string) => {
     if (!id) return;
-    const ok = confirm("Delete this card?");
+    const ok = confirm("Are you sure you want to delete this card?");
     if (!ok) return;
 
     if (!supabaseConfigured || !supabase) return;
@@ -294,72 +291,6 @@ export default function CatalogPage() {
     sync();
 
     setPreviewCard((prev) => (prev?.id === id ? null : prev));
-    setSelectedCardIds((prev) => prev.filter((x) => x !== id));
-  };
-
-  const toggleSelected = (id: string, checked: boolean) => {
-    setSelectedCardIds((prev) => {
-      const next = new Set(prev);
-      if (checked) next.add(id);
-      else next.delete(id);
-      return Array.from(next);
-    });
-  };
-
-  const bulkDeleteSelected = async () => {
-    if (!selectedCardIds.length) return;
-    const ok = confirm(`Delete ${selectedCardIds.length} selected card(s)?`);
-    if (!ok) return;
-
-    if (!supabaseConfigured || !supabase) return;
-    if (!testerKey) return;
-
-    const { error } = await supabase
-      .from("cards")
-      .delete()
-      .eq("tester_key", testerKey)
-      .in("id", selectedCardIds);
-
-    if (error) {
-      alert(`Delete failed: ${error.message}`);
-      return;
-    }
-
-    setSelectedCardIds([]);
-    sync();
-  };
-
-  const saveEstimatedPrice = async () => {
-    if (!priceCard?.id) return;
-
-    if (!priceInput.trim()) {
-      alert("Enter an estimated price.");
-      return;
-    }
-
-    const n = Number(priceInput);
-    if (!Number.isFinite(n) || n < 0) {
-      alert("Enter a valid estimated price (0 or higher).");
-      return;
-    }
-
-    if (!supabaseConfigured || !supabase) return;
-    if (!testerKey) return;
-
-    const { error } = await supabase
-      .from("cards")
-      .update({ estimated_price: n })
-      .eq("id", priceCard.id)
-      .eq("tester_key", testerKey);
-
-    if (error) {
-      alert(`Save failed: ${error.message}`);
-      return;
-    }
-
-    setPriceCard(null);
-    setPriceInput("");
-    sync();
   };
 
   const qLower = q.trim().toLowerCase();
@@ -481,26 +412,7 @@ export default function CatalogPage() {
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold">Cards in Collection: {cards.length}</h2>
-
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="text-sm text-slate-300">Estimated value: ${estimatedTotal.toFixed(2)}</div>
-
-            <button
-              type="button"
-              className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700"
-              onClick={() => {
-                const target = previewCard ?? valuable[0] ?? null;
-                if (!target) {
-                  alert("Pick a card first.");
-                  return;
-                }
-                setPriceCard(target);
-                setPriceInput(String(target.estimated_price ?? ""));
-              }}
-            >
-              eBay price search
-            </button>
-          </div>
+          <div className="text-sm text-slate-300">Estimated value: ${estimatedTotal.toFixed(2)}</div>
         </div>
         <section className="mt-8">
           <h2 className="text-xl font-semibold">Valuable Candidates</h2>
@@ -595,6 +507,9 @@ export default function CatalogPage() {
                             <div className="mt-1 text-sm text-slate-300">
                               {previewCard.team} · {previewCard.sport}
                             </div>
+                            <div className="mt-1 text-sm text-slate-300">
+                              Est. value: ${Number(previewCard.estimated_price || 0).toFixed(2)}
+                            </div>
 
                             <div className="mt-2 flex flex-wrap gap-2 text-xs">
                               {previewCard.is_autograph === "yes" && (
@@ -666,27 +581,7 @@ export default function CatalogPage() {
             </button>
           </div>
 
-          {selectedCardIds.length > 0 && (
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <div className="text-sm text-slate-300">{selectedCardIds.length} selected</div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="rounded bg-red-700 px-3 py-1 text-xs font-semibold hover:bg-red-600"
-                  onClick={bulkDeleteSelected}
-                >
-                  Delete selected
-                </button>
-                <button
-                  type="button"
-                  className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700"
-                  onClick={() => setSelectedCardIds([])}
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-          )}
+
 
           <div
             className={
@@ -704,7 +599,7 @@ export default function CatalogPage() {
                   className="rounded border border-slate-800 bg-slate-900 p-4"
                 >
                   <div className={cardsView === "grid" ? "flex flex-col gap-3" : "flex flex-col gap-3 sm:flex-row sm:items-start"}>
-                    <div className="w-full sm:w-32">
+                    <div className={cardsView === "grid" ? "w-full aspect-square overflow-hidden rounded bg-slate-950 flex items-center justify-center" : "w-full sm:w-32"}>
                       {c.image_url ? (
                         <button
                           type="button"
@@ -716,12 +611,12 @@ export default function CatalogPage() {
                               backAlt: "back",
                             })
                           }
-                          className="block w-full"
+                          className={cardsView === "grid" ? "block h-full w-full" : "block w-full"}
                         >
                           <img
                             alt="front"
                             src={driveToImageSrc(c.image_url as string)}
-                            className={cardsView === "grid" ? "h-32 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in" : "h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"}
+                            className={cardsView === "grid" ? "h-full w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in" : "h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"}
                           />
                         </button>
                       ) : c.back_image_url ? (
@@ -733,29 +628,20 @@ export default function CatalogPage() {
                               alt: "back",
                             })
                           }
-                          className="block w-full"
+                          className={cardsView === "grid" ? "block h-full w-full" : "block w-full"}
                         >
                           <img
                             alt="back"
                             src={driveToImageSrc(c.back_image_url as string)}
-                            className={cardsView === "grid" ? "h-32 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in" : "h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"}
+                            className={cardsView === "grid" ? "h-full w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in" : "h-24 w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"}
                           />
                         </button>
                       ) : null}
                     </div>
 
                     <div className="flex-1">
-                      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          {c.id && (
-                            <input
-                              type="checkbox"
-                              aria-label={`Select ${c.player_name}`}
-                              className="mb-1 h-4 w-4 rounded border border-slate-700 bg-slate-950"
-                              checked={selectedCardIds.includes(c.id)}
-                              onChange={(e) => toggleSelected(c.id as string, e.target.checked)}
-                            />
-                          )}
+                      <div className={cardsView === "grid" ? "flex flex-col gap-3 text-center" : "flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between"}>
+                        <div className={cardsView === "grid" ? "space-y-1" : ""}>
                           <div className="font-semibold">{c.player_name}</div>
                           <div className="text-sm text-slate-300">
                             {c.year} · {c.brand} · {c.set_name}
@@ -766,13 +652,16 @@ export default function CatalogPage() {
                           <div className="text-sm text-slate-300">
                             {c.team} · {c.sport}
                           </div>
+                          <div className="text-sm text-slate-300">
+                            Qty: {c.quantity} · Est. value: ${Number(c.estimated_price || 0).toFixed(2)}
+                          </div>
                           {c.graded === "yes" && c.grade != null && (
                             <div className="text-xs text-slate-400">Graded: {c.grade}</div>
                           )}
                         </div>
 
-                        <div className="mt-2 sm:mt-0 flex flex-col gap-2">
-                          <div className="text-xs text-slate-400">Qty: {c.quantity}</div>
+                        <div className={cardsView === "grid" ? "flex w-full gap-2" : "mt-2 sm:mt-0 flex flex-col gap-2"}>
+                          {cardsView !== "grid" && <div className="text-xs text-slate-400">Actions</div>}
                           <div className="flex w-full gap-2">
                             <a
                               href={c.id ? `/add-card?tester_key=${encodeURIComponent(testerKey)}&edit=${encodeURIComponent(c.id)}` : `/add-card?tester_key=${encodeURIComponent(testerKey)}`}
@@ -805,80 +694,6 @@ export default function CatalogPage() {
           </div>
         </section>
       </div>
-    {priceCard && (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-        onClick={() => {
-          setPriceCard(null);
-          setPriceInput("");
-        }}
-      >
-        <div
-          className="relative w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-5"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            className="absolute right-2 top-2 rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700"
-            onClick={() => {
-              setPriceCard(null);
-              setPriceInput("");
-            }}
-          >
-            Close
-          </button>
-
-          <div className="text-lg font-bold">Set estimated price</div>
-          <div className="mt-1 text-sm text-slate-300">
-            {priceCard.player_name} · {priceCard.year} · {priceCard.brand} · {priceCard.set_name}
-          </div>
-
-          <div className="mt-3 flex gap-2 flex-wrap">
-            <a
-              href={buildEbaySearchUrl(priceCard)}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000]"
-            >
-              eBay comps
-            </a>
-          </div>
-
-          <div className="mt-4">
-            <label className="block text-sm text-slate-300">Estimated price (USD)</label>
-            <input
-              type="number"
-              min={0}
-              step="0.01"
-              value={priceInput}
-              onChange={(e) => setPriceInput(e.target.value)}
-              className="mt-1 w-full rounded bg-slate-950 px-3 py-2 text-sm"
-              placeholder="e.g. 12.50"
-            />
-          </div>
-
-          <div className="mt-5 flex justify-end gap-2">
-            <button
-              type="button"
-              className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700"
-              onClick={() => {
-                setPriceCard(null);
-                setPriceInput("");
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className="rounded bg-[#d50000] px-4 py-2 text-sm font-semibold hover:bg-[#b80000]"
-              onClick={saveEstimatedPrice}
-            >
-              Save
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
     {imageModal && (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"

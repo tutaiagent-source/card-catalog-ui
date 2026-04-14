@@ -655,14 +655,17 @@ export default function AddCardPage() {
                   {String(card.graded || "no") === "yes" && (
                     <div className="mt-3">
                       <div className="text-slate-300 text-sm">Grade (1–10)</div>
-                      <input
-                        type="number"
-                        min={1}
-                        max={10}
+                      <select
                         className="mt-1 w-full rounded bg-slate-950 px-3 py-2"
-                        value={Number(card.grade ?? 1)}
-                        onChange={(e) => set("grade", Math.min(10, Math.max(1, Number(e.target.value || 1))))}
-                      />
+                        value={String(card.grade ?? 1)}
+                        onChange={(e) => set("grade", Number(e.target.value))}
+                      >
+                        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   )}
                 </div>
