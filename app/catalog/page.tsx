@@ -174,7 +174,13 @@ export default function CatalogPage() {
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
-  const [cardsView, setCardsView] = useState<"list" | "grid">("list");
+  const [cardsView, setCardsView] = useState<"list" | "grid" | "inventory">("inventory");
+  const [filterSport, setFilterSport] = useState("all");
+  const [filterYear, setFilterYear] = useState("all");
+  const [filterBrand, setFilterBrand] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterGraded, setFilterGraded] = useState<"all" | "yes" | "no">("all");
+  const [sortBy, setSortBy] = useState<"newest" | "player" | "year_desc" | "value_desc">("newest");
 
   const fetchCards = async () => {
     if (!supabaseConfigured || !supabase) return;
@@ -199,6 +205,23 @@ export default function CatalogPage() {
 
   const sync = () => fetchCards();
 
+  const sportOptions = useMemo(
+    () => Array.from(new Set(cards.map((c) => String(c.sport || "").trim()).filter(Boolean))).sort(),
+    [cards]
+  );
+  const yearOptions = useMemo(
+    () => Array.from(new Set(cards.map((c) => String(c.year || "").trim()).filter(Boolean))).sort((a, b) => Number(b) - Number(a) || b.localeCompare(a)),
+    [cards]
+  );
+  const brandOptions = useMemo(
+    () => Array.from(new Set(cards.map((c) => String(c.brand || "").trim()).filter(Boolean))).sort(),
+    [cards]
+  );
+  const statusOptions = useMemo(
+    () => Array.from(new Set(cards.map((c) => String(c.status || "").trim()).filter(Boolean))).sort(),
+    [cards]
+  );
+
   const filtered = useMemo(() => {
     const raw = q.trim().toLowerCase();
 
@@ -222,10 +245,33 @@ export default function CatalogPage() {
       const matchesRookie = !wantsRookie || c.rookie === "yes";
       const matchesAuto = !wantsAuto || c.is_autograph === "yes";
       const matchesMem = !wantsMem || c.has_memorabilia === "yes";
+      const matchesSport = filterSport === "all" || String(c.sport || "") === filterSport;
+      const matchesYear = filterYear === "all" || String(c.year || "") === filterYear;
+      const matchesBrand = filterBrand === "all" || String(c.brand || "") === filterBrand;
+      const matchesStatus = filterStatus === "all" || String(c.status || "") === filterStatus;
+      const matchesGraded = filterGraded === "all" || (c.graded || "no") === filterGraded;
 
-      return matchesQ && matchesRookie && matchesAuto && matchesMem;
+      return matchesQ && matchesRookie && matchesAuto && matchesMem && matchesSport && matchesYear && matchesBrand && matchesStatus && matchesGraded;
     });
-  }, [cards, q]);
+  }, [cards, q, filterSport, filterYear, filterBrand, filterStatus, filterGraded]);
+
+  const sortedCards = useMemo(() => {
+    const next = [...filtered];
+
+    next.sort((a, b) => {
+      if (sortBy === "player") return a.player_name.localeCompare(b.player_name);
+      if (sortBy === "year_desc") return Number(b.year || 0) - Number(a.year || 0);
+      if (sortBy === "value_desc") {
+        const aValue = Number(a.estimated_price || 0) * Number(a.quantity || 0);
+        const bValue = Number(b.estimated_price || 0) * Number(b.quantity || 0);
+        return bValue - aValue;
+      }
+
+      return String(b.date_added || "").localeCompare(String(a.date_added || ""));
+    });
+
+    return next;
+  }, [filtered, sortBy]);
 
   const valuable = useMemo(() => {
     return [...cards].sort((a, b) => score(b) - score(a)).slice(0, 5);
@@ -410,11 +456,59 @@ export default function CatalogPage() {
           <button
             type="button"
             className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold hover:bg-slate-700"
-            onClick={() => setQ("")}
+            onClick={() => {
+              setQ("");
+              setFilterSport("all");
+              setFilterYear("all");
+              setFilterBrand("all");
+              setFilterStatus("all");
+              setFilterGraded("all");
+              setSortBy("newest");
+            }}
           >
             Clear
           </button>
         </div>
+
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterSport} onChange={(e) => setFilterSport(e.target.value)}>
+            <option value="all">All sports</option>
+            {sportOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+          <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+            <option value="all">All years</option>
+            {yearOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+          <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)}>
+            <option value="all">All brands</option>
+            {brandOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+          <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <option value="all">All statuses</option>
+            {statusOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+          <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterGraded} onChange={(e) => setFilterGraded(e.target.value as "all" | "yes" | "no")}>
+            <option value="all">All grading</option>
+            <option value="yes">Graded only</option>
+            <option value="no">Ungraded only</option>
+          </select>
+          <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value as "newest" | "player" | "year_desc" | "value_desc")}>
+            <option value="newest">Sort: newest</option>
+            <option value="player">Sort: player A-Z</option>
+            <option value="year_desc">Sort: year desc</option>
+            <option value="value_desc">Sort: value high-low</option>
+          </select>
+        </div>
+
+        <div className="mt-3 text-sm text-slate-400">Showing {sortedCards.length} of {cards.length} card rows</div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold">Cards in Collection: {cards.length}</h2>
@@ -573,6 +667,13 @@ export default function CatalogPage() {
           <div className="mt-3 flex gap-2">
             <button
               type="button"
+              className={`rounded px-3 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "inventory" ? "bg-slate-800" : "bg-slate-900"}`}
+              onClick={() => setCardsView("inventory")}
+            >
+              Inventory
+            </button>
+            <button
+              type="button"
               className={`rounded px-3 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "list" ? "bg-slate-800" : "bg-slate-900"}`}
               onClick={() => setCardsView("list")}
             >
@@ -587,19 +688,104 @@ export default function CatalogPage() {
             </button>
           </div>
 
-
-
-          <div
-            className={
-              cardsView === "grid"
-                ? "mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                : "mt-4 space-y-3"
-            }
-          >
-            {filtered.length === 0 ? (
-              <div className="rounded border border-slate-800 bg-slate-900 p-4 text-slate-400">No matches.</div>
-            ) : (
-              filtered.map((c, i) => (
+          {sortedCards.length === 0 ? (
+            <div className="mt-4 rounded border border-slate-800 bg-slate-900 p-4 text-slate-400">No matches.</div>
+          ) : cardsView === "inventory" ? (
+            <div className="mt-4 overflow-x-auto rounded border border-slate-800 bg-slate-900">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-950 text-left text-slate-400">
+                  <tr>
+                    <th className="px-3 py-2">Img</th>
+                    <th className="px-3 py-2">Player</th>
+                    <th className="px-3 py-2">Card</th>
+                    <th className="px-3 py-2">Team</th>
+                    <th className="px-3 py-2">Qty</th>
+                    <th className="px-3 py-2">Est.</th>
+                    <th className="px-3 py-2">Grade</th>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedCards.map((c, i) => (
+                    <tr key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`} className="border-t border-slate-800 align-top">
+                      <td className="px-3 py-2">
+                        {c.image_url ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setImageModal({
+                                src: driveToImageSrc(c.image_url as string),
+                                alt: "front",
+                                backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url as string) : undefined,
+                                backAlt: "back",
+                              })
+                            }
+                          >
+                            <img
+                              alt="front"
+                              src={driveToImageSrc(c.image_url as string)}
+                              className="h-14 w-10 rounded border border-slate-800 object-contain bg-slate-950"
+                            />
+                          </button>
+                        ) : (
+                          <div className="h-14 w-10 rounded border border-slate-800 bg-slate-950" />
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="font-semibold">{c.player_name}</div>
+                        <div className="text-xs text-slate-400">{c.year} · {c.sport}</div>
+                      </td>
+                      <td className="px-3 py-2">
+                        <div>{c.brand} · {c.set_name}</div>
+                        <div className="text-xs text-slate-400">{c.parallel} · #{c.card_number}</div>
+                      </td>
+                      <td className="px-3 py-2">
+                        <div>{c.team}</div>
+                        <div className="text-xs text-slate-400">{c.serial_number_text || "(no serial)"}</div>
+                      </td>
+                      <td className="px-3 py-2">{c.quantity}</td>
+                      <td className="px-3 py-2">${(Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2)}</td>
+                      <td className="px-3 py-2">{c.graded === "yes" && c.grade != null ? c.grade : "-"}</td>
+                      <td className="px-3 py-2">{c.status || "-"}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex flex-wrap gap-2">
+                          <a
+                            href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"}
+                            className="rounded bg-[#b80000] px-2 py-1 text-xs font-semibold hover:bg-[#d50000]"
+                          >
+                            Edit
+                          </a>
+                          <a
+                            href={buildEbaySearchUrl(c)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700"
+                          >
+                            eBay
+                          </a>
+                          <button
+                            className="rounded bg-red-700 px-2 py-1 text-xs font-semibold hover:bg-red-600"
+                            onClick={() => onDelete(c.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div
+              className={
+                cardsView === "grid"
+                  ? "mt-4 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                  : "mt-4 space-y-3"
+              }
+            >
+              {sortedCards.map((c, i) => (
                 <div
                   key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`}
                   className="rounded border border-slate-800 bg-slate-900 p-4"
@@ -695,9 +881,9 @@ export default function CatalogPage() {
                     </div>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
     {imageModal && (
