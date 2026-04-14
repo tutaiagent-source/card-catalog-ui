@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 const items = [
   { href: "/catalog", label: "Catalog", icon: "🐾" },
   { href: "/add-card", label: "Add", icon: "＋" },
+  { href: "/import", label: "Import", icon: "⬆️" },
   { href: "/sold", label: "Sold", icon: "💰" },
   { href: "/account", label: "Account", icon: "⚙️" },
 ];
@@ -14,7 +15,7 @@ export default function CardCatMobileNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-slate-950/95 backdrop-blur md:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-4 gap-1 px-2 py-2">
+      <div className="mx-auto grid max-w-md grid-cols-5 gap-1 px-2 py-2">
         {items.map((item) => {
           const active = pathname === item.href;
           return (

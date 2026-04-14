@@ -507,6 +507,12 @@ export default function CatalogPage() {
               Add Card
             </a>
             <a
+              href="/import"
+              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+            >
+              Import CSV
+            </a>
+            <a
               href="/sold"
               className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
             >
