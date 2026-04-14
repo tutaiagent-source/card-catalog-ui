@@ -189,6 +189,13 @@ export default function CatalogPage() {
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
   const [statusToast, setStatusToast] = useState<{ message: string; href?: string; hrefLabel?: string } | null>(null);
+  const [statusModal, setStatusModal] = useState<{
+    card: Card;
+    nextStatus: "Listed" | "Sold";
+    price: string;
+    date: string;
+    platform: string;
+  } | null>(null);
   const [cardsView, setCardsView] = useState<"list" | "grid" | "inventory">("inventory");
   const [filterSport, setFilterSport] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
@@ -344,7 +351,7 @@ export default function CatalogPage() {
     setPreviewCard((prev) => (prev?.id === id ? null : prev));
   };
 
-  const updateCardStatus = async (card: Card, nextStatus: CardStatus) => {
+  const updateCardStatus = async (card: Card, nextStatus: CardStatus, details?: { price?: string; date?: string; platform?: string }) => {
     if (!card.id) return;
     if (!supabaseConfigured || !supabase) return;
     if (!user?.id) return;
@@ -353,11 +360,15 @@ export default function CatalogPage() {
     const payload: Record<string, any> = { status: nextStatus };
 
     if (nextStatus === "Listed") {
-      payload.listed_at = card.listed_at || today;
+      payload.asking_price = details?.price ? Number(details.price) : card.asking_price ?? null;
+      payload.listed_at = details?.date || card.listed_at || today;
+      payload.sale_platform = details?.platform?.trim() || card.sale_platform || null;
     }
 
     if (nextStatus === "Sold") {
-      payload.sold_at = card.sold_at || today;
+      payload.sold_price = details?.price ? Number(details.price) : card.sold_price ?? null;
+      payload.sold_at = details?.date || card.sold_at || today;
+      payload.sale_platform = details?.platform?.trim() || card.sale_platform || null;
     }
 
     if (nextStatus === "Collection") {
@@ -385,6 +396,32 @@ export default function CatalogPage() {
     );
 
     sync();
+  };
+
+  const openStatusModal = (card: Card, nextStatus: "Listed" | "Sold") => {
+    const today = new Date().toISOString().slice(0, 10);
+    setStatusModal({
+      card,
+      nextStatus,
+      price: String(nextStatus === "Listed" ? card.asking_price ?? "" : card.sold_price ?? ""),
+      date: String(nextStatus === "Listed" ? card.listed_at || today : card.sold_at || today),
+      platform: String(card.sale_platform || ""),
+    });
+  };
+
+  const saveStatusModal = async () => {
+    if (!statusModal) return;
+    if (!statusModal.price.trim()) {
+      alert(`Enter the amount ${statusModal.nextStatus === "Listed" ? "listed for" : "sold for"}.`);
+      return;
+    }
+
+    await updateCardStatus(statusModal.card, statusModal.nextStatus, {
+      price: statusModal.price,
+      date: statusModal.date,
+      platform: statusModal.platform,
+    });
+    setStatusModal(null);
   };
 
   const qLower = q.trim().toLowerCase();
@@ -847,7 +884,7 @@ export default function CatalogPage() {
                           {normalizeStatusValue(c.status) !== "Listed" ? (
                             <button
                               className="rounded bg-blue-900 px-2 py-1 text-xs font-semibold hover:bg-blue-800"
-                              onClick={() => updateCardStatus(c, "Listed")}
+                              onClick={() => openStatusModal(c, "Listed")}
                             >
                               List
                             </button>
@@ -861,7 +898,7 @@ export default function CatalogPage() {
                           )}
                           <button
                             className="rounded bg-emerald-900 px-2 py-1 text-xs font-semibold hover:bg-emerald-800"
-                            onClick={() => updateCardStatus(c, "Sold")}
+                            onClick={() => openStatusModal(c, "Sold")}
                           >
                             Sold
                           </button>
@@ -1004,6 +1041,85 @@ export default function CatalogPage() {
           )}
         </section>
       </div>
+    {statusModal && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        onClick={() => setStatusModal(null)}
+      >
+        <div
+          className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="text-lg font-bold">Move to {statusModal.nextStatus}</div>
+          <div className="mt-1 text-sm text-slate-300">{statusModal.card.player_name} · {statusModal.card.year} · {statusModal.card.brand}</div>
+
+          <div className="mt-4 space-y-4">
+            <label className="block">
+              <div className="mb-1 text-sm text-slate-300">
+                {statusModal.nextStatus === "Listed" ? "Listed for" : "Sold for"}
+              </div>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                className="w-full rounded bg-slate-950 px-3 py-2"
+                value={statusModal.price}
+                onChange={(e) => setStatusModal((prev) => (prev ? { ...prev, price: e.target.value } : prev))}
+                placeholder={statusModal.nextStatus === "Listed" ? "e.g. 35.00" : "e.g. 28.00"}
+              />
+            </label>
+
+            <label className="block">
+              <div className="mb-1 text-sm text-slate-300">
+                {statusModal.nextStatus === "Listed" ? "Date listed" : "Date sold"}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 rounded bg-slate-950 px-3 py-2"
+                  value={statusModal.date}
+                  onChange={(e) => setStatusModal((prev) => (prev ? { ...prev, date: e.target.value } : prev))}
+                  placeholder="YYYY-MM-DD"
+                />
+                <button
+                  type="button"
+                  className="rounded bg-slate-800 px-3 py-2 text-xs font-semibold hover:bg-slate-700"
+                  onClick={() => setStatusModal((prev) => (prev ? { ...prev, date: new Date().toISOString().slice(0, 10) } : prev))}
+                >
+                  Today
+                </button>
+              </div>
+            </label>
+
+            <label className="block">
+              <div className="mb-1 text-sm text-slate-300">App / site</div>
+              <input
+                className="w-full rounded bg-slate-950 px-3 py-2"
+                value={statusModal.platform}
+                onChange={(e) => setStatusModal((prev) => (prev ? { ...prev, platform: e.target.value } : prev))}
+                placeholder="eBay, Whatnot, local..."
+              />
+            </label>
+          </div>
+
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700"
+              onClick={() => setStatusModal(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="rounded bg-[#d50000] px-4 py-2 text-sm font-semibold hover:bg-[#b80000]"
+              onClick={saveStatusModal}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     {imageModal && (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
