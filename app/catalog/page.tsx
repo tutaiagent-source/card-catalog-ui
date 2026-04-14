@@ -115,7 +115,7 @@ function buildEbaySearchUrl(card: Card) {
   if (card.has_memorabilia === "yes") parts.push("memorabilia");
 
   const query = parts.join(" ");
-  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`;
+  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
 }
 
 function parseDen(serial: string): number | null {

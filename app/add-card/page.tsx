@@ -732,7 +732,7 @@ export default function AddCardPage() {
                           .filter(Boolean);
 
                         const query = parts.join(" ");
-                        const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`;
+                        const url = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
                         window.open(url, "_blank", "noreferrer");
                       }}
                     >
