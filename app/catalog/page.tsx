@@ -1016,30 +1016,61 @@ export default function CatalogPage() {
                         <td className="px-3 py-2">{c.quantity}</td>
                         <td className="px-3 py-2">${(Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2)}</td>
                         <td className="px-3 py-2">{c.graded === "yes" && c.grade != null ? c.grade : "-"}</td>
-                        <td className="px-3 py-2">{c.status || "-"}</td>
                         <td className="px-3 py-2">
-                          <div className="flex flex-wrap gap-2">
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(normalizeStatusValue(c.status))}`}>
+                            {normalizeStatusValue(c.status)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             {normalizeStatusValue(c.status) !== "Listed" ? (
-                              <button className="rounded bg-blue-900 px-2 py-1 text-xs font-semibold hover:bg-blue-800" onClick={() => openStatusModal(c, "Listed")}>
+                              <button
+                                className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                                onClick={() => openStatusModal(c, "Listed")}
+                              >
                                 List
                               </button>
                             ) : (
-                              <button className="rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700" onClick={() => updateCardStatus(c, "Collection")}>
+                              <button
+                                className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                                onClick={() => updateCardStatus(c, "Collection")}
+                              >
                                 Collection
                               </button>
                             )}
-                            <button className="rounded bg-emerald-900 px-2 py-1 text-xs font-semibold hover:bg-emerald-800" onClick={() => openStatusModal(c, "Sold")}>
-                              Sold
+                            <button
+                              className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                              onClick={() => openStatusModal(c, "Sold")}
+                            >
+                              Mark sold
                             </button>
-                            <a href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"} className="rounded bg-[#b80000] px-2 py-1 text-xs font-semibold hover:bg-[#d50000]">
-                              Edit
-                            </a>
-                            <a href={buildEbaySearchUrl(c)} target="_blank" rel="noreferrer" className="rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700">
-                              eBay
-                            </a>
-                            <button className="rounded bg-red-700 px-2 py-1 text-xs font-semibold hover:bg-red-600" onClick={() => onDelete(c.id)}>
-                              Delete
-                            </button>
+                            <details className="relative">
+                              <summary className="list-none cursor-pointer rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
+                                More
+                              </summary>
+                              <div className="absolute right-0 z-20 mt-2 w-36 rounded-xl border border-white/10 bg-slate-950 p-1 shadow-2xl">
+                                <a
+                                  href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"}
+                                  className="block rounded-lg px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                >
+                                  Edit
+                                </a>
+                                <a
+                                  href={buildEbaySearchUrl(c)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="block rounded-lg px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                >
+                                  eBay
+                                </a>
+                                <button
+                                  className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
+                                  onClick={() => onDelete(c.id)}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </details>
                           </div>
                         </td>
                       </tr>
