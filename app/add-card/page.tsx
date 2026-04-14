@@ -90,6 +90,63 @@ function normalizeParallelLabel(p: string | undefined | null) {
   return v;
 }
 
+function DateField({
+  label,
+  value,
+  onChange,
+  pickerRef,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  pickerRef: { current: HTMLInputElement | null };
+}) {
+  return (
+    <label className="block">
+      <div className="mb-1 text-sm text-slate-300">{label}</div>
+      <div className="flex gap-2">
+        <input
+          className="flex-1 rounded bg-slate-950 px-3 py-2"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="YYYY-MM-DD"
+          inputMode="numeric"
+        />
+        <button
+          type="button"
+          className="rounded bg-slate-800 px-3 py-2 text-xs font-semibold hover:bg-slate-700"
+          onClick={() => onChange(new Date().toISOString().slice(0, 10))}
+        >
+          Today
+        </button>
+        <button
+          type="button"
+          className="rounded bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+          onClick={() => {
+            const input = pickerRef.current as (HTMLInputElement & { showPicker?: () => void }) | null;
+            if (!input) return;
+            if (typeof input.showPicker === "function") input.showPicker();
+            else input.click();
+          }}
+          aria-label={`Pick ${label}`}
+        >
+          📅
+        </button>
+      </div>
+      <input
+        ref={pickerRef}
+        type="date"
+        className="sr-only"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        tabIndex={-1}
+        aria-hidden="true"
+      />
+      <div className="mt-1 text-xs text-slate-400">Type the date directly, use Today, or click the calendar.</div>
+    </label>
+  );
+}
+
 function normalizeCards(cards: Card[]) {
   let changed = false;
   const fixed = cards.map((c) => {
@@ -150,6 +207,8 @@ export default function AddCardPage() {
   const cardNumberRef = useRef<HTMLInputElement | null>(null);
   const rookieSelectRef = useRef<HTMLSelectElement | null>(null);
   const frontFileRef = useRef<HTMLInputElement | null>(null);
+  const listedDatePickerRef = useRef<HTMLInputElement | null>(null);
+  const soldDatePickerRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (step === 1) playerNameRef.current?.focus();
@@ -796,15 +855,12 @@ export default function AddCardPage() {
                           placeholder="e.g. 35.00"
                         />
                       </label>
-                      <label className="block">
-                        <div className="mb-1 text-sm text-slate-300">Listed date</div>
-                        <input
-                          type="date"
-                          className="w-full rounded bg-slate-950 px-3 py-2"
-                          value={String(card.listed_at || "")}
-                          onChange={(e) => set("listed_at", e.target.value)}
-                        />
-                      </label>
+                      <DateField
+                        label="Listed date"
+                        value={String(card.listed_at || "")}
+                        onChange={(value) => set("listed_at", value)}
+                        pickerRef={listedDatePickerRef}
+                      />
                       <label className="block">
                         <div className="mb-1 text-sm text-slate-300">Platform</div>
                         <input
@@ -831,15 +887,12 @@ export default function AddCardPage() {
                           placeholder="e.g. 28.00"
                         />
                       </label>
-                      <label className="block">
-                        <div className="mb-1 text-sm text-slate-300">Sold date</div>
-                        <input
-                          type="date"
-                          className="w-full rounded bg-slate-950 px-3 py-2"
-                          value={String(card.sold_at || "")}
-                          onChange={(e) => set("sold_at", e.target.value)}
-                        />
-                      </label>
+                      <DateField
+                        label="Sold date"
+                        value={String(card.sold_at || "")}
+                        onChange={(value) => set("sold_at", value)}
+                        pickerRef={soldDatePickerRef}
+                      />
                       <label className="block">
                         <div className="mb-1 text-sm text-slate-300">Platform</div>
                         <input

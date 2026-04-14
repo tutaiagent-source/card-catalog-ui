@@ -188,6 +188,7 @@ export default function CatalogPage() {
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
+  const [statusToast, setStatusToast] = useState<{ message: string; href?: string; hrefLabel?: string } | null>(null);
   const [cardsView, setCardsView] = useState<"list" | "grid" | "inventory">("inventory");
   const [filterSport, setFilterSport] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
@@ -313,6 +314,12 @@ export default function CatalogPage() {
     });
   }, [valuable]);
 
+  useEffect(() => {
+    if (!statusToast) return;
+    const timer = window.setTimeout(() => setStatusToast(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [statusToast]);
+
   const onDelete = async (id?: string) => {
     if (!id) return;
     const ok = confirm("Are you sure you want to delete this card?");
@@ -335,6 +342,49 @@ export default function CatalogPage() {
     sync();
 
     setPreviewCard((prev) => (prev?.id === id ? null : prev));
+  };
+
+  const updateCardStatus = async (card: Card, nextStatus: CardStatus) => {
+    if (!card.id) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const payload: Record<string, any> = { status: nextStatus };
+
+    if (nextStatus === "Listed") {
+      payload.listed_at = card.listed_at || today;
+    }
+
+    if (nextStatus === "Sold") {
+      payload.sold_at = card.sold_at || today;
+    }
+
+    if (nextStatus === "Collection") {
+      payload.sold_at = null;
+      payload.sold_price = null;
+    }
+
+    const { error } = await supabase
+      .from("cards")
+      .update(payload)
+      .eq("id", card.id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      alert(`Status update failed: ${error.message}`);
+      return;
+    }
+
+    setStatusToast(
+      nextStatus === "Sold"
+        ? { message: `${card.player_name} moved to Sold.`, href: "/sold", hrefLabel: "View sold cards" }
+        : nextStatus === "Listed"
+          ? { message: `${card.player_name} moved to Listed.` }
+          : { message: `${card.player_name} moved back to Collection.` }
+    );
+
+    sync();
   };
 
   const qLower = q.trim().toLowerCase();
@@ -431,6 +481,24 @@ export default function CatalogPage() {
             </button>
           </div>
         </div>
+
+        {statusToast && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-emerald-800 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
+            <span>{statusToast.message}</span>
+            {statusToast.href && statusToast.hrefLabel ? (
+              <a href={statusToast.href} className="font-semibold text-emerald-100 underline">
+                {statusToast.hrefLabel}
+              </a>
+            ) : null}
+            <button
+              type="button"
+              className="ml-auto rounded bg-emerald-900/50 px-2 py-1 text-xs font-semibold hover:bg-emerald-900"
+              onClick={() => setStatusToast(null)}
+            >
+              Close
+            </button>
+          </div>
+        )}
 
         <div className="mt-6 grid grid-cols-1 gap-3 md:grid-cols-2">
           <input
@@ -776,6 +844,27 @@ export default function CatalogPage() {
                       <td className="px-3 py-2">{c.status || "-"}</td>
                       <td className="px-3 py-2">
                         <div className="flex flex-wrap gap-2">
+                          {normalizeStatusValue(c.status) !== "Listed" ? (
+                            <button
+                              className="rounded bg-blue-900 px-2 py-1 text-xs font-semibold hover:bg-blue-800"
+                              onClick={() => updateCardStatus(c, "Listed")}
+                            >
+                              List
+                            </button>
+                          ) : (
+                            <button
+                              className="rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700"
+                              onClick={() => updateCardStatus(c, "Collection")}
+                            >
+                              Collection
+                            </button>
+                          )}
+                          <button
+                            className="rounded bg-emerald-900 px-2 py-1 text-xs font-semibold hover:bg-emerald-800"
+                            onClick={() => updateCardStatus(c, "Sold")}
+                          >
+                            Sold
+                          </button>
                           <a
                             href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"}
                             className="rounded bg-[#b80000] px-2 py-1 text-xs font-semibold hover:bg-[#d50000]"
