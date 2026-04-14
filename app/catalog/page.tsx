@@ -345,6 +345,12 @@ export default function CatalogPage() {
             >
               Add Card
             </a>
+            <a
+              href="/account"
+              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+            >
+              My Account
+            </a>
             <button
               className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
               onClick={async () => {

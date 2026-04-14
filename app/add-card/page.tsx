@@ -448,6 +448,9 @@ export default function AddCardPage() {
             <a className="text-red-300 hover:underline" href="/catalog">
               Back to Catalog
             </a>
+            <a className="text-red-300 hover:underline" href="/account">
+              My Account
+            </a>
             <button
               type="button"
               className="rounded bg-slate-800 px-3 py-1 text-sm font-semibold hover:bg-slate-700"
