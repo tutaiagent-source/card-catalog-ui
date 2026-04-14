@@ -355,26 +355,6 @@ export default function CatalogPage() {
               className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
               onClick={async () => {
                 if (!supabaseConfigured || !supabase) return;
-                if (!user?.id) return;
-                const ok = confirm("Are you sure you want to delete every card in your collection?");
-                if (!ok) return;
-                const { error } = await supabase
-                  .from("cards")
-                  .delete()
-                  .eq("user_id", user.id);
-                if (error) {
-                  alert(`Clear failed: ${error.message}`);
-                  return;
-                }
-                sync();
-              }}
-            >
-              Clear Collection
-            </button>
-            <button
-              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
-              onClick={async () => {
-                if (!supabaseConfigured || !supabase) return;
                 await supabase.auth.signOut();
                 window.location.href = "/login";
               }}

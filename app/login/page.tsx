@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -191,14 +192,24 @@ export default function LoginPage() {
           {mode !== "magic" && (
             <label className="mt-4 block">
               <div className="mb-2 text-sm text-slate-300">Password</div>
-              <input
-                type="password"
-                className="w-full rounded bg-slate-950 px-3 py-2"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete={mode === "signin" ? "current-password" : "new-password"}
-              />
+              <div className="flex gap-2">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="flex-1 rounded bg-slate-950 px-3 py-2"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                />
+                <button
+                  type="button"
+                  className="rounded bg-slate-950 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
             </label>
           )}
 
@@ -206,7 +217,7 @@ export default function LoginPage() {
             <label className="mt-4 block">
               <div className="mb-2 text-sm text-slate-300">Confirm password</div>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 className="w-full rounded bg-slate-950 px-3 py-2"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
