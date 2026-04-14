@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type YesNo = "yes" | "no";
 type CardStatus = "Collection" | "Listed" | "Sold";
@@ -521,10 +522,13 @@ export default function AddCardPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-3xl px-4 py-8">
+      <div className="mx-auto max-w-3xl px-4 py-8 pb-24 md:pb-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{editingId ? "Edit Card" : "Add Card"}</h1>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200">
+              CardCat.io
+            </div>
+            <h1 className="mt-3 text-2xl font-bold">{editingId ? "Edit Card" : "Add Card"}</h1>
             <div className="mt-1 text-sm text-slate-400">Signed in as {user.email}</div>
           </div>
           <div className="flex gap-3">
@@ -551,9 +555,14 @@ export default function AddCardPage() {
           </div>
         </div>
 
-        <div className="mt-6 text-sm text-slate-300">Step {step} of 4</div>
+        <div className="mt-6">
+          <div className="text-sm text-slate-300">Step {step} of 4</div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-900">
+            <div className="h-full rounded-full bg-gradient-to-r from-[#d50000] via-red-500 to-amber-400" style={{ width: `${(step / 4) * 100}%` }} />
+          </div>
+        </div>
 
-        <div className="mt-4 rounded-xl border border-slate-800 bg-slate-900 p-4">
+        <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           {step === 1 && (
             <form
               onSubmit={(e) => {
@@ -1170,6 +1179,7 @@ export default function AddCardPage() {
         </div>
       )}
 
+      <CardCatMobileNav />
     </main>
   );
 }

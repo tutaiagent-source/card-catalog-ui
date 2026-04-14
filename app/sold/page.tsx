@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type CardStatus = "Collection" | "Listed" | "Sold";
 
@@ -91,10 +92,13 @@ export default function SoldPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 pb-24 md:pb-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Sold</h1>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200">
+              CardCat.io
+            </div>
+            <h1 className="mt-3 text-2xl font-bold">Sold</h1>
             <div className="mt-1 text-sm text-slate-400">Your sold cards, revenue, and sales history.</div>
           </div>
           <div className="flex gap-3">
@@ -104,23 +108,23 @@ export default function SoldPage() {
         </div>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="text-sm text-slate-400">Cards sold</div>
             <div className="mt-2 text-2xl font-bold">{totalSoldCards}</div>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.08] p-4 shadow-[0_18px_40px_rgba(16,185,129,0.08)]">
             <div className="text-sm text-slate-400">Gross sales</div>
             <div className="mt-2 text-2xl font-bold">${grossSales.toFixed(2)}</div>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="text-sm text-slate-400">Avg sale per card</div>
             <div className="mt-2 text-2xl font-bold">${avgSale.toFixed(2)}</div>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
             <div className="text-sm text-slate-400">Highest sale</div>
             <div className="mt-2 text-2xl font-bold">${biggestSale.toFixed(2)}</div>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="text-sm text-slate-400">Top platform</div>
             <div className="mt-2 text-2xl font-bold">{topPlatform}</div>
           </div>
@@ -131,54 +135,91 @@ export default function SoldPage() {
             No sold cards yet. When a card is marked Sold, it will show up here with sales metrics.
           </div>
         ) : (
-          <div className="mt-6 overflow-x-auto rounded border border-slate-800 bg-slate-900">
-            <table className="min-w-full text-sm">
-              <thead className="bg-slate-950 text-left text-slate-400">
-                <tr>
-                  <th className="px-3 py-2">Player</th>
-                  <th className="px-3 py-2">Card</th>
-                  <th className="px-3 py-2">Qty</th>
-                  <th className="px-3 py-2">Sold for</th>
-                  <th className="px-3 py-2">Date</th>
-                  <th className="px-3 py-2">Platform</th>
-                  <th className="px-3 py-2">Grade</th>
-                  <th className="px-3 py-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {cards
-                  .slice()
-                  .sort((a, b) => String(b.sold_at || "").localeCompare(String(a.sold_at || "")))
-                  .map((card, i) => (
-                    <tr key={`${card.player_name}-${card.card_number}-${card.id || i}`} className="border-t border-slate-800 align-top">
-                      <td className="px-3 py-2">
-                        <div className="font-semibold">{card.player_name}</div>
-                        <div className="text-xs text-slate-400">{card.year} · {card.team}</div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div>{card.brand} · {card.set_name}</div>
-                        <div className="text-xs text-slate-400">{card.parallel} · #{card.card_number}</div>
-                      </td>
-                      <td className="px-3 py-2">{card.quantity}</td>
-                      <td className="px-3 py-2">${(Number(card.sold_price || 0) * Number(card.quantity || 0)).toFixed(2)}</td>
-                      <td className="px-3 py-2">{card.sold_at || "-"}</td>
-                      <td className="px-3 py-2">{card.sale_platform || "-"}</td>
-                      <td className="px-3 py-2">{card.graded === "yes" && card.grade != null ? card.grade : "-"}</td>
-                      <td className="px-3 py-2">
-                        <a
-                          href={card.id ? `/add-card?edit=${encodeURIComponent(card.id)}` : "/add-card"}
-                          className="rounded bg-[#b80000] px-2 py-1 text-xs font-semibold hover:bg-[#d50000]"
-                        >
-                          Edit
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="mt-6 space-y-3 md:hidden">
+              {cards
+                .slice()
+                .sort((a, b) => String(b.sold_at || "").localeCompare(String(a.sold_at || "")))
+                .map((card, i) => (
+                  <div key={`${card.player_name}-${card.card_number}-${card.id || i}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="font-semibold">{card.player_name}</div>
+                    <div className="mt-1 text-sm text-slate-300">{card.year} · {card.brand} · #{card.card_number}</div>
+                    <div className="text-sm text-slate-400">{card.set_name}{card.parallel ? ` · ${card.parallel}` : ""}</div>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                      <div className="rounded-xl bg-slate-950/70 px-3 py-2">
+                        <div className="text-slate-400">Sold for</div>
+                        <div className="font-semibold">${(Number(card.sold_price || 0) * Number(card.quantity || 0)).toFixed(2)}</div>
+                      </div>
+                      <div className="rounded-xl bg-slate-950/70 px-3 py-2">
+                        <div className="text-slate-400">Date</div>
+                        <div className="font-semibold">{card.sold_at || "-"}</div>
+                      </div>
+                      <div className="rounded-xl bg-slate-950/70 px-3 py-2">
+                        <div className="text-slate-400">Platform</div>
+                        <div className="font-semibold">{card.sale_platform || "-"}</div>
+                      </div>
+                      <div className="rounded-xl bg-slate-950/70 px-3 py-2">
+                        <div className="text-slate-400">Grade</div>
+                        <div className="font-semibold">{card.graded === "yes" && card.grade != null ? card.grade : "-"}</div>
+                      </div>
+                    </div>
+                    <a
+                      href={card.id ? `/add-card?edit=${encodeURIComponent(card.id)}` : "/add-card"}
+                      className="mt-3 inline-flex rounded-lg bg-[#b80000] px-3 py-2 text-sm font-semibold hover:bg-[#d50000]"
+                    >
+                      Edit sale details
+                    </a>
+                  </div>
+                ))}
+            </div>
+
+            <div className="mt-6 hidden overflow-x-auto rounded border border-slate-800 bg-slate-900 md:block">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-950 text-left text-slate-400">
+                  <tr>
+                    <th className="px-3 py-2">Player</th>
+                    <th className="px-3 py-2">Card</th>
+                    <th className="px-3 py-2">Qty</th>
+                    <th className="px-3 py-2">Sold for</th>
+                    <th className="px-3 py-2">Date</th>
+                    <th className="px-3 py-2">Platform</th>
+                    <th className="px-3 py-2">Grade</th>
+                    <th className="px-3 py-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cards
+                    .slice()
+                    .sort((a, b) => String(b.sold_at || "").localeCompare(String(a.sold_at || "")))
+                    .map((card, i) => (
+                      <tr key={`${card.player_name}-${card.card_number}-${card.id || i}`} className="border-t border-slate-800 align-top">
+                        <td className="px-3 py-2">
+                          <div className="font-semibold">{card.player_name}</div>
+                          <div className="text-xs text-slate-400">{card.year} · {card.team}</div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div>{card.brand} · {card.set_name}</div>
+                          <div className="text-xs text-slate-400">{card.parallel} · #{card.card_number}</div>
+                        </td>
+                        <td className="px-3 py-2">{card.quantity}</td>
+                        <td className="px-3 py-2">${(Number(card.sold_price || 0) * Number(card.quantity || 0)).toFixed(2)}</td>
+                        <td className="px-3 py-2">{card.sold_at || "-"}</td>
+                        <td className="px-3 py-2">{card.sale_platform || "-"}</td>
+                        <td className="px-3 py-2">{card.graded === "yes" && card.grade != null ? card.grade : "-"}</td>
+                        <td className="px-3 py-2">
+                          <a href={card.id ? `/add-card?edit=${encodeURIComponent(card.id)}` : "/add-card"} className="rounded bg-[#b80000] px-2 py-1 text-xs font-semibold hover:bg-[#d50000]">
+                            Edit
+                          </a>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
+      <CardCatMobileNav />
     </main>
   );
 }

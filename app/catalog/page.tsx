@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type YesNo = "yes" | "no";
 type CardStatus = "Collection" | "Listed" | "Sold";
@@ -483,7 +484,7 @@ export default function CatalogPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mx-auto max-w-5xl px-4 py-8 pb-24 md:pb-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200">
@@ -653,9 +654,15 @@ export default function CatalogPage() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl font-semibold">Active Inventory: {activeCards.length}</h2>
-          <div className="text-sm text-slate-300">Estimated value: ${estimatedTotal.toFixed(2)}</div>
+        <div className="mt-1 grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="text-sm text-slate-400">Active Inventory</div>
+            <div className="mt-1 text-2xl font-bold">{activeCards.length}</div>
+          </div>
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
+            <div className="text-sm text-slate-400">Estimated value</div>
+            <div className="mt-1 text-2xl font-bold">${estimatedTotal.toFixed(2)}</div>
+          </div>
         </div>
         <section className="mt-8 rounded-xl border border-slate-800 bg-slate-900 p-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1083,6 +1090,7 @@ export default function CatalogPage() {
           )}
         </section>
       </div>
+    <CardCatMobileNav />
     {statusModal && (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"

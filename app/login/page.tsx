@@ -135,10 +135,19 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-md px-4 py-16">
-        <h1 className="text-3xl font-bold">Sign in to Card Catalog</h1>
+        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200">
+          CardCat.io
+        </div>
+        <h1 className="mt-4 text-3xl font-bold">Sign in to CardCat</h1>
         <p className="mt-3 text-slate-300">
-          Use a password or a magic link to save and manage your collection.
+          Save your collection, track prices, and manage listed and sold cards in one place.
         </p>
+
+        <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300">
+          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">Inventory</div>
+          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">Pricing</div>
+          <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">Sold tracking</div>
+        </div>
 
         <div className="mt-6 flex gap-2 rounded-xl border border-slate-800 bg-slate-900 p-2">
           <button
@@ -175,7 +184,7 @@ export default function LoginPage() {
 
         <form
           onSubmit={mode === "signin" ? onPasswordSignIn : mode === "signup" ? onPasswordSignUp : onMagicLink}
-          className="mt-4 rounded-xl border border-slate-800 bg-slate-900 p-5"
+          className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]"
         >
           <label className="block">
             <div className="mb-2 text-sm text-slate-300">Email</div>
