@@ -216,14 +216,24 @@ export default function LoginPage() {
           {mode === "signup" && (
             <label className="mt-4 block">
               <div className="mb-2 text-sm text-slate-300">Confirm password</div>
-              <input
-                type={showPassword ? "text" : "password"}
-                className="w-full rounded bg-slate-950 px-3 py-2"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="new-password"
-              />
+              <div className="flex gap-2">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="flex-1 rounded bg-slate-950 px-3 py-2"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="rounded bg-slate-950 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
             </label>
           )}
 

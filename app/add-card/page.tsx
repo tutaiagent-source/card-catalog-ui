@@ -6,6 +6,7 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 
 type YesNo = "yes" | "no";
+type CardStatus = "Collection" | "Listed" | "Sold";
 
 type Card = {
   id?: string;
@@ -35,7 +36,12 @@ type Card = {
   image_url?: string;
   back_image_url?: string;
 
-  status?: string;
+  status?: CardStatus | string;
+  asking_price?: number | null;
+  listed_at?: string;
+  sold_price?: number | null;
+  sold_at?: string;
+  sale_platform?: string;
   notes?: string;
   date_added?: string;
 };
@@ -64,6 +70,14 @@ function storageKey() {
 }
 
 const draftKey = "card_draft_v1";
+
+function normalizeStatusValue(status?: string | null): CardStatus {
+  const raw = String(status || "").trim().toLowerCase();
+  if (!raw || raw === "incoming" || raw === "collection") return "Collection";
+  if (raw === "listed") return "Listed";
+  if (raw === "sold") return "Sold";
+  return "Collection";
+}
 
 function normalizeParallelLabel(p: string | undefined | null) {
   const raw = String(p ?? "").trim();
@@ -119,7 +133,7 @@ export default function AddCardPage() {
     grade: 1,
     serial_number_text: "",
     quantity: 1,
-    status: "Incoming",
+    status: "Collection",
     notes: "",
   });
 
@@ -172,7 +186,7 @@ export default function AddCardPage() {
       }
 
       if (data) {
-        setCard(data as any);
+        setCard({ ...(data as any), status: normalizeStatusValue((data as any)?.status) });
         setStep(1);
       }
     })();
@@ -238,7 +252,12 @@ export default function AddCardPage() {
         image_url: (card.image_url || "").trim() ? String(card.image_url) : undefined,
         back_image_url: (card.back_image_url || "").trim() ? String(card.back_image_url) : undefined,
 
-        status: String(card.status || "Incoming"),
+        status: normalizeStatusValue(card.status),
+        asking_price: normalizeStatusValue(card.status) === "Listed" && card.asking_price != null ? Number(card.asking_price) : null,
+        listed_at: normalizeStatusValue(card.status) === "Listed" ? String(card.listed_at || new Date().toISOString().slice(0, 10)) : "",
+        sold_price: normalizeStatusValue(card.status) === "Sold" && card.sold_price != null ? Number(card.sold_price) : null,
+        sold_at: normalizeStatusValue(card.status) === "Sold" ? String(card.sold_at || new Date().toISOString().slice(0, 10)) : "",
+        sale_platform: normalizeStatusValue(card.status) === "Collection" ? "" : String(card.sale_platform || ""),
         notes: String(card.notes || ""),
         date_added: String(card.date_added || ""),
       };
@@ -281,6 +300,11 @@ export default function AddCardPage() {
         back_image_url: cleaned.back_image_url ?? null,
 
         status: cleaned.status,
+        asking_price: cleaned.asking_price,
+        listed_at: cleaned.listed_at || null,
+        sold_price: cleaned.sold_price,
+        sold_at: cleaned.sold_at || null,
+        sale_platform: cleaned.sale_platform || null,
         notes: cleaned.notes,
         date_added: cleaned.date_added,
       };
@@ -447,6 +471,9 @@ export default function AddCardPage() {
           <div className="flex gap-3">
             <a className="text-red-300 hover:underline" href="/catalog">
               Back to Catalog
+            </a>
+            <a className="text-red-300 hover:underline" href="/sold">
+              Sold
             </a>
             <a className="text-red-300 hover:underline" href="/account">
               My Account
@@ -741,6 +768,91 @@ export default function AddCardPage() {
                   </div>
                 </div>
 
+                <div className="rounded border border-slate-800 p-3 space-y-3">
+                  <div>
+                    <div className="text-slate-300">Status</div>
+                    <select
+                      className="mt-2 w-full rounded bg-slate-950 px-2 py-2"
+                      value={String(card.status || "Collection")}
+                      onChange={(e) => set("status", e.target.value)}
+                    >
+                      <option value="Collection">Collection</option>
+                      <option value="Listed">Listed</option>
+                      <option value="Sold">Sold</option>
+                    </select>
+                  </div>
+
+                  {String(card.status || "Collection") === "Listed" && (
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Asking price</div>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={card.asking_price ?? ""}
+                          onChange={(e) => set("asking_price", e.target.value === "" ? null : Number(e.target.value))}
+                          placeholder="e.g. 35.00"
+                        />
+                      </label>
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Listed date</div>
+                        <input
+                          type="date"
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={String(card.listed_at || "")}
+                          onChange={(e) => set("listed_at", e.target.value)}
+                        />
+                      </label>
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Platform</div>
+                        <input
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={String(card.sale_platform || "")}
+                          onChange={(e) => set("sale_platform", e.target.value)}
+                          placeholder="eBay, Whatnot..."
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {String(card.status || "Collection") === "Sold" && (
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Sold for</div>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={card.sold_price ?? ""}
+                          onChange={(e) => set("sold_price", e.target.value === "" ? null : Number(e.target.value))}
+                          placeholder="e.g. 28.00"
+                        />
+                      </label>
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Sold date</div>
+                        <input
+                          type="date"
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={String(card.sold_at || "")}
+                          onChange={(e) => set("sold_at", e.target.value)}
+                        />
+                      </label>
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Platform</div>
+                        <input
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={String(card.sale_platform || "")}
+                          onChange={(e) => set("sale_platform", e.target.value)}
+                          placeholder="eBay, local, show..."
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+
                 <label className="block">
                   <div className="mb-1 text-slate-300">Quantity</div>
                   <input
@@ -978,7 +1090,7 @@ export default function AddCardPage() {
                     grade: 1,
                     serial_number_text: "",
                     quantity: 1,
-                    status: "Incoming",
+                    status: "Collection",
                     notes: "",
                   });
                   setFrontFile(null);

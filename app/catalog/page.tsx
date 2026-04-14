@@ -6,6 +6,7 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 
 type YesNo = "yes" | "no";
+type CardStatus = "Collection" | "Listed" | "Sold";
 
 type Card = {
   id?: string;
@@ -35,13 +36,26 @@ type Card = {
   image_url?: string;
   back_image_url?: string;
 
-  status?: string;
+  status?: CardStatus | string;
+  asking_price?: number | null;
+  listed_at?: string;
+  sold_price?: number | null;
+  sold_at?: string;
+  sale_platform?: string;
   notes?: string;
   date_added?: string;
 };
 
 function storageKey() {
   return "cards_v1";
+}
+
+function normalizeStatusValue(status?: string | null): CardStatus {
+  const raw = String(status || "").trim().toLowerCase();
+  if (!raw || raw === "incoming" || raw === "collection") return "Collection";
+  if (raw === "listed") return "Listed";
+  if (raw === "sold") return "Sold";
+  return "Collection";
 }
 
 function normalizeParallelLabel(p: string | undefined | null) {
@@ -196,7 +210,7 @@ export default function CatalogPage() {
       return;
     }
 
-    setCards((data ?? []) as any);
+    setCards(((data ?? []) as any[]).map((card) => ({ ...card, status: normalizeStatusValue(card?.status) })) as any);
   };
 
   useEffect(() => {
@@ -205,21 +219,23 @@ export default function CatalogPage() {
 
   const sync = () => fetchCards();
 
+  const activeCards = useMemo(() => cards.filter((c) => normalizeStatusValue(c.status) !== "Sold"), [cards]);
+
   const sportOptions = useMemo(
-    () => Array.from(new Set(cards.map((c) => String(c.sport || "").trim()).filter(Boolean))).sort(),
-    [cards]
+    () => Array.from(new Set(activeCards.map((c) => String(c.sport || "").trim()).filter(Boolean))).sort(),
+    [activeCards]
   );
   const yearOptions = useMemo(
-    () => Array.from(new Set(cards.map((c) => String(c.year || "").trim()).filter(Boolean))).sort((a, b) => Number(b) - Number(a) || b.localeCompare(a)),
-    [cards]
+    () => Array.from(new Set(activeCards.map((c) => String(c.year || "").trim()).filter(Boolean))).sort((a, b) => Number(b) - Number(a) || b.localeCompare(a)),
+    [activeCards]
   );
   const brandOptions = useMemo(
-    () => Array.from(new Set(cards.map((c) => String(c.brand || "").trim()).filter(Boolean))).sort(),
-    [cards]
+    () => Array.from(new Set(activeCards.map((c) => String(c.brand || "").trim()).filter(Boolean))).sort(),
+    [activeCards]
   );
   const statusOptions = useMemo(
-    () => Array.from(new Set(cards.map((c) => String(c.status || "").trim()).filter(Boolean))).sort(),
-    [cards]
+    () => Array.from(new Set(activeCards.map((c) => normalizeStatusValue(c.status)))).sort(),
+    [activeCards]
   );
 
   const filtered = useMemo(() => {
@@ -235,7 +251,7 @@ export default function CatalogPage() {
       .replace(/\s+/g, " ")
       .trim();
 
-    return cards.filter((c) => {
+    return activeCards.filter((c) => {
       const matchesQ =
         !s ||
         `${c.player_name} ${c.team} ${c.year} ${c.brand} ${c.set_name} ${c.parallel} ${c.card_number} ${c.serial_number_text}`
@@ -248,12 +264,12 @@ export default function CatalogPage() {
       const matchesSport = filterSport === "all" || String(c.sport || "") === filterSport;
       const matchesYear = filterYear === "all" || String(c.year || "") === filterYear;
       const matchesBrand = filterBrand === "all" || String(c.brand || "") === filterBrand;
-      const matchesStatus = filterStatus === "all" || String(c.status || "") === filterStatus;
+      const matchesStatus = filterStatus === "all" || normalizeStatusValue(c.status) === filterStatus;
       const matchesGraded = filterGraded === "all" || (c.graded || "no") === filterGraded;
 
       return matchesQ && matchesRookie && matchesAuto && matchesMem && matchesSport && matchesYear && matchesBrand && matchesStatus && matchesGraded;
     });
-  }, [cards, q, filterSport, filterYear, filterBrand, filterStatus, filterGraded]);
+  }, [activeCards, q, filterSport, filterYear, filterBrand, filterStatus, filterGraded]);
 
   const sortedCards = useMemo(() => {
     const next = [...filtered];
@@ -274,16 +290,16 @@ export default function CatalogPage() {
   }, [filtered, sortBy]);
 
   const valuable = useMemo(() => {
-    return [...cards].sort((a, b) => score(b) - score(a)).slice(0, 5);
-  }, [cards]);
+    return [...activeCards].sort((a, b) => score(b) - score(a)).slice(0, 5);
+  }, [activeCards]);
 
   const estimatedTotal = useMemo(() => {
-    return cards.reduce((sum, c) => {
+    return activeCards.reduce((sum, c) => {
       const qty = Number(c.quantity || 0);
       const price = Number(c.estimated_price || 0);
       return sum + qty * price;
     }, 0);
-  }, [cards]);
+  }, [activeCards]);
 
   useEffect(() => {
     if (valuable.length === 0) {
@@ -390,6 +406,12 @@ export default function CatalogPage() {
               className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]"
             >
               Add Card
+            </a>
+            <a
+              href="/sold"
+              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+            >
+              Sold
             </a>
             <a
               href="/account"
@@ -508,10 +530,10 @@ export default function CatalogPage() {
           </select>
         </div>
 
-        <div className="mt-3 text-sm text-slate-400">Showing {sortedCards.length} of {cards.length} card rows</div>
+        <div className="mt-3 text-sm text-slate-400">Showing {sortedCards.length} of {activeCards.length} active card rows</div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-xl font-semibold">Cards in Collection: {cards.length}</h2>
+          <h2 className="text-xl font-semibold">Active Inventory: {activeCards.length}</h2>
           <div className="text-sm text-slate-300">Estimated value: ${estimatedTotal.toFixed(2)}</div>
         </div>
         <section className="mt-8">
@@ -606,6 +628,10 @@ export default function CatalogPage() {
                             </div>
                             <div className="mt-1 text-sm text-slate-300">
                               {previewCard.team} · {previewCard.sport}
+                            </div>
+                            <div className="mt-1 text-sm text-slate-300">
+                              Status: {normalizeStatusValue(previewCard.status)}
+                              {normalizeStatusValue(previewCard.status) === "Listed" && previewCard.asking_price != null ? ` · Asking $${Number(previewCard.asking_price).toFixed(2)}` : ""}
                             </div>
                             <div className="mt-1 text-sm text-slate-300">
                               Est. value: ${Number(previewCard.estimated_price || 0).toFixed(2)}
@@ -843,6 +869,9 @@ export default function CatalogPage() {
                           </div>
                           <div className="text-sm text-slate-300">
                             {c.team} · {c.sport}
+                          </div>
+                          <div className="text-sm text-slate-300">
+                            Status: {normalizeStatusValue(c.status)}{normalizeStatusValue(c.status) === "Listed" && c.asking_price != null ? ` · Asking $${Number(c.asking_price).toFixed(2)}` : ""}
                           </div>
                           <div className="text-sm text-slate-300">
                             Qty: {c.quantity} · Est. value: ${Number(c.estimated_price || 0).toFixed(2)}

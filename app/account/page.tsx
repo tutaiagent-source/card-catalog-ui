@@ -119,7 +119,10 @@ export default function AccountPage() {
           </div>
           <div className="flex gap-3">
             <a href="/catalog" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
-              Back to Catalog
+              Catalog
+            </a>
+            <a href="/sold" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
+              Sold
             </a>
             <button
               type="button"
@@ -183,13 +186,23 @@ export default function AccountPage() {
 
             <label className="block">
               <div className="mb-2 text-sm text-slate-300">Confirm new password</div>
-              <input
-                type={showPassword ? "text" : "password"}
-                className="w-full rounded bg-slate-950 px-3 py-2"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                autoComplete="new-password"
-              />
+              <div className="flex gap-2">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="flex-1 rounded bg-slate-950 px-3 py-2"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="rounded bg-slate-950 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
             </label>
 
             {message ? <div className="rounded border border-emerald-800 bg-emerald-950/30 p-3 text-sm text-emerald-200">{message}</div> : null}
