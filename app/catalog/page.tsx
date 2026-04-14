@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import { normalizeCatalogTaxonomy } from "@/lib/cardTaxonomy";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type YesNo = "yes" | "no";
@@ -227,7 +228,11 @@ export default function CatalogPage() {
       return;
     }
 
-    setCards(((data ?? []) as any[]).map((card) => ({ ...card, status: normalizeStatusValue(card?.status) })) as any);
+    setCards(
+      ((data ?? []) as any[]).map((card) =>
+        normalizeCatalogTaxonomy({ ...card, status: normalizeStatusValue(card?.status) })
+      ) as any
+    );
   };
 
   useEffect(() => {

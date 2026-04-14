@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import { normalizeBrandAndSet, normalizeCatalogTaxonomy, normalizeSportLabel } from "@/lib/cardTaxonomy";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type YesNo = "yes" | "no";
@@ -248,7 +249,7 @@ export default function AddCardPage() {
       }
 
       if (data) {
-        setCard({ ...(data as any), status: normalizeStatusValue((data as any)?.status) });
+        setCard(normalizeCatalogTaxonomy({ ...(data as any), status: normalizeStatusValue((data as any)?.status) }));
         setStep(1);
       }
     })();
@@ -287,18 +288,19 @@ export default function AddCardPage() {
         return;
       }
 
+      const normalizedBrandSet = normalizeBrandAndSet(String(card.brand || ""), String(card.set_name || ""));
       const cleaned: Card = {
         id: card.id ?? crypto.randomUUID(),
 
         player_name: String(card.player_name || ""),
         year: String(card.year || ""),
-        brand: String(card.brand || ""),
-        set_name: String(card.set_name || ""),
+        brand: normalizedBrandSet.brand,
+        set_name: normalizedBrandSet.set_name,
         parallel: normalizeParallelLabel(String(card.parallel || "n/a")),
 
         card_number: String(card.card_number || ""),
         team: String(card.team || ""),
-        sport: String(card.sport || ""),
+        sport: normalizeSportLabel(String(card.sport || "")),
 
         rookie: (card.rookie as YesNo) || "no",
         is_autograph: (card.is_autograph as YesNo) || "no",

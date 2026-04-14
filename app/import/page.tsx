@@ -4,6 +4,7 @@ import Papa from "papaparse";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import { normalizeBrandAndSet, normalizeCatalogTaxonomy, normalizeSportLabel } from "@/lib/cardTaxonomy";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type YesNo = "yes" | "no";
@@ -341,6 +342,11 @@ function buildRowPayload(row: RawRow, mapping: Mapping) {
   if (!payload.parallel) payload.parallel = "n/a";
   if (!payload.serial_number_text) payload.serial_number_text = "";
 
+  const normalizedBrandSet = normalizeBrandAndSet(payload.brand, payload.set_name);
+  payload.brand = normalizedBrandSet.brand;
+  payload.set_name = normalizedBrandSet.set_name;
+  payload.sport = normalizeSportLabel(payload.sport);
+
   return { payload, issues };
 }
 
@@ -401,7 +407,7 @@ export default function ImportPage() {
         setParseErrors([`Could not load existing cards: ${error.message}`]);
         return;
       }
-      setExistingCards((data ?? []) as Card[]);
+      setExistingCards(((data ?? []) as Card[]).map((card) => normalizeCatalogTaxonomy(card)));
     })();
   }, [user?.id]);
 
@@ -546,7 +552,7 @@ export default function ImportPage() {
     setParseErrors(failures);
 
     const { data } = await supabase.from("cards").select("*").eq("user_id", user.id);
-    setExistingCards((data ?? []) as Card[]);
+    setExistingCards(((data ?? []) as Card[]).map((card) => normalizeCatalogTaxonomy(card)));
   };
 
   if (loading) {
