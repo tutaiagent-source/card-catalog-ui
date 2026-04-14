@@ -23,8 +23,13 @@ type Card = {
   is_autograph: YesNo;
   has_memorabilia: YesNo;
 
+  graded?: YesNo;
+  grade?: number | null;
+
   serial_number_text: string;
   quantity: number;
+
+  estimated_price?: number | null;
 
   image_url?: string;
   back_image_url?: string;
@@ -170,6 +175,8 @@ export default function CatalogPage() {
   const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
   const [cardsView, setCardsView] = useState<"list" | "grid">("list");
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
+  const [priceCard, setPriceCard] = useState<Card | null>(null);
+  const [priceInput, setPriceInput] = useState<string>("");
 
   const fetchCards = async () => {
     if (!supabaseConfigured || !supabase) return;
@@ -245,6 +252,14 @@ export default function CatalogPage() {
     return [...cards].sort((a, b) => score(b) - score(a)).slice(0, 5);
   }, [cards]);
 
+  const estimatedTotal = useMemo(() => {
+    return cards.reduce((sum, c) => {
+      const qty = Number(c.quantity || 0);
+      const price = Number(c.estimated_price || 0);
+      return sum + qty * price;
+    }, 0);
+  }, [cards]);
+
   useEffect(() => {
     if (valuable.length === 0) {
       setPreviewCard(null);
@@ -311,6 +326,39 @@ export default function CatalogPage() {
     }
 
     setSelectedCardIds([]);
+    sync();
+  };
+
+  const saveEstimatedPrice = async () => {
+    if (!priceCard?.id) return;
+
+    if (!priceInput.trim()) {
+      alert("Enter an estimated price.");
+      return;
+    }
+
+    const n = Number(priceInput);
+    if (!Number.isFinite(n) || n < 0) {
+      alert("Enter a valid estimated price (0 or higher).");
+      return;
+    }
+
+    if (!supabaseConfigured || !supabase) return;
+    if (!testerKey) return;
+
+    const { error } = await supabase
+      .from("cards")
+      .update({ estimated_price: n })
+      .eq("id", priceCard.id)
+      .eq("tester_key", testerKey);
+
+    if (error) {
+      alert(`Save failed: ${error.message}`);
+      return;
+    }
+
+    setPriceCard(null);
+    setPriceInput("");
     sync();
   };
 
@@ -431,7 +479,29 @@ export default function CatalogPage() {
           </button>
         </div>
 
-        <h2 className="text-xl font-semibold">Cards in Collection: {cards.length}</h2>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-xl font-semibold">Cards in Collection: {cards.length}</h2>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="text-sm text-slate-300">Estimated value: ${estimatedTotal.toFixed(2)}</div>
+
+            <button
+              type="button"
+              className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700"
+              onClick={() => {
+                const target = previewCard ?? valuable[0] ?? null;
+                if (!target) {
+                  alert("Pick a card first.");
+                  return;
+                }
+                setPriceCard(target);
+                setPriceInput(String(target.estimated_price ?? ""));
+              }}
+            >
+              eBay price search
+            </button>
+          </div>
+        </div>
         <section className="mt-8">
           <h2 className="text-xl font-semibold">Valuable Candidates</h2>
           <p className="mt-1 text-sm text-slate-400">
@@ -535,6 +605,9 @@ export default function CatalogPage() {
                               )}
                               {previewCard.rookie === "yes" && (
                                 <span className="rounded bg-amber-500 px-2 py-1 text-black">RC</span>
+                              )}
+                              {previewCard.graded === "yes" && previewCard.grade != null && (
+                                <span className="rounded bg-blue-800 px-2 py-1 text-xs">Grade {previewCard.grade}</span>
                               )}
                             </div>
                           </div>
@@ -693,6 +766,9 @@ export default function CatalogPage() {
                           <div className="text-sm text-slate-300">
                             {c.team} · {c.sport}
                           </div>
+                          {c.graded === "yes" && c.grade != null && (
+                            <div className="text-xs text-slate-400">Graded: {c.grade}</div>
+                          )}
                         </div>
 
                         <div className="mt-2 sm:mt-0 flex flex-col gap-2">
@@ -729,6 +805,80 @@ export default function CatalogPage() {
           </div>
         </section>
       </div>
+    {priceCard && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        onClick={() => {
+          setPriceCard(null);
+          setPriceInput("");
+        }}
+      >
+        <div
+          className="relative w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="absolute right-2 top-2 rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700"
+            onClick={() => {
+              setPriceCard(null);
+              setPriceInput("");
+            }}
+          >
+            Close
+          </button>
+
+          <div className="text-lg font-bold">Set estimated price</div>
+          <div className="mt-1 text-sm text-slate-300">
+            {priceCard.player_name} · {priceCard.year} · {priceCard.brand} · {priceCard.set_name}
+          </div>
+
+          <div className="mt-3 flex gap-2 flex-wrap">
+            <a
+              href={buildEbaySearchUrl(priceCard)}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded bg-[#b80000] px-3 py-1 text-xs font-semibold hover:bg-[#d50000]"
+            >
+              eBay comps
+            </a>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm text-slate-300">Estimated price (USD)</label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={priceInput}
+              onChange={(e) => setPriceInput(e.target.value)}
+              className="mt-1 w-full rounded bg-slate-950 px-3 py-2 text-sm"
+              placeholder="e.g. 12.50"
+            />
+          </div>
+
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700"
+              onClick={() => {
+                setPriceCard(null);
+                setPriceInput("");
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="rounded bg-[#d50000] px-4 py-2 text-sm font-semibold hover:bg-[#b80000]"
+              onClick={saveEstimatedPrice}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     {imageModal && (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"

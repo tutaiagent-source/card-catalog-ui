@@ -23,6 +23,9 @@ type Card = {
   is_autograph: YesNo;
   has_memorabilia: YesNo;
 
+  graded: YesNo;
+  grade: number | null;
+
   serial_number_text: string;
   quantity: number;
 
@@ -109,6 +112,8 @@ export default function AddCardPage() {
     rookie: "no",
     is_autograph: "no",
     has_memorabilia: "no",
+    graded: "no",
+    grade: 1,
     serial_number_text: "",
     quantity: 1,
     status: "Incoming",
@@ -235,6 +240,9 @@ export default function AddCardPage() {
         is_autograph: (card.is_autograph as YesNo) || "no",
         has_memorabilia: (card.has_memorabilia as YesNo) || "no",
 
+        graded: (card.graded as YesNo) || "no",
+        grade: ((card.graded as YesNo) || "no") === "yes" ? Number(card.grade || 1) : null,
+
         serial_number_text: String(card.serial_number_text || ""),
         quantity: Number(card.quantity || 1),
 
@@ -272,6 +280,9 @@ export default function AddCardPage() {
         rookie: cleaned.rookie,
         is_autograph: cleaned.is_autograph,
         has_memorabilia: cleaned.has_memorabilia,
+
+        graded: cleaned.graded,
+        grade: cleaned.grade,
 
         serial_number_text: cleaned.serial_number_text,
         quantity: cleaned.quantity,
@@ -317,6 +328,7 @@ export default function AddCardPage() {
         .eq("rookie", cleaned.rookie)
         .eq("is_autograph", cleaned.is_autograph)
         .eq("has_memorabilia", cleaned.has_memorabilia)
+        .eq("graded", cleaned.graded)
         .eq("serial_number_text", cleaned.serial_number_text)
         .limit(1);
 
@@ -330,7 +342,11 @@ export default function AddCardPage() {
         );
 
         if (ok) {
-          const updatePayload: any = { quantity: existingQty + addQty };
+          const updatePayload: any = {
+            quantity: existingQty + addQty,
+            graded: cleaned.graded,
+            grade: cleaned.grade,
+          };
 
           if (cleaned.image_url !== undefined) updatePayload.image_url = cleaned.image_url;
           if (cleaned.back_image_url !== undefined) updatePayload.back_image_url = cleaned.back_image_url;
@@ -620,6 +636,32 @@ export default function AddCardPage() {
                   </label>
                 </div>
 
+                <div className="rounded border border-slate-800 p-3">
+                  <div className="text-slate-300">Graded?</div>
+                  <select
+                    className="mt-2 w-full rounded bg-slate-950 px-2 py-2"
+                    value={String(card.graded || "no")}
+                    onChange={(e) => set("graded", e.target.value)}
+                  >
+                    <option value="no">no</option>
+                    <option value="yes">yes</option>
+                  </select>
+
+                  {String(card.graded || "no") === "yes" && (
+                    <div className="mt-3">
+                      <div className="text-slate-300 text-sm">Grade (1–9)</div>
+                      <input
+                        type="number"
+                        min={1}
+                        max={9}
+                        className="mt-1 w-full rounded bg-slate-950 px-3 py-2"
+                        value={Number(card.grade ?? 1)}
+                        onChange={(e) => set("grade", Math.min(9, Math.max(1, Number(e.target.value || 1))))}
+                      />
+                    </div>
+                  )}
+                </div>
+
                 <label className="block">
                   <div className="mb-1 text-slate-300">Quantity</div>
                   <input
@@ -853,6 +895,8 @@ export default function AddCardPage() {
                     rookie: "no",
                     is_autograph: "no",
                     has_memorabilia: "no",
+                    graded: "no",
+                    grade: 1,
                     serial_number_text: "",
                     quantity: 1,
                     status: "Incoming",
