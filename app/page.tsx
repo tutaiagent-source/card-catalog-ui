@@ -3,9 +3,12 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-3xl px-4 py-10">
-        <h1 className="text-3xl font-bold">Card Catalog</h1>
+        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
+          CardCat.io
+        </div>
+        <h1 className="mt-4 text-3xl font-bold">CardCat</h1>
         <p className="mt-2 text-slate-300">
-          Track your cards, save your collection, and jump straight into pricing and catalog tools.
+          A cleaner home for your card inventory, pricing, and sold tracking.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
@@ -24,7 +27,7 @@ export default function Home() {
         </div>
 
         <p className="mt-6 text-sm text-slate-400">
-          Email sign-in is now used for saved collections.
+          Email sign-in is used for saved collections. The brand is shifting toward CardCat.io.
         </p>
       </div>
     </main>

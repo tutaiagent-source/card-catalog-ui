@@ -197,6 +197,7 @@ export default function CatalogPage() {
     platform: string;
   } | null>(null);
   const [showValuable, setShowValuable] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [cardsView, setCardsView] = useState<"grid" | "inventory">("inventory");
   const [filterSport, setFilterSport] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
@@ -485,7 +486,10 @@ export default function CatalogPage() {
       <div className="mx-auto max-w-5xl px-4 py-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Catalog</h1>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200">
+              CardCat.io
+            </div>
+            <h1 className="mt-3 text-2xl font-bold">CardCat Catalog</h1>
             <div className="mt-1 text-sm text-slate-400">Signed in as {user.email}</div>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -553,7 +557,19 @@ export default function CatalogPage() {
           </button>
         </div>
 
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            className="rounded bg-slate-800 px-3 py-2 text-xs font-semibold hover:bg-slate-700 sm:hidden"
+            onClick={() => setShowFilters((prev) => !prev)}
+          >
+            {showFilters ? "Hide filters" : "Show filters"}
+          </button>
+          <div className="text-sm text-slate-400">Showing {sortedCards.length} of {activeCards.length} active card rows</div>
+        </div>
+
+        <div className={`${showFilters ? "mt-3" : "mt-3 hidden"} sm:block`}>
+          <div className="flex flex-wrap gap-2">
           <button
             type="button"
             className={`rounded px-3 py-1 text-xs font-semibold ${
@@ -596,9 +612,9 @@ export default function CatalogPage() {
           >
             Clear
           </button>
-        </div>
+          </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
           <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterSport} onChange={(e) => setFilterSport(e.target.value)}>
             <option value="all">All sports</option>
             {sportOptions.map((option) => (
@@ -634,9 +650,8 @@ export default function CatalogPage() {
             <option value="year_desc">Sort: year desc</option>
             <option value="value_desc">Sort: value high-low</option>
           </select>
+          </div>
         </div>
-
-        <div className="mt-3 text-sm text-slate-400">Showing {sortedCards.length} of {activeCards.length} active card rows</div>
 
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-xl font-semibold">Active Inventory: {activeCards.length}</h2>
@@ -805,17 +820,18 @@ export default function CatalogPage() {
         <section className="mt-10">
           <h2 className="text-xl font-semibold">All Cards</h2>
 
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
+            <span className="uppercase tracking-[0.18em]">View</span>
             <button
               type="button"
-              className={`rounded px-3 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "inventory" ? "bg-slate-800" : "bg-slate-900"}`}
+              className={`rounded px-2.5 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "inventory" ? "bg-slate-800 text-white" : "bg-slate-900"}`}
               onClick={() => setCardsView("inventory")}
             >
               Inventory
             </button>
             <button
               type="button"
-              className={`rounded px-3 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "grid" ? "bg-slate-800" : "bg-slate-900"}`}
+              className={`rounded px-2.5 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "grid" ? "bg-slate-800 text-white" : "bg-slate-900"}`}
               onClick={() => setCardsView("grid")}
             >
               Grid
@@ -853,13 +869,13 @@ export default function CatalogPage() {
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold">{c.player_name}</div>
-                        <div className="text-sm text-slate-300">{c.year} · {c.brand} · {c.set_name}</div>
-                        <div className="text-sm text-slate-300">{c.parallel} · #{c.card_number}</div>
-                        <div className="text-sm text-slate-300">{c.team} · {c.sport}</div>
-                        <div className="mt-1 text-sm text-slate-300">
-                          Status: {normalizeStatusValue(c.status)}{normalizeStatusValue(c.status) === "Listed" && c.asking_price != null ? ` · Asking $${Number(c.asking_price).toFixed(2)}` : ""}
+                        <div className="text-sm text-slate-300">{c.year} · {c.brand} · #{c.card_number || "n/a"}</div>
+                        <div className="text-sm text-slate-400">{c.set_name}{c.parallel && c.parallel !== "n/a" ? ` · ${c.parallel}` : ""}</div>
+                        <div className="mt-2 text-sm text-slate-300">
+                          {normalizeStatusValue(c.status)}{normalizeStatusValue(c.status) === "Listed" && c.asking_price != null ? ` · Asking $${Number(c.asking_price).toFixed(2)}` : ""}
                         </div>
-                        <div className="text-sm text-slate-300">Qty: {c.quantity} · Est. ${ (Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2) }</div>
+                        <div className="text-sm text-slate-300">Qty {c.quantity} · Est. ${(Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2)}</div>
+                        {c.graded === "yes" && c.grade != null && <div className="text-xs text-amber-300">Graded {c.grade}</div>}
                       </div>
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-2">
