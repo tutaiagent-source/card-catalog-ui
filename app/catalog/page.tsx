@@ -1096,19 +1096,15 @@ export default function CatalogPage() {
                 })}
               </div>
 
-              <div className="mt-4 hidden max-w-full overflow-x-auto overscroll-x-contain rounded border border-slate-800 bg-slate-900 md:block">
+              <div className="mt-4 hidden max-w-full overflow-x-hidden rounded border border-slate-800 bg-slate-900 md:block">
                 <table className="min-w-full text-sm">
                   <thead className="bg-slate-950 text-left text-slate-400">
                     <tr>
                       <th className="px-3 py-2">Img</th>
-                      <th className="px-3 py-2">Player</th>
                       <th className="px-3 py-2">Card</th>
-                      <th className="px-3 py-2">Team</th>
-                      <th className="px-3 py-2">Qty</th>
-                      <th className="px-3 py-2">Est.</th>
-                      <th className="px-3 py-2">Grade</th>
-                      <th className="px-3 py-2">Status</th>
-                      <th className="px-3 py-2 w-[200px] text-center">Actions</th>
+                      <th className="px-3 py-2 text-center">Qty / Value</th>
+                      <th className="px-3 py-2 text-center">Status</th>
+                      <th className="px-3 py-2 text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1136,14 +1132,13 @@ export default function CatalogPage() {
                             <div className="h-14 w-10 rounded border border-slate-800 bg-slate-950" />
                           )}
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-2 min-w-0">
                           <div className="font-semibold">{c.player_name}</div>
-                          <div className="text-xs text-slate-400">{c.year} · {c.sport}</div>
-                        </td>
-                        <td className="px-3 py-2">
-                          <div>{c.brand} · {c.set_name}</div>
-                          <div className="text-xs text-slate-400 flex items-center gap-2">
+                          <div className="text-xs text-slate-400">{c.year} · {c.team} · {c.sport}</div>
+                          <div className="mt-1 text-sm text-slate-200">{c.brand} · {c.set_name}</div>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
                             <span>#{c.card_number}</span>
+                            {c.serial_number_text ? <span>{c.serial_number_text}</span> : null}
                             <select
                               className="rounded border border-slate-800 bg-slate-950 px-2 py-1 text-[11px] text-slate-200"
                               value={selectedParallelByFamily[row.key] ?? normalizeParallelLabel(row.representative.parallel)}
@@ -1157,17 +1152,18 @@ export default function CatalogPage() {
                             </select>
                           </div>
                         </td>
-                        <td className="px-3 py-2">
-                          <div>{c.team}</div>
-                          <div className="text-xs text-slate-400">{c.serial_number_text || "(no serial)"}</div>
+                        <td className="px-3 py-2 align-middle text-center">
+                          <div className="font-semibold">Qty {c.quantity}</div>
+                          <div className="text-sm text-slate-300">${(Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2)}</div>
+                          <div className="text-xs text-amber-300">{c.graded === "yes" && c.grade != null ? `Graded ${c.grade}` : "Ungraded"}</div>
                         </td>
-                        <td className="px-3 py-2">{c.quantity}</td>
-                        <td className="px-3 py-2">${(Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2)}</td>
-                        <td className="px-3 py-2">{c.graded === "yes" && c.grade != null ? c.grade : "-"}</td>
                         <td className="px-3 py-2 align-middle text-center">
                           <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(normalizeStatusValue(c.status))}`}>
                             {normalizeStatusValue(c.status)}
                           </span>
+                          {normalizeStatusValue(c.status) === "Listed" && c.asking_price != null ? (
+                            <div className="mt-2 text-xs text-slate-300">Asking ${Number(c.asking_price).toFixed(2)}</div>
+                          ) : null}
                         </td>
                         <td className="px-3 py-2 align-middle text-center">
                           <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
@@ -1189,7 +1185,7 @@ export default function CatalogPage() {
                               <summary className="list-none cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
                                 Move ▾
                               </summary>
-                              <div className="absolute right-0 z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl">
+                              <div className="absolute right-0 z-20 mt-2 w-36 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl">
                                 {normalizeStatusValue(c.status) !== "Listed" ? (
                                   <button
                                     className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
