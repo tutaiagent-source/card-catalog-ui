@@ -58,6 +58,29 @@ function compactMonth(date: Date) {
   return date.toLocaleDateString("en-US", { month: "short" });
 }
 
+function normalizePlatformLabel(value?: string | null) {
+  const raw = String(value || "").trim();
+  if (!raw) return "Unknown";
+
+  const collapsed = raw.replace(/\s+/g, " ").toLowerCase();
+  const known: Record<string, string> = {
+    ebay: "eBay",
+    "e-bay": "eBay",
+    whatnot: "Whatnot",
+    paypal: "PayPal",
+    venmo: "Venmo",
+    myslabs: "MySlabs",
+    comc: "COMC",
+    instagram: "Instagram",
+    facebook: "Facebook",
+    "facebook marketplace": "Facebook Marketplace",
+  };
+
+  if (known[collapsed]) return known[collapsed];
+
+  return collapsed.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export default function SoldPage() {
   const { user, loading } = useSupabaseUser();
   const [cards, setCards] = useState<SoldCard[]>([]);
@@ -97,7 +120,7 @@ export default function SoldPage() {
   const topPlatform = useMemo(() => {
     const counts = new Map<string, number>();
     cards.forEach((card) => {
-      const key = String(card.sale_platform || "Unknown").trim() || "Unknown";
+      const key = normalizePlatformLabel(card.sale_platform);
       counts.set(key, (counts.get(key) || 0) + Number(card.quantity || 0));
     });
     return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
@@ -150,7 +173,7 @@ export default function SoldPage() {
     const byPlatform = new Map<string, { revenue: number; quantity: number }>();
 
     cards.forEach((card) => {
-      const key = String(card.sale_platform || "Unknown").trim() || "Unknown";
+      const key = normalizePlatformLabel(card.sale_platform);
       const current = byPlatform.get(key) || { revenue: 0, quantity: 0 };
       current.revenue += Number(card.sold_price || 0) * Number(card.quantity || 0);
       current.quantity += Number(card.quantity || 0);
@@ -392,7 +415,7 @@ export default function SoldPage() {
                       </div>
                       <div className="rounded-2xl bg-slate-950/70 px-3 py-2">
                         <div className="text-slate-400">Platform</div>
-                        <div className="font-semibold text-white">{card.sale_platform || "-"}</div>
+                        <div className="font-semibold text-white">{normalizePlatformLabel(card.sale_platform)}</div>
                       </div>
                       <div className="rounded-2xl bg-slate-950/70 px-3 py-2">
                         <div className="text-slate-400">Grade</div>
@@ -437,7 +460,7 @@ export default function SoldPage() {
                         <td className="px-4 py-3 text-slate-200">{card.quantity}</td>
                         <td className="px-4 py-3 font-semibold text-emerald-300">{money(Number(card.sold_price || 0) * Number(card.quantity || 0))}</td>
                         <td className="px-4 py-3 text-slate-200">{shortDate(card.sold_at)}</td>
-                        <td className="px-4 py-3 text-slate-200">{card.sale_platform || "-"}</td>
+                        <td className="px-4 py-3 text-slate-200">{normalizePlatformLabel(card.sale_platform)}</td>
                         <td className="px-4 py-3 text-slate-200">{card.graded === "yes" && card.grade != null ? card.grade : "-"}</td>
                         <td className="px-4 py-3">
                           <a href={card.id ? `/add-card?edit=${encodeURIComponent(card.id)}` : "/add-card"} className="rounded-lg bg-[#b80000] px-3 py-2 text-xs font-semibold hover:bg-[#d50000]">
