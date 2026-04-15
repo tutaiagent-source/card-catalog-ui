@@ -816,53 +816,115 @@ export default function CatalogPage() {
             <div className="mt-1 text-sm text-slate-400">Search, sort, and move inventory without losing the plot.</div>
           </div>
           <div className="flex flex-wrap gap-3">
-            <a
-              href="/add-card"
-              className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]"
-            >
-              Add Card
-            </a>
-            <a
-              href="/import"
-              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
-            >
-              Import CSV
-            </a>
-            <button
-              type="button"
-              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
-              onClick={exportCards}
-            >
-              Export CSV
-            </button>
-            <a
-              href="/sold"
-              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
-            >
-              Sold
-            </a>
-            <a
-              href="/pc"
-              className="rounded-lg border border-white/10 bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
-            >
-              PC ★
-            </a>
-            <a
-              href="/account"
-              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
-            >
-              My Account
-            </a>
-            <button
-              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
-              onClick={async () => {
-                if (!supabaseConfigured || !supabase) return;
-                await supabase.auth.signOut();
-                window.location.href = "/login";
-              }}
-            >
-              Sign out
-            </button>
+            <div className="flex flex-wrap gap-3 md:hidden">
+              <a
+                href="/add-card"
+                className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]"
+              >
+                Add Card
+              </a>
+
+              <details className="relative" data-inventory-menu="true">
+                <summary className="list-none cursor-pointer rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700">
+                  Menu ▾
+                </summary>
+                <div className="absolute right-0 z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl text-left">
+                  <a
+                    href="/import"
+                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                  >
+                    Import CSV
+                  </a>
+                  <button
+                    type="button"
+                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                    onClick={exportCards}
+                  >
+                    Export CSV
+                  </button>
+                  <a
+                    href="/sold"
+                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                  >
+                    Sold
+                  </a>
+                  <a
+                    href="/pc"
+                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                  >
+                    PC ★
+                  </a>
+                  <a
+                    href="/account"
+                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                  >
+                    My Account
+                  </a>
+                  <div className="my-1 h-px bg-white/8" />
+                  <button
+                    type="button"
+                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
+                    onClick={async () => {
+                      if (!supabaseConfigured || !supabase) return;
+                      await supabase.auth.signOut();
+                      window.location.href = "/login";
+                    }}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              </details>
+            </div>
+
+            <div className="hidden md:flex flex-wrap gap-3">
+              <a
+                href="/add-card"
+                className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]"
+              >
+                Add Card
+              </a>
+              <a
+                href="/import"
+                className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+              >
+                Import CSV
+              </a>
+              <button
+                type="button"
+                className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                onClick={exportCards}
+              >
+                Export CSV
+              </button>
+              <a
+                href="/sold"
+                className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+              >
+                Sold
+              </a>
+              <a
+                href="/pc"
+                className="rounded-lg border border-white/10 bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+              >
+                PC ★
+              </a>
+              <a
+                href="/account"
+                className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+              >
+                My Account
+              </a>
+              <button
+                className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                onClick={async () => {
+                  if (!supabaseConfigured || !supabase) return;
+                  await supabase.auth.signOut();
+                  window.location.href = "/login";
+                }}
+              >
+                Sign out
+              </button>
+            </div>
           </div>
         </div>
 
