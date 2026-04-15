@@ -251,7 +251,7 @@ function normalizeStatus(value: string): { value?: CardStatus; issue?: string } 
   const raw = String(value || "").trim().toLowerCase();
   if (!raw) return {};
   if (["collection", "incoming", "in collection", "owned", "pc"].includes(raw)) return { value: "Collection" };
-  if (["listed", "for sale", "sale", "on sale", "market", "active", "listing"].includes(raw)) return { value: "Listed" };
+  if (["listed", "for sale", "sale", "on sale", "market", "active", "listing", "available"].includes(raw)) return { value: "Listed" };
   if (["sold", "completed", "purchased", "win", "won"].includes(raw)) return { value: "Sold" };
   return { issue: `Unknown status "${value}".` };
 }
@@ -382,14 +382,16 @@ function buildRowPayload(row: RawRow, mapping: Mapping, gradeCompanyOverride?: G
       case "has_memorabilia":
       case "graded": {
         const normalized = normalizeYesNo(rawValue);
-        if (normalized.issue) issues.push(normalized.issue);
-        else if (normalized.value) (payload as any)[target] = normalized.value;
+        if (normalized.value) {
+          (payload as any)[target] = normalized.value;
+        } else if (target === "graded" && parseGradeNumber(rawValue).gradeNumber != null) {
+          payload.graded = "yes";
+        }
         break;
       }
       case "status": {
         const normalized = normalizeStatus(rawValue);
-        if (normalized.issue) issues.push(normalized.issue);
-        else if (normalized.value) payload.status = normalized.value;
+        if (normalized.value) payload.status = normalized.value;
         break;
       }
       case "quantity": {
