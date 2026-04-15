@@ -5,7 +5,7 @@ import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { normalizeBrandAndSet, normalizeCatalogTaxonomy, normalizeSportLabel } from "@/lib/cardTaxonomy";
-import { GradeCompany, parseGradeCompany, parseGradeNumber, upsertGradeCompanyInNotes } from "@/lib/gradeNotes";
+import { GradeCompany, parseGradeCompany, parseGradeNumber, upsertGradeCompanyInNotes, upsertNotesLines } from "@/lib/gradeNotes";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type YesNo = "yes" | "no";
@@ -56,6 +56,8 @@ type ImportField =
   | "has_memorabilia"
   | "graded"
   | "grade"
+  | "grade_company"
+  | "cert_number"
   | "serial_number_text"
   | "quantity"
   | "estimated_price"
@@ -65,6 +67,8 @@ type ImportField =
   | "sold_price"
   | "sold_at"
   | "sale_platform"
+  | "purchase_price"
+  | "storage_location"
   | "notes"
   | "image_url"
   | "back_image_url";
@@ -107,7 +111,11 @@ const FIELD_LABELS: Record<ImportField, string> = {
   has_memorabilia: "Memorabilia",
   graded: "Graded",
   grade: "Grade",
+  grade_company: "Grading company",
+  cert_number: "Cert #",
   serial_number_text: "Serial",
+  purchase_price: "Purchase price",
+  storage_location: "Storage location",
   quantity: "Quantity",
   estimated_price: "Estimated price",
   status: "Status",
@@ -136,7 +144,11 @@ const FIELD_OPTIONS: ImportField[] = [
   "has_memorabilia",
   "graded",
   "grade",
+  "grade_company",
+  "cert_number",
   "serial_number_text",
+  "purchase_price",
+  "storage_location",
   "quantity",
   "estimated_price",
   "status",
@@ -151,29 +163,33 @@ const FIELD_OPTIONS: ImportField[] = [
 ];
 
 const FIELD_ALIASES: Record<Exclude<ImportField, "__ignore">, string[]> = {
-  player_name: ["player", "player name", "name", "athlete"],
+  player_name: ["player", "player name", "name", "athlete", "subject"],
   year: ["year", "season"],
-  brand: ["brand", "manufacturer", "company"],
-  set_name: ["set", "set name", "series", "product"],
-  parallel: ["parallel", "insert", "parallel/insert", "variation"],
-  card_number: ["card number", "card #", "number", "card no", "cardnum", "card_num"],
-  team: ["team", "club"],
+  brand: ["brand", "manufacturer", "maker", "company"],
+  set_name: ["set", "set name", "series", "product", "product line"],
+  parallel: ["parallel", "insert", "subset", "theme", "parallel/insert", "variant", "version", "colorway", "variation"],
+  card_number: ["card number", "card #", "number", "checklist number", "card no", "cardnum", "card_num"],
+  team: ["team", "franchise", "club", "school"],
   sport: ["sport", "league"],
-  rookie: ["rookie", "rc"],
+  rookie: ["rookie", "rc", "rookie card", "rookie_card"],
   is_autograph: ["autograph", "auto", "is autograph", "signed"],
   has_memorabilia: ["memorabilia", "mem", "patch", "jersey", "relic"],
   graded: ["graded", "is graded"],
-  grade: ["grade", "grade number", "grading"],
-  serial_number_text: ["serial", "serial number", "serial #", "numbered", "serial_number_text"],
+  grade: ["grade", "grade number", "grading", "slab grade", "numeric grade"],
+  grade_company: ["grader", "grading co", "grading company"],
+  cert_number: ["cert", "cert #", "certification number", "certification #"],
+  purchase_price: ["cost", "paid", "purchase price", "buy price"],
+  storage_location: ["location", "box", "binder", "storage spot"],
+  serial_number_text: ["serial", "serial number", "serial #", "sn", "#d", "#'d", "numbered", "serial_number_text"],
   quantity: ["qty", "quantity", "count"],
-  estimated_price: ["estimated price", "estimated value", "value", "price", "est price"],
+  estimated_price: ["estimated price", "estimated value", "market value", "comp value", "value", "price", "est price"],
   status: ["status", "collection status"],
-  asking_price: ["asking price", "list price", "listed price"],
+  asking_price: ["asking price", "ask", "list price", "listed price", "bin price"],
   listed_at: ["listed date", "listed at", "date listed"],
   sold_price: ["sold price", "sale price"],
   sold_at: ["sold date", "sold at", "date sold"],
-  sale_platform: ["platform", "site", "app", "marketplace"],
-  notes: ["notes", "comment", "comments", "description"],
+  sale_platform: ["listed on", "platform", "site", "app", "marketplace"],
+  notes: ["notes", "note", "comment", "comments", "remarks", "description"],
   image_url: ["image", "image url", "front image", "front image url"],
   back_image_url: ["back image", "back image url"],
 };
@@ -276,6 +292,9 @@ function buildRowPayload(row: RawRow, mapping: Mapping, gradeCompanyOverride?: G
   const issues: string[] = [];
   let gradeCompanyUsed: GradeCompany | null = null;
   let gradeTextUsed: string | null = null;
+  let certNumberUsed: string | null = null;
+  let purchasePriceUsed: string | null = null;
+  let storageLocationUsed: string | null = null;
 
   for (const [header, target] of Object.entries(mapping)) {
     if (!target || target === "__ignore") continue;
@@ -336,6 +355,22 @@ function buildRowPayload(row: RawRow, mapping: Mapping, gradeCompanyOverride?: G
         }
         break;
       }
+      case "grade_company": {
+        gradeCompanyUsed = parseGradeCompany(rawValue);
+        break;
+      }
+      case "cert_number": {
+        certNumberUsed = rawValue;
+        break;
+      }
+      case "purchase_price": {
+        purchasePriceUsed = rawValue;
+        break;
+      }
+      case "storage_location": {
+        storageLocationUsed = rawValue;
+        break;
+      }
       case "estimated_price":
       case "asking_price":
       case "sold_price": {
@@ -360,6 +395,18 @@ function buildRowPayload(row: RawRow, mapping: Mapping, gradeCompanyOverride?: G
       gradeCompany: gradeCompanyUsed,
       gradeText: gradeTextUsed,
     });
+  }
+
+  if (certNumberUsed) {
+    payload.notes = upsertNotesLines(payload.notes, [`Cert #: ${certNumberUsed}`]);
+  }
+
+  if (purchasePriceUsed) {
+    payload.notes = upsertNotesLines(payload.notes, [`Purchase price: ${purchasePriceUsed}`]);
+  }
+
+  if (storageLocationUsed) {
+    payload.notes = upsertNotesLines(payload.notes, [`Storage location: ${storageLocationUsed}`]);
   }
 
   if (!payload.parallel) payload.parallel = "n/a";
