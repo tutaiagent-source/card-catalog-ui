@@ -285,20 +285,7 @@ export default function PcPage() {
                         <div
                           key={c.id}
                           role="listitem"
-                          draggable
                           style={cardTransform ? { transform: cardTransform } : undefined}
-                          onDragStart={(e) => {
-                            if (!c.id) return;
-                            setDraggingId(c.id);
-                            setDragOverId(c.id);
-                            setDragInsertBefore(true);
-                            try {
-                              e.dataTransfer.setData("text/plain", c.id);
-                            } catch {
-                              // ignore
-                            }
-                            e.dataTransfer.effectAllowed = "move";
-                          }}
                           onDragOver={(e) => {
                             e.preventDefault();
                             if (!c.id) return;
@@ -323,6 +310,29 @@ export default function PcPage() {
                             " " + insertionClass
                           }
                         >
+                          <button
+                            type="button"
+                            draggable
+                            onClick={(e) => e.stopPropagation()}
+                            onDragStart={(e) => {
+                              if (!c.id) return;
+                              setDraggingId(c.id);
+                              setDragOverId(c.id);
+                              setDragInsertBefore(true);
+                              try {
+                                e.dataTransfer.setData("text/plain", c.id);
+                              } catch {
+                                // ignore
+                              }
+                              e.dataTransfer.effectAllowed = "move";
+                            }}
+                            className="absolute left-2 top-2 z-30 cursor-grab rounded-md border border-white/10 bg-slate-950/70 px-2 py-1 text-[11px] font-semibold text-slate-200 hover:bg-slate-950/90"
+                            aria-label="Drag to reorder"
+                            title="Drag to reorder"
+                          >
+                            ↕
+                          </button>
+
                           <div className="relative">
                             <div
                               role="button"
