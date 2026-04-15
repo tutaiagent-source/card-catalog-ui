@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
@@ -101,11 +101,8 @@ export default function PcPage() {
     return next;
   };
 
-  const displayedCards = useMemo(() => {
-    if (!draggingId || !dragOverId) return pcCards;
-    if (draggingId === dragOverId) return pcCards;
-    return computeReordered(pcCards, draggingId, dragOverId, dragInsertBefore);
-  }, [pcCards, draggingId, dragOverId, dragInsertBefore]);
+  // Keep shelf order stable during drag to avoid HTML5 DnD layout glitches.
+  const displayedCards = pcCards;
 
   const persistOrder = async (next: Card[]) => {
     if (!supabaseConfigured || !supabase) return;
@@ -203,7 +200,7 @@ export default function PcPage() {
         ) : (
           <>
             {/* Mobile: 4-up grid */}
-            <section className="mt-6 md:hidden">
+            <section className="mt-6 lg:hidden">
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
                 <div className="mb-3 text-sm font-semibold text-slate-200">PC shelf</div>
 
@@ -249,7 +246,7 @@ export default function PcPage() {
             </section>
 
             {/* Desktop: shelf + drag reorder */}
-            <section className="hidden md:block mt-8">
+            <section className="hidden lg:block mt-8">
               <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5">
                 <div className="rounded-[20px] border border-white/10 bg-slate-900/30 p-4">
                   <div className="flex items-center justify-between gap-4">
