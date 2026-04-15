@@ -248,18 +248,6 @@ export default function PcPage() {
                           </div>
                         </button>
 
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFromPc(c);
-                          }}
-                          className="absolute bottom-2 right-2 px-1 py-0 text-lg font-semibold leading-none text-amber-200 drop-shadow-[0_6px_16px_rgba(0,0,0,0.55)] hover:text-amber-100"
-                          aria-label="Remove from PC"
-                          title="Remove from PC"
-                        >
-                          ★
-                        </button>
                       </div>
                     );
                   })}
@@ -371,18 +359,6 @@ export default function PcPage() {
                               </div>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeFromPc(c);
-                              }}
-                              className="absolute bottom-2 right-2 px-1 py-0 text-lg font-semibold leading-none text-amber-200 drop-shadow-[0_6px_16px_rgba(0,0,0,0.55)] hover:text-amber-100"
-                              aria-label="Remove from PC"
-                              title="Remove from PC"
-                            >
-                              ★
-                            </button>
                           </div>
 
                           <div className="mt-3">
