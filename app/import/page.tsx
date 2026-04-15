@@ -78,6 +78,7 @@ type PreviewRow = {
   action: "create" | "update" | "needs_attention" | "skip";
   issues: string[];
   matchId?: string;
+  matchedCard?: Card;
 };
 
 const REQUIRED_FIELDS: Array<keyof Pick<Card, "player_name" | "year" | "brand" | "set_name" | "card_number" | "team" | "sport">> = [
@@ -408,6 +409,7 @@ export default function ImportPage() {
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [importSummary, setImportSummary] = useState<string>("");
   const [cleanupSummary, setCleanupSummary] = useState<string>("");
+  const [duplicateChoices, setDuplicateChoices] = useState<Record<number, "update" | "add_quantity" | "skip">>({});
   const [importing, setImporting] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
 
@@ -476,6 +478,7 @@ export default function ImportPage() {
         action,
         issues,
         matchId: matched?.id,
+        matchedCard: matched,
       } as PreviewRow;
     });
   }, [rows, mapping, existingByKey]);
@@ -517,6 +520,7 @@ export default function ImportPage() {
         setHeaders(nextHeaders);
         setMapping(nextMapping);
         setRows(cleanedRows);
+        setDuplicateChoices({});
         setParseErrors((results.errors || []).map((error) => `Row ${error.row}: ${error.message}`));
       },
       error: (error) => {
@@ -527,7 +531,11 @@ export default function ImportPage() {
 
   const onImport = async () => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
-    const readyRows = previewRows.filter((row) => row.action === "create" || row.action === "update");
+    const readyRows = previewRows.filter((row) => {
+      if (row.action === "create") return true;
+      if (row.action === "update") return (duplicateChoices[row.rowNumber] || "add_quantity") !== "skip";
+      return false;
+    });
     if (!readyRows.length) {
       setImportSummary("No ready rows to import yet. Fix flagged rows or upload a different file.");
       return;
@@ -551,9 +559,17 @@ export default function ImportPage() {
       }
 
       if (row.action === "update" && row.matchId) {
+        const choice = duplicateChoices[row.rowNumber] || "add_quantity";
+        const existingQty = Number(row.matchedCard?.quantity || 0);
+        const importQty = Number(row.payload.quantity || 1);
+        const payload =
+          choice === "add_quantity"
+            ? compactUpdatePayload({ ...row.payload, quantity: existingQty + importQty })
+            : compactUpdatePayload(row.payload);
+
         const { error } = await supabase
           .from("cards")
-          .update(compactUpdatePayload(row.payload))
+          .update(payload)
           .eq("id", row.matchId)
           .eq("user_id", user.id);
 
@@ -698,7 +714,7 @@ export default function ImportPage() {
                 <div className="mt-2 text-2xl font-bold">{stats.createCount}</div>
               </div>
               <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.08] p-4">
-                <div className="text-sm text-slate-300">Update</div>
+                <div className="text-sm text-slate-300">Possible duplicates</div>
                 <div className="mt-2 text-2xl font-bold">{stats.updateCount}</div>
               </div>
               <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4">
@@ -739,9 +755,52 @@ export default function ImportPage() {
                           <li key={`${issue}-${index}`}>{issue}</li>
                         ))}
                       </ul>
+                    ) : row.action === "update" && row.matchedCard ? (
+                      <div className="mt-3 space-y-3">
+                        <div className="grid gap-3 md:grid-cols-2">
+                          <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 text-sm">
+                            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Import row</div>
+                            <div className="mt-2 text-slate-200">{row.payload.player_name} · {row.payload.year}</div>
+                            <div className="text-slate-400">{row.payload.brand} · {row.payload.set_name} · {row.payload.parallel}</div>
+                            <div className="text-slate-400">#{row.payload.card_number} · Qty {row.payload.quantity || 1}</div>
+                          </div>
+                          <div className="rounded-xl border border-white/10 bg-slate-900/70 p-3 text-sm">
+                            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Existing card</div>
+                            <div className="mt-2 text-slate-200">{row.matchedCard.player_name} · {row.matchedCard.year}</div>
+                            <div className="text-slate-400">{row.matchedCard.brand} · {row.matchedCard.set_name} · {row.matchedCard.parallel}</div>
+                            <div className="text-slate-400">#{row.matchedCard.card_number} · Qty {row.matchedCard.quantity || 1}</div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {([
+                            ["add_quantity", "Add quantity"],
+                            ["update", "Update existing"],
+                            ["skip", "Skip row"],
+                          ] as const).map(([value, label]) => {
+                            const active = (duplicateChoices[row.rowNumber] || "add_quantity") === value;
+                            return (
+                              <button
+                                key={value}
+                                type="button"
+                                className={`rounded-lg px-3 py-2 text-xs font-semibold ${active ? "bg-amber-500/15 text-amber-200" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}
+                                onClick={() => setDuplicateChoices((prev) => ({ ...prev, [row.rowNumber]: value }))}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="text-sm text-slate-400">
+                          {(duplicateChoices[row.rowNumber] || "add_quantity") === "add_quantity"
+                            ? "This will add the imported quantity onto the existing card instead of creating a duplicate."
+                            : (duplicateChoices[row.rowNumber] || "add_quantity") === "update"
+                              ? "This will update the existing card with the mapped import values."
+                              : "This row will be skipped during import."}
+                        </div>
+                      </div>
                     ) : (
                       <div className="mt-3 text-sm text-slate-400">
-                        {row.action === "update" ? "Matched an existing card and will update only the mapped fields." : row.action === "create" ? "Ready to create a new card." : "Blank row."}
+                        {row.action === "create" ? "Ready to create a new card." : "Blank row."}
                       </div>
                     )}
                   </div>
