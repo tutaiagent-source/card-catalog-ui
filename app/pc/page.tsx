@@ -202,7 +202,7 @@ export default function PcPage() {
             {/* Mobile: 4-up grid */}
             <section className="mt-6 lg:hidden">
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="mb-3 text-sm font-semibold text-slate-200">PC shelf</div>
+                <div className="mb-3 text-sm font-semibold text-slate-200">PC Shelf</div>
 
                 <div className="grid grid-cols-4 gap-2" role="list" aria-label="PC grid">
                   {pcCards.map((c) => {
@@ -231,12 +231,15 @@ export default function PcPage() {
 
                         <button
                           type="button"
-                          onClick={() => removeFromPc(c)}
-                          className="absolute -right-1 -top-1 rounded-full border border-white/10 bg-slate-950/85 px-1 py-0.5 text-[10px] text-slate-200"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeFromPc(c);
+                          }}
+                          className="absolute bottom-2 right-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
                           aria-label="Remove from PC"
                           title="Remove from PC"
                         >
-                          ✕
+                          ★
                         </button>
                       </div>
                     );
@@ -341,12 +344,15 @@ export default function PcPage() {
 
                             <button
                               type="button"
-                              onClick={() => removeFromPc(c)}
-                              className="absolute right-2 top-2 rounded-full border border-white/10 bg-slate-950/70 px-2 py-1 text-xs text-slate-200 hover:bg-slate-950/90"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFromPc(c);
+                              }}
+                              className="absolute bottom-2 right-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
                               aria-label="Remove from PC"
                               title="Remove from PC"
                             >
-                              ✕
+                              ★
                             </button>
                           </div>
 
