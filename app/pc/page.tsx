@@ -235,7 +235,7 @@ export default function PcPage() {
                             e.stopPropagation();
                             removeFromPc(c);
                           }}
-                          className="absolute bottom-2 right-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
+                          className="absolute bottom-2 right-2 px-1 py-0 text-lg font-semibold leading-none text-amber-200 drop-shadow-[0_6px_16px_rgba(0,0,0,0.55)] hover:text-amber-100"
                           aria-label="Remove from PC"
                           title="Remove from PC"
                         >
@@ -348,7 +348,7 @@ export default function PcPage() {
                                 e.stopPropagation();
                                 removeFromPc(c);
                               }}
-                              className="absolute bottom-2 right-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
+                              className="absolute bottom-2 right-2 px-1 py-0 text-lg font-semibold leading-none text-amber-200 drop-shadow-[0_6px_16px_rgba(0,0,0,0.55)] hover:text-amber-100"
                               aria-label="Remove from PC"
                               title="Remove from PC"
                             >
