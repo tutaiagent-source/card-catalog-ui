@@ -324,6 +324,75 @@ export default function CatalogPage() {
     return next;
   }, [filtered, sortBy]);
 
+  const familyRows = useMemo(() => {
+    const familyKey = (c: Card) => {
+      // Group cards by everything except `parallel`.
+      const gradePart = c.graded === "yes" ? `|g:${c.grade ?? ""}` : "|g:no";
+      return [
+        c.player_name,
+        c.year,
+        c.sport,
+        c.brand,
+        c.set_name,
+        c.team,
+        c.card_number,
+        c.serial_number_text,
+        `|r:${c.rookie}`,
+        `|a:${c.is_autograph}`,
+        `|m:${c.has_memorabilia}`,
+        gradePart,
+      ]
+        .map((p) => String(p ?? "").trim())
+        .join("~");
+    };
+
+    const byKey = new Map<string, Card[]>();
+    for (const c of sortedCards) {
+      const k = familyKey(c);
+      const arr = byKey.get(k) ?? [];
+      arr.push(c);
+      byKey.set(k, arr);
+    }
+
+    const seen = new Set<string>();
+    const rows: {
+      key: string;
+      family: Card[];
+      representative: Card;
+      parallelOptions: string[];
+    }[] = [];
+
+    for (const c of sortedCards) {
+      const k = familyKey(c);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      const family = byKey.get(k) ?? [c];
+      const parallelOptions = Array.from(new Set(family.map((f) => normalizeParallelLabel(f.parallel)))).sort(
+        (a, b) => a.localeCompare(b)
+      );
+      rows.push({ key: k, family, representative: c, parallelOptions });
+    }
+
+    return rows;
+  }, [sortedCards]);
+
+  const [selectedParallelByFamily, setSelectedParallelByFamily] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    // Initialize selected parallel per family to the representative.
+    setSelectedParallelByFamily((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const row of familyRows) {
+        if (!next[row.key]) {
+          next[row.key] = normalizeParallelLabel(row.representative.parallel);
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [familyRows]);
+
   const valuable = useMemo(() => {
     return [...activeCards].sort((a, b) => score(b) - score(a)).slice(0, 5);
   }, [activeCards]);
@@ -615,7 +684,7 @@ export default function CatalogPage() {
               >
                 {showFilters ? "Hide filters" : "Show filters"}
               </button>
-              <div className="text-sm text-slate-400">Showing {sortedCards.length} of {activeCards.length} active card rows</div>
+            <div className="text-sm text-slate-400">Showing {familyRows.length} families of {activeCards.length} active card rows</div>
             </div>
           </div>
 
@@ -908,8 +977,11 @@ export default function CatalogPage() {
           ) : cardsView === "inventory" ? (
             <>
               <div className="mt-4 space-y-3 md:hidden">
-                {sortedCards.map((c, i) => (
-                  <div key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`} className="rounded border border-slate-800 bg-slate-900 p-4">
+                {familyRows.map((row, i) => {
+                  const selectedParallel = selectedParallelByFamily[row.key] ?? normalizeParallelLabel(row.representative.parallel);
+                  const c = row.family.find((f) => normalizeParallelLabel(f.parallel) === selectedParallel) ?? row.representative;
+                  return (
+                    <div key={row.key} className="rounded border border-slate-800 bg-slate-900 p-4">
                     <div className="flex gap-3">
                       {c.image_url ? (
                         <button
@@ -935,7 +1007,20 @@ export default function CatalogPage() {
                       <div className="min-w-0 flex-1">
                         <div className="font-semibold">{c.player_name}</div>
                         <div className="text-sm text-slate-300">{c.year} · {c.brand} · #{c.card_number || "n/a"}</div>
-                        <div className="text-sm text-slate-400">{c.set_name}{c.parallel && c.parallel !== "n/a" ? ` · ${c.parallel}` : ""}</div>
+                        <div className="text-sm text-slate-400 flex items-center gap-2">
+                          <span>{c.set_name}</span>
+                          <select
+                            className="rounded border border-slate-800 bg-slate-950 px-2 py-1 text-xs text-slate-200"
+                            value={selectedParallelByFamily[row.key] ?? normalizeParallelLabel(row.representative.parallel)}
+                            onChange={(e) => setSelectedParallelByFamily((prev) => ({ ...prev, [row.key]: e.target.value }))}
+                          >
+                            {row.parallelOptions.map((p) => (
+                              <option key={p} value={p}>
+                                {p}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(normalizeStatusValue(c.status))}`}>
                             {normalizeStatusValue(c.status)}
@@ -1002,7 +1087,8 @@ export default function CatalogPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                );
+                })}
               </div>
 
               <div className="mt-4 hidden overflow-x-auto rounded border border-slate-800 bg-slate-900 md:block">
@@ -1021,8 +1107,11 @@ export default function CatalogPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedCards.map((c, i) => (
-                      <tr key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`} className="border-t border-slate-800 align-top">
+                    {familyRows.map((row, i) => {
+                      const selectedParallel = selectedParallelByFamily[row.key] ?? normalizeParallelLabel(row.representative.parallel);
+                      const c = row.family.find((f) => normalizeParallelLabel(f.parallel) === selectedParallel) ?? row.representative;
+                      return (
+                        <tr key={row.key} className="border-t border-slate-800 align-top">
                         <td className="px-3 py-2">
                           {c.image_url ? (
                             <button
@@ -1048,7 +1137,20 @@ export default function CatalogPage() {
                         </td>
                         <td className="px-3 py-2">
                           <div>{c.brand} · {c.set_name}</div>
-                          <div className="text-xs text-slate-400">{c.parallel} · #{c.card_number}</div>
+                          <div className="text-xs text-slate-400 flex items-center gap-2">
+                            <span>#{c.card_number}</span>
+                            <select
+                              className="rounded border border-slate-800 bg-slate-950 px-2 py-1 text-[11px] text-slate-200"
+                              value={selectedParallelByFamily[row.key] ?? normalizeParallelLabel(row.representative.parallel)}
+                              onChange={(e) => setSelectedParallelByFamily((prev) => ({ ...prev, [row.key]: e.target.value }))}
+                            >
+                              {row.parallelOptions.map((p) => (
+                                <option key={p} value={p}>
+                                  {p}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                         </td>
                         <td className="px-3 py-2">
                           <div>{c.team}</div>
@@ -1115,8 +1217,9 @@ export default function CatalogPage() {
                             </details>
                           </div>
                         </td>
-                      </tr>
-                    ))}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
