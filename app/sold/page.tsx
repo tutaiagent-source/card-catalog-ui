@@ -242,125 +242,139 @@ export default function SoldPage() {
           </div>
         </section>
 
-        {cards.length === 0 ? (
-          <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-slate-300">
-            <div className="text-lg font-semibold">No sold cards yet</div>
-            <div className="mt-2 text-sm text-slate-400">Once cards are moved to Sold, this dashboard will light up with revenue metrics, charts, and sales history.</div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <a href="/catalog" className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700">Back to catalog</a>
-              <a href="/add-card" className="rounded-lg bg-[#d50000] px-3 py-2 text-sm font-semibold hover:bg-[#b80000]">Add card</a>
+        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="text-sm text-slate-400">Cards sold</div>
+            <div className="mt-2 text-3xl font-bold text-white">{totalSoldCards}</div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="text-sm text-slate-400">Average sale per card</div>
+            <div className="mt-2 text-3xl font-bold text-white">{money(avgSale)}</div>
+          </div>
+          <div className="rounded-3xl border border-amber-500/20 bg-amber-500/[0.06] p-5 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
+            <div className="text-sm text-slate-300">Highest sale</div>
+            <div className="mt-2 text-3xl font-bold text-white">{money(biggestSale)}</div>
+          </div>
+          <div className="rounded-3xl border border-blue-500/20 bg-blue-500/[0.08] p-5 shadow-[0_18px_40px_rgba(59,130,246,0.08)]">
+            <div className="text-sm text-slate-300">Top platform</div>
+            <div className="mt-2 text-3xl font-bold text-white">{topPlatform}</div>
+          </div>
+        </section>
+
+        <section className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Revenue trend</h2>
+                <p className="mt-1 text-sm text-slate-400">Last 6 months of sold revenue.</p>
+              </div>
+              <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300">
+                {money(grossSales)} total
+              </div>
+            </div>
+
+            <div className="mt-6 grid h-64 grid-cols-6 items-end gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+              {monthlyTrend.map((bucket) => {
+                const height = cards.length === 0 ? "12%" : `${Math.max(12, (bucket.revenue / maxTrendRevenue) * 100)}%`;
+                return (
+                  <div key={bucket.key} className="flex h-full flex-col justify-end">
+                    <div className="text-center text-[11px] text-slate-500">{bucket.revenue > 0 ? money(bucket.revenue) : "$0"}</div>
+                    <div className="mt-2 flex flex-1 items-end">
+                      <div
+                        className={`w-full rounded-t-2xl ${cards.length === 0 ? "bg-white/10" : "bg-[linear-gradient(180deg,rgba(251,191,36,0.95),rgba(217,119,6,0.58))] shadow-[0_10px_30px_rgba(245,158,11,0.22)]"}`}
+                        style={{ height }}
+                      />
+                    </div>
+                    <div className="mt-3 text-center text-xs font-semibold text-slate-300">{bucket.label}</div>
+                    <div className="mt-1 text-center text-[11px] text-slate-500">{bucket.quantity} sold</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {cards.length === 0 ? (
+              <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+                No sales recorded yet. The graph is visible now, and it will populate automatically once cards are moved to Sold.
+              </div>
+            ) : null}
+          </div>
+
+          <div className="grid gap-4">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+              <h2 className="text-lg font-semibold text-white">Platform mix</h2>
+              <p className="mt-1 text-sm text-slate-400">Where your sold revenue is coming from.</p>
+
+              <div className="mt-5 space-y-4">
+                {platformBreakdown.length > 0 ? platformBreakdown.map((item) => (
+                  <div key={item.platform}>
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <div className="font-semibold text-slate-200">{item.platform}</div>
+                      <div className="text-slate-400">{money(item.revenue)}</div>
+                    </div>
+                    <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-900">
+                      <div
+                        className="h-full rounded-full bg-[linear-gradient(90deg,rgba(59,130,246,0.95),rgba(16,185,129,0.9))]"
+                        style={{ width: `${Math.max(8, (item.revenue / platformMaxRevenue) * 100)}%` }}
+                      />
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">{item.quantity} card{item.quantity === 1 ? "" : "s"} sold</div>
+                  </div>
+                )) : (
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+                    Platform performance will show up here once sales start coming in.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+              <h2 className="text-lg font-semibold text-white">Recent wins</h2>
+              <p className="mt-1 text-sm text-slate-400">Latest completed sales.</p>
+
+              <div className="mt-4 space-y-3">
+                {recentHighlights.length > 0 ? recentHighlights.map((card, index) => (
+                  <div key={`${card.id || index}-${card.card_number}`} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate font-semibold text-white">{card.player_name}</div>
+                        <div className="mt-1 text-sm text-slate-300">{card.year} · {card.brand} · #{card.card_number}</div>
+                        <div className="text-sm text-slate-400">{card.set_name}{card.parallel ? ` · ${card.parallel}` : ""}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-emerald-300">{money(Number(card.sold_price || 0) * Number(card.quantity || 0))}</div>
+                        <div className="mt-1 text-xs text-slate-500">{shortDate(card.sold_at)}</div>
+                      </div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+                    Your latest sold cards will show here once sales are recorded.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        ) : (
-          <>
-            <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-                <div className="text-sm text-slate-400">Cards sold</div>
-                <div className="mt-2 text-3xl font-bold text-white">{totalSoldCards}</div>
+        </section>
+
+        <section className="mt-8">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold text-white">Sales history</h2>
+              <p className="mt-1 text-sm text-slate-400">Every sold card, newest first.</p>
+            </div>
+          </div>
+
+          {cards.length === 0 ? (
+            <div className="mt-4 rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-slate-300">
+              <div className="text-lg font-semibold">No sold cards yet</div>
+              <div className="mt-2 text-sm text-slate-400">Once cards are moved to Sold, this section will fill in with your complete sales history.</div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a href="/catalog" className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700">Back to catalog</a>
+                <a href="/add-card" className="rounded-lg bg-[#d50000] px-3 py-2 text-sm font-semibold hover:bg-[#b80000]">Add card</a>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-                <div className="text-sm text-slate-400">Average sale per card</div>
-                <div className="mt-2 text-3xl font-bold text-white">{money(avgSale)}</div>
-              </div>
-              <div className="rounded-3xl border border-amber-500/20 bg-amber-500/[0.06] p-5 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
-                <div className="text-sm text-slate-300">Highest sale</div>
-                <div className="mt-2 text-3xl font-bold text-white">{money(biggestSale)}</div>
-              </div>
-              <div className="rounded-3xl border border-blue-500/20 bg-blue-500/[0.08] p-5 shadow-[0_18px_40px_rgba(59,130,246,0.08)]">
-                <div className="text-sm text-slate-300">Top platform</div>
-                <div className="mt-2 text-3xl font-bold text-white">{topPlatform}</div>
-              </div>
-            </section>
-
-            <section className="mt-6 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-semibold text-white">Revenue trend</h2>
-                    <p className="mt-1 text-sm text-slate-400">Last 6 months of sold revenue.</p>
-                  </div>
-                  <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300">
-                    {money(grossSales)} total
-                  </div>
-                </div>
-
-                <div className="mt-6 grid h-64 grid-cols-6 items-end gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                  {monthlyTrend.map((bucket) => {
-                    const height = `${Math.max(12, (bucket.revenue / maxTrendRevenue) * 100)}%`;
-                    return (
-                      <div key={bucket.key} className="flex h-full flex-col justify-end">
-                        <div className="text-center text-[11px] text-slate-500">{bucket.revenue > 0 ? money(bucket.revenue) : "$0"}</div>
-                        <div className="mt-2 flex-1 flex items-end">
-                          <div
-                            className="w-full rounded-t-2xl bg-[linear-gradient(180deg,rgba(251,191,36,0.95),rgba(217,119,6,0.58))] shadow-[0_10px_30px_rgba(245,158,11,0.22)]"
-                            style={{ height }}
-                          />
-                        </div>
-                        <div className="mt-3 text-center text-xs font-semibold text-slate-300">{bucket.label}</div>
-                        <div className="mt-1 text-center text-[11px] text-slate-500">{bucket.quantity} sold</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-                <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-                  <h2 className="text-lg font-semibold text-white">Platform mix</h2>
-                  <p className="mt-1 text-sm text-slate-400">Where your sold revenue is coming from.</p>
-
-                  <div className="mt-5 space-y-4">
-                    {platformBreakdown.map((item) => (
-                      <div key={item.platform}>
-                        <div className="flex items-center justify-between gap-3 text-sm">
-                          <div className="font-semibold text-slate-200">{item.platform}</div>
-                          <div className="text-slate-400">{money(item.revenue)}</div>
-                        </div>
-                        <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-900">
-                          <div
-                            className="h-full rounded-full bg-[linear-gradient(90deg,rgba(59,130,246,0.95),rgba(16,185,129,0.9))]"
-                            style={{ width: `${Math.max(8, (item.revenue / platformMaxRevenue) * 100)}%` }}
-                          />
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">{item.quantity} card{item.quantity === 1 ? "" : "s"} sold</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-                  <h2 className="text-lg font-semibold text-white">Recent wins</h2>
-                  <p className="mt-1 text-sm text-slate-400">Latest completed sales.</p>
-
-                  <div className="mt-4 space-y-3">
-                    {recentHighlights.map((card, index) => (
-                      <div key={`${card.id || index}-${card.card_number}`} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="truncate font-semibold text-white">{card.player_name}</div>
-                            <div className="mt-1 text-sm text-slate-300">{card.year} · {card.brand} · #{card.card_number}</div>
-                            <div className="text-sm text-slate-400">{card.set_name}{card.parallel ? ` · ${card.parallel}` : ""}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-emerald-300">{money(Number(card.sold_price || 0) * Number(card.quantity || 0))}</div>
-                            <div className="mt-1 text-xs text-slate-500">{shortDate(card.sold_at)}</div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="mt-8">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-semibold text-white">Sales history</h2>
-                  <p className="mt-1 text-sm text-slate-400">Every sold card, newest first.</p>
-                </div>
-              </div>
-
+            </div>
+          ) : (
+            <>
               <div className="mt-4 space-y-3 md:hidden">
                 {sortedCards.map((card, i) => (
                   <div key={`${card.player_name}-${card.card_number}-${card.id || i}`} className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
@@ -435,9 +449,9 @@ export default function SoldPage() {
                   </tbody>
                 </table>
               </div>
-            </section>
-          </>
-        )}
+            </>
+          )}
+        </section>
       </div>
       <CardCatMobileNav />
     </main>
