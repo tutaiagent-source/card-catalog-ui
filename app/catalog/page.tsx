@@ -958,7 +958,10 @@ export default function CatalogPage() {
               className="rounded-xl bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
               onClick={sync}
             >
-              Refresh
+              <span className="md:hidden" aria-hidden>
+                ↻
+              </span>
+              <span className="hidden md:inline">Refresh</span>
             </button>
           </div>
 
@@ -1111,57 +1114,58 @@ export default function CatalogPage() {
         </div>
 
         {cardsView === "inventory" ? (
-          <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <details className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]" open={false}>
+            <summary className="flex cursor-pointer items-start justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-slate-100">Bulk seller tools</div>
-                <div className="mt-1 text-sm text-slate-400">Select visible cards in Inventory view, then move them in batches for faster inventory management.</div>
+                <div className="mt-1 text-sm text-slate-400">Batched moves for faster inventory management.</div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
-                  onClick={() => setSelectedCardIds(visibleCardIds)}
-                  disabled={visibleCardIds.length === 0}
-                >
-                  Select visible
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
-                  onClick={() => setSelectedCardIds([])}
-                  disabled={selectedCardIds.length === 0}
-                >
-                  Clear
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
-                  onClick={() => setBulkEditModal({ platform: "", askingPrice: "" })}
-                  disabled={selectedCardIds.length === 0}
-                >
-                  Bulk edit
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
-                  onClick={() => bulkUpdateStatus("Collection")}
-                  disabled={selectedCardIds.length === 0}
-                >
-                  Move to Collection
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg bg-[#d50000] px-3 py-2 text-sm font-semibold hover:bg-[#b80000]"
-                  onClick={() => bulkUpdateStatus("Listed")}
-                  disabled={selectedCardIds.length === 0}
-                >
-                  Move to Listed
-                </button>
-              </div>
+              <div className="text-xs text-slate-500">Selected: {selectedCardIds.length}</div>
+            </summary>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+                onClick={() => setSelectedCardIds(visibleCardIds)}
+                disabled={visibleCardIds.length === 0}
+              >
+                Select visible
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+                onClick={() => setSelectedCardIds([])}
+                disabled={selectedCardIds.length === 0}
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+                onClick={() => setBulkEditModal({ platform: "", askingPrice: "" })}
+                disabled={selectedCardIds.length === 0}
+              >
+                Bulk edit
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+                onClick={() => bulkUpdateStatus("Collection")}
+                disabled={selectedCardIds.length === 0}
+              >
+                Move to Collection
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-[#d50000] px-3 py-2 text-sm font-semibold hover:bg-[#b80000]"
+                onClick={() => bulkUpdateStatus("Listed")}
+                disabled={selectedCardIds.length === 0}
+              >
+                Move to Listed
+              </button>
             </div>
-            <div className="mt-3 text-xs text-slate-500">Selected cards: {selectedCardIds.length}</div>
-          </section>
+          </details>
         ) : null}
         <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
