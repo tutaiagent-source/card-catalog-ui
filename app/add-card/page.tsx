@@ -838,13 +838,9 @@ export default function AddCardPage() {
                       onClick={() => {
                         const parts = [
                           card.player_name,
-                          card.year,
                           card.brand,
                           card.set_name,
-                          card.parallel,
                           card.card_number,
-                          card.team,
-                          card.sport,
                           card.serial_number_text,
                         ]
                           .map((p) => String(p ?? "").trim())

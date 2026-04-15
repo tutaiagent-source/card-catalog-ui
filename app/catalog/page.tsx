@@ -120,21 +120,13 @@ function driveToImageSrc(url?: string) {
 function buildEbaySearchUrl(card: Card) {
   const parts: string[] = [
     card.player_name,
-    card.year,
     card.brand,
     card.set_name,
-    card.parallel,
     card.card_number,
-    card.team,
-    card.sport,
     card.serial_number_text,
   ]
     .map((p) => String(p ?? "").trim())
     .filter(Boolean);
-
-  if (card.rookie === "yes") parts.push("rookie");
-  if (card.is_autograph === "yes") parts.push("autograph");
-  if (card.has_memorabilia === "yes") parts.push("memorabilia");
 
   const query = parts.join(" ");
   return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
