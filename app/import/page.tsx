@@ -857,6 +857,31 @@ export default function ImportPage() {
         </div>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="text-lg font-semibold">Import with confidence</div>
+              <p className="mt-1 text-sm text-slate-400">CardCat is designed to be seller-friendly, not lock-in friendly. Review the preview first, import only ready rows, and keep a CSV backup whenever you want.</p>
+            </div>
+            <a href="/catalog" className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">Back to catalog</a>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-white/10 bg-slate-950/70 p-4">
+              <div className="text-sm font-semibold text-slate-100">1. Start simple</div>
+              <div className="mt-1 text-sm text-slate-400">Map the required fields first. You can leave extra columns ignored until the core import looks right.</div>
+            </div>
+            <div className="rounded-xl border border-white/10 bg-slate-950/70 p-4">
+              <div className="text-sm font-semibold text-slate-100">2. Review before writing</div>
+              <div className="mt-1 text-sm text-slate-400">Every row gets a preview state so you can catch missing years, bad statuses, or duplicate identities before import.</div>
+            </div>
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] p-4">
+              <div className="text-sm font-semibold text-slate-100">3. Keep your backup</div>
+              <div className="mt-1 text-sm text-slate-300">After importing, use Export CSV from Catalog anytime for a portable backup and easy cleanup in Sheets or Excel.</div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <div className="text-lg font-semibold">1. Upload CSV</div>
           <p className="mt-2 text-sm text-slate-400">If the structure is close to CardCat already, this should be quick. If not, you can remap columns below.</p>
           <input

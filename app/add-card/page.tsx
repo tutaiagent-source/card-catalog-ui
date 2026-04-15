@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { normalizeBrandAndSet, normalizeCatalogTaxonomy, normalizeSportLabel } from "@/lib/cardTaxonomy";
+import { buildSellerNotes, parseSellerMeta } from "@/lib/cardSellerMeta";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type YesNo = "yes" | "no";
@@ -44,6 +45,9 @@ type Card = {
   sold_price?: number | null;
   sold_at?: string;
   sale_platform?: string;
+  cost_basis?: number | null;
+  shipping_cost?: number | null;
+  platform_fee?: number | null;
   notes?: string;
   date_added?: string;
 };
@@ -249,7 +253,15 @@ export default function AddCardPage() {
       }
 
       if (data) {
-        setCard(normalizeCatalogTaxonomy({ ...(data as any), status: normalizeStatusValue((data as any)?.status) }));
+        const normalized = normalizeCatalogTaxonomy({ ...(data as any), status: normalizeStatusValue((data as any)?.status) });
+        const seller = parseSellerMeta(normalized.notes);
+        setCard({
+          ...normalized,
+          notes: seller.publicNotes,
+          cost_basis: seller.meta.costBasis,
+          shipping_cost: seller.meta.shippingCost,
+          platform_fee: seller.meta.platformFee,
+        });
         setStep(1);
       }
     })();
@@ -289,6 +301,12 @@ export default function AddCardPage() {
       }
 
       const normalizedBrandSet = normalizeBrandAndSet(String(card.brand || ""), String(card.set_name || ""));
+      const sellerNotes = buildSellerNotes(String(card.notes || ""), {
+        costBasis: card.cost_basis ?? null,
+        shippingCost: card.shipping_cost ?? null,
+        platformFee: card.platform_fee ?? null,
+      });
+
       const cleaned: Card = {
         id: card.id ?? crypto.randomUUID(),
 
@@ -322,7 +340,10 @@ export default function AddCardPage() {
         sold_price: normalizeStatusValue(card.status) === "Sold" && card.sold_price != null ? Number(card.sold_price) : null,
         sold_at: normalizeStatusValue(card.status) === "Sold" ? String(card.sold_at || new Date().toISOString().slice(0, 10)) : "",
         sale_platform: normalizeStatusValue(card.status) === "Collection" ? "" : String(card.sale_platform || ""),
-        notes: String(card.notes || ""),
+        cost_basis: card.cost_basis == null ? null : Number(card.cost_basis),
+        shipping_cost: card.shipping_cost == null ? null : Number(card.shipping_cost),
+        platform_fee: card.platform_fee == null ? null : Number(card.platform_fee),
+        notes: sellerNotes,
         date_added: String(card.date_added || ""),
       };
 
@@ -927,7 +948,7 @@ export default function AddCardPage() {
                   )}
 
                   {String(card.status || "Collection") === "Sold" && (
-                    <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       <label className="block">
                         <div className="mb-1 text-sm text-slate-300">Sold for</div>
                         <input
@@ -955,6 +976,48 @@ export default function AddCardPage() {
                           placeholder="eBay, local, show..."
                         />
                       </label>
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Cost basis</div>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={card.cost_basis ?? ""}
+                          onChange={(e) => set("cost_basis", e.target.value === "" ? null : Number(e.target.value))}
+                          placeholder="Total cost"
+                        />
+                      </label>
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Platform fees</div>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={card.platform_fee ?? ""}
+                          onChange={(e) => set("platform_fee", e.target.value === "" ? null : Number(e.target.value))}
+                          placeholder="Fees paid"
+                        />
+                      </label>
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Shipping cost</div>
+                        <input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={card.shipping_cost ?? ""}
+                          onChange={(e) => set("shipping_cost", e.target.value === "" ? null : Number(e.target.value))}
+                          placeholder="Shipping paid"
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {String(card.status || "Collection") === "Sold" && (
+                    <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] p-3 text-sm text-emerald-100">
+                      Seller metrics stay attached to the card so CardCat can calculate net profit and ROI on the Sold dashboard.
                     </div>
                   )}
                 </div>
@@ -1197,6 +1260,9 @@ export default function AddCardPage() {
                     serial_number_text: "",
                     quantity: 1,
                     status: "Collection",
+                    cost_basis: null,
+                    shipping_cost: null,
+                    platform_fee: null,
                     notes: "",
                   });
                   setFrontFile(null);

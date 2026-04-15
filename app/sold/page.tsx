@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import { computeSaleMetrics, parseSellerMeta } from "@/lib/cardSellerMeta";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type CardStatus = "Collection" | "Listed" | "Sold";
@@ -23,6 +24,7 @@ type SoldCard = {
   sold_price?: number | null;
   sold_at?: string;
   sale_platform?: string | null;
+  notes?: string | null;
   status?: CardStatus | string;
 };
 
@@ -117,6 +119,50 @@ export default function SoldPage() {
   const avgSale = useMemo(() => (totalSoldCards ? grossSales / totalSoldCards : 0), [grossSales, totalSoldCards]);
   const biggestSale = useMemo(() => Math.max(0, ...cards.map((c) => Number(c.sold_price || 0) * Number(c.quantity || 0))), [cards]);
 
+  const salesWithMetrics = useMemo(
+    () =>
+      sortedCards.map((card) => {
+        const seller = parseSellerMeta(card.notes);
+        return {
+          ...card,
+          sellerMeta: seller.meta,
+          publicNotes: seller.publicNotes,
+          metrics: computeSaleMetrics({
+            grossSale: Number(card.sold_price || 0) * Number(card.quantity || 0),
+            costBasis: seller.meta.costBasis,
+            shippingCost: seller.meta.shippingCost,
+            platformFee: seller.meta.platformFee,
+          }),
+        };
+      }),
+    [sortedCards]
+  );
+
+  const totalNetProfit = useMemo(
+    () => salesWithMetrics.reduce((sum, card) => sum + card.metrics.netProfit, 0),
+    [salesWithMetrics]
+  );
+
+  const totalCostBasis = useMemo(
+    () => salesWithMetrics.reduce((sum, card) => sum + card.metrics.costBasis, 0),
+    [salesWithMetrics]
+  );
+
+  const totalFees = useMemo(
+    () => salesWithMetrics.reduce((sum, card) => sum + card.metrics.platformFee, 0),
+    [salesWithMetrics]
+  );
+
+  const totalShipping = useMemo(
+    () => salesWithMetrics.reduce((sum, card) => sum + card.metrics.shippingCost, 0),
+    [salesWithMetrics]
+  );
+
+  const overallRoi = useMemo(
+    () => (totalCostBasis > 0 ? (totalNetProfit / totalCostBasis) * 100 : null),
+    [totalCostBasis, totalNetProfit]
+  );
+
   const topPlatform = useMemo(() => {
     const counts = new Map<string, number>();
     cards.forEach((card) => {
@@ -187,7 +233,7 @@ export default function SoldPage() {
 
   const platformMaxRevenue = useMemo(() => Math.max(1, ...platformBreakdown.map((item) => item.revenue)), [platformBreakdown]);
 
-  const recentHighlights = useMemo(() => sortedCards.slice(0, 5), [sortedCards]);
+  const recentHighlights = useMemo(() => salesWithMetrics.slice(0, 5), [salesWithMetrics]);
 
   if (loading) {
     return (
@@ -246,8 +292,8 @@ export default function SoldPage() {
                   <div className="mt-2 text-xl font-semibold text-white">{money(avgSale)}</div>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-black/15 p-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-slate-300">Latest sale</div>
-                  <div className="mt-2 text-xl font-semibold text-white">{lastSaleDate ? shortDate(lastSaleDate) : "-"}</div>
+                  <div className="text-xs uppercase tracking-[0.18em] text-slate-300">Net profit</div>
+                  <div className="mt-2 text-xl font-semibold text-white">{money(totalNetProfit)}</div>
                 </div>
               </div>
             </div>
@@ -265,22 +311,45 @@ export default function SoldPage() {
           </div>
         </section>
 
-        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="text-sm text-slate-400">Cards sold</div>
             <div className="mt-2 text-3xl font-bold text-white">{totalSoldCards}</div>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-            <div className="text-sm text-slate-400">Average sale per card</div>
-            <div className="mt-2 text-3xl font-bold text-white">{money(avgSale)}</div>
+              <div className="text-sm text-slate-400">Average sale per card</div>
+              <div className="mt-2 text-3xl font-bold text-white">{money(avgSale)}</div>
+            </div>
+            <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/[0.08] p-5 shadow-[0_18px_40px_rgba(16,185,129,0.08)]">
+              <div className="text-sm text-slate-300">Net profit</div>
+              <div className="mt-2 text-3xl font-bold text-white">{money(totalNetProfit)}</div>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+              <div className="text-sm text-slate-400">ROI</div>
+              <div className="mt-2 text-3xl font-bold text-white">{overallRoi != null ? `${overallRoi.toFixed(1)}%` : "-"}</div>
+            </div>
+            <div className="rounded-3xl border border-amber-500/20 bg-amber-500/[0.06] p-5 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
+              <div className="text-sm text-slate-300">Highest sale</div>
+              <div className="mt-2 text-3xl font-bold text-white">{money(biggestSale)}</div>
+            </div>
+            <div className="rounded-3xl border border-blue-500/20 bg-blue-500/[0.08] p-5 shadow-[0_18px_40px_rgba(59,130,246,0.08)]">
+              <div className="text-sm text-slate-300">Top platform</div>
+              <div className="mt-2 text-3xl font-bold text-white">{topPlatform}</div>
+            </div>
+        </section>
+
+        <section className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="text-sm text-slate-400">Cost basis tracked</div>
+            <div className="mt-2 text-2xl font-bold text-white">{money(totalCostBasis)}</div>
           </div>
-          <div className="rounded-3xl border border-amber-500/20 bg-amber-500/[0.06] p-5 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
-            <div className="text-sm text-slate-300">Highest sale</div>
-            <div className="mt-2 text-3xl font-bold text-white">{money(biggestSale)}</div>
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="text-sm text-slate-400">Platform fees</div>
+            <div className="mt-2 text-2xl font-bold text-white">{money(totalFees)}</div>
           </div>
-          <div className="rounded-3xl border border-blue-500/20 bg-blue-500/[0.08] p-5 shadow-[0_18px_40px_rgba(59,130,246,0.08)]">
-            <div className="text-sm text-slate-300">Top platform</div>
-            <div className="mt-2 text-3xl font-bold text-white">{topPlatform}</div>
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="text-sm text-slate-400">Shipping costs</div>
+            <div className="mt-2 text-2xl font-bold text-white">{money(totalShipping)}</div>
           </div>
         </section>
 
@@ -355,19 +424,22 @@ export default function SoldPage() {
               <p className="mt-1 text-sm text-slate-400">Latest completed sales.</p>
 
               <div className="mt-4 space-y-3">
-                {recentHighlights.length > 0 ? recentHighlights.map((card, index) => (
-                  <div key={`${card.id || index}-${card.card_number}`} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate font-semibold text-white">{card.player_name}</div>
-                        <div className="mt-1 text-sm text-slate-300">{card.year} · {card.brand} · #{card.card_number}</div>
-                        <div className="text-sm text-slate-400">{card.set_name}{card.parallel ? ` · ${card.parallel}` : ""}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-emerald-300">{money(Number(card.sold_price || 0) * Number(card.quantity || 0))}</div>
-                        <div className="mt-1 text-xs text-slate-500">{shortDate(card.sold_at)}</div>
-                      </div>
-                    </div>
+                    {recentHighlights.length > 0 ? recentHighlights.map((card, index) => (
+                      <div key={`${card.id || index}-${card.card_number}`} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="truncate font-semibold text-white">{card.player_name}</div>
+                            <div className="mt-1 text-sm text-slate-300">{card.year} · {card.brand} · #{card.card_number}</div>
+                            <div className="text-sm text-slate-400">{card.set_name}{card.parallel ? ` · ${card.parallel}` : ""}</div>
+                            <div className="mt-1 text-xs text-slate-500">
+                              Net {money(card.metrics.netProfit)}{card.metrics.roi != null ? ` · ROI ${card.metrics.roi.toFixed(1)}%` : ""}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-emerald-300">{money(card.metrics.grossSale)}</div>
+                            <div className="mt-1 text-xs text-slate-500">{shortDate(card.sold_at)}</div>
+                          </div>
+                        </div>
                   </div>
                 )) : (
                   <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
@@ -399,7 +471,7 @@ export default function SoldPage() {
           ) : (
             <>
               <div className="mt-4 space-y-3 md:hidden">
-                {sortedCards.map((card, i) => (
+                {salesWithMetrics.map((card, i) => (
                   <div key={`${card.player_name}-${card.card_number}-${card.id || i}`} className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
                     <div className="font-semibold text-white">{card.player_name}</div>
                     <div className="mt-1 text-sm text-slate-300">{card.year} · {card.brand} · #{card.card_number}</div>
@@ -407,7 +479,7 @@ export default function SoldPage() {
                     <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                       <div className="rounded-2xl bg-slate-950/70 px-3 py-2">
                         <div className="text-slate-400">Sold for</div>
-                        <div className="font-semibold text-emerald-300">{money(Number(card.sold_price || 0) * Number(card.quantity || 0))}</div>
+                        <div className="font-semibold text-emerald-300">{money(card.metrics.grossSale)}</div>
                       </div>
                       <div className="rounded-2xl bg-slate-950/70 px-3 py-2">
                         <div className="text-slate-400">Date</div>
@@ -420,6 +492,10 @@ export default function SoldPage() {
                       <div className="rounded-2xl bg-slate-950/70 px-3 py-2">
                         <div className="text-slate-400">Grade</div>
                         <div className="font-semibold text-white">{card.graded === "yes" && card.grade != null ? card.grade : "-"}</div>
+                      </div>
+                      <div className="rounded-2xl bg-slate-950/70 px-3 py-2 col-span-2">
+                        <div className="text-slate-400">Net profit / ROI</div>
+                        <div className="font-semibold text-white">{money(card.metrics.netProfit)}{card.metrics.roi != null ? ` · ${card.metrics.roi.toFixed(1)}%` : ""}</div>
                       </div>
                     </div>
                     <a
@@ -447,7 +523,7 @@ export default function SoldPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedCards.map((card, i) => (
+                    {salesWithMetrics.map((card, i) => (
                       <tr key={`${card.player_name}-${card.card_number}-${card.id || i}`} className="border-t border-white/10 align-top hover:bg-white/[0.025]">
                         <td className="px-4 py-3">
                           <div className="font-semibold text-white">{card.player_name}</div>
@@ -458,10 +534,13 @@ export default function SoldPage() {
                           <div className="text-xs text-slate-400">{card.parallel} · #{card.card_number}</div>
                         </td>
                         <td className="px-4 py-3 text-slate-200">{card.quantity}</td>
-                        <td className="px-4 py-3 font-semibold text-emerald-300">{money(Number(card.sold_price || 0) * Number(card.quantity || 0))}</td>
+                        <td className="px-4 py-3 font-semibold text-emerald-300">{money(card.metrics.grossSale)}</td>
                         <td className="px-4 py-3 text-slate-200">{shortDate(card.sold_at)}</td>
                         <td className="px-4 py-3 text-slate-200">{normalizePlatformLabel(card.sale_platform)}</td>
-                        <td className="px-4 py-3 text-slate-200">{card.graded === "yes" && card.grade != null ? card.grade : "-"}</td>
+                        <td className="px-4 py-3 text-slate-200">
+                          <div>{card.graded === "yes" && card.grade != null ? card.grade : "-"}</div>
+                          <div className="mt-1 text-xs text-slate-500">Net {money(card.metrics.netProfit)}</div>
+                        </td>
                         <td className="px-4 py-3">
                           <a href={card.id ? `/add-card?edit=${encodeURIComponent(card.id)}` : "/add-card"} className="rounded-lg bg-[#b80000] px-3 py-2 text-xs font-semibold hover:bg-[#d50000]">
                             Edit

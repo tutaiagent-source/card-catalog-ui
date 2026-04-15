@@ -40,6 +40,9 @@ export default function AccountPage() {
 
   const totalCards = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0), 0), [cards]);
   const estimatedTotal = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.estimated_price || 0), 0), [cards]);
+  const starterLimit = 500;
+  const currentPlanPreview = totalCards > starterLimit ? "Pro Seller" : "Collector";
+  const usagePct = Math.min(100, Math.round((totalCards / starterLimit) * 100));
 
   const providers = useMemo(() => {
     const list = Array.isArray(user?.app_metadata?.providers) ? user?.app_metadata?.providers : [];
@@ -161,6 +164,70 @@ export default function AccountPage() {
             <div className="mt-1 text-2xl font-bold">${estimatedTotal.toFixed(2)}</div>
           </section>
         </div>
+
+        <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+          <h2 className="text-lg font-semibold">Start here</h2>
+          <p className="mt-2 text-sm text-slate-400">The seller-first workflow is simple: load cards in, keep a backup, track listed and sold inventory, then watch the sales dashboard.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {[
+              ["1. Add or import inventory", "Use Add Card for one-offs or Import CSV for an existing collection."],
+              ["2. Keep a backup", "Export CSV from the Catalog anytime so your data stays portable."],
+              ["3. Track sales cleanly", "Move cards to Listed or Sold and attach platform, fees, shipping, and cost basis."],
+              ["4. Watch the dashboard", "Use Sold to monitor revenue, net profit, ROI, and platform performance."],
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-xl border border-white/10 bg-slate-950/70 p-4">
+                <div className="text-sm font-semibold text-slate-100">{title}</div>
+                <div className="mt-1 text-sm text-slate-400">{body}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold">Plans and usage</h2>
+              <p className="mt-1 text-sm text-slate-400">2-tier preview for launch: a limited Collector plan and an unlimited Pro Seller plan with fair-use storage.</p>
+            </div>
+            <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+              Current fit: {currentPlanPreview}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+            <div className="flex items-center justify-between gap-3 text-sm">
+              <div className="font-semibold text-slate-200">Collector plan usage</div>
+              <div className="text-slate-400">{totalCards} / {starterLimit} cards</div>
+            </div>
+            <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-900">
+              <div className="h-full rounded-full bg-[linear-gradient(90deg,rgba(245,158,11,0.95),rgba(239,68,68,0.9))]" style={{ width: `${usagePct}%` }} />
+            </div>
+            <div className="mt-2 text-xs text-slate-500">Billing is not wired yet, but this gives the user-facing plan shape for launch.</div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+              <div className="text-sm font-semibold text-slate-100">Collector</div>
+              <div className="mt-1 text-sm text-slate-400">Starter tier, limited for personal collections and light selling.</div>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                <li>• Up to 500 cards</li>
+                <li>• Manual add/edit</li>
+                <li>• Basic sold tracking</li>
+                <li>• Basic dashboard</li>
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
+              <div className="text-sm font-semibold text-slate-100">Pro Seller</div>
+              <div className="mt-1 text-sm text-slate-400">Unlimited cards, CSV workflows, and deeper seller analytics.</div>
+              <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                <li>• Unlimited cards, fair-use image storage</li>
+                <li>• CSV import/export</li>
+                <li>• Revenue, net profit, ROI, platform analytics</li>
+                <li>• Bulk inventory tools</li>
+              </ul>
+            </div>
+          </div>
+        </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <h2 className="text-lg font-semibold">Quick actions</h2>

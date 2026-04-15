@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { normalizeCatalogTaxonomy } from "@/lib/cardTaxonomy";
+import { buildSellerNotes, parseSellerMeta } from "@/lib/cardSellerMeta";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type YesNo = "yes" | "no";
@@ -225,10 +226,14 @@ export default function CatalogPage() {
     price: string;
     date: string;
     platform: string;
+    costBasis: string;
+    shippingCost: string;
+    platformFee: string;
   } | null>(null);
   const [showValuable, setShowValuable] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [cardsView, setCardsView] = useState<"grid" | "inventory">("inventory");
+  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
   const [filterSport, setFilterSport] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
   const [filterBrand, setFilterBrand] = useState("all");
@@ -321,6 +326,11 @@ export default function CatalogPage() {
         date_added: card.date_added || "",
       }))
     );
+  };
+
+  const toggleCardSelection = (id?: string) => {
+    if (!id) return;
+    setSelectedCardIds((prev) => (prev.includes(id) ? prev.filter((entry) => entry !== id) : [...prev, id]));
   };
 
   const activeCards = useMemo(() => cards.filter((c) => normalizeStatusValue(c.status) !== "Sold"), [cards]);
@@ -447,6 +457,18 @@ export default function CatalogPage() {
 
   const [selectedParallelByFamily, setSelectedParallelByFamily] = useState<Record<string, string>>({});
 
+  const visibleCardIds = useMemo(
+    () =>
+      familyRows
+        .map((row) => {
+          const selectedParallel = selectedParallelByFamily[row.key] ?? normalizeParallelLabel(row.representative.parallel);
+          const card = row.family.find((f) => normalizeParallelLabel(f.parallel) === selectedParallel) ?? row.representative;
+          return card.id;
+        })
+        .filter(Boolean) as string[],
+    [familyRows, selectedParallelByFamily]
+  );
+
   useEffect(() => {
     // Initialize selected parallel per family to the representative.
     setSelectedParallelByFamily((prev) => {
@@ -461,6 +483,10 @@ export default function CatalogPage() {
       return changed ? next : prev;
     });
   }, [familyRows]);
+
+  useEffect(() => {
+    setSelectedCardIds((prev) => prev.filter((id) => activeCards.some((card) => card.id === id)));
+  }, [activeCards]);
 
   const valuable = useMemo(() => {
     return [...activeCards].sort((a, b) => score(b) - score(a)).slice(0, 5);
@@ -540,7 +566,11 @@ export default function CatalogPage() {
     setPreviewCard((prev) => (prev?.id === id ? null : prev));
   };
 
-  const updateCardStatus = async (card: Card, nextStatus: CardStatus, details?: { price?: string; date?: string; platform?: string }) => {
+  const updateCardStatus = async (
+    card: Card,
+    nextStatus: CardStatus,
+    details?: { price?: string; date?: string; platform?: string; costBasis?: string; shippingCost?: string; platformFee?: string }
+  ) => {
     if (!card.id) return;
     if (!supabaseConfigured || !supabase) return;
     if (!user?.id) return;
@@ -558,6 +588,11 @@ export default function CatalogPage() {
       payload.sold_price = details?.price ? Number(details.price) : card.sold_price ?? null;
       payload.sold_at = details?.date || card.sold_at || today;
       payload.sale_platform = details?.platform?.trim() || card.sale_platform || null;
+      payload.notes = buildSellerNotes(card.notes, {
+        costBasis: details?.costBasis ? Number(details.costBasis) : parseSellerMeta(card.notes).meta.costBasis,
+        shippingCost: details?.shippingCost ? Number(details.shippingCost) : parseSellerMeta(card.notes).meta.shippingCost,
+        platformFee: details?.platformFee ? Number(details.platformFee) : parseSellerMeta(card.notes).meta.platformFee,
+      });
     }
 
     if (nextStatus === "Collection") {
@@ -587,14 +622,49 @@ export default function CatalogPage() {
     sync();
   };
 
+  const bulkUpdateStatus = async (nextStatus: "Collection" | "Listed") => {
+    if (selectedCardIds.length === 0) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const payload: Record<string, any> = { status: nextStatus };
+
+    if (nextStatus === "Listed") payload.listed_at = today;
+    if (nextStatus === "Collection") {
+      payload.sold_at = null;
+      payload.sold_price = null;
+    }
+
+    const count = selectedCardIds.length;
+    const { error } = await supabase
+      .from("cards")
+      .update(payload)
+      .in("id", selectedCardIds)
+      .eq("user_id", user.id);
+
+    if (error) {
+      alert(`Bulk update failed: ${error.message}`);
+      return;
+    }
+
+    setSelectedCardIds([]);
+    setStatusToast({ message: `${count} card${count === 1 ? "" : "s"} moved to ${nextStatus}.` });
+    sync();
+  };
+
   const openStatusModal = (card: Card, nextStatus: "Listed" | "Sold") => {
     const today = new Date().toISOString().slice(0, 10);
+    const seller = parseSellerMeta(card.notes);
     setStatusModal({
       card,
       nextStatus,
       price: String(nextStatus === "Listed" ? card.asking_price ?? "" : card.sold_price ?? ""),
       date: String(nextStatus === "Listed" ? card.listed_at || today : card.sold_at || today),
       platform: String(card.sale_platform || ""),
+      costBasis: String(seller.meta.costBasis ?? ""),
+      shippingCost: String(seller.meta.shippingCost ?? ""),
+      platformFee: String(seller.meta.platformFee ?? ""),
     });
   };
 
@@ -609,6 +679,9 @@ export default function CatalogPage() {
       price: statusModal.price,
       date: statusModal.date,
       platform: statusModal.platform,
+      costBasis: statusModal.costBasis,
+      shippingCost: statusModal.shippingCost,
+      platformFee: statusModal.platformFee,
     });
     setStatusModal(null);
   };
@@ -905,6 +978,52 @@ export default function CatalogPage() {
             <div className="mt-1 text-2xl font-bold">{rookieRows} / {autographRows}</div>
           </div>
         </div>
+
+        {cardsView === "inventory" ? (
+          <section className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-slate-100">Bulk seller tools</div>
+                <div className="mt-1 text-sm text-slate-400">Select visible cards in Inventory view, then move them in batches for faster inventory management.</div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+                  onClick={() => setSelectedCardIds(visibleCardIds)}
+                  disabled={visibleCardIds.length === 0}
+                >
+                  Select visible
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+                  onClick={() => setSelectedCardIds([])}
+                  disabled={selectedCardIds.length === 0}
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+                  onClick={() => bulkUpdateStatus("Collection")}
+                  disabled={selectedCardIds.length === 0}
+                >
+                  Move to Collection
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg bg-[#d50000] px-3 py-2 text-sm font-semibold hover:bg-[#b80000]"
+                  onClick={() => bulkUpdateStatus("Listed")}
+                  disabled={selectedCardIds.length === 0}
+                >
+                  Move to Listed
+                </button>
+              </div>
+            </div>
+            <div className="mt-3 text-xs text-slate-500">Selected cards: {selectedCardIds.length}</div>
+          </section>
+        ) : null}
         <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -1103,6 +1222,17 @@ export default function CatalogPage() {
                   const c = row.family.find((f) => normalizeParallelLabel(f.parallel) === selectedParallel) ?? row.representative;
                   return (
                     <div key={row.key} className="rounded border border-slate-800 bg-slate-900 p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300">
+                        <input
+                          type="checkbox"
+                          checked={c.id ? selectedCardIds.includes(c.id) : false}
+                          onChange={() => toggleCardSelection(c.id)}
+                        />
+                        Select
+                      </label>
+                      <span className="text-xs text-slate-500">Inventory row</span>
+                    </div>
                     <div className="flex gap-3">
                       {c.image_url ? (
                         <button
@@ -1216,6 +1346,14 @@ export default function CatalogPage() {
                 <table className="min-w-full text-sm">
                   <thead className="bg-slate-950 text-left text-slate-400">
                     <tr>
+                      <th className="px-3 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          checked={visibleCardIds.length > 0 && visibleCardIds.every((id) => selectedCardIds.includes(id))}
+                          onChange={(e) => setSelectedCardIds(e.target.checked ? visibleCardIds : [])}
+                          aria-label="Select visible cards"
+                        />
+                      </th>
                       <th className="px-3 py-2">Img</th>
                       <th className="px-3 py-2">Card</th>
                       <th className="px-3 py-2 text-center">Qty / Value</th>
@@ -1229,6 +1367,14 @@ export default function CatalogPage() {
                       const c = row.family.find((f) => normalizeParallelLabel(f.parallel) === selectedParallel) ?? row.representative;
                       return (
                         <tr key={row.key} className="border-t border-slate-800 align-top">
+                        <td className="px-3 py-2 text-center align-middle">
+                          <input
+                            type="checkbox"
+                            checked={c.id ? selectedCardIds.includes(c.id) : false}
+                            onChange={() => toggleCardSelection(c.id)}
+                            aria-label={`Select ${c.player_name}`}
+                          />
+                        </td>
                         <td className="px-3 py-2">
                           {c.image_url ? (
                             <button
@@ -1537,6 +1683,47 @@ export default function CatalogPage() {
                 placeholder="eBay, Whatnot, local..."
               />
             </label>
+
+            {statusModal.nextStatus === "Sold" ? (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="block">
+                  <div className="mb-1 text-sm text-slate-300">Cost basis</div>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    className="w-full rounded bg-slate-950 px-3 py-2"
+                    value={statusModal.costBasis}
+                    onChange={(e) => setStatusModal((prev) => (prev ? { ...prev, costBasis: e.target.value } : prev))}
+                    placeholder="0.00"
+                  />
+                </label>
+                <label className="block">
+                  <div className="mb-1 text-sm text-slate-300">Fees</div>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    className="w-full rounded bg-slate-950 px-3 py-2"
+                    value={statusModal.platformFee}
+                    onChange={(e) => setStatusModal((prev) => (prev ? { ...prev, platformFee: e.target.value } : prev))}
+                    placeholder="0.00"
+                  />
+                </label>
+                <label className="block">
+                  <div className="mb-1 text-sm text-slate-300">Shipping</div>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    className="w-full rounded bg-slate-950 px-3 py-2"
+                    value={statusModal.shippingCost}
+                    onChange={(e) => setStatusModal((prev) => (prev ? { ...prev, shippingCost: e.target.value } : prev))}
+                    placeholder="0.00"
+                  />
+                </label>
+              </div>
+            ) : null}
           </div>
 
           <div className="mt-5 flex justify-end gap-2">
