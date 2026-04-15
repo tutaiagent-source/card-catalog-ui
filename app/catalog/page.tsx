@@ -230,6 +230,10 @@ export default function CatalogPage() {
     shippingCost: string;
     platformFee: string;
   } | null>(null);
+  const [bulkEditModal, setBulkEditModal] = useState<{
+    platform: string;
+    askingPrice: string;
+  } | null>(null);
   const [showValuable, setShowValuable] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [cardsView, setCardsView] = useState<"grid" | "inventory">("inventory");
@@ -653,6 +657,38 @@ export default function CatalogPage() {
     sync();
   };
 
+  const saveBulkEdit = async () => {
+    if (!bulkEditModal) return;
+    if (selectedCardIds.length === 0) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const payload: Record<string, any> = {};
+    if (bulkEditModal.platform.trim()) payload.sale_platform = bulkEditModal.platform.trim();
+    if (bulkEditModal.askingPrice.trim()) payload.asking_price = Number(bulkEditModal.askingPrice);
+
+    if (Object.keys(payload).length === 0) {
+      alert("Enter a platform or asking price to apply.");
+      return;
+    }
+
+    const count = selectedCardIds.length;
+    const { error } = await supabase
+      .from("cards")
+      .update(payload)
+      .in("id", selectedCardIds)
+      .eq("user_id", user.id);
+
+    if (error) {
+      alert(`Bulk edit failed: ${error.message}`);
+      return;
+    }
+
+    setBulkEditModal(null);
+    setStatusToast({ message: `Updated ${count} selected card${count === 1 ? "" : "s"}.` });
+    sync();
+  };
+
   const openStatusModal = (card: Card, nextStatus: "Listed" | "Sold") => {
     const today = new Date().toISOString().slice(0, 10);
     const seller = parseSellerMeta(card.notes);
@@ -1002,6 +1038,14 @@ export default function CatalogPage() {
                   disabled={selectedCardIds.length === 0}
                 >
                   Clear
+                </button>
+                <button
+                  type="button"
+                  className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
+                  onClick={() => setBulkEditModal({ platform: "", askingPrice: "" })}
+                  disabled={selectedCardIds.length === 0}
+                >
+                  Bulk edit
                 </button>
                 <button
                   type="button"
@@ -1625,6 +1669,62 @@ export default function CatalogPage() {
         </section>
       </div>
     <CardCatMobileNav />
+    {bulkEditModal && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        onClick={() => setBulkEditModal(null)}
+      >
+        <div
+          className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="text-lg font-bold">Bulk edit selected cards</div>
+          <div className="mt-1 text-sm text-slate-300">Apply the same platform or asking price to {selectedCardIds.length} selected card{selectedCardIds.length === 1 ? "" : "s"}.</div>
+
+          <div className="mt-4 space-y-4">
+            <label className="block">
+              <div className="mb-1 text-sm text-slate-300">Platform</div>
+              <input
+                className="w-full rounded bg-slate-950 px-3 py-2"
+                value={bulkEditModal.platform}
+                onChange={(e) => setBulkEditModal((prev) => (prev ? { ...prev, platform: e.target.value } : prev))}
+                placeholder="eBay, Whatnot, local..."
+              />
+            </label>
+
+            <label className="block">
+              <div className="mb-1 text-sm text-slate-300">Asking price</div>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                className="w-full rounded bg-slate-950 px-3 py-2"
+                value={bulkEditModal.askingPrice}
+                onChange={(e) => setBulkEditModal((prev) => (prev ? { ...prev, askingPrice: e.target.value } : prev))}
+                placeholder="Optional shared price"
+              />
+            </label>
+          </div>
+
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700"
+              onClick={() => setBulkEditModal(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="rounded bg-[#d50000] px-4 py-2 text-sm font-semibold hover:bg-[#b80000]"
+              onClick={saveBulkEdit}
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     {statusModal && (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
