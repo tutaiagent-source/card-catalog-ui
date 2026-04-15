@@ -110,6 +110,31 @@ function saveCards(cards: Card[]) {
   localStorage.setItem(storageKey(), JSON.stringify(cards));
 }
 
+function csvEscape(value: string | number | null | undefined) {
+  const text = String(value ?? "");
+  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+}
+
+function downloadCsv(filename: string, rows: Array<Record<string, string | number | null | undefined>>) {
+  if (rows.length === 0) return;
+
+  const headers = Object.keys(rows[0]);
+  const csv = [
+    headers.join(","),
+    ...rows.map((row) => headers.map((header) => csvEscape(row[header])).join(",")),
+  ].join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 function driveToImageSrc(url?: string) {
   const u = (url || "").trim();
   const m = u.match(/\/d\/([^/]+)\/view/);
@@ -258,6 +283,45 @@ export default function CatalogPage() {
   }, []);
 
   const sync = () => fetchCards();
+
+  const exportCards = () => {
+    if (cards.length === 0) {
+      alert("No cards to export yet.");
+      return;
+    }
+
+    downloadCsv(
+      `cardcat-export-${new Date().toISOString().slice(0, 10)}.csv`,
+      cards.map((card) => ({
+        player_name: card.player_name,
+        year: card.year,
+        brand: card.brand,
+        set_name: card.set_name,
+        parallel: card.parallel,
+        card_number: card.card_number,
+        team: card.team,
+        sport: card.sport,
+        rookie: card.rookie,
+        is_autograph: card.is_autograph,
+        has_memorabilia: card.has_memorabilia,
+        graded: card.graded || "no",
+        grade: card.grade ?? "",
+        serial_number_text: card.serial_number_text,
+        quantity: card.quantity,
+        estimated_price: card.estimated_price ?? "",
+        status: normalizeStatusValue(card.status),
+        asking_price: card.asking_price ?? "",
+        listed_at: card.listed_at || "",
+        sold_price: card.sold_price ?? "",
+        sold_at: card.sold_at || "",
+        sale_platform: card.sale_platform || "",
+        notes: card.notes || "",
+        image_url: card.image_url || "",
+        back_image_url: card.back_image_url || "",
+        date_added: card.date_added || "",
+      }))
+    );
+  };
 
   const activeCards = useMemo(() => cards.filter((c) => normalizeStatusValue(c.status) !== "Sold"), [cards]);
 
@@ -628,6 +692,13 @@ export default function CatalogPage() {
             >
               Import CSV
             </a>
+            <button
+              type="button"
+              className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+              onClick={exportCards}
+            >
+              Export CSV
+            </button>
             <a
               href="/sold"
               className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
