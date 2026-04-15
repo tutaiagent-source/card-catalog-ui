@@ -989,7 +989,7 @@ export default function CatalogPage() {
                       <th className="px-3 py-2">Est.</th>
                       <th className="px-3 py-2">Grade</th>
                       <th className="px-3 py-2">Status</th>
-                      <th className="px-3 py-2 min-w-[240px]">Actions</th>
+                      <th className="px-3 py-2 min-w-[240px] text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1029,12 +1029,12 @@ export default function CatalogPage() {
                         <td className="px-3 py-2">{c.quantity}</td>
                         <td className="px-3 py-2">${(Number(c.estimated_price || 0) * Number(c.quantity || 0)).toFixed(2)}</td>
                         <td className="px-3 py-2">{c.graded === "yes" && c.grade != null ? c.grade : "-"}</td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-2 align-middle text-center">
                           <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(normalizeStatusValue(c.status))}`}>
                             {normalizeStatusValue(c.status)}
                           </span>
                         </td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-2 align-middle text-center">
                           <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
                             <a
                               href={buildEbaySearchUrl(c)}
