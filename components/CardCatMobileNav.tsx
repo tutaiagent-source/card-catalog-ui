@@ -16,7 +16,7 @@ export default function CardCatMobileNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-slate-950/95 backdrop-blur md:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-5 gap-1 px-1 py-1">
+      <div className="mx-auto grid max-w-md grid-cols-6 gap-1 px-1 py-1">
         {items.map((item) => {
           const active = pathname === item.href;
           return (

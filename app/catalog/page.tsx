@@ -1087,26 +1087,26 @@ export default function CatalogPage() {
           </div>
         </section>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+        <div className="mt-4 grid gap-3 grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="text-sm text-slate-400">Inventory units</div>
-            <div className="mt-1 text-2xl font-bold">{inventoryUnits}</div>
+            <div className="mt-1 text-xl sm:text-2xl font-bold">{inventoryUnits}</div>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="text-sm text-slate-400">Active rows</div>
-            <div className="mt-1 text-2xl font-bold">{activeCards.length}</div>
+            <div className="mt-1 text-xl sm:text-2xl font-bold">{activeCards.length}</div>
           </div>
-          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-3 sm:p-4 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
             <div className="text-sm text-slate-400">Estimated value</div>
-            <div className="mt-1 text-2xl font-bold">${estimatedTotal.toFixed(2)}</div>
+            <div className="mt-1 text-xl sm:text-2xl font-bold">${estimatedTotal.toFixed(2)}</div>
           </div>
-          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.08] p-4 shadow-[0_18px_40px_rgba(59,130,246,0.08)]">
+          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.08] p-3 sm:p-4 shadow-[0_18px_40px_rgba(59,130,246,0.08)]">
             <div className="text-sm text-slate-300">Listed live</div>
-            <div className="mt-1 text-2xl font-bold">{listedUnits}</div>
+            <div className="mt-1 text-xl sm:text-2xl font-bold">{listedUnits}</div>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="text-sm text-slate-400">RC / Auto rows</div>
-            <div className="mt-1 text-2xl font-bold">{rookieRows} / {autographRows}</div>
+            <div className="mt-1 text-xl sm:text-2xl font-bold">{rookieRows} / {autographRows}</div>
           </div>
         </div>
 
