@@ -231,6 +231,27 @@ export default function CatalogPage() {
     fetchCards();
   }, [user?.id]);
 
+  useEffect(() => {
+    const closeMenus = (target: EventTarget | null) => {
+      document.querySelectorAll<HTMLDetailsElement>('details[data-inventory-menu="true"]').forEach((menu) => {
+        if (target instanceof Node && menu.contains(target)) return;
+        menu.open = false;
+      });
+    };
+
+    const onDocumentClick = (event: MouseEvent) => closeMenus(event.target);
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeMenus(null);
+    };
+
+    document.addEventListener("click", onDocumentClick);
+    document.addEventListener("keydown", onEscape);
+    return () => {
+      document.removeEventListener("click", onDocumentClick);
+      document.removeEventListener("keydown", onEscape);
+    };
+  }, []);
+
   const sync = () => fetchCards();
 
   const activeCards = useMemo(() => cards.filter((c) => normalizeStatusValue(c.status) !== "Sold"), [cards]);
@@ -1029,7 +1050,7 @@ export default function CatalogPage() {
                             >
                               Edit
                             </a>
-                            <details className="relative">
+                            <details className="relative" data-inventory-menu="true">
                               <summary className="list-none cursor-pointer rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
                                 Move
                               </summary>
