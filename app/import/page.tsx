@@ -1,6 +1,7 @@
 "use client";
 
 import Papa from "papaparse";
+import * as XLSX from "xlsx";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
@@ -168,12 +169,12 @@ const FIELD_ALIASES: Record<Exclude<ImportField, "__ignore">, string[]> = {
   brand: ["brand", "manufacturer", "maker", "company"],
   set_name: ["set", "set name", "series", "product", "product line"],
   parallel: ["parallel", "insert", "subset", "theme", "parallel/insert", "variant", "version", "colorway", "variation"],
-  card_number: ["card number", "card #", "number", "checklist number", "card no", "cardnum", "card_num"],
+  card_number: ["card number", "card #", "number", "checklist number", "card no", "cardnum", "card_num", "no on card", "no. on card"],
   team: ["team", "franchise", "club", "school"],
   sport: ["sport", "league"],
-  rookie: ["rookie", "rc", "rookie card", "rookie_card"],
-  is_autograph: ["autograph", "auto", "is autograph", "signed"],
-  has_memorabilia: ["memorabilia", "mem", "patch", "jersey", "relic"],
+  rookie: ["rookie", "rc", "rookie card", "rookie_card", "rookie tag"],
+  is_autograph: ["autograph", "auto", "auto included", "is autograph", "signed"],
+  has_memorabilia: ["memorabilia", "mem", "patch", "jersey", "relic", "patch/relic", "patch / relic"],
   graded: ["graded", "is graded"],
   grade: ["grade", "grade number", "grading", "slab grade", "numeric grade"],
   grade_company: ["grader", "grading co", "grading company"],
@@ -204,34 +205,74 @@ function normalizeHeader(value: string) {
 
 function guessField(header: string): ImportField {
   const normalized = normalizeHeader(header);
+  if (!normalized) return "__ignore";
+
+  const headerTokens = normalized.split(" ").filter(Boolean);
+
+  let bestField: ImportField = "__ignore";
+  let bestScore = 0;
+
   for (const [field, aliases] of Object.entries(FIELD_ALIASES) as Array<[Exclude<ImportField, "__ignore">, string[]]>) {
-    if (aliases.some((alias) => normalizeHeader(alias) === normalized)) return field;
+    let fieldBest = 0;
+
+    for (const alias of aliases) {
+      const aliasNorm = normalizeHeader(alias);
+      if (!aliasNorm) continue;
+
+      if (aliasNorm === normalized) fieldBest = Math.max(fieldBest, 100);
+      if (normalized.includes(aliasNorm) || aliasNorm.includes(normalized)) fieldBest = Math.max(fieldBest, 70);
+
+      const aliasTokens = aliasNorm.split(" ").filter(Boolean);
+      const shared = aliasTokens.filter((t) => headerTokens.includes(t));
+      const overlap = aliasTokens.length ? shared.length / aliasTokens.length : 0;
+      const tokenScore = overlap * 60;
+      if (tokenScore) fieldBest = Math.max(fieldBest, tokenScore);
+    }
+
+    if (fieldBest > bestScore) {
+      bestScore = fieldBest;
+      bestField = field;
+    }
   }
-  return "__ignore";
+
+  // Keep conservative to avoid wrong mappings.
+  return bestScore >= 45 ? bestField : "__ignore";
 }
 
 function normalizeYesNo(value: string): { value?: YesNo; issue?: string } {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw) return {};
-  if (["yes", "y", "true", "1"].includes(raw)) return { value: "yes" };
-  if (["no", "n", "false", "0"].includes(raw)) return { value: "no" };
+  if (["yes", "y", "true", "1", "t", "sure", "yeah", "yup"].includes(raw)) return { value: "yes" };
+  if (["no", "n", "false", "0", "f", "nope", "nah"].includes(raw)) return { value: "no" };
   return { issue: `Could not read yes/no value "${value}".` };
 }
 
 function normalizeStatus(value: string): { value?: CardStatus; issue?: string } {
   const raw = String(value || "").trim().toLowerCase();
   if (!raw) return {};
-  if (["collection", "incoming"].includes(raw)) return { value: "Collection" };
-  if (raw === "listed") return { value: "Listed" };
-  if (raw === "sold") return { value: "Sold" };
+  if (["collection", "incoming", "in collection", "owned", "pc"].includes(raw)) return { value: "Collection" };
+  if (["listed", "for sale", "sale", "on sale", "market", "active", "listing"].includes(raw)) return { value: "Listed" };
+  if (["sold", "completed", "purchased", "win", "won"].includes(raw)) return { value: "Sold" };
   return { issue: `Unknown status "${value}".` };
 }
 
 function normalizeNumber(value: string): { value?: number; issue?: string } {
   const raw = String(value || "").trim();
   if (!raw) return {};
-  const numeric = Number(raw.replace(/[$,]/g, ""));
-  if (Number.isFinite(numeric)) return { value: numeric };
+
+  const cleanedPercent = raw.replace(/%\s*$/g, "");
+
+  // Handle negatives in parentheses: "($12.34)"
+  const isParenNegative = /^\(.*\)$/.test(cleanedPercent.trim());
+  const cleaned = cleanedPercent
+    .replace(/^\((.*)\)$/, "$1")
+    .replace(/[$€£¥₹,]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const numeric = Number(cleaned.replace(/\s/g, ""));
+  if (Number.isFinite(numeric)) return { value: isParenNegative ? -numeric : numeric };
+
   return { issue: `Could not read number "${value}".` };
 }
 
@@ -244,7 +285,26 @@ function normalizeQuantity(value: string): { value?: number; issue?: string } {
 }
 
 function normalizeGrade(value: string): { value?: number | null; issue?: string } {
-  const parsed = normalizeNumber(value);
+  const raw = String(value || "").trim();
+  if (!raw) return {};
+
+  // Handle "7/10" (optionally "7 / 10") or "7-10"
+  const frac = raw.match(/^\s*(\d+(?:\.\d+)?)\s*[\/-]\s*10\s*$/i);
+  if (frac) {
+    const num = Number(frac[1]);
+    if (Number.isFinite(num) && num >= 1 && num <= 10) return { value: Math.round(num) };
+    return { issue: `Grade must be between 1 and 10. Got "${value}".` };
+  }
+
+  // Handle "7 of 10"
+  const of10 = raw.match(/^\s*(\d+(?:\.\d+)?)\s*of\s*10\s*$/i);
+  if (of10) {
+    const num = Number(of10[1]);
+    if (Number.isFinite(num) && num >= 1 && num <= 10) return { value: Math.round(num) };
+    return { issue: `Grade must be between 1 and 10. Got "${value}".` };
+  }
+
+  const parsed = normalizeNumber(raw);
   if (parsed.issue) return parsed;
   if (parsed.value == null) return {};
   if (parsed.value < 1 || parsed.value > 10) return { issue: `Grade must be between 1 and 10. Got "${value}".` };
@@ -569,34 +629,97 @@ export default function ImportPage() {
     if (!file) return;
     setFileName(file.name);
 
-    Papa.parse<Record<string, string>>(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const nextHeaders = (results.meta.fields || []).filter(Boolean);
-        const cleanedRows = (results.data || []).map((row) => {
-          const cleaned: RawRow = {};
-          nextHeaders.forEach((header) => {
-            cleaned[header] = cleanText((row as any)[header] || "");
+    const ext = file.name.toLowerCase().replace(/^.*\./, "");
+    const isXlsx = ext === "xlsx" || ext === "xls";
+
+    if (!isXlsx) {
+      Papa.parse<Record<string, string>>(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          const nextHeaders = (results.meta.fields || []).filter(Boolean);
+          const cleanedRows = (results.data || []).map((row) => {
+            const cleaned: RawRow = {};
+            nextHeaders.forEach((header) => {
+              cleaned[header] = cleanText((row as any)[header] || "");
+            });
+            return cleaned;
           });
-          return cleaned;
+
+          const nextMapping: Mapping = {};
+          nextHeaders.forEach((header) => {
+            nextMapping[header] = guessField(header);
+          });
+
+          setHeaders(nextHeaders);
+          setMapping(nextMapping);
+          setRows(cleanedRows);
+          setDuplicateChoices({});
+          setParseErrors((results.errors || []).map((error) => `Row ${error.row}: ${error.message}`));
+        },
+        error: (error) => {
+          setParseErrors([error.message]);
+        },
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = new Uint8Array(reader.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const firstSheetName = workbook.SheetNames[0];
+        if (!firstSheetName) {
+          setParseErrors(["No worksheets found in spreadsheet."]);
+          return;
+        }
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        // header row = first row
+        const matrix: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: true, defval: "" });
+        if (!matrix.length) {
+          setParseErrors(["Spreadsheet is empty."]);
+          return;
+        }
+        const headerRow = (matrix[0] || []).map((h) => cleanText(String(h || "")));
+        const nextHeaders = headerRow.map((h) => (h ? h : "")).filter((h) => h !== "");
+        if (!nextHeaders.length) {
+          setParseErrors(["Could not find header row (first row must contain column names)."]);
+          return;
+        }
+
+        const cleanedRows: RawRow[] = [];
+        // Build column index mapping based on the original headerRow positions
+        const headerIndexMap: Array<{ header: string; index: number }> = [];
+        headerRow.forEach((h, idx) => {
+          if (h) headerIndexMap.push({ header: h, index: idx });
         });
 
+        for (let r = 1; r < matrix.length; r++) {
+          const rowArr = matrix[r] || [];
+          const cleaned: RawRow = {};
+          headerIndexMap.forEach(({ header, index }) => {
+            cleaned[header] = cleanText(String(rowArr[index] ?? ""));
+          });
+          if (Object.values(cleaned).some((v) => cleanText(v) !== "")) cleanedRows.push(cleaned);
+        }
+
         const nextMapping: Mapping = {};
-        nextHeaders.forEach((header) => {
+        headerIndexMap.forEach(({ header }) => {
           nextMapping[header] = guessField(header);
         });
 
-        setHeaders(nextHeaders);
+        setHeaders(headerIndexMap.map((h) => h.header));
         setMapping(nextMapping);
         setRows(cleanedRows);
         setDuplicateChoices({});
-        setParseErrors((results.errors || []).map((error) => `Row ${error.row}: ${error.message}`));
-      },
-      error: (error) => {
-        setParseErrors([error.message]);
-      },
-    });
+      } catch (e: any) {
+        setParseErrors([e?.message || "Failed to parse spreadsheet."]);
+      }
+    };
+    reader.onerror = () => setParseErrors(["Failed to read spreadsheet file."]);
+    reader.readAsArrayBuffer(file);
   };
 
   const onImport = async () => {
@@ -734,7 +857,12 @@ export default function ImportPage() {
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <div className="text-lg font-semibold">1. Upload CSV</div>
           <p className="mt-2 text-sm text-slate-400">If the structure is close to CardCat already, this should be quick. If not, you can remap columns below.</p>
-          <input type="file" accept=".csv,text/csv" className="mt-4 block w-full text-sm text-slate-300" onChange={onFileChange} />
+          <input
+            type="file"
+            accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+            className="mt-4 block w-full text-sm text-slate-300"
+            onChange={onFileChange}
+          />
           {fileName ? <div className="mt-3 text-sm text-slate-300">Loaded file: {fileName}</div> : null}
           {importSummary ? <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] p-3 text-sm text-emerald-200">{importSummary}</div> : null}
           {parseErrors.length ? (
@@ -760,21 +888,106 @@ export default function ImportPage() {
                 <div className="text-sm text-slate-400">{rows.length} row(s) detected</div>
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {headers.map((header) => (
-                  <label key={header} className="rounded-xl border border-white/10 bg-slate-950/70 p-3">
-                    <div className="text-sm font-semibold text-slate-200">{header}</div>
-                    <select
-                      className="mt-2 w-full rounded bg-slate-900 px-3 py-2 text-sm"
-                      value={mapping[header] || "__ignore"}
-                      onChange={(e) => setMapping((prev) => ({ ...prev, [header]: e.target.value as ImportField }))}
-                    >
-                      {FIELD_OPTIONS.map((option) => (
-                        <option key={option} value={option}>{FIELD_LABELS[option]}</option>
-                      ))}
-                    </select>
-                  </label>
-                ))}
+              <div className="mt-4 space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="text-sm font-semibold text-slate-200">Required fields</div>
+                    <div className="text-xs text-slate-400">Only show dropdowns for what we need (edit more below).</div>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    {REQUIRED_FIELDS.map((field) => {
+                      const assignedHeader = headers.find((h) => mapping[h] === field) || "";
+                      return (
+                        <label key={field} className="rounded-xl border border-white/10 bg-slate-950/70 p-3">
+                          <div className="text-sm font-semibold text-slate-200">{FIELD_LABELS[field as ImportField]}</div>
+                          <select
+                            className="mt-2 w-full rounded bg-slate-900 px-3 py-2 text-sm"
+                            value={assignedHeader}
+                            onChange={(e) => {
+                              const nextHeader = e.target.value;
+                              setMapping((prev) => {
+                                const next: Mapping = { ...prev };
+                                // Unassign this field from any other header.
+                                for (const h of headers) {
+                                  if (next[h] === field) next[h] = "__ignore";
+                                }
+                                if (nextHeader) next[nextHeader] = field;
+                                return next;
+                              });
+                            }}
+                          >
+                            <option value="">(not mapped)</option>
+                            {headers.map((h) => (
+                              <option key={h} value={h}>
+                                {h}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-3">
+                    {(() => {
+                      const assignedHeader = headers.find((h) => mapping[h] === "grade") || "";
+                      return (
+                        <label className="rounded-xl border border-white/10 bg-slate-950/70 p-3 block">
+                          <div className="text-sm font-semibold text-slate-200">{FIELD_LABELS.grade}</div>
+                          <select
+                            className="mt-2 w-full rounded bg-slate-900 px-3 py-2 text-sm"
+                            value={assignedHeader}
+                            onChange={(e) => {
+                              const nextHeader = e.target.value;
+                              setMapping((prev) => {
+                                const next: Mapping = { ...prev };
+                                for (const h of headers) {
+                                  if (next[h] === "grade") next[h] = "__ignore";
+                                }
+                                if (nextHeader) next[nextHeader] = "grade";
+                                return next;
+                              });
+                            }}
+                          >
+                            <option value="">(optional, not mapped)</option>
+                            {headers.map((h) => (
+                              <option key={h} value={h}>
+                                {h}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="mt-1 text-xs text-slate-400">If you mapped Grade, we’ll apply it when present.</div>
+                        </label>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                <details className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-slate-200">
+                    Advanced mapping (show all columns)
+                    <span className="ml-2 text-xs text-slate-400">(power users)</span>
+                  </summary>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    {headers.map((header) => (
+                      <label key={header} className="rounded-xl border border-white/10 bg-slate-950/70 p-3">
+                        <div className="text-sm font-semibold text-slate-200">{header}</div>
+                        <select
+                          className="mt-2 w-full rounded bg-slate-900 px-3 py-2 text-sm"
+                          value={mapping[header] || "__ignore"}
+                          onChange={(e) => setMapping((prev) => ({ ...prev, [header]: e.target.value as ImportField }))}
+                        >
+                          {FIELD_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {FIELD_LABELS[option]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ))}
+                  </div>
+                </details>
               </div>
 
               {Object.values(mapping).includes("grade") && (
