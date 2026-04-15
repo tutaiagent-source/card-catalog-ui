@@ -1096,7 +1096,7 @@ export default function CatalogPage() {
                 })}
               </div>
 
-              <div className="mt-4 hidden overflow-x-hidden rounded border border-slate-800 bg-slate-900 md:block">
+              <div className="mt-4 hidden max-w-full overflow-x-auto overscroll-x-contain rounded border border-slate-800 bg-slate-900 md:block">
                 <table className="min-w-full text-sm">
                   <thead className="bg-slate-950 text-left text-slate-400">
                     <tr>
