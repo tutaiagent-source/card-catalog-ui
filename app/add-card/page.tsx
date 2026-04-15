@@ -856,12 +856,16 @@ export default function AddCardPage() {
                       type="button"
                       className="rounded bg-slate-800 px-3 py-2 text-xs font-semibold hover:bg-slate-700"
                       onClick={() => {
+                        const serialRaw = String(card.serial_number_text ?? "").trim();
+                        const slashIdx = serialRaw.indexOf("/");
+                        const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
+
                         const parts = [
                           card.player_name,
                           card.brand,
                           card.set_name,
                           card.card_number,
-                          card.serial_number_text,
+                          serialForEbay,
                         ]
                           .map((p) => String(p ?? "").trim())
                           .filter(Boolean);

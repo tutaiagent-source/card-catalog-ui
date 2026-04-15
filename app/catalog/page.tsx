@@ -118,12 +118,17 @@ function driveToImageSrc(url?: string) {
 }
 
 function buildEbaySearchUrl(card: Card) {
+  const serialRaw = String(card.serial_number_text ?? "").trim();
+  const slashIdx = serialRaw.indexOf("/");
+  // eBay serial patterns like "3/20" should become "/20" (drop the prefix).
+  const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
+
   const parts: string[] = [
     card.player_name,
     card.brand,
     card.set_name,
     card.card_number,
-    card.serial_number_text,
+    serialForEbay,
   ]
     .map((p) => String(p ?? "").trim())
     .filter(Boolean);
