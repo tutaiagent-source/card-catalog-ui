@@ -1168,16 +1168,58 @@ export default function CatalogPage() {
                           )}
                         </div>
 
-                        <div className="flex w-full gap-2">
-                          <a href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"} className="inline-flex flex-1 items-center justify-center leading-none rounded bg-[#b80000] px-2 py-1.5 text-xs font-semibold hover:bg-[#d50000]">
-                            Edit
-                          </a>
-                          <a href={buildEbaySearchUrl(c)} target="_blank" rel="noreferrer" className="inline-flex flex-1 items-center justify-center leading-none rounded bg-slate-800 px-2 py-1.5 text-xs font-semibold hover:bg-slate-700">
-                            eBay
-                          </a>
-                          <button className="rounded bg-red-700 flex-1 px-3 py-1 text-xs font-semibold hover:bg-red-600" onClick={() => onDelete(c.id)}>
-                            Delete
-                          </button>
+                        <div className="flex justify-center">
+                          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                            <a
+                              href={buildEbaySearchUrl(c)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                            >
+                              eBay ↗
+                            </a>
+                            <a
+                              href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"}
+                              className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                            >
+                              Edit
+                            </a>
+                            <details className="relative" data-inventory-menu="true">
+                              <summary className="list-none cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
+                                Move ▾
+                              </summary>
+                              <div className="absolute right-0 z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl text-left">
+                                {normalizeStatusValue(c.status) !== "Listed" ? (
+                                  <button
+                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                    onClick={() => openStatusModal(c, "Listed")}
+                                  >
+                                    Move to Listed
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                    onClick={() => updateCardStatus(c, "Collection")}
+                                  >
+                                    Move to Collection
+                                  </button>
+                                )}
+                                <button
+                                  className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                  onClick={() => openStatusModal(c, "Sold")}
+                                >
+                                  Move to Sold
+                                </button>
+                                <div className="my-1 h-px bg-white/8" />
+                                <button
+                                  className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
+                                  onClick={() => onDelete(c.id)}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </details>
+                          </div>
                         </div>
                       </div>
                     </div>
