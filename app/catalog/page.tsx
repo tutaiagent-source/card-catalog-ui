@@ -1058,7 +1058,7 @@ export default function CatalogPage() {
                           <summary className="list-none cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
                             Move ▾
                           </summary>
-                          <div className="absolute right-0 z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl text-left">
+                          <div className="absolute right-0 z-20 mt-2 w-36 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl text-left">
                             {normalizeStatusValue(c.status) !== "Listed" ? (
                               <button
                                 className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
@@ -1096,7 +1096,7 @@ export default function CatalogPage() {
                 })}
               </div>
 
-              <div className="mt-4 hidden overflow-x-auto rounded border border-slate-800 bg-slate-900 md:block">
+              <div className="mt-4 hidden overflow-x-hidden rounded border border-slate-800 bg-slate-900 md:block">
                 <table className="min-w-full text-sm">
                   <thead className="bg-slate-950 text-left text-slate-400">
                     <tr>
@@ -1108,7 +1108,7 @@ export default function CatalogPage() {
                       <th className="px-3 py-2">Est.</th>
                       <th className="px-3 py-2">Grade</th>
                       <th className="px-3 py-2">Status</th>
-                      <th className="px-3 py-2 min-w-[240px] text-center">Actions</th>
+                      <th className="px-3 py-2 w-[200px] text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
