@@ -204,10 +204,27 @@ export default function PcPage() {
                 <div className="text-xs text-slate-400">Drag to reorder</div>
               </div>
 
-              <div className="mt-4 flex gap-4 overflow-x-auto pb-3" role="list" aria-label="PC shelf">
-                {displayedCards.map((c) => {
+              <div
+                className="relative mt-4 flex gap-4 overflow-x-auto rounded-[18px] bg-slate-950/10 px-4 pb-10"
+                role="list"
+                aria-label="PC shelf"
+              >
+                <div className="pointer-events-none absolute inset-0 -z-10 rounded-[18px] bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.20),transparent_55%)]" />
+                <div className="pointer-events-none absolute bottom-2 left-2 right-2 -z-10 h-3 rounded-full bg-gradient-to-r from-amber-500/15 via-amber-400/5 to-amber-500/15 blur-[1px]" />
+
+                {displayedCards.map((c, idx) => {
                   const isDragging = draggingId && c.id === draggingId;
                   const isOver = dragOverId && c.id === dragOverId;
+
+                  const center = (displayedCards.length - 1) / 2;
+                  const offset = idx - center;
+                  const rotateY = Math.max(-12, Math.min(12, -offset * 6));
+                  const rotateZ = offset * 0.35;
+                  const translateY = Math.abs(offset) * 1.8;
+
+                  const cardTransform = isDragging
+                    ? undefined
+                    : `perspective(900px) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) translateY(${translateY}px)`;
 
                   const insertionClass =
                     isOver && draggingId ? (dragInsertBefore ? "border-l-4 border-amber-400" : "border-r-4 border-amber-400") : "";
@@ -217,6 +234,7 @@ export default function PcPage() {
                       key={c.id}
                       role="listitem"
                       draggable
+                      style={cardTransform ? { transform: cardTransform } : undefined}
                       onDragStart={(e) => {
                         if (!c.id) return;
                         setDraggingId(c.id);
@@ -244,7 +262,7 @@ export default function PcPage() {
                         onDropReorder(c.id, insertBefore);
                       }}
                       className={
-                        "w-56 shrink-0 rounded-2xl border bg-slate-900/40 p-3 transition " +
+                        "relative z-10 w-56 shrink-0 rounded-2xl border bg-slate-900/40 p-3 transition will-change-transform " +
                         (isDragging
                           ? "border-amber-500/60 bg-amber-500/10 opacity-70"
                           : isOver

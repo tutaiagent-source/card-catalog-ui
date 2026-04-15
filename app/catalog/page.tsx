@@ -845,7 +845,7 @@ export default function CatalogPage() {
               href="/pc"
               className="rounded-lg border border-white/10 bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
             >
-              PC
+              PC ★
             </a>
             <a
               href="/account"
