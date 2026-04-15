@@ -47,6 +47,9 @@ type Card = {
   sale_platform?: string;
   notes?: string;
   date_added?: string;
+
+  // PC (personal collection) shelf ordering
+  pc_position?: number | null;
 };
 
 function storageKey() {
@@ -623,6 +626,30 @@ export default function CatalogPage() {
           : { message: `${card.player_name} moved back to Collection.` }
     );
 
+    sync();
+  };
+
+  const togglePc = async (card: Card, shouldStar: boolean) => {
+    if (!card.id) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const payload: Record<string, any> = {
+      pc_position: shouldStar ? Date.now() : null,
+    };
+
+    const { error } = await supabase
+      .from("cards")
+      .update(payload)
+      .eq("id", card.id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      alert(`PC update failed: ${error.message}`);
+      return;
+    }
+
+    setStatusToast(shouldStar ? { message: `${card.player_name} added to PC.` } : { message: `${card.player_name} removed from PC.` });
     sync();
   };
 
@@ -1370,6 +1397,21 @@ export default function CatalogPage() {
                             >
                               Move to Sold
                             </button>
+                            {c.pc_position != null ? (
+                              <button
+                                className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                onClick={() => togglePc(c, false)}
+                              >
+                                Remove from PC
+                              </button>
+                            ) : (
+                              <button
+                                className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                onClick={() => togglePc(c, true)}
+                              >
+                                Star in PC
+                              </button>
+                            )}
                             <div className="my-1 h-px bg-white/8" />
                             <button
                               className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
@@ -1513,6 +1555,21 @@ export default function CatalogPage() {
                                 >
                                   Move to Sold
                                 </button>
+                                {c.pc_position != null ? (
+                                  <button
+                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                    onClick={() => togglePc(c, false)}
+                                  >
+                                    Remove from PC
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                    onClick={() => togglePc(c, true)}
+                                  >
+                                    Star in PC
+                                  </button>
+                                )}
                                 <div className="my-1 h-px bg-white/8" />
                                 <button
                                   className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
@@ -1648,6 +1705,21 @@ export default function CatalogPage() {
                                 >
                                   Move to Sold
                                 </button>
+                                {c.pc_position != null ? (
+                                  <button
+                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                    onClick={() => togglePc(c, false)}
+                                  >
+                                    Remove from PC
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                    onClick={() => togglePc(c, true)}
+                                  >
+                                    Star in PC
+                                  </button>
+                                )}
                                 <div className="my-1 h-px bg-white/8" />
                                 <button
                                   className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
