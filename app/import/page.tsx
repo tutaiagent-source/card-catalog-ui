@@ -387,6 +387,17 @@ function compactUpdatePayload(payload: Partial<Card>) {
   return Object.fromEntries(entries);
 }
 
+function taxonomyDiff(card: Card) {
+  const normalized = normalizeCatalogTaxonomy(card);
+  const changes: Partial<Card> = {};
+
+  if (cleanText(card.sport) !== cleanText(normalized.sport)) changes.sport = normalized.sport;
+  if (cleanText(card.brand) !== cleanText(normalized.brand)) changes.brand = normalized.brand;
+  if (cleanText(card.set_name) !== cleanText(normalized.set_name)) changes.set_name = normalized.set_name;
+
+  return { normalized, changes };
+}
+
 export default function ImportPage() {
   const { user, loading } = useSupabaseUser();
   const [existingCards, setExistingCards] = useState<Card[]>([]);
@@ -396,28 +407,38 @@ export default function ImportPage() {
   const [fileName, setFileName] = useState("");
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [importSummary, setImportSummary] = useState<string>("");
+  const [cleanupSummary, setCleanupSummary] = useState<string>("");
   const [importing, setImporting] = useState(false);
+  const [cleaningUp, setCleaningUp] = useState(false);
+
+  const loadExistingCards = async () => {
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+    const { data, error } = await supabase.from("cards").select("*").eq("user_id", user.id);
+    if (error) {
+      setParseErrors([`Could not load existing cards: ${error.message}`]);
+      return;
+    }
+    setExistingCards((data ?? []) as Card[]);
+  };
 
   useEffect(() => {
-    if (!user?.id || !supabaseConfigured || !supabase) return;
-
-    (async () => {
-      const { data, error } = await supabase.from("cards").select("*").eq("user_id", user.id);
-      if (error) {
-        setParseErrors([`Could not load existing cards: ${error.message}`]);
-        return;
-      }
-      setExistingCards(((data ?? []) as Card[]).map((card) => normalizeCatalogTaxonomy(card)));
-    })();
+    loadExistingCards();
   }, [user?.id]);
 
   const existingByKey = useMemo(() => {
     const map = new Map<string, Card>();
     for (const card of existingCards) {
-      const key = buildIdentityKey(card);
+      const normalizedCard = normalizeCatalogTaxonomy(card);
+      const key = buildIdentityKey(normalizedCard);
       if (key) map.set(key, card);
     }
     return map;
+  }, [existingCards]);
+
+  const cleanupCandidates = useMemo(() => {
+    return existingCards
+      .map((card) => ({ card, ...taxonomyDiff(card) }))
+      .filter((entry) => Object.keys(entry.changes).length > 0);
   }, [existingCards]);
 
   const previewRows = useMemo(() => {
@@ -551,8 +572,37 @@ export default function ImportPage() {
     );
     setParseErrors(failures);
 
-    const { data } = await supabase.from("cards").select("*").eq("user_id", user.id);
-    setExistingCards(((data ?? []) as Card[]).map((card) => normalizeCatalogTaxonomy(card)));
+    await loadExistingCards();
+  };
+
+  const onCleanupTaxonomy = async () => {
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+    if (!cleanupCandidates.length) {
+      setCleanupSummary("No taxonomy cleanup is needed right now.");
+      return;
+    }
+
+    setCleaningUp(true);
+    let updated = 0;
+    const failures: string[] = [];
+
+    for (const entry of cleanupCandidates) {
+      const { error } = await supabase
+        .from("cards")
+        .update(entry.changes)
+        .eq("id", entry.card.id)
+        .eq("user_id", user.id);
+
+      if (error) failures.push(`${entry.card.player_name}: ${error.message}`);
+      else updated += 1;
+    }
+
+    setCleaningUp(false);
+    setCleanupSummary(
+      failures.length ? `${updated} card(s) cleaned up, ${failures.length} failed.` : `${updated} card(s) cleaned up.`
+    );
+    if (failures.length) setParseErrors(failures);
+    await loadExistingCards();
   };
 
   if (loading) {
@@ -699,6 +749,43 @@ export default function ImportPage() {
               </div>
 
               {previewRows.length > 25 ? <div className="mt-4 text-sm text-slate-400">Showing first 25 preview rows.</div> : null}
+            </section>
+
+            <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="text-lg font-semibold">4. Cleanup naming</div>
+                  <p className="mt-1 text-sm text-slate-400">Use this after import to normalize duplicate taxonomy like NFL / Football or Panini Prizm / Prizm.</p>
+                </div>
+                <button
+                  className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700 disabled:opacity-50"
+                  onClick={onCleanupTaxonomy}
+                  disabled={cleaningUp || cleanupCandidates.length === 0}
+                >
+                  {cleaningUp ? "Cleaning up..." : `Apply cleanup (${cleanupCandidates.length})`}
+                </button>
+              </div>
+
+              {cleanupSummary ? <div className="mt-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] p-3 text-sm text-emerald-200">{cleanupSummary}</div> : null}
+
+              {cleanupCandidates.length > 0 ? (
+                <div className="mt-4 space-y-3">
+                  {cleanupCandidates.slice(0, 10).map((entry) => (
+                    <div key={entry.card.id || `${entry.card.player_name}-${entry.card.card_number}`} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                      <div className="font-semibold text-slate-200">{entry.card.player_name}</div>
+                      <div className="mt-1 text-sm text-slate-400">{entry.card.year} · {entry.card.brand} · {entry.card.set_name}</div>
+                      <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                        {entry.changes.sport ? <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-amber-200">Sport: {entry.card.sport || "-"} → {entry.changes.sport}</span> : null}
+                        {entry.changes.brand ? <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-amber-200">Brand: {entry.card.brand || "-"} → {entry.changes.brand}</span> : null}
+                        {entry.changes.set_name ? <span className="rounded-full bg-amber-500/15 px-2.5 py-1 text-amber-200">Set: {entry.card.set_name || "-"} → {entry.changes.set_name}</span> : null}
+                      </div>
+                    </div>
+                  ))}
+                  {cleanupCandidates.length > 10 ? <div className="text-sm text-slate-400">Showing first 10 cleanup suggestions.</div> : null}
+                </div>
+              ) : (
+                <div className="mt-4 text-sm text-slate-400">No cleanup suggestions right now.</div>
+              )}
             </section>
           </>
         )}
