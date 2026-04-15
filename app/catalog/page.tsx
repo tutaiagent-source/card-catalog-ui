@@ -1015,46 +1015,46 @@ export default function CatalogPage() {
                         </td>
                         <td className="px-3 py-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            {normalizeStatusValue(c.status) !== "Listed" ? (
-                              <button
-                                className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
-                                onClick={() => openStatusModal(c, "Listed")}
-                              >
-                                List
-                              </button>
-                            ) : (
-                              <button
-                                className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
-                                onClick={() => updateCardStatus(c, "Collection")}
-                              >
-                                Collection
-                              </button>
-                            )}
-                            <button
+                            <a
+                              href={buildEbaySearchUrl(c)}
+                              target="_blank"
+                              rel="noreferrer"
                               className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
-                              onClick={() => openStatusModal(c, "Sold")}
                             >
-                              Mark sold
-                            </button>
+                              eBay
+                            </a>
+                            <a
+                              href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"}
+                              className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                            >
+                              Edit
+                            </a>
                             <details className="relative">
                               <summary className="list-none cursor-pointer rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
-                                More
+                                Move
                               </summary>
-                              <div className="absolute right-0 z-20 mt-2 w-36 rounded-xl border border-white/10 bg-slate-950 p-1 shadow-2xl">
-                                <a
-                                  href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"}
-                                  className="block rounded-lg px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                              <div className="absolute right-0 z-20 mt-2 w-40 rounded-xl border border-white/10 bg-slate-950 p-1 shadow-2xl">
+                                {normalizeStatusValue(c.status) !== "Listed" ? (
+                                  <button
+                                    className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                    onClick={() => openStatusModal(c, "Listed")}
+                                  >
+                                    Move to Listed
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                    onClick={() => updateCardStatus(c, "Collection")}
+                                  >
+                                    Move to Collection
+                                  </button>
+                                )}
+                                <button
+                                  className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                  onClick={() => openStatusModal(c, "Sold")}
                                 >
-                                  Edit
-                                </a>
-                                <a
-                                  href={buildEbaySearchUrl(c)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="block rounded-lg px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
-                                >
-                                  eBay
-                                </a>
+                                  Move to Sold
+                                </button>
                                 <button
                                   className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
                                   onClick={() => onDelete(c.id)}
