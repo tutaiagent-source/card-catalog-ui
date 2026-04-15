@@ -357,15 +357,15 @@ export default function SoldPage() {
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-semibold text-white">Revenue trend</h2>
-                <p className="mt-1 text-sm text-slate-400">Last 6 months of sold revenue.</p>
+                <h2 className="text-base sm:text-lg font-semibold text-white">Revenue trend</h2>
+                <p className="mt-1 text-xs sm:text-sm text-slate-400">Last 6 months of sold revenue.</p>
               </div>
               <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300">
                 {money(grossSales)} total
               </div>
             </div>
 
-            <div className="mt-6 grid h-64 grid-cols-6 items-end gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+            <div className="mt-5 grid h-44 sm:h-56 lg:h-64 grid-cols-6 items-end gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
               {monthlyTrend.map((bucket) => {
                 const height = cards.length === 0 ? "12%" : `${Math.max(12, (bucket.revenue / maxTrendRevenue) * 100)}%`;
                 return (
@@ -392,9 +392,9 @@ export default function SoldPage() {
           </div>
 
           <div className="grid gap-4">
-            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-              <h2 className="text-lg font-semibold text-white">Platform mix</h2>
-              <p className="mt-1 text-sm text-slate-400">Where your sold revenue is coming from.</p>
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+              <h2 className="text-base sm:text-lg font-semibold text-white">Platform mix</h2>
+              <p className="mt-1 text-xs sm:text-sm text-slate-400">Where your sold revenue is coming from.</p>
 
               <div className="mt-5 space-y-4">
                 {platformBreakdown.length > 0 ? platformBreakdown.map((item) => (
@@ -419,13 +419,13 @@ export default function SoldPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-              <h2 className="text-lg font-semibold text-white">Recent wins</h2>
-              <p className="mt-1 text-sm text-slate-400">Latest completed sales.</p>
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+              <h2 className="text-base sm:text-lg font-semibold text-white">Recent wins</h2>
+              <p className="mt-1 text-xs sm:text-sm text-slate-400">Latest completed sales.</p>
 
               <div className="mt-4 space-y-3">
                     {recentHighlights.length > 0 ? recentHighlights.map((card, index) => (
-                      <div key={`${card.id || index}-${card.card_number}`} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                      <div key={`${card.id || index}-${card.card_number}`} className="rounded-2xl border border-white/10 bg-slate-950/60 p-3 sm:p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <div className="truncate font-semibold text-white">{card.player_name}</div>
