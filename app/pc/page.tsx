@@ -438,27 +438,24 @@ export default function PcPage() {
               <img alt="front" src={imageModal.src} className="h-full w-full object-contain" />
             </div>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-              <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-slate-200">
-                Qty {imageModal.card.quantity}
-              </div>
-              {imageModal.card.card_number ? (
-                <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-slate-200">
-                  #{imageModal.card.card_number}
-                </div>
-              ) : null}
+            <div className="mt-3 flex flex-col gap-2 text-sm">
               <a
                 href={buildEbaySearchUrl(imageModal.card)}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-slate-200 hover:bg-white/[0.08]"
+                className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-center text-slate-200 hover:bg-white/[0.08]"
               >
                 Check Comps ↗
               </a>
+
               <button
                 type="button"
-                className="ml-auto rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-sm font-semibold text-red-200 hover:bg-red-500/15"
-                onClick={() => removeFromPc(imageModal.card)}
+                className="rounded-full border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/15"
+                onClick={() => {
+                  const ok = confirm("Remove this card from PC?");
+                  if (!ok) return;
+                  removeFromPc(imageModal.card);
+                }}
               >
                 Remove
               </button>
