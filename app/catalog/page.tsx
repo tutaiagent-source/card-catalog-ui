@@ -642,7 +642,7 @@ export default function CatalogPage() {
           </div>
         )}
 
-        <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+        <section className="sticky top-0 z-30 mt-0 rounded-2xl border border-white/10 bg-slate-950/70 p-3 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] backdrop-blur md:p-4">
           <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
             <input
               className="rounded-xl bg-slate-900 px-3 py-2"
@@ -658,7 +658,7 @@ export default function CatalogPage() {
             </button>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs text-slate-400">
               <span className="uppercase tracking-[0.18em]">View</span>
               <button
@@ -734,7 +734,7 @@ export default function CatalogPage() {
           </button>
           </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
           <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterSport} onChange={(e) => setFilterSport(e.target.value)}>
             <option value="all">All sports</option>
             {sportOptions.map((option) => (
