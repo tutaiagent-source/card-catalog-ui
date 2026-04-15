@@ -410,6 +410,30 @@ export default function CatalogPage() {
     }, 0);
   }, [activeCards]);
 
+  const inventoryUnits = useMemo(
+    () => activeCards.reduce((sum, c) => sum + Number(c.quantity || 0), 0),
+    [activeCards]
+  );
+
+  const listedUnits = useMemo(
+    () =>
+      activeCards.reduce(
+        (sum, c) => sum + (normalizeStatusValue(c.status) === "Listed" ? Number(c.quantity || 0) : 0),
+        0
+      ),
+    [activeCards]
+  );
+
+  const rookieRows = useMemo(
+    () => activeCards.filter((c) => c.rookie === "yes").length,
+    [activeCards]
+  );
+
+  const autographRows = useMemo(
+    () => activeCards.filter((c) => c.is_autograph === "yes").length,
+    [activeCards]
+  );
+
   useEffect(() => {
     if (valuable.length === 0) {
       setPreviewCard(null);
@@ -588,8 +612,8 @@ export default function CatalogPage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200">
               CardCat.io
             </div>
-            <h1 className="mt-3 text-2xl font-bold">CardCat Catalog</h1>
-            <div className="mt-1 text-sm text-slate-400">Signed in as {user.email}</div>
+            <h1 className="mt-3 text-2xl font-bold">Catalog</h1>
+            <div className="mt-1 text-sm text-slate-400">Search, sort, and move inventory without losing the plot.</div>
           </div>
           <div className="flex flex-wrap gap-3">
             <a
@@ -689,7 +713,7 @@ export default function CatalogPage() {
               >
                 {showFilters ? "Hide filters" : "Show filters"}
               </button>
-            <div className="text-sm text-slate-400">Showing {familyRows.length} families of {activeCards.length} active card rows</div>
+            <div className="text-sm text-slate-400">{familyRows.length} families, {activeCards.length} active rows</div>
             </div>
           </div>
 
@@ -776,20 +800,41 @@ export default function CatalogPage() {
             <option value="value_desc">Sort: value high-low</option>
           </select>
           </div>
+
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-300">
+            {q ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Search: {q}</span> : null}
+            {filterSport !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Sport: {filterSport}</span> : null}
+            {filterYear !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Year: {filterYear}</span> : null}
+            {filterBrand !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Brand: {filterBrand}</span> : null}
+            {filterStatus !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Status: {filterStatus}</span> : null}
+            {filterGraded !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Graded: {filterGraded}</span> : null}
+          </div>
           </div>
         </section>
 
-        <div className="mt-1 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-            <div className="text-sm text-slate-400">Active Inventory</div>
+            <div className="text-sm text-slate-400">Inventory units</div>
+            <div className="mt-1 text-2xl font-bold">{inventoryUnits}</div>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="text-sm text-slate-400">Active rows</div>
             <div className="mt-1 text-2xl font-bold">{activeCards.length}</div>
           </div>
           <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
             <div className="text-sm text-slate-400">Estimated value</div>
             <div className="mt-1 text-2xl font-bold">${estimatedTotal.toFixed(2)}</div>
           </div>
+          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.08] p-4 shadow-[0_18px_40px_rgba(59,130,246,0.08)]">
+            <div className="text-sm text-slate-300">Listed live</div>
+            <div className="mt-1 text-2xl font-bold">{listedUnits}</div>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <div className="text-sm text-slate-400">RC / Auto rows</div>
+            <div className="mt-1 text-2xl font-bold">{rookieRows} / {autographRows}</div>
+          </div>
         </div>
-        <section className="mt-8 rounded-xl border border-slate-800 bg-slate-900 p-4">
+        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold">Valuable Candidates</h2>
@@ -806,7 +851,7 @@ export default function CatalogPage() {
 
           {showValuable && (valuable.length === 0 ? (
             <div className="mt-4 rounded border border-slate-800 bg-slate-900 p-4 text-slate-400">
-              No cards yet. Click "Add Card".
+              No cards yet. Click &quot;Add Card&quot;.
             </div>
           ) : (
             <>
@@ -944,7 +989,7 @@ export default function CatalogPage() {
                     </div>
                   </>
                 ) : (
-                  <div className="text-sm text-slate-400">Tap "View" to preview a candidate.</div>
+                  <div className="text-sm text-slate-400">Tap &quot;View&quot; to preview a candidate.</div>
                 )}
               </div>
             </>
