@@ -45,6 +45,25 @@ function driveToImageSrc(url?: string) {
   return u;
 }
 
+function buildEbaySearchUrl(card: Card) {
+  const serialRaw = String(card.serial_number_text ?? "").trim();
+  const slashIdx = serialRaw.indexOf("/");
+  const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
+
+  const parts: string[] = [
+    card.player_name,
+    card.brand,
+    card.set_name,
+    card.card_number,
+    serialForEbay,
+  ]
+    .map((p) => String(p ?? "").trim())
+    .filter(Boolean);
+
+  const query = parts.join(" ");
+  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
+}
+
 export default function PcPage() {
   const { user, loading } = useSupabaseUser();
 
@@ -428,6 +447,14 @@ export default function PcPage() {
                   #{imageModal.card.card_number}
                 </div>
               ) : null}
+              <a
+                href={buildEbaySearchUrl(imageModal.card)}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-slate-200 hover:bg-white/[0.08]"
+              >
+                Check Comps ↗
+              </a>
               <button
                 type="button"
                 className="ml-auto rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-sm font-semibold text-red-200 hover:bg-red-500/15"
