@@ -47,11 +47,14 @@ function driveToImageSrc(url?: string) {
 
 export default function PcPage() {
   const { user, loading } = useSupabaseUser();
+
   const [pcCards, setPcCards] = useState<Card[]>([]);
   const [savingOrder, setSavingOrder] = useState(false);
   const [statusToast, setStatusToast] = useState<string | null>(null);
+
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const [dragInsertBefore, setDragInsertBefore] = useState(true);
 
   useEffect(() => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -78,6 +81,25 @@ export default function PcPage() {
     const t = window.setTimeout(() => setStatusToast(null), 5000);
     return () => window.clearTimeout(t);
   }, [statusToast]);
+
+  const computeReordered = (base: Card[], fromId: string, overId: string, insertBefore: boolean) => {
+    const fromIndex = base.findIndex((c) => c.id === fromId);
+    const toIndex = base.findIndex((c) => c.id === overId);
+    if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return base;
+
+    const next = base.slice();
+    const [moved] = next.splice(fromIndex, 1);
+    const targetIndex = toIndex + (insertBefore ? 0 : 1);
+    const insertAt = fromIndex < toIndex ? targetIndex - 1 : targetIndex;
+    next.splice(insertAt, 0, moved);
+    return next;
+  };
+
+  const displayedCards = useMemo(() => {
+    if (!draggingId || !dragOverId) return pcCards;
+    if (draggingId === dragOverId) return pcCards;
+    return computeReordered(pcCards, draggingId, dragOverId, dragInsertBefore);
+  }, [pcCards, draggingId, dragOverId, dragInsertBefore]);
 
   const persistOrder = async (next: Card[]) => {
     if (!supabaseConfigured || !supabase) return;
@@ -122,22 +144,14 @@ export default function PcPage() {
     setPcCards((prev) => prev.filter((c) => c.id !== card.id));
   };
 
-  const onDropReorder = async (overId: string) => {
+  const onDropReorder = async (overId: string, insertBefore: boolean) => {
     if (!draggingId || draggingId === overId) return;
 
-    const fromIndex = pcCards.findIndex((c) => c.id === draggingId);
-    const toIndex = pcCards.findIndex((c) => c.id === overId);
-    if (fromIndex < 0 || toIndex < 0) return;
-
-    const next = pcCards.slice();
-    const [moved] = next.splice(fromIndex, 1);
-    const insertAt = fromIndex < toIndex ? toIndex - 1 : toIndex;
-    next.splice(insertAt, 0, moved);
-
+    const next = computeReordered(pcCards, draggingId, overId, insertBefore);
     setDragOverId(null);
     setDraggingId(null);
 
-    const name = moved?.player_name ?? "Card";
+    const name = pcCards.find((c) => c.id === draggingId)?.player_name ?? "Card";
     await persistOrder(next);
     setStatusToast(`Reordered: ${name}`);
   };
@@ -161,7 +175,7 @@ export default function PcPage() {
               <span>⭐</span>
               <span>PC</span>
             </div>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">Personal Collection shelf</h1>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">Personal Collection Shelf</h1>
             <p className="mt-2 text-slate-300">Starred cards live here. Drag to reorder.</p>
           </div>
 
@@ -181,17 +195,16 @@ export default function PcPage() {
             <div className="rounded-[20px] border border-white/10 bg-slate-900/30 p-4">
               <div className="flex items-center justify-between gap-4">
                 <div className="text-sm font-semibold text-slate-200">Display</div>
-                <div className="text-xs text-slate-400">Drag cards to reorder</div>
+                <div className="text-xs text-slate-400">Drag to reorder</div>
               </div>
 
-              <div
-                className="mt-4 flex gap-4 overflow-x-auto pb-3"
-                role="list"
-                aria-label="PC shelf"
-              >
-                {pcCards.map((c) => {
+              <div className="mt-4 flex gap-4 overflow-x-auto pb-3" role="list" aria-label="PC shelf">
+                {displayedCards.map((c) => {
                   const isDragging = draggingId && c.id === draggingId;
                   const isOver = dragOverId && c.id === dragOverId;
+
+                  const insertionClass =
+                    isOver && draggingId ? (dragInsertBefore ? "border-l-4 border-amber-400" : "border-r-4 border-amber-400") : "";
 
                   return (
                     <div
@@ -202,6 +215,7 @@ export default function PcPage() {
                         if (!c.id) return;
                         setDraggingId(c.id);
                         setDragOverId(c.id);
+                        setDragInsertBefore(true);
                         try {
                           e.dataTransfer.setData("text/plain", c.id);
                         } catch {
@@ -212,20 +226,26 @@ export default function PcPage() {
                       onDragOver={(e) => {
                         e.preventDefault();
                         if (!c.id) return;
+                        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                         setDragOverId(c.id);
+                        setDragInsertBefore(e.clientX < rect.left + rect.width / 2);
                       }}
                       onDrop={(e) => {
                         e.preventDefault();
                         if (!c.id) return;
-                        onDropReorder(c.id);
+                        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                        const insertBefore = e.clientX < rect.left + rect.width / 2;
+                        onDropReorder(c.id, insertBefore);
                       }}
                       className={
                         "w-56 shrink-0 rounded-2xl border bg-slate-900/40 p-3 transition " +
                         (isDragging
                           ? "border-amber-500/60 bg-amber-500/10 opacity-70"
                           : isOver
-                            ? "border-amber-500/40 bg-amber-500/8"
-                            : "border-slate-800/90 hover:border-white/20")
+                            ? "border-amber-500/30 bg-amber-500/8"
+                            : "border-slate-800/90 hover:border-white/20") +
+                        " " +
+                        insertionClass
                       }
                     >
                       <div className="relative">
@@ -257,7 +277,9 @@ export default function PcPage() {
                         <div className="mt-1 text-xs text-slate-300">
                           {c.year} · {c.brand}
                         </div>
-                        <div className="mt-1 text-xs text-slate-400">{c.set_name} · #{c.card_number || "n/a"}</div>
+                        <div className="mt-1 text-xs text-slate-400">
+                          {c.set_name} · #{c.card_number || "n/a"}
+                        </div>
                       </div>
                     </div>
                   );

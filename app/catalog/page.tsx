@@ -1353,6 +1353,19 @@ export default function CatalogPage() {
                           <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(normalizeStatusValue(c.status))}`}>
                             {normalizeStatusValue(c.status)}
                           </span>
+                          <button
+                            type="button"
+                            onClick={() => togglePc(c, c.pc_position == null)}
+                            className={
+                              c.pc_position != null
+                                ? "rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
+                                : "rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                            }
+                            aria-label={c.pc_position != null ? "Remove from PC" : "Add to PC"}
+                            title={c.pc_position != null ? "Remove from PC" : "Star in PC"}
+                          >
+                            {c.pc_position != null ? "★" : "☆"}
+                          </button>
                           {normalizeStatusValue(c.status) === "Listed" && c.asking_price != null ? (
                             <span className="text-sm text-slate-300">Asking ${Number(c.asking_price).toFixed(2)}</span>
                           ) : null}
@@ -1487,7 +1500,22 @@ export default function CatalogPage() {
                           )}
                         </td>
                         <td className="px-3 py-2 min-w-0">
-                          <div className="font-semibold">{c.player_name}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-semibold">{c.player_name}</div>
+                            <button
+                              type="button"
+                              onClick={() => togglePc(c, c.pc_position == null)}
+                              className={
+                                c.pc_position != null
+                                  ? "rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
+                                  : "rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                              }
+                              aria-label={c.pc_position != null ? "Remove from PC" : "Add to PC"}
+                              title={c.pc_position != null ? "Remove from PC" : "Star in PC"}
+                            >
+                              {c.pc_position != null ? "★" : "☆"}
+                            </button>
+                          </div>
                           <div className="text-xs text-slate-400">{c.year} · {c.team} · {c.sport}</div>
                           <div className="mt-1 text-sm text-slate-200">{c.brand} · {c.set_name}</div>
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
@@ -1645,7 +1673,22 @@ export default function CatalogPage() {
                     <div className="flex-1">
                       <div className="flex flex-col gap-3 text-center">
                         <div className="space-y-1">
-                          <div className="font-semibold">{c.player_name}</div>
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="font-semibold">{c.player_name}</div>
+                            <button
+                              type="button"
+                              onClick={() => togglePc(c, c.pc_position == null)}
+                              className={
+                                c.pc_position != null
+                                  ? "rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
+                                  : "rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                              }
+                              aria-label={c.pc_position != null ? "Remove from PC" : "Add to PC"}
+                              title={c.pc_position != null ? "Remove from PC" : "Star in PC"}
+                            >
+                              {c.pc_position != null ? "★" : "☆"}
+                            </button>
+                          </div>
                           <div className="text-sm text-slate-300">
                             {c.year} · {c.brand} · {c.set_name}
                           </div>
