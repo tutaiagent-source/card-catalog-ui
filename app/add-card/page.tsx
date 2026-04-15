@@ -535,7 +535,17 @@ export default function AddCardPage() {
             <h1 className="mt-3 text-2xl font-bold">{editingId ? "Edit Card" : "Add Card"}</h1>
             <div className="mt-1 text-sm text-slate-400">Signed in as {user.email}</div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {editingId && (
+              <button
+                type="button"
+                disabled={saving}
+                className="rounded-lg bg-[#d50000] px-4 py-2 text-sm font-semibold hover:bg-[#b80000] disabled:opacity-60"
+                onClick={onSave}
+              >
+                {saving ? "Saving..." : "Save changes"}
+              </button>
+            )}
             <a className="text-red-300 hover:underline" href="/catalog">
               Back to Catalog
             </a>
@@ -563,14 +573,24 @@ export default function AddCardPage() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm text-slate-300">Step {step} of 4</div>
-              <div className="text-xs text-slate-400">{stepLabels[step - 1]}</div>
+              <div className="text-xs text-slate-400">{stepLabels[step - 1]}{editingId ? " · Jump between sections and save anytime." : ""}</div>
             </div>
-            <div className="hidden gap-2 sm:flex">
+            <div className="flex flex-wrap gap-2">
               {stepLabels.map((label, index) => {
                 const stepNumber = index + 1;
                 const active = stepNumber === step;
                 const complete = stepNumber < step;
-                return (
+                const canJump = Boolean(editingId);
+                return canJump ? (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setStep(stepNumber)}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${active ? "bg-amber-500/15 text-amber-200" : complete ? "bg-emerald-500/12 text-emerald-200" : "bg-slate-900 text-slate-400 hover:bg-slate-800"}`}
+                  >
+                    {stepNumber}. {label}
+                  </button>
+                ) : (
                   <div
                     key={label}
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${active ? "bg-amber-500/15 text-amber-200" : complete ? "bg-emerald-500/12 text-emerald-200" : "bg-slate-900 text-slate-400"}`}
