@@ -5,6 +5,7 @@ import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { normalizeBrandAndSet, normalizeCatalogTaxonomy, normalizeSportLabel } from "@/lib/cardTaxonomy";
+import { GradeCompany, parseGradeCompany, parseGradeNumber, upsertGradeCompanyInNotes } from "@/lib/gradeNotes";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 
 type YesNo = "yes" | "no";
@@ -270,9 +271,11 @@ function rowHasAnyData(row: RawRow) {
   return Object.values(row).some((value) => cleanText(value) !== "");
 }
 
-function buildRowPayload(row: RawRow, mapping: Mapping) {
+function buildRowPayload(row: RawRow, mapping: Mapping, gradeCompanyOverride?: GradeCompany | "") {
   const payload: Partial<Card> = {};
   const issues: string[] = [];
+  let gradeCompanyUsed: GradeCompany | null = null;
+  let gradeTextUsed: string | null = null;
 
   for (const [header, target] of Object.entries(mapping)) {
     if (!target || target === "__ignore") continue;
@@ -317,9 +320,20 @@ function buildRowPayload(row: RawRow, mapping: Mapping) {
         break;
       }
       case "grade": {
-        const normalized = normalizeGrade(rawValue);
-        if (normalized.issue) issues.push(normalized.issue);
-        else if (normalized.value != null) payload.grade = normalized.value;
+        const parsed = parseGradeNumber(rawValue);
+        if (parsed.issue) {
+          issues.push(parsed.issue);
+        } else if (parsed.gradeNumber != null) {
+          payload.grade = Math.round(parsed.gradeNumber);
+          gradeTextUsed = parsed.gradeText ?? String(parsed.gradeNumber);
+
+          const parsedCompany = parseGradeCompany(rawValue);
+          const hasOverride = gradeCompanyOverride != null && gradeCompanyOverride !== "";
+
+          // Only store a company when it’s explicit in the grade text or the user provided an override.
+          if (parsedCompany !== "Other") gradeCompanyUsed = parsedCompany;
+          else if (hasOverride) gradeCompanyUsed = gradeCompanyOverride as GradeCompany;
+        }
         break;
       }
       case "estimated_price":
@@ -338,6 +352,14 @@ function buildRowPayload(row: RawRow, mapping: Mapping) {
         break;
       }
     }
+  }
+
+  if (gradeCompanyUsed) {
+    payload.notes = upsertGradeCompanyInNotes({
+      notes: payload.notes,
+      gradeCompany: gradeCompanyUsed,
+      gradeText: gradeTextUsed,
+    });
   }
 
   if (!payload.parallel) payload.parallel = "n/a";
@@ -409,6 +431,7 @@ export default function ImportPage() {
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [importSummary, setImportSummary] = useState<string>("");
   const [cleanupSummary, setCleanupSummary] = useState<string>("");
+  const [gradeCompanyOverride, setGradeCompanyOverride] = useState<GradeCompany | "">("");
   const [duplicateChoices, setDuplicateChoices] = useState<Record<number, "update" | "add_quantity" | "skip">>({});
   const [importing, setImporting] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
@@ -451,7 +474,7 @@ export default function ImportPage() {
         return { rowNumber: index + 2, source: row, payload: {}, action: "skip", issues: [] } as PreviewRow;
       }
 
-      const { payload, issues } = buildRowPayload(row, mapping);
+      const { payload, issues } = buildRowPayload(row, mapping, gradeCompanyOverride);
 
       for (const field of REQUIRED_FIELDS) {
         if (!cleanText(String((payload as any)[field] || ""))) {
@@ -481,7 +504,7 @@ export default function ImportPage() {
         matchedCard: matched,
       } as PreviewRow;
     });
-  }, [rows, mapping, existingByKey]);
+  }, [rows, mapping, existingByKey, gradeCompanyOverride]);
 
   const stats = useMemo(() => {
     const createCount = previewRows.filter((row) => row.action === "create").length;
@@ -706,6 +729,28 @@ export default function ImportPage() {
                   </label>
                 ))}
               </div>
+
+              {Object.values(mapping).includes("grade") && (
+                <div className="mt-4">
+                  <label className="block text-sm font-semibold text-slate-200">Grade company (optional)</label>
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <select
+                      className="w-full rounded bg-slate-900 px-3 py-2 text-sm"
+                      value={gradeCompanyOverride}
+                      onChange={(e) => setGradeCompanyOverride(e.target.value as GradeCompany | "")} 
+                    >
+                      <option value="">Auto-detect from grade text</option>
+                      <option value="PSA">PSA</option>
+                      <option value="BGS">BGS</option>
+                      <option value="CSG">CSG</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div className="mt-1 text-xs text-slate-400">
+                    Used only when the grade text doesn’t include PSA/BGS/CSG.
+                  </div>
+                </div>
+              )}
             </section>
 
             <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
