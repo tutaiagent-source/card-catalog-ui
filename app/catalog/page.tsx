@@ -1416,21 +1416,6 @@ export default function CatalogPage() {
                             >
                               Move to Sold
                             </button>
-                            {c.pc_position != null ? (
-                              <button
-                                className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
-                                onClick={() => togglePc(c, false)}
-                              >
-                                Remove from PC
-                              </button>
-                            ) : (
-                              <button
-                                className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
-                                onClick={() => togglePc(c, true)}
-                              >
-                                Star in PC
-                              </button>
-                            )}
                             <div className="my-1 h-px bg-white/8" />
                             <button
                               className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
@@ -1589,21 +1574,6 @@ export default function CatalogPage() {
                                 >
                                   Move to Sold
                                 </button>
-                                {c.pc_position != null ? (
-                                  <button
-                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
-                                    onClick={() => togglePc(c, false)}
-                                  >
-                                    Remove from PC
-                                  </button>
-                                ) : (
-                                  <button
-                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
-                                    onClick={() => togglePc(c, true)}
-                                  >
-                                    Star in PC
-                                  </button>
-                                )}
                                 <div className="my-1 h-px bg-white/8" />
                                 <button
                                   className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
@@ -1754,21 +1724,6 @@ export default function CatalogPage() {
                                 >
                                   Move to Sold
                                 </button>
-                                {c.pc_position != null ? (
-                                  <button
-                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
-                                    onClick={() => togglePc(c, false)}
-                                  >
-                                    Remove from PC
-                                  </button>
-                                ) : (
-                                  <button
-                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
-                                    onClick={() => togglePc(c, true)}
-                                  >
-                                    Star in PC
-                                  </button>
-                                )}
                                 <div className="my-1 h-px bg-white/8" />
                                 <button
                                   className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"

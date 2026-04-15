@@ -205,12 +205,12 @@ export default function PcPage() {
               </div>
 
               <div
-                className="relative mt-4 flex gap-4 overflow-x-auto rounded-[18px] bg-slate-950/10 px-4 pb-10"
+              className="relative mt-4 flex gap-4 overflow-x-auto rounded-[18px] bg-gradient-to-b from-amber-500/10 via-slate-950/10 to-slate-950/25 px-4 pb-10"
                 role="list"
                 aria-label="PC shelf"
               >
-                <div className="pointer-events-none absolute inset-0 -z-10 rounded-[18px] bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.20),transparent_55%)]" />
-                <div className="pointer-events-none absolute bottom-2 left-2 right-2 -z-10 h-3 rounded-full bg-gradient-to-r from-amber-500/15 via-amber-400/5 to-amber-500/15 blur-[1px]" />
+                <div className="pointer-events-none absolute inset-0 -z-10 rounded-[18px] bg-[radial-gradient(circle_at_top,rgba(245,158,11,0.32),transparent_58%)]" />
+                <div className="pointer-events-none absolute bottom-3 left-3 right-3 -z-10 h-4 rounded-full bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-amber-500/20 blur-[0.5px]" />
 
                 {displayedCards.map((c, idx) => {
                   const isDragging = draggingId && c.id === draggingId;
@@ -218,9 +218,9 @@ export default function PcPage() {
 
                   const center = (displayedCards.length - 1) / 2;
                   const offset = idx - center;
-                  const rotateY = Math.max(-12, Math.min(12, -offset * 6));
-                  const rotateZ = offset * 0.35;
-                  const translateY = Math.abs(offset) * 1.8;
+                  const rotateY = Math.max(-20, Math.min(20, -offset * 9));
+                  const rotateZ = offset * 0.55;
+                  const translateY = Math.abs(offset) * 3.2;
 
                   const cardTransform = isDragging
                     ? undefined
@@ -262,7 +262,7 @@ export default function PcPage() {
                         onDropReorder(c.id, insertBefore);
                       }}
                       className={
-                        "relative z-10 w-56 shrink-0 rounded-2xl border bg-slate-900/40 p-3 transition will-change-transform " +
+                        "relative z-10 w-56 shrink-0 rounded-2xl border bg-slate-900/40 p-3 transition will-change-transform shadow-[0_18px_60px_rgba(0,0,0,0.45)] hover:shadow-[0_28px_90px_rgba(0,0,0,0.65)] " +
                         (isDragging
                           ? "border-amber-500/60 bg-amber-500/10 opacity-70"
                           : isOver

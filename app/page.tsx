@@ -42,7 +42,7 @@ export default function Home() {
               CardCat keeps your catalog, imports, and sold history in one place, with a cleaner layout that feels more like a modern product and less like a spreadsheet.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
               <a
                 href="/catalog"
                 className="rounded-xl bg-[#d50000] px-5 py-3 font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.22)] hover:bg-[#b80000]"
