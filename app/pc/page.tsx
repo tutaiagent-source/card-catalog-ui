@@ -177,6 +177,12 @@ export default function PcPage() {
             </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">Personal Collection Shelf</h1>
             <p className="mt-2 text-slate-300">Starred cards live here. Drag to reorder.</p>
+            <a
+              href="/catalog"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+            >
+              ← Catalog
+            </a>
           </div>
 
           <div className="text-right">
