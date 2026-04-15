@@ -989,7 +989,7 @@ export default function CatalogPage() {
                       <th className="px-3 py-2">Est.</th>
                       <th className="px-3 py-2">Grade</th>
                       <th className="px-3 py-2">Status</th>
-                      <th className="px-3 py-2">Actions</th>
+                      <th className="px-3 py-2 min-w-[240px]">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1035,49 +1035,50 @@ export default function CatalogPage() {
                           </span>
                         </td>
                         <td className="px-3 py-2">
-                          <div className="flex flex-wrap items-center gap-2">
+                          <div className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
                             <a
                               href={buildEbaySearchUrl(c)}
                               target="_blank"
                               rel="noreferrer"
-                              className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                              className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
                             >
-                              eBay
+                              eBay ↗
                             </a>
                             <a
                               href={c.id ? `/add-card?edit=${encodeURIComponent(c.id)}` : "/add-card"}
-                              className="rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                              className="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
                             >
                               Edit
                             </a>
                             <details className="relative" data-inventory-menu="true">
-                              <summary className="list-none cursor-pointer rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
-                                Move
+                              <summary className="list-none cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
+                                Move ▾
                               </summary>
-                              <div className="absolute right-0 z-20 mt-2 w-40 rounded-xl border border-white/10 bg-slate-950 p-1 shadow-2xl">
+                              <div className="absolute right-0 z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl">
                                 {normalizeStatusValue(c.status) !== "Listed" ? (
                                   <button
-                                    className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
                                     onClick={() => openStatusModal(c, "Listed")}
                                   >
                                     Move to Listed
                                   </button>
                                 ) : (
                                   <button
-                                    className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
                                     onClick={() => updateCardStatus(c, "Collection")}
                                   >
                                     Move to Collection
                                   </button>
                                 )}
                                 <button
-                                  className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                                  className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
                                   onClick={() => openStatusModal(c, "Sold")}
                                 >
                                   Move to Sold
                                 </button>
+                                <div className="my-1 h-px bg-white/8" />
                                 <button
-                                  className="block w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
+                                  className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-red-300 hover:bg-red-500/10"
                                   onClick={() => onDelete(c.id)}
                                 >
                                   Delete
