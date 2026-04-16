@@ -553,6 +553,7 @@ function taxonomyDiff(card: Card) {
 
 export default function ImportPage() {
   const { user, loading } = useSupabaseUser();
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const previewSectionRef = useRef<HTMLElement | null>(null);
   const [existingCards, setExistingCards] = useState<Card[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -930,10 +931,23 @@ export default function ImportPage() {
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <div className="text-lg font-semibold">1. Upload CSV</div>
           <p className="mt-2 text-sm text-slate-400">If the structure is close to CardCat already, this should be quick. If not, you can remap columns below.</p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold text-white hover:bg-[#b80000]"
+              onClick={() => uploadInputRef.current?.click()}
+            >
+              Choose file
+            </button>
+            <div className="text-sm text-slate-400">
+              {fileName ? fileName : "CSV or Excel file (.csv, .xlsx, .xls)"}
+            </div>
+          </div>
           <input
+            ref={uploadInputRef}
             type="file"
             accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-            className="mt-4 block w-full text-sm text-slate-300"
+            className="sr-only"
             onChange={onFileChange}
           />
           {fileName ? <div className="mt-3 text-sm text-slate-300">Loaded file: {fileName}</div> : null}
