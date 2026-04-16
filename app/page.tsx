@@ -16,7 +16,7 @@ const featureCards = [
   },
   {
     title: "Seller Tools When You Need Them",
-    body: "Track listed and sold cards cleanly, then go deeper with exports and sales insights when it matters.",
+    body: "Track listed and sold cards cleanly, then open recent sold listings on eBay with a click when you need quicker context.",
   },
 ];
 
@@ -31,7 +31,7 @@ const audienceCards = [
     eyebrow: "For Serious Collectors",
     title: "Strong Enough To Scale With You",
     body: "Import larger inventories, manage listed and sold cards, and keep your collection data portable.",
-    bullets: ["CSV Import And Export", "Bulk Inventory Actions", "Deeper Sold Tracking"],
+    bullets: ["CSV Import And Export", "Bulk Inventory Actions", "One-Click eBay Sold Search"],
   },
 ];
 
@@ -61,14 +61,14 @@ const workflow = [
 const pricingTiers = [
   {
     name: "Collector",
-    price: "$0",
+    price: "$10 / Month",
     caption: "A Strong Starting Point For Personal Collections And Lighter Tracking.",
     features: ["Up To 100 Cards", "Manual Card Entry", "Personal Collection View", "Basic Sold Tracking"],
     accent: "border-white/10 bg-white/[0.04]",
   },
   {
     name: "Pro",
-    price: "Coming Soon",
+    price: "$20 / Month",
     caption: "For Bigger Inventories, Cleaner Workflows, And Deeper Tracking Tools.",
     features: ["CSV Import And Export", "Bulk Inventory Tools", "Advanced Sold Insights", "More Room To Grow"],
     accent: "border-amber-500/25 bg-amber-500/[0.08]",

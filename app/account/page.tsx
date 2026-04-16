@@ -301,12 +301,15 @@ export default function AccountPage() {
             <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-900">
               <div className="h-full rounded-full bg-[linear-gradient(90deg,rgba(245,158,11,0.95),rgba(239,68,68,0.9))]" style={{ width: `${usagePct}%` }} />
             </div>
-            <div className="mt-2 text-xs text-slate-500">Billing is not wired yet, but this gives the user-facing plan shape for launch.</div>
+            <div className="mt-2 text-xs text-slate-500">Billing is not wired yet, but this gives the user-facing plan shape and pricing for launch.</div>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-              <div className="text-sm font-semibold text-slate-100">Collector</div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-slate-100">Collector</div>
+                <div className="text-sm font-semibold text-white">$10 / Month</div>
+              </div>
               <div className="mt-1 text-sm text-slate-400">Starter tier, limited for personal collections and light selling.</div>
               <ul className="mt-3 space-y-2 text-sm text-slate-300">
                 <li>• Up to 100 cards</li>
@@ -316,7 +319,10 @@ export default function AccountPage() {
               </ul>
             </div>
             <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
-              <div className="text-sm font-semibold text-slate-100">Pro</div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-slate-100">Pro</div>
+                <div className="text-sm font-semibold text-white">$20 / Month</div>
+              </div>
               <div className="mt-1 text-sm text-slate-400">Unlimited cards, CSV workflows, and deeper seller analytics.</div>
               <ul className="mt-3 space-y-2 text-sm text-slate-300">
                 <li>• Unlimited cards, fair-use image storage</li>

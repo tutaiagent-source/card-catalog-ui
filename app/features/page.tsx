@@ -20,7 +20,7 @@ const featureGroups = [
   {
     title: "Sold Tracking And Insights",
     body: "Track sold cards cleanly and keep the history attached to the original card record.",
-    bullets: ["Sold Price And Date Tracking", "Sales History", "Export Options", "Deeper Pro Analytics"],
+    bullets: ["Sold Price And Date Tracking", "Sales History", "Open Recent Sold Listings On eBay", "Deeper Pro Analytics"],
   },
 ];
 

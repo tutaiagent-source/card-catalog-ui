@@ -62,24 +62,26 @@ export function CatalogShowcase() {
             ))}
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {[
-              ["Tom Brady", "2020 Prizm · #17", "Listed", "$65.00"],
-              ["C.J. Stroud", "2023 Select · #42", "Collection", "$120.00"],
-              ["Lionel Messi", "2022 Prizm World Cup", "Sold", "$210.00"],
-            ].map(([name, meta, status, price]) => (
-              <div key={name} className="rounded-3xl border border-white/10 bg-slate-950/80 p-4 shadow-[0_12px_30px_rgba(2,6,23,0.35)]">
-                <div className="aspect-[4/5] rounded-2xl bg-[linear-gradient(160deg,rgba(213,0,0,0.18),rgba(15,23,42,0.2))]" />
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${status === "Sold" ? "bg-emerald-500/10 text-emerald-200" : status === "Listed" ? "bg-blue-500/10 text-blue-200" : "bg-amber-500/10 text-amber-200"}`}>
-                    {status}
-                  </div>
-                  <div className="text-sm font-semibold text-white">{price}</div>
+          <div className="mt-4">
+            <div className="rounded-3xl border border-white/10 bg-slate-950/80 p-4 shadow-[0_12px_30px_rgba(2,6,23,0.35)]">
+              <div className="aspect-[16/9] rounded-2xl bg-[linear-gradient(160deg,rgba(213,0,0,0.18),rgba(15,23,42,0.2))]" />
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-semibold text-blue-200">
+                  Listed
                 </div>
-                <div className="mt-3 font-semibold text-white">{name}</div>
-                <div className="mt-1 text-sm text-slate-400">{meta}</div>
+                <div className="text-sm font-semibold text-white">$65.00</div>
               </div>
-            ))}
+              <div className="mt-3 text-xl font-semibold text-white">Tom Brady</div>
+              <div className="mt-1 text-sm text-slate-400">2020 Prizm · #17</div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <div className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-xs font-semibold text-slate-200">
+                  Edit Card
+                </div>
+                <div className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200">
+                  Check Recent Sold On eBay ↗
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
