@@ -386,8 +386,8 @@ export default function SoldPage() {
                   <div className="mt-2 text-xl font-semibold text-white">{money(avgSale)}</div>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-black/15 p-4">
-                  <div className="text-xs uppercase tracking-[0.18em] text-slate-300">Net profit</div>
-                  <div className="mt-2 text-xl font-semibold text-white">{money(totalNetProfit)}</div>
+                  <div className="text-xs uppercase tracking-[0.18em] text-slate-300">{isCollectorPreview ? "Cards sold" : "Net profit"}</div>
+                  <div className="mt-2 text-xl font-semibold text-white">{isCollectorPreview ? totalSoldCards : money(totalNetProfit)}</div>
                 </div>
               </div>
             </div>
@@ -398,14 +398,14 @@ export default function SoldPage() {
                 <div className="mt-2 text-3xl font-bold text-white">{money(biggestSale)}</div>
               </div>
               <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-                <div className="text-sm text-slate-400">Top platform</div>
-                <div className="mt-2 text-3xl font-bold text-white">{topPlatform}</div>
+                <div className="text-sm text-slate-400">{isCollectorPreview ? "Cards sold" : "Top platform"}</div>
+                <div className="mt-2 text-3xl font-bold text-white">{isCollectorPreview ? totalSoldCards : topPlatform}</div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+        <section className={`mt-6 grid gap-4 ${isCollectorPreview ? "md:grid-cols-3" : "md:grid-cols-2 xl:grid-cols-6"}`}>
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="text-sm text-slate-400">Cards sold</div>
             <div className="mt-2 text-3xl font-bold text-white">{totalSoldCards}</div>
@@ -413,7 +413,13 @@ export default function SoldPage() {
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
               <div className="text-sm text-slate-400">Average sale per card</div>
               <div className="mt-2 text-3xl font-bold text-white">{money(avgSale)}</div>
-            </div>
+          </div>
+          <div className="rounded-3xl border border-amber-500/20 bg-amber-500/[0.06] p-5 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
+            <div className="text-sm text-slate-300">Highest sale</div>
+            <div className="mt-2 text-3xl font-bold text-white">{money(biggestSale)}</div>
+          </div>
+          {!isCollectorPreview ? (
+            <>
             <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/[0.08] p-5 shadow-[0_18px_40px_rgba(16,185,129,0.08)]">
               <div className="text-sm text-slate-300">Net profit</div>
               <div className="mt-2 text-3xl font-bold text-white">{money(totalNetProfit)}</div>
@@ -430,6 +436,8 @@ export default function SoldPage() {
               <div className="text-sm text-slate-300">Top platform</div>
               <div className="mt-2 text-3xl font-bold text-white">{topPlatform}</div>
             </div>
+            </>
+          ) : null}
         </section>
 
         {isCollectorPreview ? (

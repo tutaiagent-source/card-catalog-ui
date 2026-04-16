@@ -11,6 +11,7 @@ import {
   SPORT_OPTIONS,
 } from "@/lib/cardTaxonomy";
 import { buildSellerNotes, parseSellerMeta } from "@/lib/cardSellerMeta";
+import { usePlanPreview } from "@/lib/planPreview";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 
@@ -193,6 +194,7 @@ const stepLabels = ["Identity", "Details", "Value", "Images"];
 
 export default function AddCardPage() {
   const { user, loading: authLoading } = useSupabaseUser();
+  const { isCollectorPreview } = usePlanPreview();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [step, setStep] = useState(1);
 
@@ -1020,48 +1022,54 @@ export default function AddCardPage() {
                           placeholder="eBay, local, show..."
                         />
                       </label>
-                      <label className="block">
-                        <div className="mb-1 text-sm text-slate-300">Card cost</div>
-                        <input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          className="w-full rounded bg-slate-950 px-3 py-2"
-                          value={card.cost_basis ?? ""}
-                          onChange={(e) => set("cost_basis", e.target.value === "" ? null : Number(e.target.value))}
-                          placeholder="Total cost"
-                        />
-                      </label>
-                      <label className="block">
-                        <div className="mb-1 text-sm text-slate-300">Platform fees</div>
-                        <input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          className="w-full rounded bg-slate-950 px-3 py-2"
-                          value={card.platform_fee ?? ""}
-                          onChange={(e) => set("platform_fee", e.target.value === "" ? null : Number(e.target.value))}
-                          placeholder="Fees paid"
-                        />
-                      </label>
-                      <label className="block">
-                        <div className="mb-1 text-sm text-slate-300">Shipping cost</div>
-                        <input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          className="w-full rounded bg-slate-950 px-3 py-2"
-                          value={card.shipping_cost ?? ""}
-                          onChange={(e) => set("shipping_cost", e.target.value === "" ? null : Number(e.target.value))}
-                          placeholder="Shipping paid"
-                        />
-                      </label>
+                      {!isCollectorPreview ? (
+                        <>
+                          <label className="block">
+                            <div className="mb-1 text-sm text-slate-300">Card cost</div>
+                            <input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              className="w-full rounded bg-slate-950 px-3 py-2"
+                              value={card.cost_basis ?? ""}
+                              onChange={(e) => set("cost_basis", e.target.value === "" ? null : Number(e.target.value))}
+                              placeholder="Total cost"
+                            />
+                          </label>
+                          <label className="block">
+                            <div className="mb-1 text-sm text-slate-300">Platform fees</div>
+                            <input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              className="w-full rounded bg-slate-950 px-3 py-2"
+                              value={card.platform_fee ?? ""}
+                              onChange={(e) => set("platform_fee", e.target.value === "" ? null : Number(e.target.value))}
+                              placeholder="Fees paid"
+                            />
+                          </label>
+                          <label className="block">
+                            <div className="mb-1 text-sm text-slate-300">Shipping cost</div>
+                            <input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              className="w-full rounded bg-slate-950 px-3 py-2"
+                              value={card.shipping_cost ?? ""}
+                              onChange={(e) => set("shipping_cost", e.target.value === "" ? null : Number(e.target.value))}
+                              placeholder="Shipping paid"
+                            />
+                          </label>
+                        </>
+                      ) : null}
                     </div>
                   )}
 
                   {String(card.status || "Collection") === "Sold" && (
-                    <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] p-3 text-sm text-emerald-100">
-                      Seller metrics stay attached to the card so CardCat can calculate net profit and ROI on the Sold dashboard.
+                    <div className={`rounded-xl border p-3 text-sm ${isCollectorPreview ? "border-amber-500/20 bg-amber-500/[0.08] text-amber-100" : "border-emerald-500/20 bg-emerald-500/[0.08] text-emerald-100"}`}>
+                      {isCollectorPreview
+                        ? "Collector preview keeps sold price, sold date, and platform. Card cost, fees, shipping, and profit math show up in Pro."
+                        : "Seller metrics stay attached to the card so CardCat can calculate net profit and ROI on the Sold dashboard."}
                     </div>
                   )}
                 </div>
