@@ -134,6 +134,14 @@ export default function Home() {
                 </a>
               </div>
 
+              <div className="mt-5 max-w-xl rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Quick Comp Check</div>
+                <div className="mt-2 text-sm font-semibold text-white">Open Recent Sold Listings On eBay In One Click.</div>
+                <div className="mt-1 text-sm leading-6 text-slate-200">
+                  Jump straight from a card record to recent sold listings on eBay when you want a faster read on the market.
+                </div>
+              </div>
+
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
                 {[
                   ["Personal Collection", "Keep favorite cards separate without losing the full picture"],

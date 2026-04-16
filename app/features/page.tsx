@@ -109,6 +109,11 @@ export default function FeaturesPage() {
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
               Sold cards stay connected to the inventory record so the app keeps the full picture clear over time.
             </p>
+            <div className="mt-4 max-w-2xl rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4 text-sm text-slate-100 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Quick Comp Check</div>
+              <div className="mt-2 font-semibold text-white">Open Recent Sold Listings On eBay In One Click.</div>
+              <div className="mt-1 leading-6 text-slate-200">It is a simple convenience feature, not an official eBay partnership, but it gives collectors a much faster way to check recent sold history when working through cards.</div>
+            </div>
           </div>
           <SoldShowcase />
         </section>
