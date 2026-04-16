@@ -159,6 +159,7 @@ export default function PcPage() {
     }
 
     setStatusToast(`${card.player_name} removed from PC.`);
+    setImageModal((prev) => (prev?.card.id === card.id ? null : prev));
     setPcCards((prev) => prev.filter((c) => c.id !== card.id));
   };
 
