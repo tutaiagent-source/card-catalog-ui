@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CardCat",
-  description: "Track your cards, inventory, pricing, and sales with CardCat.",
+  description: "Card inventory for collectors, with pricing and sold tracking in CardCat.",
 };
 
 export default function RootLayout({

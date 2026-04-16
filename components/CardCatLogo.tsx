@@ -46,7 +46,7 @@ export default function CardCatLogo({
       <div>
         <div className="text-lg font-black tracking-[-0.03em] text-white sm:text-xl">CardCat</div>
         {showTagline ? (
-          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-200/90">Seller-first inventory</div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-200/90 sm:text-[11px]">Card inventory for collectors</div>
         ) : null}
       </div>
     </div>

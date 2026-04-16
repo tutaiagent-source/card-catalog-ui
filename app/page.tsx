@@ -18,7 +18,7 @@ const featureCards = [
 const quickStats = [
   { label: "Best for", value: "Collectors, flippers, breakers" },
   { label: "Core flow", value: "Add, import, list, sell" },
-  { label: "Focus", value: "Inventory clarity + sales tracking" },
+  { label: "Focus", value: "Collection clarity + sold tracking" },
 ];
 
 const workflow = [
@@ -36,10 +36,10 @@ export default function Home() {
           <div>
             <CardCatLogo markClassName="h-12 w-12" />
             <h1 className="mt-5 max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-5xl">
-              A cleaner command center for card inventory and sales.
+              Card inventory for collectors, without the spreadsheet feel.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-              CardCat keeps your catalog, imports, and sold history in one place, with a cleaner layout that feels more like a modern product and less like a spreadsheet.
+              CardCat keeps your catalog, personal collection, imports, and sold history in one place, with a cleaner layout that feels more like a modern product and less like a spreadsheet.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:justify-start">

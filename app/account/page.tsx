@@ -245,7 +245,7 @@ export default function AccountPage() {
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <h2 className="text-lg font-semibold">Start here</h2>
-          <p className="mt-2 text-sm text-slate-400">The seller-first workflow is simple: load cards in, keep a backup, track listed and sold inventory, then watch the sales dashboard.</p>
+          <p className="mt-2 text-sm text-slate-400">The CardCat workflow is simple: load cards in, keep a backup, track what stays in the collection and what moves, then check sold performance when you need it.</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {[
               ["1. Add or import inventory", "Use Add Card for one-offs or Import CSV for an existing collection."],
