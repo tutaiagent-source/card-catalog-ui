@@ -47,7 +47,7 @@ export default function AccountPage() {
   const estimatedTotal = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.estimated_price || 0), 0), [cards]);
   const soldRows = useMemo(() => cards.filter((card) => String(card.status || "") === "Sold"), [cards]);
   const starterLimit = 100;
-  const currentPlanPreview = totalCards > starterLimit ? "Pro Seller" : "Collector";
+  const currentPlanPreview = totalCards > starterLimit ? "Pro" : "Collector";
   const usagePct = Math.min(100, Math.round((totalCards / starterLimit) * 100));
 
   const providers = useMemo(() => {
@@ -263,7 +263,7 @@ export default function AccountPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold">Plans and usage</h2>
-              <p className="mt-1 text-sm text-slate-400">2-tier preview for launch: a limited Collector plan and an unlimited Pro Seller plan with fair-use storage.</p>
+              <p className="mt-1 text-sm text-slate-400">2-tier preview for launch: a limited Collector plan and an unlimited Pro plan with fair-use storage.</p>
             </div>
             <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
               Current fit: {currentPlanPreview}
@@ -293,7 +293,7 @@ export default function AccountPage() {
               </ul>
             </div>
             <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
-              <div className="text-sm font-semibold text-slate-100">Pro Seller</div>
+              <div className="text-sm font-semibold text-slate-100">Pro</div>
               <div className="mt-1 text-sm text-slate-400">Unlimited cards, CSV workflows, and deeper seller analytics.</div>
               <ul className="mt-3 space-y-2 text-sm text-slate-300">
                 <li>• Unlimited cards, fair-use image storage</li>
