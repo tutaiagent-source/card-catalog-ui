@@ -87,7 +87,8 @@ function normalizePlatformLabel(value?: string | null) {
 }
 
 function csvCell(value: unknown) {
-  const text = String(value ?? "");
+  let text = String(value ?? "");
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
   if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
   return text;
 }

@@ -163,7 +163,8 @@ function cardToInsertRow(card: Card, userId: string) {
 }
 
 function csvEscape(value: string | number | null | undefined) {
-  const text = String(value ?? "");
+  let text = String(value ?? "");
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
