@@ -1,3 +1,5 @@
+import CardCatLogo from "@/components/CardCatLogo";
+
 const featureCards = [
   {
     title: "Catalog that feels fast",
@@ -32,9 +34,7 @@ export default function Home() {
       <div className="mx-auto max-w-6xl px-4 py-10 md:py-14">
         <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
-              CardCat.io
-            </div>
+            <CardCatLogo markClassName="h-12 w-12" />
             <h1 className="mt-5 max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-5xl">
               A cleaner command center for card inventory and sales.
             </h1>

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import CardCatLogo from "@/components/CardCatLogo";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 
@@ -135,9 +136,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-md px-4 py-16">
-        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200">
-          CardCat.io
-        </div>
+        <CardCatLogo markClassName="h-12 w-12" />
         <h1 className="mt-4 text-3xl font-bold">Sign in to CardCat</h1>
         <p className="mt-3 text-slate-300">
           Save your collection, track prices, and manage listed and sold cards in one place.

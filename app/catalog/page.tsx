@@ -7,6 +7,7 @@ import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { normalizeCatalogTaxonomy } from "@/lib/cardTaxonomy";
 import { buildSellerNotes, parseSellerMeta } from "@/lib/cardSellerMeta";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
+import CardCatLogo from "@/components/CardCatLogo";
 
 type YesNo = "yes" | "no";
 type CardStatus = "Collection" | "Listed" | "Sold";
@@ -1031,9 +1032,7 @@ export default function CatalogPage() {
       <div className="mx-auto max-w-5xl px-4 py-8 pb-24 md:pb-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200">
-              CardCat.io
-            </div>
+            <CardCatLogo />
             <h1 className="mt-3 text-2xl font-bold">Catalog</h1>
             <div className="mt-1 text-sm text-slate-400">Search, sort, and move inventory without losing the plot.</div>
           </div>

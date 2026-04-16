@@ -5,6 +5,7 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { computeSaleMetrics, parseSellerMeta } from "@/lib/cardSellerMeta";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
+import CardCatLogo from "@/components/CardCatLogo";
 
 type CardStatus = "Collection" | "Listed" | "Sold";
 
@@ -260,9 +261,7 @@ export default function SoldPage() {
       <div className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200">
-              CardCat.io
-            </div>
+            <CardCatLogo />
             <h1 className="mt-3 text-3xl font-bold tracking-tight">Sales dashboard</h1>
             <div className="mt-2 max-w-2xl text-sm text-slate-400">
               Your sold cards, revenue performance, and recent sales momentum in one cleaner view.

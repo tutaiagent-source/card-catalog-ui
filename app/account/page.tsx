@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
+import CardCatLogo from "@/components/CardCatLogo";
 
 type CardSummary = {
   quantity: number | null;
@@ -146,9 +147,7 @@ export default function AccountPage() {
       <div className="mx-auto max-w-3xl px-4 py-8 pb-24 md:pb-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-200">
-              CardCat.io
-            </div>
+            <CardCatLogo />
             <h1 className="mt-3 text-2xl font-bold">My Account</h1>
             <div className="mt-1 text-sm text-slate-400">Manage your login and collection settings.</div>
           </div>

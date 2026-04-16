@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
+import CardCatLogo from "@/components/CardCatLogo";
 
 type YesNo = "yes" | "no";
 
@@ -190,7 +191,8 @@ export default function PcPage() {
       <div className="mx-auto max-w-6xl px-4 py-8">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
+            <CardCatLogo />
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
               <span>⭐</span>
               <span>PC</span>
             </div>

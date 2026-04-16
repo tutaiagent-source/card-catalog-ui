@@ -1,9 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { CardCatMark } from "@/components/CardCatLogo";
 
 const items = [
-  { href: "/catalog", label: "Catalog", icon: "🐾" },
+  { href: "/catalog", label: "Catalog", icon: <CardCatMark className="h-4.5 w-4.5" /> },
   { href: "/pc", label: "PC ★", icon: "☆" },
   { href: "/add-card", label: "Add", icon: "＋" },
   { href: "/import", label: "Import", icon: "⬆️" },
@@ -25,7 +26,7 @@ export default function CardCatMobileNav() {
               href={item.href}
               className={`flex flex-col items-center justify-center rounded-lg px-1 py-1 text-[10px] font-semibold ${active ? "bg-amber-500/15 text-amber-200" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
             >
-              <span className="text-base leading-none">{item.icon}</span>
+              <span className="flex h-5 items-center justify-center text-base leading-none">{item.icon}</span>
               <span>{item.label}</span>
             </a>
           );
