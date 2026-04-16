@@ -46,7 +46,7 @@ export default function AccountPage() {
   const totalCards = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0), 0), [cards]);
   const estimatedTotal = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.estimated_price || 0), 0), [cards]);
   const soldRows = useMemo(() => cards.filter((card) => String(card.status || "") === "Sold"), [cards]);
-  const starterLimit = 500;
+  const starterLimit = 100;
   const currentPlanPreview = totalCards > starterLimit ? "Pro Seller" : "Collector";
   const usagePct = Math.min(100, Math.round((totalCards / starterLimit) * 100));
 
@@ -286,7 +286,7 @@ export default function AccountPage() {
               <div className="text-sm font-semibold text-slate-100">Collector</div>
               <div className="mt-1 text-sm text-slate-400">Starter tier, limited for personal collections and light selling.</div>
               <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li>• Up to 500 cards</li>
+                <li>• Up to 100 cards</li>
                 <li>• Manual add/edit</li>
                 <li>• Basic sold tracking</li>
                 <li>• Basic dashboard</li>
