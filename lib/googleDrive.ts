@@ -1,7 +1,7 @@
 function buildDriveImageUrl(fileId: string, resourceKey?: string | null) {
-  const params = new URLSearchParams({ export: "view", id: fileId });
+  const params = new URLSearchParams({ id: fileId, sz: "w2000" });
   if (resourceKey) params.set("resourcekey", resourceKey);
-  return `https://drive.google.com/uc?${params.toString()}`;
+  return `https://drive.google.com/thumbnail?${params.toString()}`;
 }
 
 export function driveToImageSrc(url?: string | null) {
