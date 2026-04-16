@@ -151,13 +151,13 @@ export function SoldShowcase() {
           <div className="mt-2 text-sm text-emerald-100/80">Gross Sales Across 41 Sold Cards</div>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {[
-              ["Last 30 Days", "$842"],
-              ["Average Sale", "$84.92"],
-              ["Highest Sale", "$210.00"],
+              ["Last 30d", "$842"],
+              ["Avg Sale", "$84.92"],
+              ["High Sale", "$210.00"],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-2xl border border-white/10 bg-black/15 p-4">
-                <div className="text-xs uppercase tracking-[0.16em] text-slate-300">{label}</div>
-                <div className="mt-2 text-xl font-semibold text-white">{value}</div>
+              <div key={label} className="min-w-0 rounded-2xl border border-white/10 bg-black/15 p-3">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">{label}</div>
+                <div className="mt-2 text-xl font-semibold text-white sm:text-2xl">{value}</div>
               </div>
             ))}
           </div>
@@ -172,8 +172,8 @@ export function SoldShowcase() {
             <div key={card} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</div>
-                  <div className="mt-2 font-semibold text-white">{card}</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</div>
+                  <div className="mt-2 text-2xl font-semibold text-white">{card}</div>
                 </div>
                 <div className="text-lg font-semibold text-emerald-300">{price}</div>
               </div>
