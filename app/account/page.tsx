@@ -265,7 +265,7 @@ export default function AccountPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold">Plans and usage</h2>
-              <p className="mt-1 text-sm text-slate-400">2-tier preview for launch: a limited Collector plan and an unlimited Pro plan with fair-use storage.</p>
+              <p className="mt-1 text-sm text-slate-400">2-tier preview for launch: a limited Collector plan and an expanded Pro plan with fair-use storage.</p>
             </div>
             <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
               Previewing: {currentPlanPreview}
@@ -323,9 +323,9 @@ export default function AccountPage() {
                 <div className="text-sm font-semibold text-slate-100">Pro</div>
                 <div className="text-sm font-semibold text-white">$20 / Month</div>
               </div>
-              <div className="mt-1 text-sm text-slate-400">Unlimited cards, CSV workflows, and deeper seller analytics.</div>
+              <div className="mt-1 text-sm text-slate-400">Higher card limits, CSV workflows, and deeper seller analytics.</div>
               <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li>• Unlimited cards, fair-use image storage</li>
+                <li>• Higher card limits, fair-use image storage</li>
                 <li>• CSV import/export</li>
                 <li>• Revenue, net profit, ROI, platform analytics</li>
                 <li>• Bulk inventory tools</li>
