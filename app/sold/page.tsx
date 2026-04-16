@@ -19,6 +19,7 @@ type SoldCard = {
   card_number: string;
   team: string;
   sport: string;
+  competition?: string | null;
   quantity: number;
   graded?: "yes" | "no";
   grade?: number | null;
@@ -82,6 +83,12 @@ function normalizePlatformLabel(value?: string | null) {
   if (known[collapsed]) return known[collapsed];
 
   return collapsed.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function csvCell(value: unknown) {
+  const text = String(value ?? "");
+  if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
+  return text;
 }
 
 export default function SoldPage() {
@@ -236,6 +243,71 @@ export default function SoldPage() {
 
   const recentHighlights = useMemo(() => salesWithMetrics.slice(0, 5), [salesWithMetrics]);
 
+  const exportSalesCsv = () => {
+    if (salesWithMetrics.length === 0) return;
+
+    const headers = [
+      "player_name",
+      "year",
+      "brand",
+      "set_name",
+      "parallel",
+      "card_number",
+      "team",
+      "sport",
+      "competition",
+      "quantity",
+      "sold_price_per_card",
+      "gross_sale",
+      "sold_at",
+      "sale_platform",
+      "card_cost",
+      "shipping_cost",
+      "platform_fee",
+      "net_profit",
+      "roi_percent",
+      "graded",
+      "grade",
+      "notes",
+    ];
+
+    const rows = salesWithMetrics.map((card) => [
+      card.player_name,
+      card.year,
+      card.brand,
+      card.set_name,
+      card.parallel,
+      card.card_number,
+      card.team,
+      card.sport,
+      card.competition || "",
+      Number(card.quantity || 0),
+      Number(card.sold_price || 0),
+      card.metrics.grossSale,
+      card.sold_at || "",
+      normalizePlatformLabel(card.sale_platform),
+      card.sellerMeta.costBasis ?? "",
+      card.sellerMeta.shippingCost ?? "",
+      card.sellerMeta.platformFee ?? "",
+      card.metrics.netProfit,
+      card.metrics.roi != null ? Number(card.metrics.roi.toFixed(2)) : "",
+      card.graded || "",
+      card.grade ?? "",
+      card.publicNotes || "",
+    ]);
+
+    const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `cardcat-sales-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -269,6 +341,14 @@ export default function SoldPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <a href="/catalog" className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 font-semibold text-slate-100 hover:bg-white/[0.08]">Catalog</a>
+            <button
+              type="button"
+              className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={exportSalesCsv}
+              disabled={salesWithMetrics.length === 0}
+            >
+              Export sales CSV
+            </button>
             <a href="/import" className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 font-semibold text-slate-200 hover:bg-slate-800">Import</a>
             <a href="/account" className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 font-semibold text-slate-200 hover:bg-slate-800">My Account</a>
           </div>
