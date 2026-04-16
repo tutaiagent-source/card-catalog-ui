@@ -2,7 +2,7 @@
 
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { normalizeBrandAndSet, normalizeCatalogTaxonomy } from "@/lib/cardTaxonomy";
@@ -553,6 +553,7 @@ function taxonomyDiff(card: Card) {
 
 export default function ImportPage() {
   const { user, loading } = useSupabaseUser();
+  const previewSectionRef = useRef<HTMLElement | null>(null);
   const [existingCards, setExistingCards] = useState<Card[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Mapping>({});
@@ -565,6 +566,7 @@ export default function ImportPage() {
   const [duplicateChoices, setDuplicateChoices] = useState<Record<number, "update" | "add_quantity" | "skip">>({});
   const [importing, setImporting] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
+  const [previewFocus, setPreviewFocus] = useState<"all" | PreviewRow["action"]>("all");
 
   const loadExistingCards = async () => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -643,6 +645,18 @@ export default function ImportPage() {
     const skippedCount = previewRows.filter((row) => row.action === "skip").length;
     return { createCount, updateCount, flaggedCount, skippedCount };
   }, [previewRows]);
+
+  const focusedPreviewRows = useMemo(() => {
+    if (previewFocus === "all") return previewRows;
+    return previewRows.filter((row) => row.action === previewFocus);
+  }, [previewRows, previewFocus]);
+
+  const focusPreviewRows = (nextFocus: "all" | PreviewRow["action"]) => {
+    setPreviewFocus(nextFocus);
+    requestAnimationFrame(() => {
+      previewSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -1060,30 +1074,76 @@ export default function ImportPage() {
             </section>
 
             <section className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.08] p-4">
+              <button
+                type="button"
+                className={`rounded-2xl border p-4 text-left transition-colors ${previewFocus === "create" ? "border-emerald-400/40 bg-emerald-500/[0.14]" : "border-emerald-500/20 bg-emerald-500/[0.08] hover:bg-emerald-500/[0.12]"}`}
+                onClick={() => focusPreviewRows("create")}
+              >
                 <div className="text-sm text-slate-300">Create</div>
                 <div className="mt-2 text-2xl font-bold">{stats.createCount}</div>
-              </div>
-              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.08] p-4">
+                <div className="mt-2 text-xs text-slate-400">Show rows ready to create</div>
+              </button>
+              <button
+                type="button"
+                className={`rounded-2xl border p-4 text-left transition-colors ${previewFocus === "update" ? "border-blue-400/40 bg-blue-500/[0.14]" : "border-blue-500/20 bg-blue-500/[0.08] hover:bg-blue-500/[0.12]"}`}
+                onClick={() => focusPreviewRows("update")}
+              >
                 <div className="text-sm text-slate-300">Possible duplicates</div>
                 <div className="mt-2 text-2xl font-bold">{stats.updateCount}</div>
-              </div>
-              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4">
+                <div className="mt-2 text-xs text-slate-400">Review and choose how to merge</div>
+              </button>
+              <button
+                type="button"
+                className={`rounded-2xl border p-4 text-left transition-colors ${previewFocus === "needs_attention" ? "border-amber-400/40 bg-amber-500/[0.14]" : "border-amber-500/20 bg-amber-500/[0.08] hover:bg-amber-500/[0.12]"}`}
+                onClick={() => focusPreviewRows("needs_attention")}
+              >
                 <div className="text-sm text-slate-300">Needs attention</div>
                 <div className="mt-2 text-2xl font-bold">{stats.flaggedCount}</div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                <div className="mt-2 text-xs text-slate-400">Jump to the rows blocking import</div>
+              </button>
+              <button
+                type="button"
+                className={`rounded-2xl border p-4 text-left transition-colors ${previewFocus === "skip" ? "border-white/20 bg-white/[0.08]" : "border-white/10 bg-white/[0.04] hover:bg-white/[0.07]"}`}
+                onClick={() => focusPreviewRows("skip")}
+              >
                 <div className="text-sm text-slate-300">Skipped</div>
                 <div className="mt-2 text-2xl font-bold">{stats.skippedCount}</div>
-              </div>
+                <div className="mt-2 text-xs text-slate-400">See rows currently marked to skip</div>
+              </button>
             </section>
 
-            <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <section ref={previewSectionRef} className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
               <div className="text-lg font-semibold">3. Preview</div>
               <p className="mt-2 text-sm text-slate-400">Ready rows can import now. Flagged rows are held back until the file or mapping is fixed.</p>
 
+              <div className="mt-4 flex flex-wrap gap-2">
+                {([
+                  ["all", `All rows (${previewRows.length})`],
+                  ["create", `Create (${stats.createCount})`],
+                  ["update", `Possible duplicates (${stats.updateCount})`],
+                  ["needs_attention", `Needs attention (${stats.flaggedCount})`],
+                  ["skip", `Skipped (${stats.skippedCount})`],
+                ] as const).map(([value, label]) => {
+                  const active = previewFocus === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      className={`rounded-full px-3 py-2 text-xs font-semibold transition-colors ${active ? "bg-[#d50000] text-white" : "bg-slate-900 text-slate-300 hover:bg-slate-800"}`}
+                      onClick={() => focusPreviewRows(value)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3 text-sm text-slate-400">
+                Showing {focusedPreviewRows.length} of {previewRows.length} preview row{previewRows.length === 1 ? "" : "s"}.
+              </div>
+
               <div className="mt-4 space-y-3">
-                {previewRows.slice(0, 25).map((row) => (
+                {focusedPreviewRows.map((row) => (
                   <div key={row.rowNumber} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
@@ -1156,6 +1216,11 @@ export default function ImportPage() {
                     )}
                   </div>
                 ))}
+                {focusedPreviewRows.length === 0 ? (
+                  <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-400">
+                    No rows in this bucket right now.
+                  </div>
+                ) : null}
               </div>
 
               {previewRows.length > 25 ? <div className="mt-4 text-sm text-slate-400">Showing first 25 preview rows.</div> : null}
