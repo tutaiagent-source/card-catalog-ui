@@ -149,15 +149,15 @@ export function SoldShowcase() {
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Revenue Pulse</div>
           <div className="mt-3 text-4xl font-black tracking-[-0.04em] text-white">$3,482</div>
           <div className="mt-2 text-sm text-emerald-100/80">Gross Sales Across 41 Sold Cards</div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 space-y-3">
             {[
               ["Last 30d", "$842"],
               ["Avg Sale", "$84.92"],
               ["High Sale", "$210.00"],
             ].map(([label, value]) => (
-              <div key={label} className="min-w-0 rounded-2xl border border-white/10 bg-black/15 p-3">
+              <div key={label} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/15 px-4 py-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">{label}</div>
-                <div className="mt-2 text-xl font-semibold text-white sm:text-2xl">{value}</div>
+                <div className="text-xl font-semibold text-white sm:text-2xl">{value}</div>
               </div>
             ))}
           </div>
