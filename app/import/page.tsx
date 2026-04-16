@@ -7,6 +7,7 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { normalizeBrandAndSet, normalizeCatalogTaxonomy } from "@/lib/cardTaxonomy";
 import { GradeCompany, parseGradeCompany, parseGradeNumber, upsertGradeCompanyInNotes, upsertNotesLines } from "@/lib/gradeNotes";
+import { usePlanPreview } from "@/lib/planPreview";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 
@@ -553,6 +554,7 @@ function taxonomyDiff(card: Card) {
 
 export default function ImportPage() {
   const { user, loading } = useSupabaseUser();
+  const { isCollectorPreview } = usePlanPreview();
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const previewSectionRef = useRef<HTMLElement | null>(null);
   const [existingCards, setExistingCards] = useState<Card[]>([]);
@@ -881,6 +883,52 @@ export default function ImportPage() {
           <p className="mt-3 text-slate-300">Please sign in to import a collection.</p>
           <a href="/login" className="mt-6 inline-flex rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]">Go to sign in</a>
         </div>
+      </main>
+    );
+  }
+
+  if (isCollectorPreview) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-4xl px-4 py-8 pb-24 md:pb-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardCatLogo />
+              <h1 className="mt-3 text-2xl font-bold">Import collection</h1>
+              <div className="mt-1 text-sm text-slate-400">Collector preview keeps this locked so you can feel the upgrade boundary.</div>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <a href="/catalog" className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700">Catalog</a>
+              <a href="/account" className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]">Switch to Pro preview</a>
+            </div>
+          </div>
+
+          <section className="mt-6 rounded-3xl border border-amber-500/20 bg-amber-500/[0.08] p-6 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-200">Pro feature preview</div>
+            <h2 className="mt-3 text-2xl font-bold text-white">CSV import lives in Pro</h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-200">Collector is for manual add/edit and basic tracking. Pro unlocks spreadsheet workflows for larger inventories.</p>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                <div className="text-sm font-semibold text-slate-100">Collector keeps it simple</div>
+                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                  <li>• Manual add/edit</li>
+                  <li>• Up to 100 cards</li>
+                  <li>• Basic sold tracking</li>
+                </ul>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                <div className="text-sm font-semibold text-slate-100">Pro is built for volume</div>
+                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                  <li>• CSV import/export</li>
+                  <li>• Bulk inventory tools</li>
+                  <li>• Deeper profit analytics</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
+        <CardCatMobileNav />
       </main>
     );
   }

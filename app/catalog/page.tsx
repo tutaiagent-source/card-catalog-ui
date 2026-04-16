@@ -7,6 +7,7 @@ import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { normalizeCatalogTaxonomy } from "@/lib/cardTaxonomy";
 import { buildSellerNotes, parseSellerMeta } from "@/lib/cardSellerMeta";
 import { driveToImageSrc } from "@/lib/googleDrive";
+import { usePlanPreview } from "@/lib/planPreview";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 
@@ -258,6 +259,7 @@ function score(card: Card) {
 
 export default function CatalogPage() {
   const { user, loading: authLoading } = useSupabaseUser();
+  const { isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<Card[]>([]);
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
@@ -1044,19 +1046,32 @@ export default function CatalogPage() {
                   Menu ▾
                 </summary>
                 <div className="absolute right-0 top-full z-50 mt-2 w-44 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl text-left">
-                  <a
-                    href="/import"
-                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
-                  >
-                    Import CSV
-                  </a>
-                  <button
-                    type="button"
-                    className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
-                    onClick={exportCards}
-                  >
-                    Export CSV
-                  </button>
+                  {isCollectorPreview ? (
+                    <>
+                      <a href="/account" className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-amber-200 hover:bg-amber-500/10">
+                        Import CSV (Pro)
+                      </a>
+                      <a href="/account" className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-amber-200 hover:bg-amber-500/10">
+                        Export CSV (Pro)
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <a
+                        href="/import"
+                        className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                      >
+                        Import CSV
+                      </a>
+                      <button
+                        type="button"
+                        className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
+                        onClick={exportCards}
+                      >
+                        Export CSV
+                      </button>
+                    </>
+                  )}
                   <a
                     href="/sold"
                     className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
@@ -1098,19 +1113,32 @@ export default function CatalogPage() {
               >
                 Add Card
               </a>
-              <a
-                href="/import"
-                className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
-              >
-                Import CSV
-              </a>
-              <button
-                type="button"
-                className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
-                onClick={exportCards}
-              >
-                Export CSV
-              </button>
+              {isCollectorPreview ? (
+                <>
+                  <a href="/account" className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-200 hover:bg-amber-500/15">
+                    Import CSV (Pro)
+                  </a>
+                  <a href="/account" className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-200 hover:bg-amber-500/15">
+                    Export CSV (Pro)
+                  </a>
+                </>
+              ) : (
+                <>
+                  <a
+                    href="/import"
+                    className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                  >
+                    Import CSV
+                  </a>
+                  <button
+                    type="button"
+                    className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                    onClick={exportCards}
+                  >
+                    Export CSV
+                  </button>
+                </>
+              )}
               <a
                 href="/sold"
                 className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
@@ -1142,6 +1170,13 @@ export default function CatalogPage() {
             </div>
           </div>
         </div>
+
+        {isCollectorPreview ? (
+          <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4 text-sm text-amber-100">
+            Collector preview is active. CSV import/export and bulk inventory tools show up as Pro-only here.
+            <a href="/account" className="ml-2 font-semibold underline underline-offset-2">Change preview</a>
+          </div>
+        ) : null}
 
         {statusToast && (
           <div className="pointer-events-none fixed left-1/2 top-4 z-50 w-[min(92vw,680px)] -translate-x-1/2 px-2">
@@ -1223,22 +1258,28 @@ export default function CatalogPage() {
                   Grid
                 </button>
               </div>
-              <div className="inline-flex items-center rounded-full border border-white/10 bg-slate-900/90 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                <button
-                  type="button"
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${!selectionMode ? "bg-white/[0.08] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
-                  onClick={exitSelectionMode}
-                >
-                  Browse
-                </button>
-                <button
-                  type="button"
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${selectionMode ? "bg-[#d50000] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
-                  onClick={() => setSelectionMode(true)}
-                >
-                  Select
-                </button>
-              </div>
+              {isCollectorPreview ? (
+                <a href="/account" className="inline-flex items-center rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200">
+                  Bulk tools in Pro
+                </a>
+              ) : (
+                <div className="inline-flex items-center rounded-full border border-white/10 bg-slate-900/90 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                  <button
+                    type="button"
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${!selectionMode ? "bg-white/[0.08] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+                    onClick={exitSelectionMode}
+                  >
+                    Browse
+                  </button>
+                  <button
+                    type="button"
+                    className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${selectionMode ? "bg-[#d50000] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+                    onClick={() => setSelectionMode(true)}
+                  >
+                    Select
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -2043,7 +2084,7 @@ export default function CatalogPage() {
           )}
         </section>
       </div>
-    {selectionMode ? (
+    {selectionMode && !isCollectorPreview ? (
       <div className="fixed inset-x-0 bottom-20 z-40 px-3 md:bottom-4 md:px-4">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur">
           <div className="mr-1 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">

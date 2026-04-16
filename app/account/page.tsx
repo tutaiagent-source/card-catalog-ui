@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import { usePlanPreview } from "@/lib/planPreview";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 
@@ -15,6 +16,7 @@ type CardSummary = {
 
 export default function AccountPage() {
   const { user, loading } = useSupabaseUser();
+  const { planPreview, setPlanPreview, isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<CardSummary[]>([]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -47,7 +49,7 @@ export default function AccountPage() {
   const estimatedTotal = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.estimated_price || 0), 0), [cards]);
   const soldRows = useMemo(() => cards.filter((card) => String(card.status || "") === "Sold"), [cards]);
   const starterLimit = 100;
-  const currentPlanPreview = totalCards > starterLimit ? "Pro" : "Collector";
+  const currentPlanPreview = isCollectorPreview ? "Collector" : "Pro";
   const usagePct = Math.min(100, Math.round((totalCards / starterLimit) * 100));
 
   const providers = useMemo(() => {
@@ -266,7 +268,28 @@ export default function AccountPage() {
               <p className="mt-1 text-sm text-slate-400">2-tier preview for launch: a limited Collector plan and an unlimited Pro plan with fair-use storage.</p>
             </div>
             <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-              Current fit: {currentPlanPreview}
+              Previewing: {currentPlanPreview}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+            <div className="text-sm font-semibold text-slate-200">Preview the paid-wall experience</div>
+            <div className="mt-1 text-sm text-slate-400">Flip between Collector and Pro to see which tools stay visible, which tools get gated, and where upgrade prompts show up.</div>
+            <div className="mt-3 inline-flex items-center rounded-full border border-white/10 bg-slate-900/90 p-1">
+              <button
+                type="button"
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${planPreview === "collector" ? "bg-white/[0.08] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+                onClick={() => setPlanPreview("collector")}
+              >
+                Collector preview
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${planPreview === "pro" ? "bg-[#d50000] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+                onClick={() => setPlanPreview("pro")}
+              >
+                Pro preview
+              </button>
             </div>
           </div>
 

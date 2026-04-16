@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { computeSaleMetrics, parseSellerMeta } from "@/lib/cardSellerMeta";
+import { usePlanPreview } from "@/lib/planPreview";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 
@@ -93,6 +94,7 @@ function csvCell(value: unknown) {
 
 export default function SoldPage() {
   const { user, loading } = useSupabaseUser();
+  const { isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<SoldCard[]>([]);
 
   useEffect(() => {
@@ -341,18 +343,31 @@ export default function SoldPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <a href="/catalog" className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 font-semibold text-slate-100 hover:bg-white/[0.08]">Catalog</a>
-            <button
-              type="button"
-              className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              onClick={exportSalesCsv}
-              disabled={salesWithMetrics.length === 0}
-            >
-              Export sales CSV
-            </button>
+            {isCollectorPreview ? (
+              <a href="/account" className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 font-semibold text-amber-200 hover:bg-amber-500/15">
+                Export sales CSV (Pro)
+              </a>
+            ) : (
+              <button
+                type="button"
+                className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 font-semibold text-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={exportSalesCsv}
+                disabled={salesWithMetrics.length === 0}
+              >
+                Export sales CSV
+              </button>
+            )}
             <a href="/import" className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 font-semibold text-slate-200 hover:bg-slate-800">Import</a>
             <a href="/account" className="rounded-xl border border-white/10 bg-slate-900 px-4 py-2.5 font-semibold text-slate-200 hover:bg-slate-800">My Account</a>
           </div>
         </div>
+
+        {isCollectorPreview ? (
+          <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4 text-sm text-amber-100">
+            Collector preview is active. Basic sold tracking stays visible here, while export and deeper analytics are shown as Pro-only.
+            <a href="/account" className="ml-2 font-semibold underline underline-offset-2">Change preview</a>
+          </div>
+        ) : null}
 
         <section className="mt-6 rounded-[28px] border border-white/10 bg-white/[0.04] p-5 shadow-[0_30px_80px_rgba(2,6,23,0.45)]">
           <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
@@ -417,6 +432,26 @@ export default function SoldPage() {
             </div>
         </section>
 
+        {isCollectorPreview ? (
+          <section className="mt-6 rounded-3xl border border-amber-500/20 bg-amber-500/[0.08] p-6 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
+            <div className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-200">Pro analytics preview</div>
+            <h2 className="mt-3 text-2xl font-bold text-white">Advanced profit analytics live in Pro</h2>
+            <p className="mt-2 max-w-2xl text-sm text-slate-200">Collector keeps the basics: sold history, sale values, and simple dashboard stats. Pro unlocks profit breakdowns, ROI, platform mix, export, and richer trends.</p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                "Card cost, fees, and shipping rollups",
+                "Net profit and ROI detail",
+                "Revenue trend and platform mix",
+                "Sales CSV export",
+              ].map((item) => (
+                <div key={item} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-200">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : (
+        <>
         <section className="mt-4 grid gap-4 md:grid-cols-3">
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="text-sm text-slate-400">Card cost tracked</div>
@@ -529,6 +564,8 @@ export default function SoldPage() {
             </div>
           </div>
         </section>
+        </>
+        )}
 
         <section className="mt-8">
           <div className="flex items-center justify-between gap-3">
@@ -572,10 +609,12 @@ export default function SoldPage() {
                         <div className="text-slate-400">Grade</div>
                         <div className="font-semibold text-white">{card.graded === "yes" && card.grade != null ? card.grade : "-"}</div>
                       </div>
-                      <div className="rounded-2xl bg-slate-950/70 px-3 py-2 col-span-2">
-                        <div className="text-slate-400">Net profit / ROI</div>
-                        <div className="font-semibold text-white">{money(card.metrics.netProfit)}{card.metrics.roi != null ? ` · ${card.metrics.roi.toFixed(1)}%` : ""}</div>
-                      </div>
+                      {!isCollectorPreview ? (
+                        <div className="rounded-2xl bg-slate-950/70 px-3 py-2 col-span-2">
+                          <div className="text-slate-400">Net profit / ROI</div>
+                          <div className="font-semibold text-white">{money(card.metrics.netProfit)}{card.metrics.roi != null ? ` · ${card.metrics.roi.toFixed(1)}%` : ""}</div>
+                        </div>
+                      ) : null}
                     </div>
                     <a
                       href={card.id ? `/add-card?edit=${encodeURIComponent(card.id)}` : "/add-card"}
@@ -618,7 +657,7 @@ export default function SoldPage() {
                         <td className="px-4 py-3 text-slate-200">{normalizePlatformLabel(card.sale_platform)}</td>
                         <td className="px-4 py-3 text-slate-200">
                           <div>{card.graded === "yes" && card.grade != null ? card.grade : "-"}</div>
-                          <div className="mt-1 text-xs text-slate-500">Net {money(card.metrics.netProfit)}</div>
+                          {!isCollectorPreview ? <div className="mt-1 text-xs text-slate-500">Net {money(card.metrics.netProfit)}</div> : null}
                         </td>
                         <td className="px-4 py-3">
                           <a href={card.id ? `/add-card?edit=${encodeURIComponent(card.id)}` : "/add-card"} className="rounded-lg bg-[#b80000] px-3 py-2 text-xs font-semibold hover:bg-[#d50000]">
