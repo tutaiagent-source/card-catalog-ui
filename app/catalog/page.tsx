@@ -115,6 +115,50 @@ function saveCards(cards: Card[]) {
   localStorage.setItem(storageKey(), JSON.stringify(cards));
 }
 
+function cardToDbPayload(card: Card) {
+  const payload: Record<string, any> = {
+    player_name: card.player_name,
+    year: card.year,
+    brand: card.brand,
+    set_name: card.set_name,
+    parallel: card.parallel,
+    card_number: card.card_number,
+    team: card.team,
+    sport: card.sport,
+    rookie: card.rookie,
+    is_autograph: card.is_autograph,
+    has_memorabilia: card.has_memorabilia,
+    graded: card.graded || "no",
+    grade: card.grade ?? null,
+    serial_number_text: card.serial_number_text,
+    quantity: card.quantity,
+    estimated_price: card.estimated_price ?? null,
+    image_url: card.image_url ?? null,
+    back_image_url: card.back_image_url ?? null,
+    status: normalizeStatusValue(card.status),
+    asking_price: card.asking_price ?? null,
+    listed_at: card.listed_at || null,
+    sold_price: card.sold_price ?? null,
+    sold_at: card.sold_at || null,
+    sale_platform: card.sale_platform || null,
+    notes: card.notes || "",
+    date_added: card.date_added || null,
+    pc_position: card.pc_position ?? null,
+  };
+
+  if (String(card.competition || "").trim()) payload.competition = String(card.competition).trim();
+
+  return payload;
+}
+
+function cardToInsertRow(card: Card, userId: string) {
+  return {
+    user_id: userId,
+    ...cardToDbPayload(card),
+    id: card.id,
+  };
+}
+
 function csvEscape(value: string | number | null | undefined) {
   const text = String(value ?? "");
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
@@ -223,7 +267,14 @@ export default function CatalogPage() {
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
-  const [statusToast, setStatusToast] = useState<{ message: string; href?: string; hrefLabel?: string } | null>(null);
+  const [statusToast, setStatusToast] = useState<{
+    message: string;
+    href?: string;
+    hrefLabel?: string;
+    actionLabel?: string;
+    onAction?: () => void | Promise<void>;
+    tone?: "success" | "danger" | "neutral";
+  } | null>(null);
   const [statusModal, setStatusModal] = useState<{
     card: Card;
     nextStatus: "Listed" | "Sold";
@@ -241,6 +292,7 @@ export default function CatalogPage() {
   const [showValuable, setShowValuable] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [cardsView, setCardsView] = useState<"grid" | "inventory">("inventory");
+  const [selectionMode, setSelectionMode] = useState(false);
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
   const [filterSport, setFilterSport] = useState("all");
   const [filterCompetition, setFilterCompetition] = useState("all");
@@ -341,6 +393,11 @@ export default function CatalogPage() {
   const toggleCardSelection = (id?: string) => {
     if (!id) return;
     setSelectedCardIds((prev) => (prev.includes(id) ? prev.filter((entry) => entry !== id) : [...prev, id]));
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedCardIds([]);
   };
 
   const activeCards = useMemo(() => cards.filter((c) => normalizeStatusValue(c.status) !== "Sold"), [cards]);
@@ -570,6 +627,8 @@ export default function CatalogPage() {
     if (!supabaseConfigured || !supabase) return;
     if (!user?.id) return;
 
+    const snapshot = cards.find((card) => card.id === id);
+
     const { error } = await supabase
       .from("cards")
       .delete()
@@ -584,6 +643,25 @@ export default function CatalogPage() {
     sync();
 
     setPreviewCard((prev) => (prev?.id === id ? null : prev));
+
+    if (snapshot) {
+      setStatusToast({
+        message: `${snapshot.player_name} deleted.`,
+        actionLabel: "Undo",
+        tone: "danger",
+        onAction: async () => {
+          if (!supabaseConfigured || !supabase) return;
+          if (!user?.id) return;
+          const { error: undoError } = await supabase.from("cards").insert(cardToInsertRow(snapshot, user.id));
+          if (undoError) {
+            alert(`Undo failed: ${undoError.message}`);
+            return;
+          }
+          setStatusToast({ message: `${snapshot.player_name} restored.`, tone: "success" });
+          sync();
+        },
+      });
+    }
   };
 
   const updateCardStatus = async (
@@ -594,6 +672,8 @@ export default function CatalogPage() {
     if (!card.id) return;
     if (!supabaseConfigured || !supabase) return;
     if (!user?.id) return;
+
+    const previousCard = { ...card };
 
     const today = new Date().toISOString().slice(0, 10);
     const payload: Record<string, any> = { status: nextStatus };
@@ -633,10 +713,69 @@ export default function CatalogPage() {
 
     setStatusToast(
       nextStatus === "Sold"
-        ? { message: `${card.player_name} moved to Sold.`, href: "/sold", hrefLabel: "View sold cards" }
+        ? {
+            message: `${card.player_name} moved to Sold.`,
+            href: "/sold",
+            hrefLabel: "View sold cards",
+            actionLabel: "Undo",
+            tone: "success",
+            onAction: async () => {
+              if (!supabaseConfigured || !supabase) return;
+              if (!user?.id) return;
+              const { error: undoError } = await supabase
+                .from("cards")
+                .update(cardToDbPayload(previousCard))
+                .eq("id", card.id)
+                .eq("user_id", user.id);
+              if (undoError) {
+                alert(`Undo failed: ${undoError.message}`);
+                return;
+              }
+              setStatusToast({ message: `${card.player_name} restored to ${normalizeStatusValue(previousCard.status)}.`, tone: "success" });
+              sync();
+            },
+          }
         : nextStatus === "Listed"
-          ? { message: `${card.player_name} moved to Listed.` }
-          : { message: `${card.player_name} moved back to Collection.` }
+          ? {
+              message: `${card.player_name} moved to Listed.`,
+              actionLabel: "Undo",
+              tone: "success",
+              onAction: async () => {
+                if (!supabaseConfigured || !supabase) return;
+                if (!user?.id) return;
+                const { error: undoError } = await supabase
+                  .from("cards")
+                  .update(cardToDbPayload(previousCard))
+                  .eq("id", card.id)
+                  .eq("user_id", user.id);
+                if (undoError) {
+                  alert(`Undo failed: ${undoError.message}`);
+                  return;
+                }
+                setStatusToast({ message: `${card.player_name} restored to ${normalizeStatusValue(previousCard.status)}.`, tone: "success" });
+                sync();
+              },
+            }
+          : {
+              message: `${card.player_name} moved back to Collection.`,
+              actionLabel: "Undo",
+              tone: "success",
+              onAction: async () => {
+                if (!supabaseConfigured || !supabase) return;
+                if (!user?.id) return;
+                const { error: undoError } = await supabase
+                  .from("cards")
+                  .update(cardToDbPayload(previousCard))
+                  .eq("id", card.id)
+                  .eq("user_id", user.id);
+                if (undoError) {
+                  alert(`Undo failed: ${undoError.message}`);
+                  return;
+                }
+                setStatusToast({ message: `${card.player_name} restored to ${normalizeStatusValue(previousCard.status)}.`, tone: "success" });
+                sync();
+              },
+            }
     );
 
     sync();
@@ -671,6 +810,8 @@ export default function CatalogPage() {
     if (!supabaseConfigured || !supabase) return;
     if (!user?.id) return;
 
+    const snapshots = cards.filter((card) => card.id && selectedCardIds.includes(card.id));
+
     const today = new Date().toISOString().slice(0, 10);
     const payload: Record<string, any> = { status: nextStatus };
 
@@ -693,7 +834,31 @@ export default function CatalogPage() {
     }
 
     setSelectedCardIds([]);
-    setStatusToast({ message: `${count} card${count === 1 ? "" : "s"} moved to ${nextStatus}.` });
+    setStatusToast({
+      message: `${count} card${count === 1 ? "" : "s"} moved to ${nextStatus}.`,
+      actionLabel: snapshots.length ? "Undo" : undefined,
+      tone: "success",
+      onAction: snapshots.length
+        ? async () => {
+            if (!supabaseConfigured || !supabase) return;
+            if (!user?.id) return;
+            for (const snapshot of snapshots) {
+              if (!snapshot.id) continue;
+              const { error: undoError } = await supabase
+                .from("cards")
+                .update(cardToDbPayload(snapshot))
+                .eq("id", snapshot.id)
+                .eq("user_id", user.id);
+              if (undoError) {
+                alert(`Undo failed: ${undoError.message}`);
+                return;
+              }
+            }
+            setStatusToast({ message: `Undid move for ${snapshots.length} card${snapshots.length === 1 ? "" : "s"}.`, tone: "success" });
+            sync();
+          }
+        : undefined,
+    });
     sync();
   };
 
@@ -735,6 +900,7 @@ export default function CatalogPage() {
     if (!user?.id) return;
 
     const count = selectedCardIds.length;
+    const snapshots = cards.filter((card) => card.id && selectedCardIds.includes(card.id));
     const ok = confirm(`Delete ${count} selected card${count === 1 ? "" : "s"}? This cannot be undone.`);
     if (!ok) return;
 
@@ -750,7 +916,25 @@ export default function CatalogPage() {
     }
 
     setSelectedCardIds([]);
-    setStatusToast({ message: `Deleted ${count} card${count === 1 ? "" : "s"}.` });
+    setStatusToast({
+      message: `Deleted ${count} card${count === 1 ? "" : "s"}.`,
+      actionLabel: snapshots.length ? "Undo" : undefined,
+      tone: "danger",
+      onAction: snapshots.length
+        ? async () => {
+            if (!supabaseConfigured || !supabase) return;
+            if (!user?.id) return;
+            const rows = snapshots.map((snapshot) => cardToInsertRow(snapshot, user.id));
+            const { error: undoError } = await supabase.from("cards").insert(rows);
+            if (undoError) {
+              alert(`Undo failed: ${undoError.message}`);
+              return;
+            }
+            setStatusToast({ message: `Restored ${snapshots.length} card${snapshots.length === 1 ? "" : "s"}.`, tone: "success" });
+            sync();
+          }
+        : undefined,
+    });
     sync();
   };
 
@@ -967,20 +1151,44 @@ export default function CatalogPage() {
         </div>
 
         {statusToast && (
-          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-emerald-800 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
-            <span>{statusToast.message}</span>
-            {statusToast.href && statusToast.hrefLabel ? (
-              <a href={statusToast.href} className="font-semibold text-emerald-100 underline">
-                {statusToast.hrefLabel}
-              </a>
-            ) : null}
-            <button
-              type="button"
-              className="ml-auto rounded bg-emerald-900/50 px-2 py-1 text-xs font-semibold hover:bg-emerald-900"
-              onClick={() => setStatusToast(null)}
+          <div className="pointer-events-none fixed left-1/2 top-4 z-50 w-[min(92vw,680px)] -translate-x-1/2 px-2">
+            <div
+              className={
+                "pointer-events-auto flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3 text-sm shadow-2xl backdrop-blur transition-all duration-200 " +
+                (statusToast.tone === "danger"
+                  ? "border-red-500/30 bg-slate-950/95 text-red-100"
+                  : statusToast.tone === "neutral"
+                    ? "border-white/10 bg-slate-950/95 text-slate-100"
+                    : "border-emerald-500/30 bg-slate-950/95 text-emerald-100")
+              }
             >
-              Close
-            </button>
+              <span>{statusToast.message}</span>
+              {statusToast.href && statusToast.hrefLabel ? (
+                <a href={statusToast.href} className="font-semibold underline underline-offset-2">
+                  {statusToast.hrefLabel}
+                </a>
+              ) : null}
+              {statusToast.actionLabel && statusToast.onAction ? (
+                <button
+                  type="button"
+                  className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1 text-xs font-semibold text-white transition-colors duration-150 hover:bg-white/[0.12]"
+                  onClick={async () => {
+                    const action = statusToast.onAction;
+                    setStatusToast(null);
+                    if (action) await action();
+                  }}
+                >
+                  {statusToast.actionLabel}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className="ml-auto rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
+                onClick={() => setStatusToast(null)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         )}
 
@@ -1004,22 +1212,40 @@ export default function CatalogPage() {
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
               <span className="uppercase tracking-[0.18em]">View</span>
-              <button
-                type="button"
-                className={`rounded px-2.5 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "inventory" ? "bg-slate-800 text-white" : "bg-slate-900"}`}
-                onClick={() => setCardsView("inventory")}
-              >
-                Inventory
-              </button>
-              <button
-                type="button"
-                className={`rounded px-2.5 py-1 text-xs font-semibold hover:bg-slate-800 ${cardsView === "grid" ? "bg-slate-800 text-white" : "bg-slate-900"}`}
-                onClick={() => setCardsView("grid")}
-              >
-                Grid
-              </button>
+              <div className="inline-flex items-center rounded-full border border-white/10 bg-slate-900/90 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                <button
+                  type="button"
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${cardsView === "inventory" ? "bg-white/[0.08] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+                  onClick={() => setCardsView("inventory")}
+                >
+                  Inventory
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${cardsView === "grid" ? "bg-white/[0.08] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+                  onClick={() => setCardsView("grid")}
+                >
+                  Grid
+                </button>
+              </div>
+              <div className="inline-flex items-center rounded-full border border-white/10 bg-slate-900/90 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                <button
+                  type="button"
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${!selectionMode ? "bg-white/[0.08] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+                  onClick={exitSelectionMode}
+                >
+                  Browse
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-150 ${selectionMode ? "bg-[#d50000] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+                  onClick={() => setSelectionMode(true)}
+                >
+                  Select
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -1164,68 +1390,6 @@ export default function CatalogPage() {
           </div>
         </div>
 
-        {cardsView === "inventory" ? (
-          <details className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]" open={false}>
-            <summary className="flex cursor-pointer items-start justify-between gap-4">
-              <div>
-                <div className="text-sm font-semibold text-slate-100">Bulk seller tools</div>
-                <div className="mt-1 text-sm text-slate-400">Batched moves for faster inventory management.</div>
-              </div>
-              <div className="text-xs text-slate-500">Selected: {selectedCardIds.length}</div>
-            </summary>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
-                onClick={() => setSelectedCardIds(visibleCardIds)}
-                disabled={visibleCardIds.length === 0}
-              >
-                Select visible
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
-                onClick={() => setSelectedCardIds([])}
-                disabled={selectedCardIds.length === 0}
-              >
-                Clear
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
-                onClick={() => setBulkEditModal({ platform: "", askingPrice: "" })}
-                disabled={selectedCardIds.length === 0}
-              >
-                Bulk edit
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-slate-800 px-3 py-2 text-sm font-semibold hover:bg-slate-700"
-                onClick={() => bulkUpdateStatus("Collection")}
-                disabled={selectedCardIds.length === 0}
-              >
-                Move to Collection
-              </button>
-              <button
-                type="button"
-                className="rounded-lg bg-[#d50000] px-3 py-2 text-sm font-semibold hover:bg-[#b80000]"
-                onClick={() => bulkUpdateStatus("Listed")}
-                disabled={selectedCardIds.length === 0}
-              >
-                Move to Listed
-              </button>
-              <button
-                type="button"
-                className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/15"
-                onClick={bulkDeleteSelected}
-                disabled={selectedCardIds.length === 0}
-              >
-                Delete selected
-              </button>
-            </div>
-          </details>
-        ) : null}
         <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -1402,6 +1566,7 @@ export default function CatalogPage() {
                   onClick={() => {
                     setQ("");
                     setFilterSport("all");
+                    setFilterCompetition("all");
                     setFilterYear("all");
                     setFilterBrand("all");
                     setFilterStatus("all");
@@ -1423,17 +1588,19 @@ export default function CatalogPage() {
                   const selectedParallel = selectedParallelByFamily[row.key] ?? normalizeParallelLabel(row.representative.parallel);
                   const c = row.family.find((f) => normalizeParallelLabel(f.parallel) === selectedParallel) ?? row.representative;
                   return (
-                    <div key={row.key} className="rounded border border-slate-800 bg-slate-900 p-4">
+                    <div key={row.key} className="rounded-2xl border border-slate-800 bg-slate-900 p-4 transition-all duration-150 hover:border-white/15">
                     <div className="mb-3 flex items-center justify-between gap-3">
-                      <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300">
-                        <input
-                          type="checkbox"
-                          checked={c.id ? selectedCardIds.includes(c.id) : false}
-                          onChange={() => toggleCardSelection(c.id)}
-                        />
-                        Select
-                      </label>
-                      <span className="text-xs text-slate-500">Inventory row</span>
+                      {selectionMode ? (
+                        <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-300">
+                          <input
+                            type="checkbox"
+                            checked={c.id ? selectedCardIds.includes(c.id) : false}
+                            onChange={() => toggleCardSelection(c.id)}
+                          />
+                          Select
+                        </label>
+                      ) : <span className="text-xs text-slate-500">Inventory row</span>}
+                      {selectionMode ? <span className="text-xs text-slate-500">Tap rows to build a batch</span> : null}
                     </div>
                     <div className="flex gap-3">
                       {c.image_url ? (
@@ -1557,18 +1724,20 @@ export default function CatalogPage() {
                 })}
               </div>
 
-              <div className="mt-4 hidden max-w-full overflow-x-hidden rounded border border-slate-800 bg-slate-900 md:block">
+              <div className="mt-4 hidden max-w-full overflow-x-hidden rounded-2xl border border-slate-800 bg-slate-900 md:block">
                 <table className="min-w-full text-sm">
                   <thead className="bg-slate-950 text-left text-slate-400">
                     <tr>
-                      <th className="px-3 py-2 text-center">
-                        <input
-                          type="checkbox"
-                          checked={visibleCardIds.length > 0 && visibleCardIds.every((id) => selectedCardIds.includes(id))}
-                          onChange={(e) => setSelectedCardIds(e.target.checked ? visibleCardIds : [])}
-                          aria-label="Select visible cards"
-                        />
-                      </th>
+                      {selectionMode ? (
+                        <th className="px-3 py-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={visibleCardIds.length > 0 && visibleCardIds.every((id) => selectedCardIds.includes(id))}
+                            onChange={(e) => setSelectedCardIds(e.target.checked ? visibleCardIds : [])}
+                            aria-label="Select visible cards"
+                          />
+                        </th>
+                      ) : null}
                       <th className="px-3 py-2">Img</th>
                       <th className="px-3 py-2">Card</th>
                       <th className="px-3 py-2 text-center">Qty / Value</th>
@@ -1581,15 +1750,17 @@ export default function CatalogPage() {
                       const selectedParallel = selectedParallelByFamily[row.key] ?? normalizeParallelLabel(row.representative.parallel);
                       const c = row.family.find((f) => normalizeParallelLabel(f.parallel) === selectedParallel) ?? row.representative;
                       return (
-                        <tr key={row.key} className="border-t border-slate-800 align-top">
-                        <td className="px-3 py-2 text-center align-middle">
-                          <input
-                            type="checkbox"
-                            checked={c.id ? selectedCardIds.includes(c.id) : false}
-                            onChange={() => toggleCardSelection(c.id)}
-                            aria-label={`Select ${c.player_name}`}
-                          />
-                        </td>
+                        <tr key={row.key} className="border-t border-slate-800 align-top transition-colors duration-150 hover:bg-white/[0.02]">
+                        {selectionMode ? (
+                          <td className="px-3 py-2 text-center align-middle">
+                            <input
+                              type="checkbox"
+                              checked={c.id ? selectedCardIds.includes(c.id) : false}
+                              onChange={() => toggleCardSelection(c.id)}
+                              aria-label={`Select ${c.player_name}`}
+                            />
+                          </td>
+                        ) : null}
                         <td className="px-3 py-2">
                           {c.image_url ? (
                             <button
@@ -1617,8 +1788,8 @@ export default function CatalogPage() {
                               onClick={() => togglePc(c, c.pc_position == null)}
                               className={
                                 c.pc_position != null
-                                  ? "rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-500/15"
-                                  : "rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                                  ? "rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs font-semibold text-amber-200 transition-colors duration-150 hover:bg-amber-500/15"
+                                  : "rounded-full border border-white/10 bg-white/[0.04] px-2 py-1 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.08]"
                               }
                               aria-label={c.pc_position != null ? "Remove from PC" : "Add to PC"}
                               title={c.pc_position != null ? "Remove from PC" : "Star in PC"}
@@ -1722,10 +1893,20 @@ export default function CatalogPage() {
               {sortedCards.map((c, i) => (
                 <div
                   key={`${c.player_name}-${c.year}-${c.card_number}-${c.id || i}`}
-                  className="rounded border border-slate-800 bg-slate-900 p-4"
+                  className="rounded-2xl border border-slate-800 bg-slate-900 p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-white/15 hover:shadow-[0_20px_60px_rgba(0,0,0,0.22)]"
                 >
                   <div className="flex flex-col gap-3">
-                    <div className="w-full aspect-square overflow-hidden rounded bg-slate-950 flex items-center justify-center">
+                    <div className="relative w-full aspect-square overflow-hidden rounded-xl bg-slate-950 flex items-center justify-center">
+                      {selectionMode ? (
+                        <label className="absolute left-2 top-2 z-10 inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/90 px-2.5 py-1 text-[11px] font-semibold text-slate-100 backdrop-blur">
+                          <input
+                            type="checkbox"
+                            checked={c.id ? selectedCardIds.includes(c.id) : false}
+                            onChange={() => toggleCardSelection(c.id)}
+                          />
+                          Select
+                        </label>
+                      ) : null}
                       {c.image_url ? (
                         <button
                           type="button"
@@ -1869,6 +2050,70 @@ export default function CatalogPage() {
           )}
         </section>
       </div>
+    {selectionMode ? (
+      <div className="fixed inset-x-0 bottom-20 z-40 px-3 md:bottom-4 md:px-4">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur">
+          <div className="mr-1 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">
+            {selectedCardIds.length} selected
+          </div>
+          <button
+            type="button"
+            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
+            onClick={() => setSelectedCardIds(visibleCardIds)}
+            disabled={visibleCardIds.length === 0}
+          >
+            Select visible
+          </button>
+          <button
+            type="button"
+            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
+            onClick={() => setSelectedCardIds([])}
+            disabled={selectedCardIds.length === 0}
+          >
+            Clear
+          </button>
+          <button
+            type="button"
+            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
+            onClick={() => setBulkEditModal({ platform: "", askingPrice: "" })}
+            disabled={selectedCardIds.length === 0}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
+            onClick={() => bulkUpdateStatus("Collection")}
+            disabled={selectedCardIds.length === 0}
+          >
+            Collection
+          </button>
+          <button
+            type="button"
+            className="rounded-full bg-[#d50000] px-3 py-1.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#b80000]"
+            onClick={() => bulkUpdateStatus("Listed")}
+            disabled={selectedCardIds.length === 0}
+          >
+            Listed
+          </button>
+          <button
+            type="button"
+            className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition-colors duration-150 hover:bg-red-500/15"
+            onClick={bulkDeleteSelected}
+            disabled={selectedCardIds.length === 0}
+          >
+            Delete
+          </button>
+          <button
+            type="button"
+            className="ml-auto rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
+            onClick={exitSelectionMode}
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    ) : null}
     <CardCatMobileNav />
     {bulkEditModal && (
       <div
