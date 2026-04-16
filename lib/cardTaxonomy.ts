@@ -128,6 +128,14 @@ export function normalizeBrandAndSet(brandValue: string | undefined | null, setV
   const lowerBrand = brand.toLowerCase();
   const lowerSet = set_name.toLowerCase();
 
+  const manufacturerPrefixes: Array<[string, string]> = [
+    ["panini", "Panini"],
+    ["topps", "Topps"],
+    ["bowman", "Bowman"],
+    ["upper deck", "Upper Deck"],
+    ["leaf", "Leaf"],
+  ];
+
   const paniniSets: Record<string, string> = {
     prizm: "Prizm",
     select: "Select",
@@ -142,10 +150,27 @@ export function normalizeBrandAndSet(brandValue: string | undefined | null, setV
     donruss: "Donruss",
   };
 
+  for (const [prefix, canonicalBrand] of manufacturerPrefixes) {
+    if (!lowerBrand.startsWith(`${prefix} `)) continue;
+
+    const remainder = clean(brand.slice(prefix.length));
+    const remainderLower = remainder.toLowerCase();
+
+    brand = canonicalBrand;
+
+    if (!set_name || lowerSet === remainderLower || lowerSet === `${prefix} ${remainderLower}`) {
+      set_name = titleCase(remainder);
+    }
+
+    break;
+  }
+
   for (const [token, canonicalSet] of Object.entries(paniniSets)) {
-    if ((lowerBrand === token || lowerBrand === `panini ${token}`) && !set_name) {
+    if (lowerBrand === token || lowerBrand === `panini ${token}`) {
       brand = "Panini";
-      set_name = canonicalSet;
+      if (!set_name || lowerSet === token || lowerSet === `panini ${token}`) {
+        set_name = canonicalSet;
+      }
     }
   }
 
@@ -158,6 +183,13 @@ export function normalizeBrandAndSet(brandValue: string | undefined | null, setV
   if (!brand && lowerSet.startsWith("panini ")) {
     brand = "Panini";
     set_name = titleCase(set_name.replace(/^panini\s+/i, ""));
+  }
+
+  for (const [token, canonicalSet] of Object.entries(paniniSets)) {
+    if (lowerSet === `panini ${token}`) {
+      if (!brand || brand === "Panini") brand = "Panini";
+      set_name = canonicalSet;
+    }
   }
 
   if (brand === "Panini" && lowerSet.startsWith("panini ")) {
