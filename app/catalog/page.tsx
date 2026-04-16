@@ -23,6 +23,7 @@ type Card = {
   card_number: string;
   team: string;
   sport: string;
+  competition?: string | null;
 
   rookie: YesNo;
   is_autograph: YesNo;
@@ -242,6 +243,7 @@ export default function CatalogPage() {
   const [cardsView, setCardsView] = useState<"grid" | "inventory">("inventory");
   const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
   const [filterSport, setFilterSport] = useState("all");
+  const [filterCompetition, setFilterCompetition] = useState("all");
   const [filterYear, setFilterYear] = useState("all");
   const [filterBrand, setFilterBrand] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -313,6 +315,7 @@ export default function CatalogPage() {
         card_number: card.card_number,
         team: card.team,
         sport: card.sport,
+        competition: card.competition || "",
         rookie: card.rookie,
         is_autograph: card.is_autograph,
         has_memorabilia: card.has_memorabilia,
@@ -346,6 +349,24 @@ export default function CatalogPage() {
     () => Array.from(new Set(activeCards.map((c) => String(c.sport || "").trim()).filter(Boolean))).sort(),
     [activeCards]
   );
+  const competitionOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          activeCards
+            .filter((c) => filterSport === "all" || String(c.sport || "") === filterSport)
+            .map((c) => String(c.competition || "").trim())
+            .filter(Boolean)
+        )
+      ).sort(),
+    [activeCards, filterSport]
+  );
+  useEffect(() => {
+    if (filterCompetition === "all") return;
+    if (competitionOptions.includes(filterCompetition)) return;
+    setFilterCompetition("all");
+  }, [competitionOptions, filterCompetition]);
+
   const yearOptions = useMemo(
     () => Array.from(new Set(activeCards.map((c) => String(c.year || "").trim()).filter(Boolean))).sort((a, b) => Number(b) - Number(a) || b.localeCompare(a)),
     [activeCards]
@@ -375,7 +396,7 @@ export default function CatalogPage() {
     return activeCards.filter((c) => {
       const matchesQ =
         !s ||
-        `${c.player_name} ${c.team} ${c.year} ${c.brand} ${c.set_name} ${c.parallel} ${c.card_number} ${c.serial_number_text}`
+        `${c.player_name} ${c.team} ${c.year} ${c.brand} ${c.set_name} ${c.parallel} ${c.card_number} ${c.serial_number_text} ${c.competition || ""}`
           .toLowerCase()
           .includes(s);
 
@@ -383,14 +404,15 @@ export default function CatalogPage() {
       const matchesAuto = !wantsAuto || c.is_autograph === "yes";
       const matchesMem = !wantsMem || c.has_memorabilia === "yes";
       const matchesSport = filterSport === "all" || String(c.sport || "") === filterSport;
+      const matchesCompetition = filterCompetition === "all" || String(c.competition || "") === filterCompetition;
       const matchesYear = filterYear === "all" || String(c.year || "") === filterYear;
       const matchesBrand = filterBrand === "all" || String(c.brand || "") === filterBrand;
       const matchesStatus = filterStatus === "all" || normalizeStatusValue(c.status) === filterStatus;
       const matchesGraded = filterGraded === "all" || (c.graded || "no") === filterGraded;
 
-      return matchesQ && matchesRookie && matchesAuto && matchesMem && matchesSport && matchesYear && matchesBrand && matchesStatus && matchesGraded;
+      return matchesQ && matchesRookie && matchesAuto && matchesMem && matchesSport && matchesCompetition && matchesYear && matchesBrand && matchesStatus && matchesGraded;
     });
-  }, [activeCards, q, filterSport, filterYear, filterBrand, filterStatus, filterGraded]);
+  }, [activeCards, q, filterSport, filterCompetition, filterYear, filterBrand, filterStatus, filterGraded]);
 
   const sortedCards = useMemo(() => {
     const next = [...filtered];
@@ -418,6 +440,7 @@ export default function CatalogPage() {
         c.player_name,
         c.year,
         c.sport,
+        c.competition,
         c.brand,
         c.set_name,
         c.team,
@@ -518,16 +541,6 @@ export default function CatalogPage() {
         (sum, c) => sum + (normalizeStatusValue(c.status) === "Listed" ? Number(c.quantity || 0) : 0),
         0
       ),
-    [activeCards]
-  );
-
-  const rookieRows = useMemo(
-    () => activeCards.filter((c) => c.rookie === "yes").length,
-    [activeCards]
-  );
-
-  const autographRows = useMemo(
-    () => activeCards.filter((c) => c.is_autograph === "yes").length,
     [activeCards]
   );
 
@@ -713,6 +726,31 @@ export default function CatalogPage() {
 
     setBulkEditModal(null);
     setStatusToast({ message: `Updated ${count} selected card${count === 1 ? "" : "s"}.` });
+    sync();
+  };
+
+  const bulkDeleteSelected = async () => {
+    if (selectedCardIds.length === 0) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const count = selectedCardIds.length;
+    const ok = confirm(`Delete ${count} selected card${count === 1 ? "" : "s"}? This cannot be undone.`);
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from("cards")
+      .delete()
+      .in("id", selectedCardIds)
+      .eq("user_id", user.id);
+
+    if (error) {
+      alert(`Bulk delete failed: ${error.message}`);
+      return;
+    }
+
+    setSelectedCardIds([]);
+    setStatusToast({ message: `Deleted ${count} card${count === 1 ? "" : "s"}.` });
     sync();
   };
 
@@ -1030,6 +1068,7 @@ export default function CatalogPage() {
             onClick={() => {
               setQ("");
               setFilterSport("all");
+              setFilterCompetition("all");
               setFilterYear("all");
               setFilterBrand("all");
               setFilterStatus("all");
@@ -1042,12 +1081,23 @@ export default function CatalogPage() {
           </div>
 
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-6">
-          <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterSport} onChange={(e) => setFilterSport(e.target.value)}>
+          <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterSport} onChange={(e) => {
+            setFilterSport(e.target.value);
+            setFilterCompetition("all");
+          }}>
             <option value="all">All sports</option>
             {sportOptions.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
           </select>
+          {(filterSport === "Soccer" || filterCompetition !== "all") && competitionOptions.length > 0 ? (
+            <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterCompetition} onChange={(e) => setFilterCompetition(e.target.value)}>
+              <option value="all">All competitions</option>
+              {competitionOptions.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          ) : null}
           <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
             <option value="all">All years</option>
             {yearOptions.map((option) => (
@@ -1082,6 +1132,7 @@ export default function CatalogPage() {
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-300">
             {q ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Search: {q}</span> : null}
             {filterSport !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Sport: {filterSport}</span> : null}
+            {filterCompetition !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Competition: {filterCompetition}</span> : null}
             {filterYear !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Year: {filterYear}</span> : null}
             {filterBrand !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Brand: {filterBrand}</span> : null}
             {filterStatus !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Status: {filterStatus}</span> : null}
@@ -1108,8 +1159,8 @@ export default function CatalogPage() {
             <div className="mt-1 text-xl sm:text-2xl font-bold">{listedUnits}</div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-3 sm:p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-            <div className="text-sm text-slate-400">RC / Auto rows</div>
-            <div className="mt-1 text-xl sm:text-2xl font-bold">{rookieRows} / {autographRows}</div>
+            <div className="text-sm text-slate-400">Sports tracked</div>
+            <div className="mt-1 text-xl sm:text-2xl font-bold">{sportOptions.length}</div>
           </div>
         </div>
 
@@ -1163,6 +1214,14 @@ export default function CatalogPage() {
                 disabled={selectedCardIds.length === 0}
               >
                 Move to Listed
+              </button>
+              <button
+                type="button"
+                className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/15"
+                onClick={bulkDeleteSelected}
+                disabled={selectedCardIds.length === 0}
+              >
+                Delete selected
               </button>
             </div>
           </details>
@@ -1267,7 +1326,7 @@ export default function CatalogPage() {
                               {previewCard.parallel} · #{previewCard.card_number} · {previewCard.serial_number_text || "(no serial)"}
                             </div>
                             <div className="mt-1 text-sm text-slate-300">
-                              {previewCard.team} · {previewCard.sport}
+                              {previewCard.team} · {previewCard.sport}{previewCard.competition ? ` · ${previewCard.competition}` : ""}
                             </div>
                             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-300">
                               <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(normalizeStatusValue(previewCard.status))}`}>
@@ -1567,7 +1626,7 @@ export default function CatalogPage() {
                               {c.pc_position != null ? "★" : "☆"}
                             </button>
                           </div>
-                          <div className="text-xs text-slate-400">{c.year} · {c.team} · {c.sport}</div>
+                          <div className="text-xs text-slate-400">{c.year} · {c.team} · {c.sport}{c.competition ? ` · ${c.competition}` : ""}</div>
                           <div className="mt-1 text-sm text-slate-200">{c.brand} · {c.set_name}</div>
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
                             <span>#{c.card_number}</span>
@@ -1732,7 +1791,7 @@ export default function CatalogPage() {
                             {c.parallel} · #{c.card_number} · {c.serial_number_text || "(no serial)"}
                           </div>
                           <div className="text-sm text-slate-300">
-                            {c.team} · {c.sport}
+                            {c.team} · {c.sport}{c.competition ? ` · ${c.competition}` : ""}
                           </div>
                           <div className="flex items-center justify-center gap-2 text-sm text-slate-300">
                             <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(normalizeStatusValue(c.status))}`}>

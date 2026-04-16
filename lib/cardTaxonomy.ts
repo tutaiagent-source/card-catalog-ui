@@ -11,9 +11,76 @@ function titleCase(value: string) {
     .join(" ");
 }
 
+export const SPORT_OPTIONS = [
+  "Baseball",
+  "Basketball",
+  "Football",
+  "Hockey",
+  "Soccer",
+  "Golf",
+  "Racing",
+  "Wrestling",
+  "MMA",
+  "Tennis",
+  "Other",
+] as const;
+
+export const SOCCER_COMPETITION_OPTIONS = [
+  "Premier League",
+  "La Liga",
+  "Bundesliga",
+  "Serie A",
+  "Ligue 1",
+  "MLS",
+  "NWSL",
+  "Liga F",
+  "Saudi Pro League",
+  "UEFA Champions League",
+  "UEFA Europa League",
+  "FIFA World Cup",
+  "UEFA Euro",
+  "Copa América",
+  "Women's World Cup",
+  "Other",
+] as const;
+
+const SOCCER_COMPETITION_ALIASES: Array<[string, string[]]> = [
+  ["Premier League", ["premier league", "english premier league", "epl"]],
+  ["La Liga", ["la liga", "laliga"]],
+  ["Bundesliga", ["bundesliga"]],
+  ["Serie A", ["serie a"]],
+  ["Ligue 1", ["ligue 1"]],
+  ["MLS", ["mls", "major league soccer"]],
+  ["NWSL", ["nwsl", "national women's soccer league", "national womens soccer league"]],
+  ["Liga F", ["liga f"]],
+  ["Saudi Pro League", ["saudi pro league", "spl"]],
+  ["UEFA Champions League", ["uefa champions league", "champions league", "ucl"]],
+  ["UEFA Europa League", ["uefa europa league", "europa league"]],
+  ["FIFA World Cup", ["fifa world cup", "world cup"]],
+  ["UEFA Euro", ["uefa euro", "euro"]],
+  ["Copa América", ["copa america", "copa américa"]],
+  ["Women's World Cup", ["women's world cup", "womens world cup", "fifa women's world cup", "fifa womens world cup"]],
+];
+
+function normalizeSoccerCompetition(value: string | undefined | null) {
+  const raw = clean(value);
+  if (!raw) return "";
+  const lower = raw.toLowerCase();
+
+  for (const [canonical, aliases] of SOCCER_COMPETITION_ALIASES) {
+    if (aliases.includes(lower)) return canonical;
+  }
+
+  return "";
+}
+
 export function normalizeSportLabel(value: string | undefined | null) {
   const raw = clean(value);
   if (!raw) return "";
+
+  const competitionMatch = normalizeSoccerCompetition(raw);
+  if (competitionMatch) return "Soccer";
+
   const lower = raw.toLowerCase();
 
   if (["nfl", "ncaaf", "ncaa football", "football", "ncaa footbal"].includes(lower) || lower.includes("football")) {
@@ -36,6 +103,20 @@ export function normalizeSportLabel(value: string | undefined | null) {
   if (lower.includes("wrestling") || lower.includes("wwe")) return "Wrestling";
   if (lower.includes("ufc") || lower.includes("mma")) return "MMA";
   if (lower.includes("tennis")) return "Tennis";
+  if (lower === "other") return "Other";
+
+  return titleCase(raw);
+}
+
+export function normalizeCompetitionLabel(value: string | undefined | null, sport?: string | undefined | null) {
+  const raw = clean(value);
+  if (!raw) return "";
+
+  const soccerMatch = normalizeSoccerCompetition(raw);
+  if (soccerMatch) return soccerMatch;
+
+  const normalizedSport = normalizeSportLabel(sport);
+  if (normalizedSport === "Soccer") return titleCase(raw);
 
   return titleCase(raw);
 }
@@ -104,13 +185,35 @@ export function normalizeBrandAndSet(brandValue: string | undefined | null, setV
   };
 }
 
-export function normalizeCatalogTaxonomy<T extends { brand?: string | null; set_name?: string | null; sport?: string | null }>(card: T): T {
-  const normalizedSport = normalizeSportLabel(card.sport);
+export function normalizeCatalogTaxonomy<
+  T extends { brand?: string | null; set_name?: string | null; sport?: string | null; competition?: string | null }
+>(card: T): T {
+  const rawSport = clean(card.sport);
+  const rawCompetition = clean(card.competition);
+
+  let normalizedSport = normalizeSportLabel(rawSport);
+  let normalizedCompetition = rawCompetition;
+
+  const sportAsCompetition = normalizeSoccerCompetition(rawSport);
+  if (sportAsCompetition) {
+    normalizedSport = "Soccer";
+    if (!normalizedCompetition) normalizedCompetition = sportAsCompetition;
+  }
+
+  const competitionAsSoccer = normalizeSoccerCompetition(rawCompetition);
+  if (competitionAsSoccer) {
+    normalizedCompetition = competitionAsSoccer;
+    if (!normalizedSport) normalizedSport = "Soccer";
+  }
+
+  normalizedCompetition = normalizeCompetitionLabel(normalizedCompetition, normalizedSport);
+
   const normalizedBrandSet = normalizeBrandAndSet(card.brand, card.set_name);
 
   return {
     ...card,
     sport: normalizedSport || card.sport,
+    competition: normalizedCompetition || undefined,
     brand: normalizedBrandSet.brand || card.brand,
     set_name: normalizedBrandSet.set_name || card.set_name,
   };

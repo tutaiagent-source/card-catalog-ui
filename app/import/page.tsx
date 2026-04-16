@@ -5,7 +5,7 @@ import * as XLSX from "xlsx";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
-import { normalizeBrandAndSet, normalizeCatalogTaxonomy, normalizeSportLabel } from "@/lib/cardTaxonomy";
+import { normalizeBrandAndSet, normalizeCatalogTaxonomy } from "@/lib/cardTaxonomy";
 import { GradeCompany, parseGradeCompany, parseGradeNumber, upsertGradeCompanyInNotes, upsertNotesLines } from "@/lib/gradeNotes";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 
@@ -22,6 +22,7 @@ type Card = {
   card_number: string;
   team: string;
   sport: string;
+  competition?: string | null;
   rookie: YesNo;
   is_autograph: YesNo;
   has_memorabilia: YesNo;
@@ -52,6 +53,7 @@ type ImportField =
   | "card_number"
   | "team"
   | "sport"
+  | "competition"
   | "rookie"
   | "is_autograph"
   | "has_memorabilia"
@@ -107,6 +109,7 @@ const FIELD_LABELS: Record<ImportField, string> = {
   card_number: "Card number",
   team: "Team",
   sport: "Sport",
+  competition: "Competition",
   rookie: "Rookie",
   is_autograph: "Autograph",
   has_memorabilia: "Memorabilia",
@@ -140,6 +143,7 @@ const FIELD_OPTIONS: ImportField[] = [
   "card_number",
   "team",
   "sport",
+  "competition",
   "rookie",
   "is_autograph",
   "has_memorabilia",
@@ -171,7 +175,8 @@ const FIELD_ALIASES: Record<Exclude<ImportField, "__ignore">, string[]> = {
   parallel: ["parallel", "insert", "subset", "theme", "parallel/insert", "variant", "version", "colorway", "variation"],
   card_number: ["card number", "card #", "number", "checklist number", "card no", "cardnum", "card_num", "no on card", "no. on card"],
   team: ["team", "franchise", "club", "school"],
-  sport: ["sport", "league"],
+  sport: ["sport"],
+  competition: ["competition", "league", "tournament", "event"],
   rookie: ["rookie", "rc", "rookie card", "rookie_card", "rookie tag"],
   is_autograph: ["autograph", "auto", "auto included", "is autograph", "signed"],
   has_memorabilia: ["memorabilia", "mem", "patch", "jersey", "relic", "patch/relic", "patch / relic"],
@@ -328,7 +333,7 @@ function cleanText(value: string) {
 }
 
 function buildIdentityKey(values: Partial<Card>) {
-  const parts = [
+  const coreParts = [
     values.player_name,
     values.year,
     values.brand,
@@ -339,8 +344,10 @@ function buildIdentityKey(values: Partial<Card>) {
     values.sport,
   ].map((part) => cleanText(String(part || "")).toLowerCase());
 
-  if (parts.some((part) => !part)) return null;
-  return parts.join("|");
+  if (coreParts.some((part) => !part)) return null;
+
+  const competition = cleanText(String(values.competition || "")).toLowerCase();
+  return [...coreParts, competition].join("|");
 }
 
 function rowHasAnyData(row: RawRow) {
@@ -477,7 +484,18 @@ function buildRowPayload(row: RawRow, mapping: Mapping, gradeCompanyOverride?: G
   const normalizedBrandSet = normalizeBrandAndSet(payload.brand, payload.set_name);
   payload.brand = normalizedBrandSet.brand;
   payload.set_name = normalizedBrandSet.set_name;
-  payload.sport = normalizeSportLabel(payload.sport);
+
+  const normalizedTaxonomy = normalizeCatalogTaxonomy({
+    sport: payload.sport,
+    competition: payload.competition,
+    brand: payload.brand,
+    set_name: payload.set_name,
+  });
+
+  payload.sport = normalizedTaxonomy.sport;
+  payload.competition = normalizedTaxonomy.competition;
+  payload.brand = normalizedTaxonomy.brand;
+  payload.set_name = normalizedTaxonomy.set_name;
 
   return { payload, issues };
 }
@@ -493,6 +511,7 @@ function createInsertPayload(payload: Partial<Card>, userId: string) {
     card_number: payload.card_number || "",
     team: payload.team || "",
     sport: payload.sport || "",
+    ...(payload.competition ? { competition: payload.competition } : {}),
     rookie: payload.rookie || "no",
     is_autograph: payload.is_autograph || "no",
     has_memorabilia: payload.has_memorabilia || "no",
@@ -524,6 +543,7 @@ function taxonomyDiff(card: Card) {
   const changes: Partial<Card> = {};
 
   if (cleanText(card.sport) !== cleanText(normalized.sport)) changes.sport = normalized.sport;
+  if (cleanText(card.competition || "") !== cleanText(normalized.competition || "")) changes.competition = normalized.competition || null;
   if (cleanText(card.brand) !== cleanText(normalized.brand)) changes.brand = normalized.brand;
   if (cleanText(card.set_name) !== cleanText(normalized.set_name)) changes.set_name = normalized.set_name;
 

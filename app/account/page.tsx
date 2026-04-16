@@ -17,6 +17,7 @@ export default function AccountPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [clearingCatalog, setClearingCatalog] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -86,6 +87,33 @@ export default function AccountPage() {
     setPassword("");
     setConfirmPassword("");
     setMessage("Password updated.");
+  };
+
+  const clearCatalog = async () => {
+    setMessage("");
+    setError("");
+
+    if (!supabaseConfigured || !supabase) {
+      setError("Supabase is not configured yet.");
+      return;
+    }
+
+    if (!user?.id) return;
+
+    const ok = confirm(`Clear your entire catalog? This will permanently delete ${cards.length} row${cards.length === 1 ? "" : "s"}.`);
+    if (!ok) return;
+
+    setClearingCatalog(true);
+    const { error: deleteError } = await supabase.from("cards").delete().eq("user_id", user.id);
+    setClearingCatalog(false);
+
+    if (deleteError) {
+      setError(deleteError.message);
+      return;
+    }
+
+    setCards([]);
+    setMessage("Catalog cleared.");
   };
 
   if (loading) {
@@ -245,6 +273,20 @@ export default function AccountPage() {
               Review sold cards
             </a>
           </div>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+          <h2 className="text-lg font-semibold">Danger zone</h2>
+          <p className="mt-2 text-sm text-slate-300">Need a clean slate? You can clear the entire catalog from here.</p>
+          <button
+            type="button"
+            className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={clearCatalog}
+            disabled={clearingCatalog || cards.length === 0}
+          >
+            {clearingCatalog ? "Clearing catalog..." : "Clear catalog"}
+          </button>
+          <div className="mt-2 text-xs text-slate-400">This permanently deletes all catalog rows for this account.</div>
         </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">

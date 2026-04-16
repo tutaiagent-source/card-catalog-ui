@@ -4,7 +4,12 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
-import { normalizeBrandAndSet, normalizeCatalogTaxonomy, normalizeSportLabel } from "@/lib/cardTaxonomy";
+import {
+  normalizeBrandAndSet,
+  normalizeCatalogTaxonomy,
+  SOCCER_COMPETITION_OPTIONS,
+  SPORT_OPTIONS,
+} from "@/lib/cardTaxonomy";
 import { buildSellerNotes, parseSellerMeta } from "@/lib/cardSellerMeta";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 
@@ -23,6 +28,7 @@ type Card = {
   card_number: string;
   team: string;
   sport: string;
+  competition?: string | null;
 
   rookie: YesNo;
   is_autograph: YesNo;
@@ -191,6 +197,7 @@ export default function AddCardPage() {
 
   const [card, setCard] = useState<Partial<Card>>({
     parallel: "n/a",
+    competition: "",
     rookie: "no",
     is_autograph: "no",
     has_memorabilia: "no",
@@ -307,7 +314,7 @@ export default function AddCardPage() {
         platformFee: card.platform_fee ?? null,
       });
 
-      const cleaned: Card = {
+      const cleaned = normalizeCatalogTaxonomy({
         id: card.id ?? crypto.randomUUID(),
 
         player_name: String(card.player_name || ""),
@@ -318,7 +325,8 @@ export default function AddCardPage() {
 
         card_number: String(card.card_number || ""),
         team: String(card.team || ""),
-        sport: normalizeSportLabel(String(card.sport || "")),
+        sport: String(card.sport || ""),
+        competition: String(card.competition || ""),
 
         rookie: (card.rookie as YesNo) || "no",
         is_autograph: (card.is_autograph as YesNo) || "no",
@@ -345,7 +353,7 @@ export default function AddCardPage() {
         platform_fee: card.platform_fee == null ? null : Number(card.platform_fee),
         notes: sellerNotes,
         date_added: String(card.date_added || ""),
-      };
+      }) as Card;
 
       if (!supabaseConfigured || !supabase) {
         alert("Supabase isn’t configured yet.");
@@ -357,7 +365,7 @@ export default function AddCardPage() {
         return;
       }
 
-      const row = {
+      const row: Record<string, any> = {
         user_id: user.id,
 
         player_name: cleaned.player_name,
@@ -394,6 +402,10 @@ export default function AddCardPage() {
         date_added: cleaned.date_added,
       };
 
+      if (String(cleaned.competition || "").trim()) {
+        row.competition = String(cleaned.competition).trim();
+      }
+
       if (editingId) {
         const { error } = await supabase
           .from("cards")
@@ -412,7 +424,7 @@ export default function AddCardPage() {
       }
 
       // If the same card identity already exists, offer to update quantity instead of inserting a duplicate.
-      const { data: existingMatches, error: matchErr } = await supabase
+      let existingMatchQuery = supabase
         .from("cards")
         .select("id, quantity")
         .eq("user_id", user.id)
@@ -428,8 +440,13 @@ export default function AddCardPage() {
         .eq("is_autograph", cleaned.is_autograph)
         .eq("has_memorabilia", cleaned.has_memorabilia)
         .eq("graded", cleaned.graded)
-        .eq("serial_number_text", cleaned.serial_number_text)
-        .limit(1);
+        .eq("serial_number_text", cleaned.serial_number_text);
+
+      if (String(cleaned.competition || "").trim()) {
+        existingMatchQuery = existingMatchQuery.eq("competition", String(cleaned.competition).trim());
+      }
+
+      const { data: existingMatches, error: matchErr } = await existingMatchQuery.limit(1);
 
       if (!matchErr && existingMatches && existingMatches.length > 0) {
         const existing = existingMatches[0] as any;
@@ -734,7 +751,7 @@ export default function AddCardPage() {
                   />
                 </label>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label className="block">
                     <div className="mb-1 text-slate-300">Team *</div>
                     <input
@@ -745,13 +762,41 @@ export default function AddCardPage() {
                   </label>
                   <label className="block">
                     <div className="mb-1 text-slate-300">Sport *</div>
-                    <input
+                    <select
                       className="w-full rounded bg-slate-950 px-3 py-2"
                       value={String(card.sport || "")}
-                      onChange={(e) => set("sport", e.target.value)}
-                    />
+                      onChange={(e) => {
+                        const nextSport = e.target.value;
+                        set("sport", nextSport);
+                        if (nextSport !== "Soccer") set("competition", "");
+                      }}
+                    >
+                      <option value="">Select sport</option>
+                      {SPORT_OPTIONS.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
                   </label>
                 </div>
+
+                {String(card.sport || "") === "Soccer" ? (
+                  <label className="block">
+                    <div className="mb-1 text-slate-300">Competition (optional)</div>
+                    <input
+                      className="w-full rounded bg-slate-950 px-3 py-2"
+                      list="soccer-competition-options"
+                      placeholder="Premier League, UEFA Champions League, World Cup..."
+                      value={String(card.competition || "")}
+                      onChange={(e) => set("competition", e.target.value)}
+                    />
+                    <datalist id="soccer-competition-options">
+                      {SOCCER_COMPETITION_OPTIONS.map((option) => (
+                        <option key={option} value={option} />
+                      ))}
+                    </datalist>
+                    <div className="mt-1 text-xs text-slate-500">Only shown for soccer, so it does not slow down the normal add flow.</div>
+                  </label>
+                ) : null}
 
                 <label className="block">
                   <div className="mb-1 text-slate-300">Serial number text (optional)</div>
@@ -1252,6 +1297,7 @@ export default function AddCardPage() {
                   setStep(1);
                   setCard({
                     parallel: "n/a",
+                    competition: "",
                     rookie: "no",
                     is_autograph: "no",
                     has_memorabilia: "no",
