@@ -564,6 +564,7 @@ export default function ImportPage() {
   const [cleanupSummary, setCleanupSummary] = useState<string>("");
   const [gradeCompanyOverride, setGradeCompanyOverride] = useState<GradeCompany | "">("");
   const [duplicateChoices, setDuplicateChoices] = useState<Record<number, "update" | "add_quantity" | "skip">>({});
+  const [attentionChoices, setAttentionChoices] = useState<Record<number, "review" | "skip" | "import_anyway">>({});
   const [importing, setImporting] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
   const [previewFocus, setPreviewFocus] = useState<"all" | PreviewRow["action"]>("all");
@@ -648,8 +649,15 @@ export default function ImportPage() {
 
   const focusedPreviewRows = useMemo(() => {
     if (previewFocus === "all") return previewRows;
+    if (previewFocus === "skip") {
+      return previewRows.filter(
+        (row) => row.action === "skip" || attentionChoices[row.rowNumber] === "skip"
+      );
+    }
     return previewRows.filter((row) => row.action === previewFocus);
-  }, [previewRows, previewFocus]);
+  }, [previewRows, previewFocus, attentionChoices]);
+
+  const rowHasBlockingRequiredIssue = (row: PreviewRow) => row.issues.some((issue) => issue.startsWith("Missing required field:"));
 
   const focusPreviewRows = (nextFocus: "all" | PreviewRow["action"]) => {
     setPreviewFocus(nextFocus);
@@ -692,6 +700,7 @@ export default function ImportPage() {
           setMapping(nextMapping);
           setRows(cleanedRows);
           setDuplicateChoices({});
+          setAttentionChoices({});
           setParseErrors((results.errors || []).map((error) => `Row ${error.row}: ${error.message}`));
         },
         error: (error) => {
@@ -751,6 +760,7 @@ export default function ImportPage() {
         setMapping(nextMapping);
         setRows(cleanedRows);
         setDuplicateChoices({});
+        setAttentionChoices({});
       } catch (e: any) {
         setParseErrors([e?.message || "Failed to parse spreadsheet."]);
       }
@@ -764,6 +774,7 @@ export default function ImportPage() {
     const readyRows = previewRows.filter((row) => {
       if (row.action === "create") return true;
       if (row.action === "update") return (duplicateChoices[row.rowNumber] || "add_quantity") !== "skip";
+      if (row.action === "needs_attention") return attentionChoices[row.rowNumber] === "import_anyway";
       return false;
     });
     if (!readyRows.length) {
@@ -778,7 +789,7 @@ export default function ImportPage() {
     const failures: string[] = [];
 
     for (const row of readyRows) {
-      if (row.action === "create") {
+      if (row.action === "create" || (row.action === "needs_attention" && !row.matchId)) {
         const { error } = await supabase.from("cards").insert(createInsertPayload(row.payload, user.id));
         if (error) {
           failed += 1;
@@ -788,12 +799,14 @@ export default function ImportPage() {
         }
       }
 
-      if (row.action === "update" && row.matchId) {
+      if ((row.action === "update" || row.action === "needs_attention") && row.matchId) {
         const choice = duplicateChoices[row.rowNumber] || "add_quantity";
         const existingQty = Number(row.matchedCard?.quantity || 0);
         const importQty = Number(row.payload.quantity || 1);
         const payload =
-          choice === "add_quantity"
+          row.action === "needs_attention"
+            ? compactUpdatePayload(row.payload)
+            : choice === "add_quantity"
             ? compactUpdatePayload({ ...row.payload, quantity: existingQty + importQty })
             : compactUpdatePayload(row.payload);
 
@@ -1161,11 +1174,50 @@ export default function ImportPage() {
                     </div>
 
                     {row.issues.length > 0 ? (
-                      <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-amber-200">
-                        {row.issues.map((issue, index) => (
-                          <li key={`${issue}-${index}`}>{issue}</li>
-                        ))}
-                      </ul>
+                      <div className="mt-3 space-y-3">
+                        <ul className="list-disc space-y-1 pl-5 text-sm text-amber-200">
+                          {row.issues.map((issue, index) => (
+                            <li key={`${issue}-${index}`}>{issue}</li>
+                          ))}
+                        </ul>
+
+                        <div className="flex flex-wrap gap-2">
+                          {([
+                            ["review", "Fix above"],
+                            ["skip", "Skip row"],
+                            ["import_anyway", row.matchId ? "Update anyway" : "Create anyway"],
+                          ] as const).map(([value, label]) => {
+                            const active = (attentionChoices[row.rowNumber] || "review") === value;
+                            const disabled = value === "import_anyway" && rowHasBlockingRequiredIssue(row);
+                            return (
+                              <button
+                                key={value}
+                                type="button"
+                                className={`rounded-lg px-3 py-2 text-xs font-semibold ${active ? "bg-amber-500/15 text-amber-200" : "bg-slate-800 text-slate-300 hover:bg-slate-700"} ${disabled ? "cursor-not-allowed opacity-40" : ""}`}
+                                onClick={() => {
+                                  if (disabled) return;
+                                  setAttentionChoices((prev) => ({ ...prev, [row.rowNumber]: value }));
+                                }}
+                                disabled={disabled}
+                              >
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <div className="text-sm text-slate-400">
+                          {(attentionChoices[row.rowNumber] || "review") === "skip"
+                            ? "This row will be skipped during import."
+                            : (attentionChoices[row.rowNumber] || "review") === "import_anyway"
+                              ? row.matchId
+                                ? "This will update the matched existing card with the mapped values that parsed cleanly."
+                                : "This will create the card using the fields that parsed cleanly, even though the row still has warnings."
+                              : rowHasBlockingRequiredIssue(row)
+                                ? "This row is blocked by a missing required field. Fix the mapping or source CSV, or skip it."
+                                : "Fix the mapping/file above, skip this row, or import it anyway if the warnings are acceptable."}
+                        </div>
+                      </div>
                     ) : row.action === "update" && row.matchedCard ? (
                       <div className="mt-3 space-y-3">
                         <div className="grid gap-3 md:grid-cols-2">
