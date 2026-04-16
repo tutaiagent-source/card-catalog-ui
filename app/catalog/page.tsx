@@ -2232,7 +2232,7 @@ export default function CatalogPage() {
             {statusModal.nextStatus === "Sold" ? (
               <div className="grid gap-3 sm:grid-cols-3">
                 <label className="block">
-                  <div className="mb-1 text-sm text-slate-300">Cost basis</div>
+                  <div className="mb-1 text-sm text-slate-300">Card cost</div>
                   <input
                     type="number"
                     min={0}

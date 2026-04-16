@@ -248,7 +248,7 @@ export default function AccountPage() {
             {[
               ["1. Add or import inventory", "Use Add Card for one-offs or Import CSV for an existing collection."],
               ["2. Keep a backup", "Export CSV from the Catalog anytime so your data stays portable."],
-              ["3. Track sales cleanly", "Move cards to Listed or Sold and attach platform, fees, shipping, and cost basis."],
+              ["3. Track sales cleanly", "Move cards to Listed or Sold and attach platform, fees, shipping, and card cost."],
               ["4. Watch the dashboard", "Use Sold to monitor revenue, net profit, ROI, and platform performance."],
             ].map(([title, body]) => (
               <div key={title} className="rounded-xl border border-white/10 bg-slate-950/70 p-4">

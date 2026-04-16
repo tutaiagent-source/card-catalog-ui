@@ -339,7 +339,7 @@ export default function SoldPage() {
 
         <section className="mt-4 grid gap-4 md:grid-cols-3">
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-            <div className="text-sm text-slate-400">Cost basis tracked</div>
+            <div className="text-sm text-slate-400">Card cost tracked</div>
             <div className="mt-2 text-2xl font-bold text-white">{money(totalCostBasis)}</div>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
