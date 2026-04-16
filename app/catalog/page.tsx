@@ -6,6 +6,7 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { normalizeCatalogTaxonomy } from "@/lib/cardTaxonomy";
 import { buildSellerNotes, parseSellerMeta } from "@/lib/cardSellerMeta";
+import { driveToImageSrc } from "@/lib/googleDrive";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 
@@ -183,13 +184,6 @@ function downloadCsv(filename: string, rows: Array<Record<string, string | numbe
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-}
-
-function driveToImageSrc(url?: string) {
-  const u = (url || "").trim();
-  const m = u.match(/\/d\/([^/]+)\/view/);
-  if (m && m[1]) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-  return u;
 }
 
 function buildEbaySearchUrl(card: Card) {

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import { driveToImageSrc } from "@/lib/googleDrive";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 
@@ -38,13 +39,6 @@ type Card = {
 
   pc_position?: number | null;
 };
-
-function driveToImageSrc(url?: string) {
-  const u = (url || "").trim();
-  const m = u.match(/\/d\/([^/]+)\/view/);
-  if (m && m[1]) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-  return u;
-}
 
 function buildEbaySearchUrl(card: Card) {
   const serialRaw = String(card.serial_number_text ?? "").trim();
