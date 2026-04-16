@@ -7,8 +7,10 @@ import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 
 type CardSummary = {
+  id?: string;
   quantity: number | null;
   estimated_price?: number | null;
+  status?: string | null;
 };
 
 export default function AccountPage() {
@@ -19,6 +21,7 @@ export default function AccountPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [clearingCatalog, setClearingCatalog] = useState(false);
+  const [resettingSales, setResettingSales] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -28,7 +31,7 @@ export default function AccountPage() {
     (async () => {
       const { data, error: loadError } = await supabase
         .from("cards")
-        .select("quantity, estimated_price")
+        .select("id, quantity, estimated_price, status")
         .eq("user_id", user.id);
 
       if (loadError) {
@@ -42,6 +45,7 @@ export default function AccountPage() {
 
   const totalCards = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0), 0), [cards]);
   const estimatedTotal = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.estimated_price || 0), 0), [cards]);
+  const soldRows = useMemo(() => cards.filter((card) => String(card.status || "") === "Sold"), [cards]);
   const starterLimit = 500;
   const currentPlanPreview = totalCards > starterLimit ? "Pro Seller" : "Collector";
   const usagePct = Math.min(100, Math.round((totalCards / starterLimit) * 100));
@@ -115,6 +119,51 @@ export default function AccountPage() {
 
     setCards([]);
     setMessage("Catalog cleared.");
+  };
+
+  const resetSoldHistory = async () => {
+    setMessage("");
+    setError("");
+
+    if (!supabaseConfigured || !supabase) {
+      setError("Supabase is not configured yet.");
+      return;
+    }
+
+    if (!user?.id) return;
+
+    const soldIds = soldRows.map((card) => card.id).filter(Boolean) as string[];
+    if (soldIds.length === 0) {
+      setError("No sold history to reset.");
+      return;
+    }
+
+    const ok = confirm(
+      `Reset sold history for ${soldIds.length} sold row${soldIds.length === 1 ? "" : "s"}? This moves them back to Collection and removes them from the Sold dashboard.`
+    );
+    if (!ok) return;
+
+    setResettingSales(true);
+    const { error: resetError } = await supabase
+      .from("cards")
+      .update({ status: "Collection", sold_price: null, sold_at: null })
+      .in("id", soldIds)
+      .eq("user_id", user.id);
+    setResettingSales(false);
+
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+
+    setCards((prev) =>
+      prev.map((card) =>
+        card.id && soldIds.includes(card.id)
+          ? { ...card, status: "Collection" }
+          : card
+      )
+    );
+    setMessage(`Reset sold history for ${soldIds.length} row${soldIds.length === 1 ? "" : "s"}.`);
   };
 
   if (loading) {
@@ -276,16 +325,35 @@ export default function AccountPage() {
 
         <section className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <h2 className="text-lg font-semibold">Danger zone</h2>
-          <p className="mt-2 text-sm text-slate-300">Need a clean slate? You can clear the entire catalog from here.</p>
-          <button
-            type="button"
-            className="mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={clearCatalog}
-            disabled={clearingCatalog || cards.length === 0}
-          >
-            {clearingCatalog ? "Clearing catalog..." : "Clear catalog"}
-          </button>
-          <div className="mt-2 text-xs text-slate-400">This permanently deletes all catalog rows for this account.</div>
+          <p className="mt-2 text-sm text-slate-300">Use these when you need to rewind sales or wipe the whole catalog.</p>
+
+          <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.05] p-4">
+            <div className="text-sm font-semibold text-slate-100">Reset sold history</div>
+            <div className="mt-1 text-sm text-slate-400">Moves sold cards back to Collection and clears their sold date and sold price.</div>
+            <button
+              type="button"
+              className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={resetSoldHistory}
+              disabled={resettingSales || soldRows.length === 0}
+            >
+              {resettingSales ? "Resetting sold history..." : `Reset sold history${soldRows.length ? ` (${soldRows.length})` : ""}`}
+            </button>
+            <div className="mt-2 text-xs text-slate-400">This keeps the cards, but removes them from the Sold dashboard.</div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-4">
+            <div className="text-sm font-semibold text-slate-100">Clear catalog</div>
+            <div className="mt-1 text-sm text-slate-400">Permanently deletes every catalog row for this account.</div>
+            <button
+              type="button"
+              className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={clearCatalog}
+              disabled={clearingCatalog || cards.length === 0}
+            >
+              {clearingCatalog ? "Clearing catalog..." : "Clear catalog"}
+            </button>
+            <div className="mt-2 text-xs text-slate-400">This is permanent and deletes everything, not just sales history.</div>
+          </div>
         </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
