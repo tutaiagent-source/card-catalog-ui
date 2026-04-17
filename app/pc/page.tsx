@@ -450,7 +450,7 @@ export default function PcPage() {
             </div>
 
             <div
-              className="mt-4 h-[60vh] max-h-[560px] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950"
+              className="relative mt-4 h-[60vh] max-h-[560px] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950"
               role={imageModal.backSrc ? "button" : undefined}
               tabIndex={imageModal.backSrc ? 0 : undefined}
               onClick={() => {
@@ -458,6 +458,11 @@ export default function PcPage() {
                 setShowBack((v) => !v);
               }}
             >
+              {imageModal.backSrc ? (
+                <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-slate-950/60 px-2 py-1 text-[11px] font-semibold text-slate-200 ring-1 ring-white/10 shadow">
+                  ↻ Flip
+                </div>
+              ) : null}
               <img
                 alt={showBack ? "back" : "front"}
                 src={showBack && imageModal.backSrc ? imageModal.backSrc : imageModal.src}
