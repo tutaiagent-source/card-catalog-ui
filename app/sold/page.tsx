@@ -97,6 +97,7 @@ export default function SoldPage() {
   const { user, loading } = useSupabaseUser();
   const { isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<SoldCard[]>([]);
+  const [graphsRaised, setGraphsRaised] = useState(false);
 
   useEffect(() => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -116,6 +117,11 @@ export default function SoldPage() {
       setCards(((data ?? []) as SoldCard[]).map((card) => ({ ...card, status: normalizeStatusValue(card.status) })));
     })();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (loading) return;
+    setGraphsRaised(true);
+  }, [loading, cards.length]);
 
   const sortedCards = useMemo(
     () =>
@@ -545,7 +551,7 @@ export default function SoldPage() {
             </div>
 
             <div className="mt-5 grid h-44 sm:h-56 lg:h-64 grid-cols-6 items-end gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-              {monthlyTrend.map((bucket) => {
+              {monthlyTrend.map((bucket, i) => {
                 const height = cards.length === 0 ? "12%" : `${Math.max(12, (bucket.revenue / maxTrendRevenue) * 100)}%`;
                 return (
                   <div key={bucket.key} className="flex h-full flex-col justify-end">
@@ -553,7 +559,14 @@ export default function SoldPage() {
                     <div className="mt-2 flex flex-1 items-end">
                       <div
                         className={`w-full rounded-t-2xl ${cards.length === 0 ? "bg-white/10" : "bg-[linear-gradient(180deg,rgba(251,191,36,0.95),rgba(217,119,6,0.58))] shadow-[0_10px_30px_rgba(245,158,11,0.22)]"}`}
-                        style={{ height }}
+                        style={{
+                          height,
+                          transform: graphsRaised ? "scaleY(1)" : "scaleY(0)",
+                          transformOrigin: "bottom",
+                          transition: "transform 700ms ease",
+                          transitionDelay: `${i * 70}ms`,
+                          willChange: "transform",
+                        }}
                       />
                     </div>
                     <div className="mt-3 text-center text-xs font-semibold text-slate-300">{bucket.label}</div>
@@ -587,7 +600,7 @@ export default function SoldPage() {
                   </div>
                 ) : (
                   <div className="mt-5 grid h-44 sm:h-56 lg:h-64 grid-cols-6 items-end gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                    {monthlyNetProfitTrend.map((bucket) => {
+                    {monthlyNetProfitTrend.map((bucket, i) => {
                       const abs = Math.abs(bucket.netProfit);
                       const height = cards.length === 0 ? "12%" : `${Math.max(12, (abs / maxTrendNetProfitAbs) * 100)}%`;
                       const isPositive = bucket.netProfit >= 0;
@@ -602,7 +615,14 @@ export default function SoldPage() {
                                   ? "bg-[linear-gradient(180deg,rgba(16,185,129,0.95),rgba(6,95,70,0.45))] shadow-[0_10px_30px_rgba(16,185,129,0.22)]"
                                   : "bg-[linear-gradient(180deg,rgba(239,68,68,0.95),rgba(127,29,29,0.45))] shadow-[0_10px_30px_rgba(239,68,68,0.22)]"
                               }`}
-                              style={{ height }}
+                              style={{
+                                height,
+                                transform: graphsRaised ? "scaleY(1)" : "scaleY(0)",
+                                transformOrigin: "bottom",
+                                transition: "transform 700ms ease",
+                                transitionDelay: `${i * 70}ms`,
+                                willChange: "transform",
+                              }}
                             />
                           </div>
                           <div className="mt-3 text-center text-xs font-semibold text-slate-300">{bucket.label}</div>
