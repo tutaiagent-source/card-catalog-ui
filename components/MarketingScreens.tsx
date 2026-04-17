@@ -1,3 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
+import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import { driveToImageSrc } from "@/lib/googleDrive";
+
 function ScreenFrame({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
     <div className="rounded-[30px] border border-white/10 bg-slate-950/80 p-3 shadow-[0_30px_80px_rgba(2,6,23,0.55)]">
@@ -186,16 +193,58 @@ export function SoldShowcase() {
 }
 
 export function PcShowcase() {
+  const { user } = useSupabaseUser();
+  const [cards, setCards] = useState<Array<{ id: string; player_name: string; image_url: string | null }>>([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!supabaseConfigured || !supabase) return;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("cards")
+        .select("id,player_name,image_url")
+        .eq("user_id", user.id)
+        .order("date_added", { ascending: false })
+        .limit(12);
+
+      if (error) return;
+
+      const next = (data ?? [])
+        .filter((c) => c.image_url)
+        .map((c) => ({ id: String(c.id), player_name: String(c.player_name || ""), image_url: String(c.image_url || "") }));
+
+      setCards(next);
+    })();
+  }, [user?.id]);
+
+  const placeholders = ["Jordan", "Brady", "Messi", "Wemby"];
+
   return (
     <ScreenFrame title="Personal Collection" subtitle="A Dedicated View For The Cards That Stay Close">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {["Jordan", "Brady", "Messi", "Wemby"].map((name, index) => (
-          <div key={name} className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
-            <div className={`aspect-[4/5] rounded-2xl ${index % 2 === 0 ? "bg-[linear-gradient(160deg,rgba(59,130,246,0.22),rgba(15,23,42,0.2))]" : "bg-[linear-gradient(160deg,rgba(245,158,11,0.2),rgba(15,23,42,0.2))]"}`} />
-            <div className="mt-3 text-sm font-semibold text-white">{name}</div>
-            <div className="mt-1 text-xs text-slate-400">Tap For Details, Keep The Full Catalog Separate</div>
-          </div>
-        ))}
+        {Array.from({ length: 4 }, (_, i) => {
+          const card = cards[i];
+          const name = card?.player_name || placeholders[i];
+          const src = card?.image_url ? driveToImageSrc(card.image_url) : null;
+
+          return (
+            <div key={card?.id || name} className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
+              {src ? (
+                <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-slate-950/20">
+                  <img alt={name} src={src} className="h-full w-full object-contain" />
+                </div>
+              ) : (
+                <div
+                  className={`aspect-[4/5] rounded-2xl ${i % 2 === 0 ? "bg-[linear-gradient(160deg,rgba(59,130,246,0.22),rgba(15,23,42,0.2))]" : "bg-[linear-gradient(160deg,rgba(245,158,11,0.2),rgba(15,23,42,0.2))]"}`}
+                />
+              )}
+
+              <div className="mt-3 text-center text-sm font-semibold text-white">{name}</div>
+              <div className="mt-1 text-center text-xs text-slate-400">Tap For Details, Keep The Full Catalog Separate</div>
+            </div>
+          );
+        })}
       </div>
     </ScreenFrame>
   );
