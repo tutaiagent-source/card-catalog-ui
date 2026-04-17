@@ -279,6 +279,27 @@ export default function SoldPage() {
 
   const platformMaxRevenue = useMemo(() => Math.max(1, ...platformBreakdown.map((item) => item.revenue)), [platformBreakdown]);
 
+  const platformProfitBreakdown = useMemo(() => {
+    const byPlatform = new Map<string, { netProfit: number; quantity: number }>();
+
+    salesWithMetrics.forEach((card) => {
+      const key = normalizePlatformLabel(card.sale_platform);
+      const current = byPlatform.get(key) || { netProfit: 0, quantity: 0 };
+      current.netProfit += card.metrics.netProfit;
+      current.quantity += Number(card.quantity || 0);
+      byPlatform.set(key, current);
+    });
+
+    return [...byPlatform.entries()]
+      .map(([platform, values]) => ({ platform, ...values }))
+      .sort((a, b) => b.netProfit - a.netProfit);
+  }, [salesWithMetrics]);
+
+  const platformProfitMaxAbs = useMemo(
+    () => Math.max(1, ...platformProfitBreakdown.map((item) => Math.abs(item.netProfit))),
+    [platformProfitBreakdown]
+  );
+
   const recentHighlights = useMemo(() => salesWithMetrics.slice(0, 5), [salesWithMetrics]);
 
   const exportSalesCsv = () => {
@@ -621,6 +642,44 @@ export default function SoldPage() {
                   </div>
                 )}
               </div>
+
+              {!isCollectorPreview ? (
+                <div className="mt-6">
+                  <h2 className="text-base font-semibold text-white">Net profit by platform</h2>
+                  <p className="mt-1 text-xs text-slate-400">After card cost, fees, and shipping.</p>
+
+                  <div className="mt-4 space-y-4">
+                    {platformProfitBreakdown.length > 0 ? platformProfitBreakdown.map((item) => {
+                      const isPositive = item.netProfit >= 0;
+                      const width = Math.max(8, (Math.abs(item.netProfit) / platformProfitMaxAbs) * 100);
+                      return (
+                        <div key={item.platform}>
+                          <div className="flex items-center justify-between gap-3 text-sm">
+                            <div className="font-semibold text-slate-200">{item.platform}</div>
+                            <div className={isPositive ? "text-emerald-300" : "text-red-300"}>{money(item.netProfit)}</div>
+                          </div>
+                          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-900">
+                            <div
+                              className={
+                                "h-full rounded-full " +
+                                (isPositive
+                                  ? "bg-[linear-gradient(90deg,rgba(16,185,129,0.95),rgba(6,95,70,0.9))]"
+                                  : "bg-[linear-gradient(90deg,rgba(239,68,68,0.95),rgba(127,29,29,0.9))]")
+                              }
+                              style={{ width: `${width}%` }}
+                            />
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">{item.quantity} card{item.quantity === 1 ? "" : "s"} sold</div>
+                        </div>
+                      );
+                    }) : (
+                      <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+                        Profit-per-platform will show up here once you have cost/fee/shipping data.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
