@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import MarketingNav from "@/components/MarketingNav";
+import { ImportShowcase, PcShowcase, SoldShowcase } from "@/components/MarketingScreens";
 
 export const metadata: Metadata = {
   title: "Pro Plan | CardCat",
@@ -79,6 +80,65 @@ export default function ProPlanPage() {
               <p className="mt-2 text-sm leading-6 text-slate-100">
                 Keep your cost basis fields accurate during Sold updates. Profit and ROI charts will stay consistent and your export stays trustworthy.
               </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-12 space-y-8">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Pro Screens</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Tools for import, cleanup, and profit decisions</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
+              Pro keeps your workflow moving: CSV import for cleaner rows, Sold tracking for context, and deeper analytics to help you understand ROI.
+            </p>
+          </div>
+
+          <ImportShowcase />
+          <SoldShowcase />
+          <PcShowcase />
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-amber-500/25 bg-amber-500/[0.06] p-6 sm:p-8">
+          <div className="max-w-5xl">
+            <h2 className="text-2xl font-bold text-white">Collector vs Pro (quick visual)</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-200">
+              Collector is built for organization. Pro is built for workflows that need import/export, bulk tools, and profit/ROI visibility.
+            </p>
+
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Collector</div>
+                <ul className="mt-4 space-y-3 text-sm text-slate-200">
+                  {[
+                    "Cleaner catalog browsing",
+                    "Personal Collection (PC) view",
+                    "Manual card entry",
+                    "Basic sold tracking",
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <span className="mt-1 text-amber-300">✓</span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-[28px] border border-amber-500/25 bg-amber-500/[0.08] p-6">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Pro</div>
+                <ul className="mt-4 space-y-3 text-sm text-slate-100">
+                  {[
+                    "CSV import/export",
+                    "Bulk inventory tools",
+                    "Advanced sold insights",
+                    "Profit / ROI metrics",
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <span className="mt-1 text-amber-200">✓</span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </section>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import MarketingNav from "@/components/MarketingNav";
+import { CatalogShowcase, PcShowcase, SoldShowcase } from "@/components/MarketingScreens";
 
 export const metadata: Metadata = {
   title: "Collector Plan | CardCat",
@@ -84,22 +85,46 @@ export default function CollectorPlanPage() {
           </div>
         </section>
 
-        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-          <div className="max-w-3xl">
-            <h2 className="text-2xl font-bold text-white">Collector vs Pro</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-300">
-              Pro adds CSV import/export, bulk inventory tools, and deeper sold analytics (profit/ROI and richer trends). If your collection is growing beyond a simple PC and manual entry, Pro is the next step.
+        <section className="mt-12 space-y-8">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Collector Screens</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">What you’ll actually use every day</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
+              These are the core workflow screens the Collector plan focuses on: catalog browsing, PC organization, and sold tracking context.
             </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a href="/pro" className="rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-5 py-3 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/[0.12]">
-                View Pro Plan
+          </div>
+
+          <CatalogShowcase />
+          <PcShowcase />
+          <SoldShowcase />
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-start">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">When you should upgrade</div>
+              <h2 className="mt-3 text-2xl font-bold text-white">When your workflow starts becoming a seller workflow</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                Pro adds CSV import/export, bulk inventory tools, and deeper sold analytics like profit and ROI. If you track costs and want export-ready insights, it’s the next step.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/pro"
+                className="rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-5 py-3 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/[0.12]"
+              >
+                See Pro
               </a>
-              <a href="/" className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">
-                Back to Home
+              <a
+                href="/login"
+                className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
+              >
+                Start with Collector
               </a>
             </div>
           </div>
         </section>
+
       </div>
     </main>
   );
