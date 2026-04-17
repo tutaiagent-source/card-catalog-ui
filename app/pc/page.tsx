@@ -105,13 +105,13 @@ export default function PcPage() {
     const toIndex = base.findIndex((c) => c.id === overId);
     if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return base;
 
+    // Replace the hovered card's position with the dragged card (swap),
+    // instead of inserting and shifting everything between.
     const next = base.slice();
-    const [moved] = next.splice(fromIndex, 1);
+    const tmp = next[fromIndex];
+    next[fromIndex] = next[toIndex];
+    next[toIndex] = tmp;
 
-    const targetIndex = toIndex + (insertBefore ? 0 : 1);
-    const insertAt = fromIndex < toIndex ? targetIndex - 1 : targetIndex;
-
-    next.splice(insertAt, 0, moved);
     return next;
   };
 
@@ -302,7 +302,7 @@ export default function PcPage() {
 
                       const cardTransform = undefined;
 
-                      const insertionClass = isOver && draggingId ? (dragInsertBefore ? "border-t-4 border-amber-400" : "border-b-4 border-amber-400") : "";
+                      const insertionClass = isOver && draggingId ? "ring-2 ring-amber-400/70" : "";
 
                       return (
                         <div
