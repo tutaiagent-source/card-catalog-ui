@@ -27,6 +27,29 @@ function ScreenFrame({ title, subtitle, children }: { title: string; subtitle: s
 }
 
 export function CatalogShowcase() {
+  const { user } = useSupabaseUser();
+  const [heroSrc, setHeroSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!supabaseConfigured || !supabase) return;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("cards")
+        .select("image_url")
+        .eq("user_id", user.id)
+        .order("date_added", { ascending: false })
+        .limit(20);
+
+      if (error) return;
+      const first = (data ?? []).find((c) => c.image_url);
+      if (!first?.image_url) return;
+
+      setHeroSrc(driveToImageSrc(String(first.image_url)));
+    })();
+  }, [user?.id]);
+
   return (
     <ScreenFrame title="Catalog" subtitle="A Fast, Clean View Of The Collection">
       <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
@@ -71,7 +94,11 @@ export function CatalogShowcase() {
 
           <div className="mt-4">
             <div className="rounded-3xl border border-white/10 bg-slate-950/80 p-4 shadow-[0_12px_30px_rgba(2,6,23,0.35)]">
-              <div className="aspect-[16/9] rounded-2xl bg-[linear-gradient(160deg,rgba(213,0,0,0.18),rgba(15,23,42,0.2))]" />
+              <div className="aspect-[16/9] overflow-hidden rounded-2xl bg-[linear-gradient(160deg,rgba(213,0,0,0.18),rgba(15,23,42,0.2))]">
+                {heroSrc ? (
+                  <img src={heroSrc} alt="Card preview" className="h-full w-full object-contain" />
+                ) : null}
+              </div>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-semibold text-blue-200">
                   Listed
