@@ -5,9 +5,65 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { driveToImageSrc } from "@/lib/googleDrive";
 
+function CountUpNumber({
+  target,
+  decimals = 0,
+  prefix = "",
+  suffix = "",
+  durationMs = 900,
+}: {
+  target: number;
+  decimals?: number;
+  prefix?: string;
+  suffix?: string;
+  durationMs?: number;
+}) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+    if (reduceMotion) {
+      setValue(target);
+      return;
+    }
+
+    const start = performance.now();
+    const from = 0;
+    const to = target;
+
+    const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    let raf = 0;
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const progress = Math.min(1, elapsed / durationMs);
+      const next = from + (to - from) * easeOutCubic(progress);
+      setValue(next);
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, decimals, durationMs]);
+
+  const formatted = new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+
+  return (
+    <span>
+      {prefix}
+      {formatted}
+      {suffix}
+    </span>
+  );
+}
+
 function ScreenFrame({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-[30px] border border-white/10 bg-slate-950/80 p-3 shadow-[0_30px_80px_rgba(2,6,23,0.55)]">
+    <div className="rounded-[30px] border border-white/10 bg-slate-950/80 p-3 shadow-[0_30px_80px_rgba(2,6,23,0.55)] transition-transform duration-300 hover:-translate-y-1">
       <div className="rounded-[24px] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.98))] p-4 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -55,21 +111,23 @@ export function CatalogShowcase() {
       <div className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
         <div className="space-y-3">
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Collection Summary</div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              {[
-                ["Collection", "148"],
-                ["Listed", "23"],
-                ["Sold", "41"],
-                ["Sports", "5"],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/70 p-3">
-                  <div className="text-xs text-slate-400">{label}</div>
-                  <div className="mt-1 text-lg font-semibold text-white">{value}</div>
-                </div>
-              ))}
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Collection Summary</div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                {[
+                ["Collection", 148],
+                ["Listed", 23],
+                ["Sold", 41],
+                ["Sports", 5],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/70 p-3 transition-transform duration-300 hover:-translate-y-1">
+                    <div className="text-xs text-slate-400">{label}</div>
+                    <div className="mt-1 text-lg font-semibold text-white">
+                      <CountUpNumber target={Number(value)} decimals={0} />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-slate-300">
             Search, Filter, Browse, And Batch Actions Stay Tight And Easy To Reach.
           </div>
@@ -103,7 +161,9 @@ export function CatalogShowcase() {
                 <div className="rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-semibold text-blue-200">
                   Listed
                 </div>
-                <div className="text-sm font-semibold text-white">$65.00</div>
+                <div className="text-sm font-semibold text-white">
+                  <CountUpNumber target={65} decimals={2} prefix="$" />
+                </div>
               </div>
               <div className="mt-3 text-xl font-semibold text-white">Tom Brady</div>
               <div className="mt-1 text-sm text-slate-400">2020 Prizm · #17</div>
@@ -134,9 +194,20 @@ export function ImportShowcase() {
             ["Needs Attention", "3 Rows"],
             ["Skipped", "1 Row"],
           ].map(([label, value], i) => (
-            <div key={label} className={`rounded-2xl border p-4 ${i === 0 ? "border-emerald-500/25 bg-emerald-500/[0.08]" : "border-white/10 bg-white/[0.04]"}`}>
+            <div key={label} className={`rounded-2xl border p-4 ${i === 0 ? "border-emerald-500/25 bg-emerald-500/[0.08]" : "border-white/10 bg-white/[0.04]"} transition-transform duration-300 hover:-translate-y-1`}>
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</div>
-              <div className="mt-2 text-2xl font-bold text-white">{value}</div>
+              <div className="mt-2 text-2xl font-bold text-white">
+                {(() => {
+                  const match = String(value).match(/-?\d+(?:\.\d+)?/);
+                  const num = match ? Number(match[0]) : 0;
+                  const suffix = match ? String(value).slice(String(match[0]).length).trim() : "";
+                  return (
+                    <span>
+                      <CountUpNumber target={num} decimals={0} /> {suffix}
+                    </span>
+                  );
+                })()}
+              </div>
             </div>
           ))}
         </div>
@@ -177,7 +248,7 @@ export function ImportShowcase() {
 
 export function SoldShowcase() {
   const { user } = useSupabaseUser();
-  const [recentSold, setRecentSold] = useState<Array<{ cardTitle: string; priceText: string; src: string | null }>>([]);
+  const [recentSold, setRecentSold] = useState<Array<{ cardTitle: string; price: number; src: string | null }>>([]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -198,12 +269,12 @@ export function SoldShowcase() {
         .filter((c) => c && c.image_url)
         .slice(0, 3)
         .map((c) => {
-          const price = c.sold_price == null ? null : Number(c.sold_price);
-          const priceText = price == null || !Number.isFinite(price) ? "$0.00" : `$${price.toFixed(2)}`;
+          const price = c.sold_price == null ? 0 : Number(c.sold_price);
+          const safePrice = Number.isFinite(price) ? price : 0;
           const cardTitle = `${c.year ?? ""} ${c.brand ?? ""} ${c.set_name ?? ""}`.trim() || String(c.player_name || "Sold card");
           return {
             cardTitle,
-            priceText,
+            price: safePrice,
             src: c.image_url ? driveToImageSrc(String(c.image_url)) : null,
           };
         });
@@ -215,19 +286,25 @@ export function SoldShowcase() {
   return (
     <ScreenFrame title="Sold" subtitle="Clear Sales History With Room For Deeper Insights">
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-3xl border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(15,23,42,0.15))] p-5">
+        <div className="rounded-3xl border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.16),rgba(15,23,42,0.15))] p-5 transition-transform duration-300 hover:-translate-y-1">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Revenue Pulse</div>
-          <div className="mt-3 text-4xl font-black tracking-[-0.04em] text-white">$3,482</div>
-          <div className="mt-2 text-sm text-emerald-100/80">Gross Sales Across 41 Sold Cards</div>
+          <div className="mt-3 text-4xl font-black tracking-[-0.04em] text-white">
+            <CountUpNumber target={3482} decimals={0} prefix="$" />
+          </div>
+          <div className="mt-2 text-sm text-emerald-100/80">
+            Gross Sales Across <CountUpNumber target={41} decimals={0} /> Sold Cards
+          </div>
           <div className="mt-5 space-y-3">
             {[
-              ["Last 30d", "$842"],
-              ["Avg Sale", "$84.92"],
-              ["High Sale", "$210.00"],
-            ].map(([label, value]) => (
+              ["Last 30d", 842, 0],
+              ["Avg Sale", 84.92, 2],
+              ["High Sale", 210, 2],
+            ].map(([label, value, decimals]) => (
               <div key={label} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-black/15 px-4 py-3">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">{label}</div>
-                <div className="text-xl font-semibold text-white sm:text-2xl">{value}</div>
+                <div className="text-xl font-semibold text-white sm:text-2xl">
+                  <CountUpNumber target={Number(value)} decimals={Number(decimals)} prefix="$" />
+                </div>
               </div>
             ))}
           </div>
@@ -237,23 +314,25 @@ export function SoldShowcase() {
           {(recentSold.length
             ? recentSold
             : [
-                { cardTitle: "2022 Prizm Messi", priceText: "$210.00", src: null },
-                { cardTitle: "2023 Select Stroud", priceText: "$145.00", src: null },
-                { cardTitle: "2020 Prizm Brady", priceText: "$90.00", src: null },
+                { cardTitle: "2022 Prizm Messi", price: 210, src: null },
+                { cardTitle: "2023 Select Stroud", price: 145, src: null },
+                { cardTitle: "2020 Prizm Brady", price: 90, src: null },
               ]
           ).map((item, i) => (
-            <div key={`${item.cardTitle}-${i}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+            <div key={`${item.cardTitle}-${i}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition-transform duration-300 hover:-translate-y-1">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Recent Sale</div>
                   {item.src ? (
-                    <div className="mt-2 aspect-[3/2] w-[72px] overflow-hidden rounded-xl border border-white/10 bg-slate-950">
-                      <img src={item.src} alt="Recent sold card" className="h-full w-full object-contain" />
-                    </div>
+                  <div className="mt-2 aspect-[3/2] w-[72px] overflow-hidden rounded-xl border border-white/10 bg-slate-950">
+                    <img src={item.src} alt="Recent sold card" className="h-full w-full object-contain" />
+                  </div>
                   ) : null}
                   <div className="mt-2 text-2xl font-semibold text-white">{item.cardTitle}</div>
                 </div>
-                <div className="text-lg font-semibold text-emerald-300 whitespace-nowrap">{item.priceText}</div>
+                <div className="text-lg font-semibold text-emerald-300 whitespace-nowrap">
+                  <CountUpNumber target={item.price} decimals={2} prefix="$" />
+                </div>
               </div>
             </div>
           ))}
