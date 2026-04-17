@@ -226,6 +226,41 @@ export default function SoldPage() {
 
   const maxTrendRevenue = useMemo(() => Math.max(1, ...monthlyTrend.map((bucket) => bucket.revenue)), [monthlyTrend]);
 
+  const monthlyNetProfitTrend = useMemo(() => {
+    const monthCount = 6;
+    const now = new Date();
+    const buckets = Array.from({ length: monthCount }, (_, index) => {
+      const date = new Date(now.getFullYear(), now.getMonth() - (monthCount - 1 - index), 1);
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      return {
+        key,
+        label: compactMonth(date),
+        netProfit: 0,
+        quantity: 0,
+      };
+    });
+
+    const bucketMap = new Map(buckets.map((bucket) => [bucket.key, bucket]));
+
+    salesWithMetrics.forEach((card) => {
+      const soldDate = parseSafeDate(card.sold_at);
+      if (!soldDate) return;
+      const key = `${soldDate.getFullYear()}-${soldDate.getMonth()}`;
+      const bucket = bucketMap.get(key);
+      if (!bucket) return;
+
+      bucket.netProfit += card.metrics.netProfit;
+      bucket.quantity += Number(card.quantity || 0);
+    });
+
+    return buckets;
+  }, [salesWithMetrics]);
+
+  const maxTrendNetProfitAbs = useMemo(
+    () => Math.max(1, ...monthlyNetProfitTrend.map((bucket) => Math.abs(bucket.netProfit))),
+    [monthlyNetProfitTrend]
+  );
+
   const platformBreakdown = useMemo(() => {
     const byPlatform = new Map<string, { revenue: number; quantity: number }>();
 
@@ -510,6 +545,52 @@ export default function SoldPage() {
             {cards.length === 0 ? (
               <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
                 No sales recorded yet. The graph is visible now, and it will populate automatically once cards are moved to Sold.
+              </div>
+            ) : null}
+
+            {!isCollectorPreview ? (
+              <div className="mt-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-base sm:text-lg font-semibold text-white">Net profit trend</h2>
+                    <p className="mt-1 text-xs sm:text-sm text-slate-400">Last 6 months of net profit.</p>
+                  </div>
+                  <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300">
+                    {money(totalNetProfit)} total
+                  </div>
+                </div>
+
+                {cards.length === 0 ? (
+                  <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+                    No profit data yet. The chart will populate automatically once cards have cost/fee/shipping data.
+                  </div>
+                ) : (
+                  <div className="mt-5 grid h-44 sm:h-56 lg:h-64 grid-cols-6 items-end gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                    {monthlyNetProfitTrend.map((bucket) => {
+                      const abs = Math.abs(bucket.netProfit);
+                      const height = cards.length === 0 ? "12%" : `${Math.max(12, (abs / maxTrendNetProfitAbs) * 100)}%`;
+                      const isPositive = bucket.netProfit >= 0;
+
+                      return (
+                        <div key={bucket.key} className="flex h-full flex-col justify-end">
+                          <div className="text-center text-[11px] text-slate-500">{money(bucket.netProfit)}</div>
+                          <div className="mt-2 flex flex-1 items-end">
+                            <div
+                              className={`w-full rounded-t-2xl ${
+                                isPositive
+                                  ? "bg-[linear-gradient(180deg,rgba(16,185,129,0.95),rgba(6,95,70,0.45))] shadow-[0_10px_30px_rgba(16,185,129,0.22)]"
+                                  : "bg-[linear-gradient(180deg,rgba(239,68,68,0.95),rgba(127,29,29,0.45))] shadow-[0_10px_30px_rgba(239,68,68,0.22)]"
+                              }`}
+                              style={{ height }}
+                            />
+                          </div>
+                          <div className="mt-3 text-center text-xs font-semibold text-slate-300">{bucket.label}</div>
+                          <div className="mt-1 text-center text-[11px] text-slate-500">{bucket.quantity} sold</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
