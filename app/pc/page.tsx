@@ -234,7 +234,7 @@ export default function PcPage() {
                       <div
                         key={c.id}
                         role="listitem"
-                        className="relative rounded-xl border border-slate-800 bg-slate-950/40 p-1"
+                        className="relative rounded-xl border border-slate-800 bg-slate-950/40 p-0"
                         draggable
                         onDragStart={(e) => {
                           if (!c.id) return;
@@ -389,7 +389,7 @@ export default function PcPage() {
                               }}
                               className="cursor-pointer"
                             >
-                              <div className="aspect-[3/2] w-full overflow-hidden rounded-xl bg-slate-950/10">
+                              <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950/10">
                                 {c.image_url ? (
                                   <img alt="front" src={driveToImageSrc(c.image_url)} className="h-full w-full object-contain" />
                                 ) : (
