@@ -308,6 +308,19 @@ export default function PcPage() {
                         <div
                           key={c.id}
                           role="listitem"
+                          draggable
+                          onDragStart={(e) => {
+                            if (!c.id) return;
+                            setDraggingId(c.id);
+                            setDragOverId(c.id);
+                            setDragInsertBefore(true);
+                            try {
+                              e.dataTransfer.setData("text/plain", c.id);
+                            } catch {
+                              // ignore
+                            }
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
                           style={cardTransform ? { transform: cardTransform } : undefined}
                           onDragOver={(e) => {
                             e.preventDefault();
