@@ -174,14 +174,14 @@ export default function PcPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 bg-cover bg-center text-slate-100" style={{ backgroundImage: "url('/pc-wall.jpg')" }}>
+      <main className="min-h-screen bg-slate-950 bg-cover bg-center text-slate-100" style={{ backgroundImage: "url('/pc-wall.png')" }}>
         <div className="mx-auto max-w-6xl px-4 py-16 text-slate-300">Loading PC…</div>
       </main>
     );
   }
 
   return (
-    <main className="flex-1 min-h-screen bg-slate-950 bg-cover bg-center text-slate-100 pb-20" style={{ backgroundImage: "url('/pc-wall.jpg')" }}>
+    <main className="flex-1 min-h-screen bg-slate-950 bg-cover bg-center text-slate-100 pb-20" style={{ backgroundImage: "url('/pc-wall.png')" }}>
       <div className="mx-auto max-w-6xl px-4 py-8">
         <div className="flex items-end justify-between gap-4">
           <div>
