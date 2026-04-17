@@ -72,7 +72,13 @@ export default function PcPage() {
   const [dragInsertBefore, setDragInsertBefore] = useState(true);
 
   // Image modal (mobile + desktop)
-  const [imageModal, setImageModal] = useState<{ card: Card; src: string } | null>(null);
+  const [imageModal, setImageModal] = useState<{ card: Card; src: string; backSrc?: string } | null>(null);
+  const [showBack, setShowBack] = useState(false);
+
+  useEffect(() => {
+    if (!imageModal) return;
+    setShowBack(false);
+  }, [imageModal]);
 
   useEffect(() => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -259,7 +265,7 @@ export default function PcPage() {
                       >
                         <button
                           type="button"
-                          onClick={() => setImageModal({ card: c, src })}
+                          onClick={() => setImageModal({ card: c, src, backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url) : undefined })}
                           className="block w-full"
                           aria-label={`View ${c.player_name}`}
                         >
@@ -375,7 +381,11 @@ export default function PcPage() {
                               tabIndex={0}
                               onClick={() => {
                                 if (!c.image_url) return;
-                                setImageModal({ card: c, src: driveToImageSrc(c.image_url) });
+                                setImageModal({
+                                  card: c,
+                                  src: driveToImageSrc(c.image_url),
+                                  backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url) : undefined,
+                                });
                               }}
                               className="cursor-pointer"
                             >
@@ -439,8 +449,20 @@ export default function PcPage() {
               </button>
             </div>
 
-            <div className="mt-4 h-[60vh] max-h-[560px] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
-              <img alt="front" src={imageModal.src} className="h-full w-full object-contain" />
+            <div
+              className="mt-4 h-[60vh] max-h-[560px] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950"
+              role={imageModal.backSrc ? "button" : undefined}
+              tabIndex={imageModal.backSrc ? 0 : undefined}
+              onClick={() => {
+                if (!imageModal.backSrc) return;
+                setShowBack((v) => !v);
+              }}
+            >
+              <img
+                alt={showBack ? "back" : "front"}
+                src={showBack && imageModal.backSrc ? imageModal.backSrc : imageModal.src}
+                className="h-full w-full object-contain"
+              />
             </div>
 
             <div className="mt-3 flex flex-col gap-2 text-sm">
