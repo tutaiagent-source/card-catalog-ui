@@ -384,53 +384,52 @@ export function PcShowcase() {
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-3">
             <img alt="PC iPhone preview" src="/iphone-pc-mockup-1.png" className="w-full h-auto" />
           </div>
-          <div className="hidden lg:block rounded-3xl border border-white/10 bg-white/[0.03] p-3">
-            <img alt="PC iPhone preview variant" src="/iphone-pc-mockup-2.png" className="w-full h-auto" />
+        </div>
+
+        <div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }, (_, i) => {
+              const card = cards[i];
+              const name = card?.player_name || placeholders[i];
+              const src = card?.image_url ? driveToImageSrc(card.image_url) : null;
+
+              return (
+                <div key={card?.id || name} className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
+                  {src ? (
+                    <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-slate-950/20">
+                      <img alt={name} src={src} className="h-full w-full object-contain" />
+                    </div>
+                  ) : (
+                    <div
+                      className={`aspect-[4/5] rounded-2xl ${i % 2 === 0 ? "bg-[linear-gradient(160deg,rgba(59,130,246,0.22),rgba(15,23,42,0.2))]" : "bg-[linear-gradient(160deg,rgba(245,158,11,0.2),rgba(15,23,42,0.2))]"}`}
+                    />
+                  )}
+
+                  <div className="mt-3 text-center text-sm font-semibold text-white">{name}</div>
+                  <div className="mt-1 text-center text-xs text-slate-400">Tap For Details, Keep The Full Catalog Separate</div>
+                </div>
+              );
+            })}
           </div>
-        </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }, (_, i) => {
-            const card = cards[i];
-            const name = card?.player_name || placeholders[i];
-            const src = card?.image_url ? driveToImageSrc(card.image_url) : null;
+          <div className="mt-6 rounded-[28px] border border-white/10 bg-slate-950/40 p-5">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Check comps on PC</div>
+            <div className="mt-2 text-sm leading-6 text-slate-200">
+              Tap a PC card to open comps. It jumps to eBay sold + completed listings so you can compare what’s actually moving.
+            </div>
 
-            return (
-              <div key={card?.id || name} className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
-                {src ? (
-                  <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-slate-950/20">
-                    <img alt={name} src={src} className="h-full w-full object-contain" />
-                  </div>
-                ) : (
-                  <div
-                    className={`aspect-[4/5] rounded-2xl ${i % 2 === 0 ? "bg-[linear-gradient(160deg,rgba(59,130,246,0.22),rgba(15,23,42,0.2))]" : "bg-[linear-gradient(160deg,rgba(245,158,11,0.2),rgba(15,23,42,0.2))]"}`}
-                  />
-                )}
-
-                <div className="mt-3 text-center text-sm font-semibold text-white">{name}</div>
-                <div className="mt-1 text-center text-xs text-slate-400">Tap For Details, Keep The Full Catalog Separate</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="mt-6 rounded-[28px] border border-white/10 bg-slate-950/40 p-5">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Check comps on PC</div>
-        <div className="mt-2 text-sm leading-6 text-slate-200">
-          Tap a PC card to open comps. It jumps to eBay sold + completed listings so you can compare what’s actually moving.
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <a
-            href="https://www.ebay.com/sch/i.html?_nkw=Michael%20Jordan%20Fleer%201986%20Fleer%2057&LH_Sold=1&LH_Complete=1"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]"
-          >
-            Check Comps ↗
-          </a>
-          <div className="text-xs text-slate-400">Example: Michael Jordan · 1986 Fleer · #57 · PSA 8 (NM/M) · OC · Rookie · Chicago Bulls</div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <a
+                href="https://www.ebay.com/sch/i.html?_nkw=Michael%20Jordan%20Fleer%201986%20Fleer%2057&LH_Sold=1&LH_Complete=1"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]"
+              >
+                Check Comps ↗
+              </a>
+              <div className="text-xs text-slate-400">Example: Michael Jordan · 1986 Fleer · #57 · PSA 8 (NM/M) · OC · Rookie · Chicago Bulls</div>
+            </div>
+          </div>
         </div>
       </div>
     </ScreenFrame>
