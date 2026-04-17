@@ -339,12 +339,12 @@ export default function PcPage() {
                             onDropReorder(c.id, insertBefore);
                           }}
                           className={
-                            "relative z-10 w-full rounded-2xl border bg-slate-900/40 p-3 transition shadow-[0_18px_60px_rgba(0,0,0,0.45)] hover:shadow-[0_28px_90px_rgba(0,0,0,0.65)] " +
+                            "relative z-10 w-full rounded-2xl bg-slate-900/20 p-3 transition shadow-[0_18px_60px_rgba(0,0,0,0.45)] hover:shadow-[0_28px_90px_rgba(0,0,0,0.65)] " +
                             (isDragging
-                              ? "border-amber-500/60 bg-amber-500/10 opacity-70"
+                              ? "bg-amber-500/10 opacity-70"
                               : isOver
-                                ? "border-amber-500/30 bg-amber-500/8"
-                                : "border-slate-800/90 hover:border-white/20") +
+                                ? "bg-amber-500/8"
+                                : "bg-slate-900/20 hover:bg-slate-900/25") +
                             " " + insertionClass
                           }
                         >
@@ -364,7 +364,7 @@ export default function PcPage() {
                               }
                               e.dataTransfer.effectAllowed = "move";
                             }}
-                            className="absolute left-2 top-2 z-30 cursor-grab rounded-md border border-white/10 bg-slate-950/70 px-2 py-1 text-[11px] font-semibold text-slate-200 hover:bg-slate-950/90"
+                            className="absolute left-2 top-2 z-30 cursor-grab rounded-md bg-slate-950/70 px-2 py-1 text-[11px] font-semibold text-slate-200 hover:bg-slate-950/90"
                             aria-label="Drag to reorder"
                             title="Drag to reorder"
                           >
@@ -381,7 +381,7 @@ export default function PcPage() {
                               }}
                               className="cursor-pointer"
                             >
-                              <div className="aspect-[3/2] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                              <div className="aspect-[3/2] w-full overflow-hidden rounded-xl bg-slate-950/10">
                                 {c.image_url ? (
                                   <img alt="front" src={driveToImageSrc(c.image_url)} className="h-full w-full object-contain" />
                                 ) : (
