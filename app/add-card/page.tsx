@@ -263,7 +263,8 @@ export default function AddCardPage() {
       }
 
       if (data) {
-        const normalized = normalizeCatalogTaxonomy({ ...(data as any), status: normalizeStatusValue((data as any)?.status) });
+        const normalizedStatus = normalizeStatusValue((data as any)?.status);
+        const normalized = normalizeCatalogTaxonomy({ ...(data as any), status: normalizedStatus });
         const seller = parseSellerMeta(normalized.notes);
         setCard({
           ...normalized,
@@ -272,7 +273,7 @@ export default function AddCardPage() {
           shipping_cost: seller.meta.shippingCost,
           platform_fee: seller.meta.platformFee,
         });
-        setStep(1);
+        setStep(normalizedStatus === "Sold" ? 3 : 1);
       }
     })();
   }, [editingId, user?.id]);
