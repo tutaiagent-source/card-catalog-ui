@@ -191,7 +191,7 @@ export default function PcPage() {
               <span>PC</span>
             </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">Personal Collection Shelf</h1>
-            <p className="mt-2 text-slate-300">Starred cards live here. Tap to view, drag to reorder (desktop).</p>
+            <p className="mt-2 text-slate-300">Starred cards live here. Tap to view, drag to reorder (where supported).</p>
             <a
               href="/catalog"
               className="mt-4 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
@@ -229,6 +229,33 @@ export default function PcPage() {
                         key={c.id}
                         role="listitem"
                         className="relative rounded-xl border border-slate-800 bg-slate-950/40 p-1"
+                        draggable
+                        onDragStart={(e) => {
+                          if (!c.id) return;
+                          setDraggingId(c.id);
+                          setDragOverId(c.id);
+                          setDragInsertBefore(true);
+                          try {
+                            e.dataTransfer.setData("text/plain", c.id);
+                          } catch {
+                            // ignore
+                          }
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          if (!c.id) return;
+                          const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                          setDragOverId(c.id);
+                          setDragInsertBefore(e.clientY < rect.top + rect.height / 2);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (!c.id) return;
+                          const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                          const insertBefore = e.clientY < rect.top + rect.height / 2;
+                          onDropReorder(c.id, insertBefore);
+                        }}
                       >
                         <button
                           type="button"
@@ -236,7 +263,7 @@ export default function PcPage() {
                           className="block w-full"
                           aria-label={`View ${c.player_name}`}
                         >
-                          <div className="aspect-[3/4] w-full overflow-hidden rounded-lg bg-slate-950">
+                          <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
                             {c.image_url ? (
                               <img alt="front" src={src} className="h-full w-full object-contain" />
                             ) : (
@@ -262,7 +289,7 @@ export default function PcPage() {
                   </div>
 
                   <div
-                    className="relative mt-4 flex gap-4 overflow-x-auto rounded-[18px] bg-gradient-to-b from-amber-500/10 via-slate-950/10 to-slate-950/25 px-4 pb-10"
+                    className="relative mt-4 grid grid-cols-4 gap-4 rounded-[18px] bg-gradient-to-b from-amber-500/10 via-slate-950/10 to-slate-950/25 px-4 pb-10"
                     role="list"
                     aria-label="PC shelf"
                   >
@@ -273,17 +300,9 @@ export default function PcPage() {
                       const isDragging = draggingId && c.id === draggingId;
                       const isOver = dragOverId && c.id === dragOverId;
 
-                      const center = (displayedCards.length - 1) / 2;
-                      const offset = idx - center;
-                      const rotateY = Math.max(-20, Math.min(20, -offset * 9));
-                      const rotateZ = offset * 0.55;
-                      const translateY = Math.abs(offset) * 3.2;
+                      const cardTransform = undefined;
 
-                      const cardTransform = isDragging
-                        ? undefined
-                        : `perspective(900px) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) translateY(${translateY}px)`;
-
-                      const insertionClass = isOver && draggingId ? (dragInsertBefore ? "border-l-4 border-amber-400" : "border-r-4 border-amber-400") : "";
+                      const insertionClass = isOver && draggingId ? (dragInsertBefore ? "border-t-4 border-amber-400" : "border-b-4 border-amber-400") : "";
 
                       return (
                         <div
@@ -295,17 +314,17 @@ export default function PcPage() {
                             if (!c.id) return;
                             const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                             setDragOverId(c.id);
-                            setDragInsertBefore(e.clientX < rect.left + rect.width / 2);
+                            setDragInsertBefore(e.clientY < rect.top + rect.height / 2);
                           }}
                           onDrop={(e) => {
                             e.preventDefault();
                             if (!c.id) return;
                             const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                            const insertBefore = e.clientX < rect.left + rect.width / 2;
+                            const insertBefore = e.clientY < rect.top + rect.height / 2;
                             onDropReorder(c.id, insertBefore);
                           }}
                           className={
-                            "relative z-10 w-56 shrink-0 rounded-2xl border bg-slate-900/40 p-3 transition will-change-transform shadow-[0_18px_60px_rgba(0,0,0,0.45)] hover:shadow-[0_28px_90px_rgba(0,0,0,0.65)] " +
+                            "relative z-10 w-full rounded-2xl border bg-slate-900/40 p-3 transition shadow-[0_18px_60px_rgba(0,0,0,0.45)] hover:shadow-[0_28px_90px_rgba(0,0,0,0.65)] " +
                             (isDragging
                               ? "border-amber-500/60 bg-amber-500/10 opacity-70"
                               : isOver
