@@ -405,7 +405,7 @@ export default function PcPage() {
           onClick={() => setImageModal(null)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-950 p-4 shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
+            className="w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-slate-950 p-4 shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
@@ -426,7 +426,7 @@ export default function PcPage() {
               </button>
             </div>
 
-            <div className="mt-4 aspect-[3/2] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+            <div className="mt-4 h-[60vh] max-h-[560px] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
               <img alt="front" src={imageModal.src} className="h-full w-full object-contain" />
             </div>
 
