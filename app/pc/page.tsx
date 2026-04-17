@@ -390,7 +390,7 @@ export default function PcPage() {
 
                           </div>
 
-                          <div className="mt-3">
+                          <div className="mt-3 text-center">
                             <div className="line-clamp-2 text-sm font-semibold text-white">{c.player_name}</div>
                             <div className="mt-1 text-xs text-slate-300">
                               {c.year} · {c.brand}
