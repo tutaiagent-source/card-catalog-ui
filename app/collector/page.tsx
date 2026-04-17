@@ -100,6 +100,53 @@ export default function CollectorPlanPage() {
         </section>
 
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="max-w-5xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Collector Workflow</div>
+            <h2 className="mt-3 text-2xl font-bold text-white">Simple, clean, and always connected</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300">
+              Collector keeps your day-to-day flow tight: browse the catalog, keep PC separate, and record sold info on the same card record.
+            </p>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {[
+                {
+                  title: "1) Catalog",
+                  body: "Search, filter, and move through your inventory without clutter.",
+                },
+                {
+                  title: "2) Personal Collection",
+                  body: "Keep favorites in the PC view so your “real home” stays readable.",
+                },
+                {
+                  title: "3) Sold tracking",
+                  body: "Attach sold price/date to the card record for quick future lookup.",
+                },
+              ].map((step) => (
+                <div key={step.title} className="rounded-[28px] border border-white/10 bg-slate-950/50 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+                  <div className="text-sm font-semibold text-white">{step.title}</div>
+                  <div className="mt-2 text-sm leading-6 text-slate-300">{step.body}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a
+                href="/login"
+                className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
+              >
+                Start with Collector
+              </a>
+              <a
+                href="/features"
+                className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
+              >
+                Compare Screens
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-start">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">When you should upgrade</div>
@@ -121,6 +168,34 @@ export default function CollectorPlanPage() {
               >
                 Start with Collector
               </a>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="max-w-5xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">FAQ</div>
+            <h2 className="mt-3 text-2xl font-bold text-white">Collector questions</h2>
+
+            <div className="mt-6 space-y-4">
+              {[{
+                q: "Can I upgrade to Pro later?",
+                a: "Yes. If you outgrow basic organization and start wanting import/export plus profit/ROI insight, Pro is your next step.",
+              }, {
+                q: "Is my PC separate from my catalog?",
+                a: "Yes. Collector keeps your Personal Collection focused while still letting you reference the bigger inventory context.",
+              }, {
+                q: "Does Sold tracking stay attached to the card?",
+                a: "That’s the whole idea. Sold entries remain connected to the original card record so future searching stays fast and consistent.",
+              }, {
+                q: "Is the app built for mobile?",
+                a: "Yes. The core workflow is designed to feel clean on smaller screens, with tighter spacing and easier navigation.",
+              }].map((item) => (
+                <details key={item.q} className="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-white">{item.q}</summary>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{item.a}</p>
+                </details>
+              ))}
             </div>
           </div>
         </section>

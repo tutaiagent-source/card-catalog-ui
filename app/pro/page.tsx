@@ -159,6 +159,34 @@ export default function ProPlanPage() {
             </div>
           </div>
         </section>
+
+        <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-amber-500/[0.06] p-6 sm:p-8">
+          <div className="max-w-5xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">FAQ</div>
+            <h2 className="mt-3 text-2xl font-bold text-white">Pro questions</h2>
+
+            <div className="mt-6 space-y-4">
+              {[{
+                q: "Do I need profit/ROI fields to use Pro?",
+                a: "You can. But Pro is also useful just for the workflow upgrades (CSV import/export, bulk actions, and richer sold trends). Profit/ROI becomes especially valuable once you track costs and fees.",
+              }, {
+                q: "Is CSV export ready to share?",
+                a: "Yes. Pro’s exports include analytics fields so you can verify results and keep your workflow portable.",
+              }, {
+                q: "Will advanced charts match the CSV?",
+                a: "That’s the goal: the same underlying profit/ROI calculations power both the dashboard and the sales export fields.",
+              }, {
+                q: "Can I keep using my Personal Collection?",
+                a: "Absolutely. Pro includes everything from Collector, including PC separation and the clean inventory workflow.",
+              }].map((item) => (
+                <details key={item.q} className="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-white">{item.q}</summary>
+                  <p className="mt-2 text-sm leading-6 text-slate-300">{item.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );
