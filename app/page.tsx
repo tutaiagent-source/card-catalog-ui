@@ -202,6 +202,31 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">On Your Phone</div>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A cleaner PC + sold workflow on iPhone</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
+                Star cards, tap into details, and review comps from your phone without losing the “inventory story.”
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 max-w-md">
+              <img
+                src="/iphone-pc-mockup-1.png"
+                alt="CardCat on iPhone mockup"
+                className="w-full h-auto rounded-[26px] border border-white/10 bg-slate-950/20"
+              />
+              <img
+                src="/iphone-pc-mockup-2.png"
+                alt="CardCat on iPhone mockup variant"
+                className="w-full h-auto rounded-[26px] border border-white/10 bg-slate-950/20"
+              />
+            </div>
+          </div>
+        </section>
+
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_30px_80px_rgba(2,6,23,0.35)] sm:p-8">
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">How CardCat Works</div>

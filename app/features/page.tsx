@@ -52,6 +52,31 @@ export default function FeaturesPage() {
           </div>
         </section>
 
+        <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">On iPhone</div>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Tap, flip, reorder, and edit fast</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
+                CardCat is built to feel clean on mobile. Star cards, review comps, and keep your PC workflow tight.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 max-w-md">
+              <img
+                src="/iphone-pc-mockup-1.png"
+                alt="CardCat iPhone mockup"
+                className="w-full h-auto rounded-[26px] border border-white/10 bg-slate-950/20"
+              />
+              <img
+                src="/iphone-pc-mockup-2.png"
+                alt="CardCat iPhone mockup variant"
+                className="w-full h-auto rounded-[26px] border border-white/10 bg-slate-950/20"
+              />
+            </div>
+          </div>
+        </section>
+
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
           {featureGroups.map((group) => (
             <div key={group.title} className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
