@@ -1,0 +1,106 @@
+import type { Metadata } from "next";
+
+import MarketingNav from "@/components/MarketingNav";
+
+export const metadata: Metadata = {
+  title: "Collector Plan | CardCat",
+  description:
+    "CardCat Collector plan helps you organize your personal collection with clean catalog browsing, a dedicated PC view, and simple sold tracking.",
+  openGraph: {
+    title: "Collector Plan | CardCat",
+    description:
+      "CardCat Collector plan helps you organize your personal collection with clean catalog browsing, a dedicated PC view, and simple sold tracking.",
+    type: "website",
+  },
+};
+
+export default function CollectorPlanPage() {
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="mx-auto max-w-7xl px-4 py-6 pb-16 sm:px-6 lg:px-8">
+        <MarketingNav />
+
+        <section className="rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.16),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-5 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.55)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
+              Collector Plan
+            </div>
+            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
+              A clean home for your collection.
+            </h1>
+            <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
+              Keep your catalog searchable, your Personal Collection focused, and your sold history attached to the original card.
+              Collector is built for fast day-to-day organization without extra complexity.
+            </p>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href="/login"
+                className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
+              >
+                Create Account
+              </a>
+              <a
+                href="/features"
+                className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
+              >
+                See What’s Included
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-10 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <h2 className="text-2xl font-bold text-white">What Collector gives you</h2>
+            <ul className="mt-5 space-y-3 text-sm text-slate-200">
+              {[
+                "Up To 100 Cards",
+                "Manual Card Entry",
+                "Personal Collection (PC) View",
+                "Cleaner Catalog Browsing",
+                "Basic Sold Tracking",
+                "Quick context via Recent Sold Listings",
+              ].map((feature) => (
+                <li key={feature} className="flex items-start gap-3">
+                  <span className="mt-1 text-amber-300">•</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+            <h2 className="text-2xl font-bold text-white">Best for</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300">
+              Collectors who want organization first. If you mainly care about browsing your catalog, keeping PC separate, and recording sold dates and prices, Collector keeps it simple.
+            </p>
+            <div className="mt-6 rounded-2xl border border-blue-500/20 bg-blue-500/[0.08] p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">Collector tip</div>
+              <p className="mt-2 text-sm leading-6 text-slate-100">
+                Use the Catalog flow to keep card fields consistent. Sold history stays connected to the same card record so your future self can find everything faster.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl font-bold text-white">Collector vs Pro</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300">
+              Pro adds CSV import/export, bulk inventory tools, and deeper sold analytics (profit/ROI and richer trends). If your collection is growing beyond a simple PC and manual entry, Pro is the next step.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a href="/pro" className="rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-5 py-3 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/[0.12]">
+                View Pro Plan
+              </a>
+              <a href="/" className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">
+                Back to Home
+              </a>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}

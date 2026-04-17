@@ -270,6 +270,24 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
+
+                <div className="mt-6">
+                  {tier.name === "Collector" ? (
+                    <a
+                      href="/collector"
+                      className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
+                    >
+                      Collector details
+                    </a>
+                  ) : (
+                    <a
+                      href="/pro"
+                      className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/[0.08] px-4 py-2 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/[0.12]"
+                    >
+                      Pro details
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>
