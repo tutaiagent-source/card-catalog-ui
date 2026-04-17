@@ -76,10 +76,18 @@ export default function PcPage() {
   const [showBack, setShowBack] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
 
+  const [estimateDraft, setEstimateDraft] = useState<string>("");
+  const [estimateSaving, setEstimateSaving] = useState(false);
+
   useEffect(() => {
     if (!imageModal) return;
     setShowBack(false);
     setIsFlipping(false);
+    setEstimateDraft(
+      imageModal.card.estimated_price != null && Number.isFinite(Number(imageModal.card.estimated_price))
+        ? String(imageModal.card.estimated_price)
+        : ""
+    );
   }, [imageModal]);
 
   useEffect(() => {
@@ -166,6 +174,44 @@ export default function PcPage() {
     setPcCards((prev) => prev.filter((c) => c.id !== card.id));
   };
 
+  const updateEstimatedPrice = async () => {
+    const cardId = imageModal?.card?.id;
+    if (!cardId) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const trimmed = estimateDraft.trim();
+    let next: number | null = null;
+    if (trimmed !== "") {
+      const parsed = Number(trimmed);
+      if (!Number.isFinite(parsed)) {
+        alert("Enter a valid estimated price (numbers only). ");
+        return;
+      }
+      next = parsed;
+    }
+
+    setEstimateSaving(true);
+    try {
+      const { error } = await supabase
+        .from("cards")
+        .update({ estimated_price: next })
+        .eq("id", cardId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        alert(`PC estimate update failed: ${error.message}`);
+        return;
+      }
+
+      setPcCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, estimated_price: next } : c)));
+      setImageModal((prev) => (prev ? { ...prev, card: { ...prev.card, estimated_price: next } } : prev));
+      setStatusToast("Estimated price updated.");
+    } finally {
+      setEstimateSaving(false);
+    }
+  };
+
   const onDropReorder = async (overId: string, insertBefore: boolean) => {
     if (!draggingId || draggingId === overId) return;
 
@@ -179,6 +225,17 @@ export default function PcPage() {
   };
 
   const totalPcCards = pcCards.length;
+
+  const formatDollars = (amount: number) =>
+    new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+
+  const totalPcEstimatedValue = pcCards.reduce((sum, c) => sum + (c.estimated_price != null ? Number(c.estimated_price) || 0 : 0), 0);
+  const hasAnyEstimatedValue = pcCards.some((c) => c.estimated_price != null && Number.isFinite(Number(c.estimated_price)));
 
   if (loading) {
     return (
@@ -211,6 +268,10 @@ export default function PcPage() {
           <div className="text-right">
             <div className="text-sm text-slate-400">
               {totalPcCards} card{totalPcCards === 1 ? "" : "s"}
+            </div>
+            <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+              <div className="text-xs text-slate-400">Estimated PC value</div>
+              <div className="mt-1 text-lg font-bold text-white">{hasAnyEstimatedValue ? formatDollars(totalPcEstimatedValue) : "—"}</div>
             </div>
             {savingOrder ? <div className="mt-1 text-xs text-amber-200">Saving order…</div> : null}
           </div>
@@ -474,6 +535,44 @@ export default function PcPage() {
               >
                 Check Comps ↗
               </a>
+
+              <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Estimated price</div>
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2">
+                    <span className="text-slate-300">$</span>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      step="0.01"
+                      className="w-28 bg-transparent text-sm text-white outline-none"
+                      value={estimateDraft}
+                      onChange={(e) => setEstimateDraft(e.target.value)}
+                      placeholder="0.00"
+                      aria-label="Estimated price"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
+                    onClick={() => updateEstimatedPrice()}
+                    disabled={estimateSaving}
+                  >
+                    {estimateSaving ? "Updating…" : "Update"}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="rounded-xl border border-white/10 bg-transparent px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06] disabled:opacity-60"
+                    onClick={() => setEstimateDraft("")}
+                    disabled={estimateSaving}
+                  >
+                    Clear
+                  </button>
+                </div>
+                <div className="mt-2 text-xs text-slate-400">Used in the PC total value at the top of the page.</div>
+              </div>
 
               <button
                 type="button"
