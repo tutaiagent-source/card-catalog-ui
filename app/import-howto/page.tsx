@@ -110,7 +110,7 @@ export default function ImportHowtoPage() {
               </ul>
 
               <div className="mt-8 rounded-2xl border border-blue-500/20 bg-blue-500/[0.08] p-5">
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">Pro tip</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">Pro Tip</div>
                 <p className="mt-2 text-sm leading-6 text-slate-100">
                   Tell the LLM to keep <span className="font-semibold">card_number</span> as text (it may include letters). If a required value is missing in a row, have it leave the cell blank.
                 </p>
@@ -118,8 +118,8 @@ export default function ImportHowtoPage() {
             </div>
 
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Copy/paste prompt</div>
-              <h3 className="mt-3 text-xl font-bold text-white">LLM prompt you can reuse</h3>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Copy/Paste Prompt</div>
+              <h3 className="mt-3 text-xl font-bold text-white">LLM Prompt You Can Reuse</h3>
 
               <div className="mt-3 flex justify-end">
                 <CopyButton text={samplePrompt} buttonLabel="Copy prompt" />
@@ -136,7 +136,7 @@ export default function ImportHowtoPage() {
 
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-amber-500/[0.06] p-6 sm:p-8">
           <div className="max-w-5xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Still unsure?</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Still Unsure?</div>
             <h2 className="mt-3 text-2xl font-bold text-white">Don’t stress the formatting</h2>
             <p className="mt-3 text-sm leading-7 text-slate-200">
               CardCat’s import review exists for a reason. Even if your CSV is messy, upload it, review what the importer flags, and fix the rows quickly.
@@ -146,10 +146,10 @@ export default function ImportHowtoPage() {
                 href="/import"
                 className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
               >
-                Start import
+                Start Import
               </a>
               <a href="/features" className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">
-                Read features
+                Read Features
               </a>
             </div>
           </div>
