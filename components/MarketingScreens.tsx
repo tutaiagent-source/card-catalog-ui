@@ -186,6 +186,13 @@ export function CatalogShowcase() {
 export function ImportShowcase() {
   return (
     <ScreenFrame title="Import" subtitle="Guided CSV Review Before Anything Gets Saved">
+      <div className="mb-4 text-sm leading-6 text-slate-300">
+        Have an existing spreadsheet? Export it as CSV and upload it here. If the format feels daunting, use our
+        <a href="/import-howto" className="ml-2 font-semibold text-amber-200 hover:text-amber-100">
+          CSV prep guide
+        </a>
+        to align columns quickly (optionally with an LLM).
+      </div>
       <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr]">
         <div className="space-y-3">
           {[

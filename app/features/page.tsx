@@ -14,8 +14,8 @@ const featureGroups = [
   },
   {
     title: "Import And Cleanup",
-    body: "Bring in bigger inventories from CSV and clean up issues before they become bad data.",
-    bullets: ["CSV Import", "Duplicate Review", "Needs Attention Workflow", "Row-Level Fixes Before Save"],
+    body: "If you already have a spreadsheet, export it as CSV and CardCat makes it easy to import your collection quickly. Review and fix issues before they become bad data.",
+    bullets: ["CSV Import", "Duplicate Review", "Needs Attention Workflow", "Row-Level Fixes Before Save", "LLM-assisted CSV prep guide"],
   },
   {
     title: "Sold Tracking And Insights",
