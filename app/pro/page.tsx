@@ -144,6 +144,67 @@ export default function ProPlanPage() {
         </section>
 
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="max-w-5xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Plan comparison</div>
+            <h2 className="mt-3 text-2xl font-bold text-white">Everything Pro adds (clearly)</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300">
+              Collector covers organization and basic sold tracking. Pro expands workflows with import/export, bulk actions, and profit/ROI-ready analytics.
+            </p>
+
+            <div className="mt-6 grid gap-2">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.7fr_0.7fr]">
+                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Feature</div>
+                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Collector</div>
+                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.10] p-4 text-sm font-semibold text-amber-200">Pro</div>
+              </div>
+
+              {[
+                ["Up to 100 cards", true, true],
+                ["More room to grow", false, true],
+                ["Manual card entry", true, true],
+                ["CSV import/export", false, true],
+                ["Personal Collection (PC) view", true, true],
+                ["Cleaner catalog browsing", true, true],
+                ["Basic sold tracking", true, true],
+                ["Advanced sold insights", false, true],
+                ["Profit + ROI metrics", false, true],
+                ["Sales CSV export with analytics fields", false, true],
+              ].map(([feature, cOn, pOn]) => (
+                <div key={String(feature)} className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.7fr_0.7fr] items-center">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-200">{String(feature)}</div>
+                  <div
+                    className={`rounded-2xl border border-white/10 p-4 text-center text-sm font-semibold ${
+                      cOn ? "bg-white/[0.04] text-emerald-300" : "bg-white/[0.02] text-slate-500"
+                    }`}
+                  >
+                    {cOn ? "✓" : "—"}
+                  </div>
+                  <div
+                    className={`rounded-2xl border border-amber-500/20 p-4 text-center text-sm font-semibold ${
+                      pOn ? "bg-amber-500/[0.10] text-amber-200" : "bg-white/[0.02] text-slate-500"
+                    }`}
+                  >
+                    {pOn ? "✓" : "—"}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href="/login"
+                className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
+              >
+                Start with Pro
+              </a>
+              <a href="/collector" className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">
+                See Collector
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-3xl">
             <h2 className="text-2xl font-bold text-white">Collector plan still included</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
