@@ -281,8 +281,8 @@ export default function PcPage() {
 
             {/* Desktop: shelf + drag reorder */}
             <section className="hidden lg:block mt-8">
-              <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-5">
-                <div className="rounded-[20px] border border-white/10 bg-slate-900/30 p-4">
+              <div className="rounded-[28px] bg-white/[0.03] p-5">
+                <div className="rounded-[20px] bg-slate-900/30 p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="text-sm font-semibold text-slate-200">Display</div>
                     <div className="text-xs text-slate-400">Drag to reorder</div>
@@ -300,9 +300,7 @@ export default function PcPage() {
                       const isDragging = draggingId && c.id === draggingId;
                       const isOver = dragOverId && c.id === dragOverId;
 
-                      const liftPx = -6 - (idx % 4) * 4; // negative => hangs upward
-                      const tiltDeg = (idx % 2 === 0 ? -1 : 1) * (2 + (idx % 3) * 0.6);
-                      const cardTransform = isDragging ? undefined : `translateY(${liftPx}px) rotateZ(${tiltDeg}deg)`;
+                      const cardTransform = undefined;
 
                       const insertionClass = isOver && draggingId ? "ring-2 ring-amber-400/70" : "";
 
