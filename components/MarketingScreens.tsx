@@ -379,29 +379,40 @@ export function PcShowcase() {
 
   return (
     <ScreenFrame title="Personal Collection" subtitle="A Dedicated View For The Cards That Stay Close">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }, (_, i) => {
-          const card = cards[i];
-          const name = card?.player_name || placeholders[i];
-          const src = card?.image_url ? driveToImageSrc(card.image_url) : null;
+      <div className="grid gap-4 lg:grid-cols-[0.95fr_1.05fr] items-start">
+        <div className="space-y-4">
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-3">
+            <img alt="PC iPhone preview" src="/iphone-pc-mockup-1.png" className="w-full h-auto" />
+          </div>
+          <div className="hidden lg:block rounded-3xl border border-white/10 bg-white/[0.03] p-3">
+            <img alt="PC iPhone preview variant" src="/iphone-pc-mockup-2.png" className="w-full h-auto" />
+          </div>
+        </div>
 
-          return (
-            <div key={card?.id || name} className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
-              {src ? (
-                <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-slate-950/20">
-                  <img alt={name} src={src} className="h-full w-full object-contain" />
-                </div>
-              ) : (
-                <div
-                  className={`aspect-[4/5] rounded-2xl ${i % 2 === 0 ? "bg-[linear-gradient(160deg,rgba(59,130,246,0.22),rgba(15,23,42,0.2))]" : "bg-[linear-gradient(160deg,rgba(245,158,11,0.2),rgba(15,23,42,0.2))]"}`}
-                />
-              )}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => {
+            const card = cards[i];
+            const name = card?.player_name || placeholders[i];
+            const src = card?.image_url ? driveToImageSrc(card.image_url) : null;
 
-              <div className="mt-3 text-center text-sm font-semibold text-white">{name}</div>
-              <div className="mt-1 text-center text-xs text-slate-400">Tap For Details, Keep The Full Catalog Separate</div>
-            </div>
-          );
-        })}
+            return (
+              <div key={card?.id || name} className="rounded-3xl border border-white/10 bg-white/[0.04] p-3">
+                {src ? (
+                  <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-slate-950/20">
+                    <img alt={name} src={src} className="h-full w-full object-contain" />
+                  </div>
+                ) : (
+                  <div
+                    className={`aspect-[4/5] rounded-2xl ${i % 2 === 0 ? "bg-[linear-gradient(160deg,rgba(59,130,246,0.22),rgba(15,23,42,0.2))]" : "bg-[linear-gradient(160deg,rgba(245,158,11,0.2),rgba(15,23,42,0.2))]"}`}
+                  />
+                )}
+
+                <div className="mt-3 text-center text-sm font-semibold text-white">{name}</div>
+                <div className="mt-1 text-center text-xs text-slate-400">Tap For Details, Keep The Full Catalog Separate</div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mt-6 rounded-[28px] border border-white/10 bg-slate-950/40 p-5">
