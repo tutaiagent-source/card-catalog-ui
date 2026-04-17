@@ -197,6 +197,7 @@ export default function AddCardPage() {
   const { isCollectorPreview } = usePlanPreview();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [step, setStep] = useState(1);
+  const [addToPC, setAddToPC] = useState(false);
 
   const [card, setCard] = useState<Partial<Card>>({
     parallel: "n/a",
@@ -273,6 +274,7 @@ export default function AddCardPage() {
           shipping_cost: seller.meta.shippingCost,
           platform_fee: seller.meta.platformFee,
         });
+        setAddToPC((data as any)?.pc_position != null);
         setStep(normalizedStatus === "Sold" ? 3 : 1);
       }
     })();
@@ -404,6 +406,7 @@ export default function AddCardPage() {
         sale_platform: cleaned.sale_platform || null,
         notes: cleaned.notes,
         date_added: cleaned.date_added,
+        pc_position: addToPC ? Date.now() : null,
       };
 
       if (String(cleaned.competition || "").trim()) {
@@ -469,6 +472,7 @@ export default function AddCardPage() {
             estimated_price: cleaned.estimated_price,
           };
 
+          if (addToPC) updatePayload.pc_position = Date.now();
           if (cleaned.image_url !== undefined) updatePayload.image_url = cleaned.image_url;
           if (cleaned.back_image_url !== undefined) updatePayload.back_image_url = cleaned.back_image_url;
 
@@ -960,6 +964,19 @@ export default function AddCardPage() {
                       <option value="Listed">Listed</option>
                       <option value="Sold">Sold</option>
                     </select>
+                  </div>
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <input
+                      id="add-to-pc"
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-700 bg-slate-950"
+                      checked={addToPC}
+                      onChange={(e) => setAddToPC(e.target.checked)}
+                    />
+                    <label htmlFor="add-to-pc" className="text-sm text-slate-300">
+                      Add to PC ★
+                    </label>
                   </div>
 
                   {String(card.status || "Collection") === "Listed" && (
