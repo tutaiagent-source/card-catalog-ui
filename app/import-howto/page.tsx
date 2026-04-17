@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import MarketingNav from "@/components/MarketingNav";
+import CopyButton from "@/components/CopyButton";
 
 export const metadata: Metadata = {
   title: "How to Prep a CSV for CardCat Import",
@@ -119,6 +120,10 @@ export default function ImportHowtoPage() {
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Copy/paste prompt</div>
               <h3 className="mt-3 text-xl font-bold text-white">LLM prompt you can reuse</h3>
+
+              <div className="mt-3 flex justify-end">
+                <CopyButton text={samplePrompt} buttonLabel="Copy prompt" />
+              </div>
               <pre className="mt-4 max-h-[520px] overflow-auto rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-xs leading-5 text-slate-200">
                 {samplePrompt}
               </pre>
