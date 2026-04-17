@@ -2217,7 +2217,7 @@ export default function CatalogPage() {
           <button
             type="button"
             aria-label="Close"
-            className="absolute right-3 top-3 rounded bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+            className="absolute right-3 top-3 z-50 rounded bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-700"
             onClick={() => setStatusModal(null)}
           >
             ✕
