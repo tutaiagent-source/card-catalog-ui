@@ -412,14 +412,14 @@ export function PcShowcase() {
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <a
-            href="https://www.ebay.com/sch/i.html?_nkw=Tom%20Brady%20Panini%20Prizm%2017&LH_Sold=1&LH_Complete=1"
+            href="https://www.ebay.com/sch/i.html?_nkw=Michael%20Jordan%20Fleer%201986%20Fleer%2057&LH_Sold=1&LH_Complete=1"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]"
           >
             Check Comps ↗
           </a>
-          <div className="text-xs text-slate-400">Example: Tom Brady · 2020 Panini Prizm · #17</div>
+          <div className="text-xs text-slate-400">Example: Michael Jordan · 1986 Fleer · #57 · PSA 8 (NM/M) · OC · Rookie · Chicago Bulls</div>
         </div>
       </div>
     </ScreenFrame>
