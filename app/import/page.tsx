@@ -979,6 +979,19 @@ export default function ImportPage() {
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <div className="text-lg font-semibold">1. Upload CSV</div>
           <p className="mt-2 text-sm text-slate-400">If the structure is close to CardCat already, this should be quick. If not, you can remap columns below.</p>
+
+          <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4">
+            <div className="text-sm font-semibold text-amber-200">Having trouble uploading your spreadsheet?</div>
+            <p className="mt-1 text-sm leading-6 text-slate-200">
+              Export your file as CSV, then use the CSV prep guide to align columns and avoid common import issues.
+            </p>
+            <a
+              href="/import-howto"
+              className="mt-3 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]"
+            >
+              Open the CSV prep guide ↗
+            </a>
+          </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <button
               type="button"
