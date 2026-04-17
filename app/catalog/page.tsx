@@ -2209,12 +2209,19 @@ export default function CatalogPage() {
     {statusModal && (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-        onClick={() => setStatusModal(null)}
       >
         <div
-          className="w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-5"
+          className="relative w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-5"
           onClick={(e) => e.stopPropagation()}
         >
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute right-3 top-3 rounded bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+            onClick={() => setStatusModal(null)}
+          >
+            ✕
+          </button>
           <div className="text-lg font-bold">Move to {statusModal.nextStatus}</div>
           <div className="mt-1 text-sm text-slate-300">{statusModal.card.player_name} · {statusModal.card.year} · {statusModal.card.brand}</div>
 
