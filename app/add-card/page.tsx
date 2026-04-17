@@ -1296,7 +1296,13 @@ export default function AddCardPage() {
 
                   <button
                     type="submit"
-                    disabled={saving}
+                    disabled={
+                      saving ||
+                      uploading === "front" ||
+                      (Boolean(frontFile) && !card.image_url) ||
+                      uploading === "back" ||
+                      (Boolean(backFile) && !card.back_image_url)
+                    }
                     className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000] disabled:opacity-60"
                   >
                     {saving ? "Saving..." : "Save Card"}
