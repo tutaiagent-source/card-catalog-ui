@@ -176,6 +176,42 @@ export function ImportShowcase() {
 }
 
 export function SoldShowcase() {
+  const { user } = useSupabaseUser();
+  const [recentSold, setRecentSold] = useState<Array<{ cardTitle: string; priceText: string; src: string | null }>>([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    if (!supabaseConfigured || !supabase) return;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("cards")
+        .select("year,brand,set_name,card_number,player_name,sold_price,image_url")
+        .eq("user_id", user.id)
+        .eq("status", "Sold")
+        .order("sold_at", { ascending: false })
+        .limit(12);
+
+      if (error) return;
+
+      const next = (data ?? [])
+        .filter((c) => c && c.image_url)
+        .slice(0, 3)
+        .map((c) => {
+          const price = c.sold_price == null ? null : Number(c.sold_price);
+          const priceText = price == null || !Number.isFinite(price) ? "$0.00" : `$${price.toFixed(2)}`;
+          const cardTitle = `${c.year ?? ""} ${c.brand ?? ""} ${c.set_name ?? ""}`.trim() || String(c.player_name || "Sold card");
+          return {
+            cardTitle,
+            priceText,
+            src: c.image_url ? driveToImageSrc(String(c.image_url)) : null,
+          };
+        });
+
+      setRecentSold(next);
+    })();
+  }, [user?.id]);
+
   return (
     <ScreenFrame title="Sold" subtitle="Clear Sales History With Room For Deeper Insights">
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
@@ -198,18 +234,26 @@ export function SoldShowcase() {
         </div>
 
         <div className="space-y-3">
-          {[
-            ["Recent Sale", "2022 Prizm Messi", "$210.00"],
-            ["Recent Sale", "2023 Select Stroud", "$145.00"],
-            ["Recent Sale", "2020 Prizm Brady", "$90.00"],
-          ].map(([label, card, price]) => (
-            <div key={card} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="flex items-center justify-between gap-3">
+          {(recentSold.length
+            ? recentSold
+            : [
+                { cardTitle: "2022 Prizm Messi", priceText: "$210.00", src: null },
+                { cardTitle: "2023 Select Stroud", priceText: "$145.00", src: null },
+                { cardTitle: "2020 Prizm Brady", priceText: "$90.00", src: null },
+              ]
+          ).map((item, i) => (
+            <div key={`${item.cardTitle}-${i}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{label}</div>
-                  <div className="mt-2 text-2xl font-semibold text-white">{card}</div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Recent Sale</div>
+                  {item.src ? (
+                    <div className="mt-2 aspect-[3/2] w-[72px] overflow-hidden rounded-xl border border-white/10 bg-slate-950">
+                      <img src={item.src} alt="Recent sold card" className="h-full w-full object-contain" />
+                    </div>
+                  ) : null}
+                  <div className="mt-2 text-2xl font-semibold text-white">{item.cardTitle}</div>
                 </div>
-                <div className="text-lg font-semibold text-emerald-300">{price}</div>
+                <div className="text-lg font-semibold text-emerald-300 whitespace-nowrap">{item.priceText}</div>
               </div>
             </div>
           ))}
