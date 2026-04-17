@@ -352,29 +352,6 @@ export default function PcPage() {
                             " " + insertionClass
                           }
                         >
-                          <button
-                            type="button"
-                            draggable
-                            onClick={(e) => e.stopPropagation()}
-                            onDragStart={(e) => {
-                              if (!c.id) return;
-                              setDraggingId(c.id);
-                              setDragOverId(c.id);
-                              setDragInsertBefore(true);
-                              try {
-                                e.dataTransfer.setData("text/plain", c.id);
-                              } catch {
-                                // ignore
-                              }
-                              e.dataTransfer.effectAllowed = "move";
-                            }}
-                            className="absolute left-2 top-2 z-30 cursor-grab rounded-md bg-slate-950/70 px-2 py-1 text-[11px] font-semibold text-slate-200 hover:bg-slate-950/90"
-                            aria-label="Drag to reorder"
-                            title="Drag to reorder"
-                          >
-                            ↕
-                          </button>
-
                           <div className="relative">
                             <div
                               role="button"
