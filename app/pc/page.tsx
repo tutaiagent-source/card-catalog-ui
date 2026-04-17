@@ -289,7 +289,7 @@ export default function PcPage() {
                   </div>
 
                   <div
-                    className="relative mt-4 grid grid-cols-4 gap-4 rounded-[18px] bg-gradient-to-b from-amber-500/10 via-slate-950/10 to-slate-950/25 px-4 pb-10"
+                    className="relative mt-4 grid grid-cols-4 gap-4 overflow-visible rounded-[18px] bg-gradient-to-b from-amber-500/10 via-slate-950/10 to-slate-950/25 px-4 pb-10"
                     role="list"
                     aria-label="PC shelf"
                   >
@@ -300,7 +300,9 @@ export default function PcPage() {
                       const isDragging = draggingId && c.id === draggingId;
                       const isOver = dragOverId && c.id === dragOverId;
 
-                      const cardTransform = undefined;
+                      const liftPx = -6 - (idx % 4) * 4; // negative => hangs upward
+                      const tiltDeg = (idx % 2 === 0 ? -1 : 1) * (2 + (idx % 3) * 0.6);
+                      const cardTransform = isDragging ? undefined : `translateY(${liftPx}px) rotateZ(${tiltDeg}deg)`;
 
                       const insertionClass = isOver && draggingId ? "ring-2 ring-amber-400/70" : "";
 
