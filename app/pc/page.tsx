@@ -59,23 +59,6 @@ function buildEbaySearchUrl(card: Card) {
   return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
 }
 
-const compsExampleCard: Card = {
-  player_name: "Tom Brady",
-  year: "2020",
-  brand: "Panini",
-  set_name: "Prizm",
-  parallel: "",
-  card_number: "17",
-  team: "Tampa Bay Buccaneers",
-  sport: "Football",
-  rookie: "no",
-  is_autograph: "no",
-  has_memorabilia: "no",
-  serial_number_text: "",
-  quantity: 1,
-  estimated_price: null,
-};
-
 export default function PcPage() {
   const { user, loading } = useSupabaseUser();
 
@@ -552,20 +535,6 @@ export default function PcPage() {
               >
                 Check Comps ↗
               </a>
-
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Try comps on a sample card</div>
-                <div className="mt-2 text-sm text-slate-200">Tom Brady · 2020 Panini Prizm · #17</div>
-                <div className="mt-1 text-xs text-slate-400">This opens eBay sold + completed listings so you can see how comps work.</div>
-                <a
-                  href={buildEbaySearchUrl(compsExampleCard)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]"
-                >
-                  Check Comps for Sample ↗
-                </a>
-              </div>
 
               <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Estimated price</div>
