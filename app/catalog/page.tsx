@@ -1721,7 +1721,7 @@ export default function CatalogPage() {
                           <summary className="list-none cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
                             Move ▾
                           </summary>
-                          <div className="absolute right-0 z-20 mt-2 w-36 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl text-left">
+                          <div className="absolute right-0 z-50 mt-2 w-36 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl text-left">
                             {normalizeStatusValue(c.status) !== "Listed" ? (
                               <button
                                 className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
@@ -1883,7 +1883,7 @@ export default function CatalogPage() {
                               <summary className="list-none cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
                                 Move ▾
                               </summary>
-                              <div className="absolute right-0 z-20 mt-2 w-36 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl">
+                              <div className="absolute right-0 z-50 mt-2 w-36 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl">
                                 {normalizeStatusValue(c.status) !== "Listed" ? (
                                   <button
                                     className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
@@ -2043,7 +2043,7 @@ export default function CatalogPage() {
                               <summary className="list-none cursor-pointer rounded-full px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
                                 Move ▾
                               </summary>
-                              <div className="absolute right-0 z-20 mt-2 w-44 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl text-left">
+                              <div className="absolute right-0 z-50 mt-2 w-44 rounded-2xl border border-white/10 bg-slate-950 p-1.5 shadow-2xl text-left">
                                 {normalizeStatusValue(c.status) !== "Listed" ? (
                                   <button
                                     className="block w-full rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06]"
