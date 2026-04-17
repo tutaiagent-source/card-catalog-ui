@@ -205,6 +205,53 @@ export default function ProPlanPage() {
         </section>
 
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="max-w-5xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Exports</div>
+            <h2 className="mt-3 text-2xl font-bold text-white">Export your inventory + sold data at any time</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300">
+              Pro keeps your workflow portable. When you want a spreadsheet backup or want to analyze your results elsewhere,
+              export your inventory from Catalog and your sold history from Sold.
+            </p>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-6">
+                <h3 className="text-lg font-semibold text-white">Inventory export (Catalog)</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-300">Back up your cards, do cleanup in Sheets/Excel, and keep your data portable.</p>
+                <ul className="mt-4 space-y-2 text-sm text-slate-200">
+                  {[
+                    "Undo-proof backups before big edits",
+                    "Move your inventory to another tool",
+                    "Batch updates outside the app",
+                  ].map((x) => (
+                    <li key={x} className="flex items-start gap-3">
+                      <span className="mt-1 text-emerald-300">•</span>
+                      <span>{x}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="rounded-[28px] border border-amber-500/20 bg-amber-500/[0.08] p-6">
+                <h3 className="text-lg font-semibold text-white">Sales export (Sold)</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-200">Export sales with analytics fields so you can review performance quickly.</p>
+                <ul className="mt-4 space-y-2 text-sm text-slate-100/90">
+                  {[
+                    "Track net profit + ROI in Sheets",
+                    "Compare platforms and comps over time",
+                    "Share a clean report with an accountant or buyer",
+                  ].map((x) => (
+                    <li key={x} className="flex items-start gap-3">
+                      <span className="mt-1 text-amber-200">•</span>
+                      <span>{x}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-3xl">
             <h2 className="text-2xl font-bold text-white">Collector plan still included</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
