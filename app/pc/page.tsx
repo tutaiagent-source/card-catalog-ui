@@ -505,10 +505,18 @@ export default function PcPage() {
               role={imageModal.backSrc ? "button" : undefined}
               tabIndex={imageModal.backSrc ? 0 : undefined}
               onClick={() => {
-                if (!imageModal.backSrc) return;
+                if (!imageModal.backSrc || isFlipping) return;
                 setIsFlipping(true);
                 setShowBack((v) => !v);
-                window.setTimeout(() => setIsFlipping(false), 180);
+                window.setTimeout(() => setIsFlipping(false), 520);
+              }}
+              onKeyDown={(e) => {
+                if (!imageModal.backSrc || isFlipping) return;
+                if (e.key !== "Enter" && e.key !== " ") return;
+                e.preventDefault();
+                setIsFlipping(true);
+                setShowBack((v) => !v);
+                window.setTimeout(() => setIsFlipping(false), 520);
               }}
             >
               {imageModal.backSrc ? (
@@ -516,14 +524,33 @@ export default function PcPage() {
                   ↻ Flip
                 </div>
               ) : null}
-              <img
-                alt={showBack ? "back" : "front"}
-                src={showBack && imageModal.backSrc ? imageModal.backSrc : imageModal.src}
-                className={
-                  "h-full w-full object-contain transition-transform duration-150 " +
-                  (isFlipping ? "scale-[0.98] opacity-80" : "scale-100 opacity-100")
-                }
-              />
+
+              <div className="relative h-full w-full" style={{ perspective: 1200 }}>
+                <div
+                  className="absolute inset-0 h-full w-full transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    transform: showBack ? "rotateY(180deg)" : "rotateY(0deg)",
+                  }}
+                >
+                  <img
+                    alt="front"
+                    src={imageModal.src}
+                    className="absolute inset-0 h-full w-full object-contain"
+                    style={{ backfaceVisibility: "hidden" }}
+                    draggable={false}
+                  />
+                  {imageModal.backSrc ? (
+                    <img
+                      alt="back"
+                      src={imageModal.backSrc}
+                      className="absolute inset-0 h-full w-full object-contain"
+                      style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                      draggable={false}
+                    />
+                  ) : null}
+                </div>
+              </div>
             </div>
 
             <div className="mt-3 flex flex-col gap-2 text-sm">
