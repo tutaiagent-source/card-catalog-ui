@@ -334,6 +334,35 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="max-w-2xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Guides</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Learn the workflow, step by step</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300">
+              Prefer details over guesswork? Start with CSV import, then add images, then organize in PC.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2">
+            {[
+              { title: "CSV Import", href: "/guides/csv", body: "Export and match CardCat fields so imports are clean." },
+              { title: "LLM Reformat", href: "/guides/csv/llm", body: "A copy/paste prompt that returns a downloadable CSV code block." },
+              { title: "Image Uploads", href: "/guides/images", body: "Supported formats + what happens when images are too large." },
+              { title: "PC ★ & Sold", href: "/guides/pc", body: "Favorites in PC, then sold history on the same card record." },
+            ].map((g) => (
+              <a
+                key={g.href}
+                href={g.href}
+                className="group rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition-transform duration-200 hover:-translate-y-0.5 hover:border-white/15"
+              >
+                <div className="text-lg font-semibold text-white">{g.title}</div>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{g.body}</p>
+                <div className="mt-4 text-sm font-semibold text-amber-200 group-hover:text-amber-100">Read guide →</div>
+              </a>
+            ))}
+          </div>
+        </section>
+
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(213,0,0,0.10))] p-6 shadow-[0_30px_90px_rgba(120,53,15,0.2)] sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>

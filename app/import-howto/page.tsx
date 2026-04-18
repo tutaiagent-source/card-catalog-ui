@@ -134,6 +134,24 @@ export default function ImportHowtoPage() {
           </div>
         </section>
 
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="max-w-2xl">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Next up</div>
+              <h2 className="mt-3 text-2xl font-bold text-white">Move from “CSV import” to “better previews”</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                After your rows import cleanly, add images so CardCat can show front/back flipping previews. Then organize in PC and attach sold history when cards move.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <a href="/guides/images" className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]">Image Uploads</a>
+              <a href="/guides/pc" className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">PC Guide</a>
+              <a href="/guides/sold" className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">Sold Tracking</a>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-amber-500/[0.06] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Still Unsure?</div>

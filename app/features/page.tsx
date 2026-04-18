@@ -143,6 +143,24 @@ export default function FeaturesPage() {
           <SoldShowcase />
         </section>
 
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">SEO-friendly guides</div>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">If you want details, go deeper</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                Start with CSV import, then use the LLM prompt for a clean downloadable CSV, and finally set up images so previews flip correctly.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <a href="/guides/csv" className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]">CSV Guide</a>
+              <a href="/guides/csv/llm" className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">LLM Prompt</a>
+              <a href="/guides/images" className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">Image Uploads</a>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(213,0,0,0.10))] p-6 shadow-[0_30px_90px_rgba(120,53,15,0.2)] sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
