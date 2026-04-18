@@ -146,7 +146,7 @@ export default function FeaturesPage() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">SEO-friendly guides</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Step-by-step guides</div>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">If you want details, go deeper</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300">
                 Start with CSV import, then use the LLM prompt for a clean downloadable CSV, and finally set up images so previews flip correctly.
