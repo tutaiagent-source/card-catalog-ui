@@ -20,6 +20,9 @@ export default function ImagesGuidePage() {
 
         <section className="rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-5 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.55)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
           <div className="max-w-3xl">
+            <a href="/guides" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-300 hover:text-white">
+              <span aria-hidden>←</span> Back to Guides
+            </a>
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
               Images
             </div>
