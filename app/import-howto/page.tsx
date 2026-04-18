@@ -21,7 +21,7 @@ My input: a CSV exported from my existing spreadsheet.
 
 Task:
 1) Convert my CSV into the CardCat import format.
-2) Output ONLY a CSV (no explanations). Wrap it in a single code block so I can copy it into a .csv file.
+2) Output ONLY a CSV (no explanations). Wrap it in a single ```csv``` code block so it’s copy/download-friendly (I can save it as a .csv file).
 3) Preserve the original values as much as possible.
 4) Normalize column meanings to these fields:
    - Required (best matching): player_name, year, brand, set_name, card_number, team, sport
@@ -76,7 +76,7 @@ export default function ImportHowtoPage() {
             },
             {
               title: "2) (Optional) Reformat with an LLM",
-              body: "Paste your CSV into ChatGPT (or another LLM) and ask it to output a CardCat-ready CSV.",
+              body: "Paste your CSV into ChatGPT (or another LLM) and ask it to output a CardCat-ready CSV in a single downloadable/copyable code block.",
             },
             {
               title: "3) Upload + review in CardCat",
@@ -128,7 +128,7 @@ export default function ImportHowtoPage() {
                 {samplePrompt}
               </pre>
               <p className="mt-3 text-xs leading-6 text-slate-400">
-                Paste your CSV after “Here is my CSV:”. Ask the model to output ONLY the CSV.
+                Paste your CSV after “Here is my CSV:”. Ask the model to output ONLY the CSV in a single ```csv``` code block.
               </p>
             </div>
           </div>
