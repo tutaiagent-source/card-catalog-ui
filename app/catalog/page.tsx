@@ -266,6 +266,8 @@ export default function CatalogPage() {
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [previewShowBack, setPreviewShowBack] = useState(false);
   const [previewIsFlipping, setPreviewIsFlipping] = useState(false);
+  const [modalShowBack, setModalShowBack] = useState(false);
+  const [modalIsFlipping, setModalIsFlipping] = useState(false);
   const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
   const [statusToast, setStatusToast] = useState<{
     message: string;
@@ -331,6 +333,11 @@ export default function CatalogPage() {
     setPreviewShowBack(false);
     setPreviewIsFlipping(false);
   }, [previewCard]);
+
+  useEffect(() => {
+    setModalShowBack(false);
+    setModalIsFlipping(false);
+  }, [imageModal]);
 
   useEffect(() => {
     const closeMenus = (target: EventTarget | null) => {
@@ -2396,18 +2403,54 @@ export default function CatalogPage() {
             Close
           </button>
           <div className="max-h-[75vh] overflow-y-auto space-y-3">
-            <img
-              src={imageModal.src}
-              alt={imageModal.alt}
-              className="max-h-[70vh] w-full rounded border border-slate-800 bg-slate-950 object-contain"
-            />
             {imageModal.backSrc ? (
+              <button
+                type="button"
+                className="relative h-[70vh] max-h-[70vh] w-full overflow-hidden rounded border border-slate-800 bg-slate-950"
+                onClick={() => {
+                  if (modalIsFlipping) return;
+                  setModalIsFlipping(true);
+                  setModalShowBack((v) => !v);
+                  window.setTimeout(() => setModalIsFlipping(false), 520);
+                }}
+                aria-label="Flip card"
+              >
+                <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full bg-slate-950/60 px-2 py-1 text-[11px] font-semibold text-slate-200 ring-1 ring-white/10">
+                  ↻ Flip
+                </div>
+
+                <div className="relative h-full w-full" style={{ perspective: 1200 }}>
+                  <div
+                    className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+                    style={{
+                      transformStyle: "preserve-3d",
+                      transform: modalShowBack ? "rotateY(180deg)" : "rotateY(0deg)",
+                    }}
+                  >
+                    <img
+                      src={imageModal.src}
+                      alt={imageModal.alt}
+                      className="absolute inset-0 h-full w-full object-contain"
+                      style={{ backfaceVisibility: "hidden" }}
+                      draggable={false}
+                    />
+                    <img
+                      src={imageModal.backSrc}
+                      alt={imageModal.backAlt || "back"}
+                      className="absolute inset-0 h-full w-full object-contain"
+                      style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                      draggable={false}
+                    />
+                  </div>
+                </div>
+              </button>
+            ) : (
               <img
-                src={imageModal.backSrc}
-                alt={imageModal.backAlt || "back"}
+                src={imageModal.src}
+                alt={imageModal.alt}
                 className="max-h-[70vh] w-full rounded border border-slate-800 bg-slate-950 object-contain"
               />
-            ) : null}
+            )}
           </div>
         </div>
       </div>
