@@ -66,12 +66,12 @@ export default function FeaturesPage() {
               <img
                 src="/iphone-pc-mockup-1.png"
                 alt="CardCat iPhone mockup"
-                className="w-full h-auto rounded-[26px] border border-white/10 bg-slate-950/20"
+                className="w-full h-auto rounded-[26px] border border-white/10"
               />
               <img
                 src="/iphone-pc-mockup-2.png"
                 alt="CardCat iPhone mockup variant"
-                className="w-full h-auto rounded-[26px] border border-white/10 bg-slate-950/20"
+                className="w-full h-auto rounded-[26px] border border-white/10"
               />
             </div>
           </div>

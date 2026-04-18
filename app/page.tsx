@@ -216,12 +216,12 @@ export default function Home() {
               <img
                 src="/iphone-pc-mockup-1.png"
                 alt="CardCat on iPhone mockup"
-                className="w-full h-auto rounded-[26px] border border-white/10 bg-slate-950/20"
+                className="w-full h-auto rounded-[26px] border border-white/10"
               />
               <img
                 src="/iphone-pc-mockup-2.png"
                 alt="CardCat on iPhone mockup variant"
-                className="w-full h-auto rounded-[26px] border border-white/10 bg-slate-950/20"
+                className="w-full h-auto rounded-[26px] border border-white/10"
               />
             </div>
           </div>
