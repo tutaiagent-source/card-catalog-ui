@@ -525,6 +525,40 @@ export default function AddCardPage() {
     const path = `${crypto.randomUUID()}/${folder}/${file.name}`;
 
     try {
+      const allowedMimes = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+      const MAX_BYTES = 6 * 1024 * 1024; // 6MB
+      const MAX_DIM = 2500;
+
+      const mime = file.type || "";
+      if (!allowedMimes.has(mime)) {
+        throw new Error("Only PNG, JPG, WebP, or GIF images are allowed.");
+      }
+
+      if (file.size > MAX_BYTES) {
+        throw new Error("Image is too large (max 6MB). Please use a smaller file.");
+      }
+
+      // Basic dimension check (prevents giant images from killing the UI)
+      await new Promise<void>((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          const w = img.naturalWidth || 0;
+          const h = img.naturalHeight || 0;
+          URL.revokeObjectURL(url);
+          if (w > MAX_DIM || h > MAX_DIM) {
+            reject(new Error(`Image dimensions are too large (max ${MAX_DIM}×${MAX_DIM}).`));
+          } else {
+            resolve();
+          }
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error("Could not read that image file."));
+        };
+        img.src = url;
+      });
+
       setUploading(kind);
       const { error: uploadErr } = await supabase!.storage.from(bucket).upload(path, file, {
         upsert: false,
