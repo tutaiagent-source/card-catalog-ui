@@ -264,6 +264,8 @@ export default function CatalogPage() {
   const [cards, setCards] = useState<Card[]>([]);
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
+  const [previewShowBack, setPreviewShowBack] = useState(false);
+  const [previewIsFlipping, setPreviewIsFlipping] = useState(false);
   const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
   const [statusToast, setStatusToast] = useState<{
     message: string;
@@ -324,6 +326,11 @@ export default function CatalogPage() {
   useEffect(() => {
     fetchCards();
   }, [user?.id]);
+
+  useEffect(() => {
+    setPreviewShowBack(false);
+    setPreviewIsFlipping(false);
+  }, [previewCard]);
 
   useEffect(() => {
     const closeMenus = (target: EventTarget | null) => {
@@ -1476,25 +1483,64 @@ export default function CatalogPage() {
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                       <div className="w-full sm:w-80">
                         {previewCard.image_url ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setImageModal({
-                                src: driveToImageSrc(previewCard.image_url),
-                                alt: "front",
-                                backSrc: previewCard.back_image_url
-                                  ? driveToImageSrc(previewCard.back_image_url)
-                                  : undefined,
-                                backAlt: "back",
-                              })
-                            }
-                          >
-                            <img
-                              alt="front"
-                              src={driveToImageSrc(previewCard.image_url)}
-                              className="h-80 w-full rounded border border-slate-800 bg-slate-900 object-contain"
-                            />
-                          </button>
+                          previewCard.back_image_url ? (
+                            <button
+                              type="button"
+                              className="relative h-80 w-full overflow-hidden rounded border border-slate-800 bg-slate-900"
+                              onClick={() => {
+                                if (previewIsFlipping) return;
+                                setPreviewIsFlipping(true);
+                                setPreviewShowBack((v) => !v);
+                                window.setTimeout(() => setPreviewIsFlipping(false), 520);
+                              }}
+                              aria-label="Flip card preview"
+                            >
+                              <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full bg-slate-950/60 px-2 py-1 text-[11px] font-semibold text-slate-200 ring-1 ring-white/10">
+                                ⇄ Flip
+                              </div>
+
+                              <div className="relative h-full w-full" style={{ perspective: 1200 }}>
+                                <div
+                                  className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+                                  style={{
+                                    transformStyle: "preserve-3d",
+                                    transform: previewShowBack ? "rotateY(180deg)" : "rotateY(0deg)",
+                                  }}
+                                >
+                                  <img
+                                    alt="front"
+                                    src={driveToImageSrc(previewCard.image_url)}
+                                    className="absolute inset-0 h-full w-full object-contain"
+                                    style={{ backfaceVisibility: "hidden" }}
+                                    draggable={false}
+                                  />
+                                  <img
+                                    alt="back"
+                                    src={driveToImageSrc(previewCard.back_image_url)}
+                                    className="absolute inset-0 h-full w-full object-contain"
+                                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                                    draggable={false}
+                                  />
+                                </div>
+                              </div>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setImageModal({
+                                  src: driveToImageSrc(previewCard.image_url),
+                                  alt: "front",
+                                })
+                              }
+                            >
+                              <img
+                                alt="front"
+                                src={driveToImageSrc(previewCard.image_url)}
+                                className="h-80 w-full rounded border border-slate-800 bg-slate-900 object-contain"
+                              />
+                            </button>
+                          )
                         ) : previewCard.back_image_url ? (
                           <button
                             type="button"
