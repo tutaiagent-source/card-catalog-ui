@@ -364,7 +364,7 @@ export default function PcPage() {
                   </div>
 
                   <div
-                    className="relative mt-4 grid grid-cols-4 gap-4 overflow-visible rounded-[18px] bg-gradient-to-b from-amber-500/10 via-slate-950/10 to-slate-950/25 px-4 pb-10"
+                    className="relative mt-4 grid grid-cols-5 gap-4 overflow-visible rounded-[18px] bg-gradient-to-b from-amber-500/10 via-slate-950/10 to-slate-950/25 px-4 pb-10"
                     role="list"
                     aria-label="PC shelf"
                   >
