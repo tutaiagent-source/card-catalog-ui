@@ -21,7 +21,7 @@ My input: a CSV exported from my existing spreadsheet.
 
 Task:
 1) Convert my CSV into the CardCat import format.
-2) Output ONLY a CSV (no explanations). Wrap it in a single ```csv``` code block so it’s copy/download-friendly (I can save it as a .csv file).
+2) Output ONLY a CSV (no explanations). Wrap it in a single \`\`\`csv\`\`\` code block so it’s copy/download-friendly (I can save it as a .csv file).
 3) Preserve the original values as much as possible.
 4) Normalize column meanings to these fields:
    - Required (best matching): player_name, year, brand, set_name, card_number, team, sport

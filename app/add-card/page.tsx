@@ -520,10 +520,6 @@ export default function AddCardPage() {
       return;
     }
 
-    const bucket = "card-images";
-    const folder = kind === "front" ? "front" : "back";
-    const path = `${crypto.randomUUID()}/${folder}/${file.name}`;
-
     try {
       const allowedMimes = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
       const MAX_BYTES = 6 * 1024 * 1024; // 6MB
@@ -534,35 +530,155 @@ export default function AddCardPage() {
         throw new Error("Only PNG, JPG, WebP, or GIF images are allowed.");
       }
 
-      if (file.size > MAX_BYTES) {
+      const bucket = "card-images";
+      const folder = kind === "front" ? "front" : "back";
+
+      const loadImage = (f: File) =>
+        new Promise<{ img: HTMLImageElement; w: number; h: number }>((resolve, reject) => {
+          const url = URL.createObjectURL(f);
+          const img = new Image();
+          img.onload = () => {
+            const w = img.naturalWidth || 0;
+            const h = img.naturalHeight || 0;
+            URL.revokeObjectURL(url);
+            resolve({ img, w, h });
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Could not read that image file."));
+          };
+          img.src = url;
+        });
+
+      const fileBaseName = (() => {
+        const n = file.name || "image";
+        const dot = n.lastIndexOf(".");
+        if (dot > 0) return n.slice(0, dot);
+        return n;
+      })();
+
+      const resizeToWebp = async (f: File, maxDim: number, maxBytes: number) => {
+        // Convert to a resized/compressed WebP before uploading.
+        // This prevents iPhone-sized originals from failing the upload gate while keeping storage predictable.
+        const { img: sourceImg, w: srcW, h: srcH } = await loadImage(f);
+
+        const scale = Math.min(1, maxDim / Math.max(srcW, srcH || 1));
+        const targetW = Math.max(1, Math.round(srcW * scale));
+        const targetH = Math.max(1, Math.round(srcH * scale));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Could not process that image file.");
+
+        ctx.drawImage(sourceImg, 0, 0, targetW, targetH);
+
+        const toWebpBlob = (quality: number) =>
+          new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+              (b) => {
+                if (!b) reject(new Error("Could not process that image file."));
+                else resolve(b);
+              },
+              "image/webp",
+              quality,
+            );
+          });
+
+        // Try quality steps first.
+        const qualities = [0.9, 0.8, 0.7, 0.6];
+        let lastBlob: Blob | null = null;
+        for (const q of qualities) {
+          // eslint-disable-next-line no-await-in-loop
+          const blob = await toWebpBlob(q);
+          lastBlob = blob;
+          if (blob.size <= maxBytes) {
+            return {
+              file: new File([blob], `${fileBaseName}.webp`, { type: "image/webp" }),
+              w: targetW,
+              h: targetH,
+            };
+          }
+        }
+
+        // If it’s still too big, scale down a bit and retry once more (bounded).
+        if (!lastBlob) throw new Error("Could not process that image file.");
+        const smallerMaxDim = Math.max(900, Math.floor(maxDim * 0.85));
+        const { img: img2, w: w2, h: h2 } = await loadImage(f);
+        const scale2 = Math.min(1, smallerMaxDim / Math.max(w2, h2 || 1));
+        const targetW2 = Math.max(1, Math.round(w2 * scale2));
+        const targetH2 = Math.max(1, Math.round(h2 * scale2));
+        const canvas2 = document.createElement("canvas");
+        canvas2.width = targetW2;
+        canvas2.height = targetH2;
+        const ctx2 = canvas2.getContext("2d");
+        if (!ctx2) throw new Error("Could not process that image file.");
+        ctx2.drawImage(img2, 0, 0, targetW2, targetH2);
+
+        const toWebpBlob2 = (quality: number) =>
+          new Promise<Blob>((resolve, reject) => {
+            canvas2.toBlob(
+              (b) => {
+                if (!b) reject(new Error("Could not process that image file."));
+                else resolve(b);
+              },
+              "image/webp",
+              quality,
+            );
+          });
+
+        for (const q of qualities) {
+          // eslint-disable-next-line no-await-in-loop
+          const blob = await toWebpBlob2(q);
+          if (blob.size <= maxBytes) {
+            return {
+              file: new File([blob], `${fileBaseName}.webp`, { type: "image/webp" }),
+              w: targetW2,
+              h: targetH2,
+            };
+          }
+        }
+
+        // Final fallback: return the smallest we produced and let the normal size check throw a friendly error.
+        return {
+          file: new File([lastBlob], `${fileBaseName}.webp`, { type: "image/webp" }),
+          w: targetW,
+          h: targetH,
+        };
+      };
+
+      // iPhone-sized originals can fail the current gate (2500px / 6MB). If that happens,
+      // we resize+recompress to WebP before uploading.
+      let fileToUpload: File = file;
+      if (mime !== "image/gif") {
+        const { w, h } = await loadImage(file);
+        const needsResize = file.size > MAX_BYTES || w > MAX_DIM || h > MAX_DIM;
+        if (needsResize) {
+          const resized = await resizeToWebp(file, MAX_DIM, MAX_BYTES);
+          fileToUpload = resized.file;
+        }
+      } else {
+        // GIF: we can’t reliably resize/flatten animations here, so we keep the original strict gate.
+        if (file.size > MAX_BYTES) {
+          throw new Error("Image is too large (max 6MB). Please use a smaller file.");
+        }
+        const { w, h } = await loadImage(file);
+        if (w > MAX_DIM || h > MAX_DIM) {
+          throw new Error(`Image dimensions are too large (max ${MAX_DIM}×${MAX_DIM}).`);
+        }
+      }
+
+      if (fileToUpload.size > MAX_BYTES) {
         throw new Error("Image is too large (max 6MB). Please use a smaller file.");
       }
 
-      // Basic dimension check (prevents giant images from killing the UI)
-      await new Promise<void>((resolve, reject) => {
-        const url = URL.createObjectURL(file);
-        const img = new Image();
-        img.onload = () => {
-          const w = img.naturalWidth || 0;
-          const h = img.naturalHeight || 0;
-          URL.revokeObjectURL(url);
-          if (w > MAX_DIM || h > MAX_DIM) {
-            reject(new Error(`Image dimensions are too large (max ${MAX_DIM}×${MAX_DIM}).`));
-          } else {
-            resolve();
-          }
-        };
-        img.onerror = () => {
-          URL.revokeObjectURL(url);
-          reject(new Error("Could not read that image file."));
-        };
-        img.src = url;
-      });
-
       setUploading(kind);
-      const { error: uploadErr } = await supabase!.storage.from(bucket).upload(path, file, {
+
+      const path = `${crypto.randomUUID()}/${folder}/${fileToUpload.name}`;
+      const { error: uploadErr } = await supabase!.storage.from(bucket).upload(path, fileToUpload, {
         upsert: false,
-        contentType: file.type || undefined,
+        contentType: fileToUpload.type || undefined,
       });
 
       if (uploadErr) throw uploadErr;
