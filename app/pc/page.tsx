@@ -6,6 +6,7 @@ import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { driveToImageSrc } from "@/lib/googleDrive";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
+import EmailVerificationNotice from "@/components/EmailVerificationNotice";
 
 type YesNo = "yes" | "no";
 
@@ -61,6 +62,7 @@ function buildEbaySearchUrl(card: Card) {
 
 export default function PcPage() {
   const { user, loading } = useSupabaseUser();
+  const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
 
   const [pcCards, setPcCards] = useState<Card[]>([]);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -248,6 +250,7 @@ export default function PcPage() {
   return (
     <main className="flex-1 min-h-screen bg-slate-950 bg-cover bg-center text-slate-100 pb-20" style={{ backgroundImage: "url('/pc-wall.png')" }}>
       <div className="mx-auto max-w-6xl px-4 py-8">
+        <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
         <div className="flex items-end justify-between gap-4">
           <div>
             <CardCatLogo />

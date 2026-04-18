@@ -10,6 +10,7 @@ import { GradeCompany, parseGradeCompany, parseGradeNumber, upsertGradeCompanyIn
 import { usePlanPreview } from "@/lib/planPreview";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
+import EmailVerificationNotice from "@/components/EmailVerificationNotice";
 
 type YesNo = "yes" | "no";
 type CardStatus = "Collection" | "Listed" | "Sold";
@@ -554,6 +555,7 @@ function taxonomyDiff(card: Card) {
 
 export default function ImportPage() {
   const { user, loading } = useSupabaseUser();
+  const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
   const { isCollectorPreview } = usePlanPreview();
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const previewSectionRef = useRef<HTMLElement | null>(null);
@@ -936,6 +938,7 @@ export default function ImportPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-6xl px-4 py-8 pb-24 md:pb-8">
+        <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardCatLogo />

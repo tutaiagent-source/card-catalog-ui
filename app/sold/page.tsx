@@ -7,6 +7,7 @@ import { computeSaleMetrics, parseSellerMeta } from "@/lib/cardSellerMeta";
 import { usePlanPreview } from "@/lib/planPreview";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
+import EmailVerificationNotice from "@/components/EmailVerificationNotice";
 
 type CardStatus = "Collection" | "Listed" | "Sold";
 
@@ -95,6 +96,7 @@ function csvCell(value: unknown) {
 
 export default function SoldPage() {
   const { user, loading } = useSupabaseUser();
+  const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
   const { isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<SoldCard[]>([]);
   const [graphsRaised, setGraphsRaised] = useState(false);
@@ -396,6 +398,7 @@ export default function SoldPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-8">
+        <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <CardCatLogo />
