@@ -47,6 +47,16 @@ function wrapText(text: string, maxChars = 28) {
   return lines;
 }
 
+function loadImage(src: string, crossOrigin?: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    if (crossOrigin) image.crossOrigin = crossOrigin;
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+}
+
 function cleanParallel(parallel: string) {
   const value = String(parallel || "").trim();
   if (!value || value.toLowerCase() === "n/a") return "";
@@ -63,41 +73,6 @@ function buildCaption(card: ShareCard, includePrice: boolean, price: string) {
   ].filter(Boolean);
 
   return lines.join("\n");
-}
-
-function buildShareSvg(card: ShareCard, includePrice: boolean, price: string) {
-  const title = [card.year, card.player_name].filter(Boolean).join(" ");
-  const titleLines = wrapText(title, 26).slice(0, 3);
-  const detailLines = [
-    card.set_name,
-    cleanParallel(card.parallel),
-    card.serial_number_text ? `Serial ${card.serial_number_text}` : "",
-    includePrice && price.trim() ? `$${price.trim()}` : "",
-  ].filter(Boolean);
-
-  const imageHref = card.image_url ? driveToImageSrc(card.image_url) : "";
-  const textNodes = [
-    ...titleLines.map((line, index) => `<text x="80" y="${690 + index * 58}" font-size="46" font-weight="700" fill="#f8fafc">${escapeXml(line)}</text>`),
-    ...detailLines.map((line, index) => `<text x="80" y="${860 + index * 42}" font-size="28" fill="#cbd5e1">${escapeXml(line)}</text>`),
-  ].join("");
-
-  return `
-<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
-  <rect width="1080" height="1080" rx="48" fill="#020617" />
-  <rect x="40" y="40" width="1000" height="1000" rx="40" fill="#0f172a" stroke="rgba(255,255,255,0.12)" />
-  <rect x="80" y="80" width="920" height="560" rx="32" fill="#111827" />
-  ${imageHref ? `<image href="${escapeXml(imageHref)}" x="80" y="80" width="920" height="560" preserveAspectRatio="xMidYMid meet" />` : `<rect x="80" y="80" width="920" height="560" rx="32" fill="#1e293b" /><text x="540" y="370" text-anchor="middle" font-size="40" fill="#94a3b8">Card image</text>`}
-  <rect x="80" y="80" width="920" height="560" rx="32" fill="url(#fade)" opacity="0.2" />
-  <text x="80" y="120" font-size="22" letter-spacing="6" fill="#fbbf24">CARDCAT SHARE</text>
-  ${textNodes}
-  <text x="1000" y="1000" text-anchor="end" font-size="24" fill="#64748b">cardcat.io</text>
-  <defs>
-    <linearGradient id="fade" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#f59e0b" />
-      <stop offset="100%" stop-color="#0f172a" />
-    </linearGradient>
-  </defs>
-</svg>`.trim();
 }
 
 export default function CatalogShareModal({ card, onClose }: { card: ShareCard; onClose: () => void }) {
@@ -128,18 +103,92 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
     await copyCaption();
   }
 
-  function downloadShareImage() {
-    const svg = buildShareSvg(card, includePrice, price);
-    const blob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
+  async function downloadShareImage() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1080;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = "#020617";
+    ctx.fillRect(0, 0, 1080, 1080);
+
+    ctx.fillStyle = "#0f172a";
+    ctx.beginPath();
+    ctx.roundRect(40, 40, 1000, 1000, 40);
+    ctx.fill();
+
+    ctx.fillStyle = "#111827";
+    ctx.beginPath();
+    ctx.roundRect(80, 80, 920, 560, 32);
+    ctx.fill();
+
+    if (card.image_url) {
+      try {
+        const cardImage = await loadImage(driveToImageSrc(card.image_url), "anonymous");
+        const imageRatio = cardImage.width / cardImage.height;
+        const boxRatio = 920 / 560;
+        let drawWidth = 920;
+        let drawHeight = 560;
+        let drawX = 80;
+        let drawY = 80;
+
+        if (imageRatio > boxRatio) {
+          drawHeight = 920 / imageRatio;
+          drawY = 80 + (560 - drawHeight) / 2;
+        } else {
+          drawWidth = 560 * imageRatio;
+          drawX = 80 + (920 - drawWidth) / 2;
+        }
+
+        ctx.drawImage(cardImage, drawX, drawY, drawWidth, drawHeight);
+      } catch {
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(80, 80, 920, 560);
+      }
+    }
+
+    const title = [card.year, card.player_name].filter(Boolean).join(" ");
+    const titleLines = wrapText(title, 24).slice(0, 3);
+    const detailLines = [card.set_name, cleanParallel(card.parallel), card.serial_number_text ? `Serial: ${card.serial_number_text}` : ""].filter(Boolean);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#f8fafc";
+    ctx.font = "700 46px Inter, Arial, sans-serif";
+    titleLines.forEach((line, index) => {
+      ctx.fillText(line, 540, 720 + index * 58);
+    });
+
+    ctx.fillStyle = "#cbd5e1";
+    ctx.font = "500 28px Inter, Arial, sans-serif";
+    detailLines.forEach((line, index) => {
+      ctx.fillText(line, 540, 870 + index * 40);
+    });
+
+    if (includePrice && price.trim()) {
+      ctx.fillStyle = "#86efac";
+      ctx.font = "700 52px Inter, Arial, sans-serif";
+      ctx.fillText(`$${price.trim()}`, 540, 1010);
+    }
+
+    ctx.textAlign = "left";
+    try {
+      const logo = await loadImage("/icon.svg");
+      ctx.drawImage(logo, 850, 955, 42, 42);
+    } catch {
+      // fall back to text only
+    }
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "600 24px Inter, Arial, sans-serif";
+    ctx.fillText("CardCat", 904, 985);
+
     const a = document.createElement("a");
     const name = slugify([card.year, card.player_name, card.set_name].filter(Boolean).join(" ")) || "cardcat-share";
-    a.href = url;
-    a.download = `${name}.svg`;
+    a.href = canvas.toDataURL("image/jpeg", 0.92);
+    a.download = `${name}.jpg`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   }
 
   return (
@@ -173,14 +222,17 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                   </div>
                 </div>
                 <div className="flex flex-1 flex-col justify-between p-5">
-                  <div>
+                  <div className="text-center">
                     <div className="text-3xl font-black tracking-tight text-white">{[card.year, card.player_name].filter(Boolean).join(" ")}</div>
                     <div className="mt-3 text-base text-slate-300">{card.set_name}</div>
                     {parallel ? <div className="mt-2 text-sm text-slate-400">{parallel}</div> : null}
                     {card.serial_number_text ? <div className="mt-2 text-sm text-slate-400">Serial: {card.serial_number_text}</div> : null}
                     {includePrice && price.trim() ? <div className="mt-5 text-3xl font-bold text-emerald-300">${price.trim()}</div> : null}
                   </div>
-                  <div className="pt-4 text-right text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">cardcat.io</div>
+                  <div className="flex items-center justify-end gap-2 pt-4 text-right text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    <img src="/icon.svg" alt="CardCat" className="h-4 w-4" />
+                    <span>CardCat</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -221,7 +273,7 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
               </button>
             </div>
 
-            <p className="mt-4 text-xs leading-5 text-slate-500">Download saves a square SVG image so it stays crisp for social posts and selling groups.</p>
+            <p className="mt-4 text-xs leading-5 text-slate-500">Download saves a square JPG image sized for social posts and selling groups.</p>
           </div>
         </div>
       </div>
