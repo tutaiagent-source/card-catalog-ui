@@ -27,7 +27,7 @@ type ListedCard = {
 
   status?: CardStatus | string;
   asking_price?: number | null;
-  listed_at?: string;
+  listed_at?: string | null;
   sale_platform?: string | null;
 };
 
@@ -53,7 +53,9 @@ export default function ListedPage() {
   const [showBack, setShowBack] = useState(false);
 
   const [editLink, setEditLink] = useState<string>("");
-  const [isSavingLink, setIsSavingLink] = useState(false);
+  const [editAskingPrice, setEditAskingPrice] = useState<string>("");
+  const [editListedAt, setEditListedAt] = useState<string>("");
+  const [isSavingDetails, setIsSavingDetails] = useState(false);
 
   const [shareCard, setShareCard] = useState<any | null>(null);
 
@@ -95,37 +97,56 @@ export default function ListedPage() {
     if (!activeCard) return;
     setShowBack(false);
     setEditLink(String(activeCard.sale_platform || ""));
+    setEditAskingPrice(activeCard.asking_price != null ? String(activeCard.asking_price) : "");
+    setEditListedAt(activeCard.listed_at ? String(activeCard.listed_at).slice(0, 10) : "");
   }, [activeCard]);
 
-  async function saveSalePlatform() {
+  async function saveListingDetails() {
     if (!user?.id || !supabaseConfigured || !supabase || !activeCard?.id) return;
 
-    setIsSavingLink(true);
+    setIsSavingDetails(true);
     try {
-      const value = editLink.trim() ? editLink.trim() : null;
+      const askingRaw = editAskingPrice.trim();
+      let asking_price: number | null = null;
+      if (askingRaw) {
+        const n = Number(askingRaw);
+        if (!Number.isFinite(n)) {
+          alert("Enter a valid asking price.");
+          return;
+        }
+        asking_price = n;
+      }
+
+      const listed_at = editListedAt.trim() ? editListedAt.trim() : null;
+      const sale_platform = editLink.trim() ? editLink.trim() : null;
+
       const { error } = await supabase
         .from("cards")
-        .update({ sale_platform: value })
+        .update({ asking_price, listed_at, sale_platform })
         .eq("id", activeCard.id)
         .eq("user_id", user.id);
 
       if (error) {
-        alert("Could not save the listing link.");
+        alert("Could not save the listing details.");
         console.error(error);
         return;
       }
 
       setCards((prev) =>
-        prev.map((c) => (c.id === activeCard.id ? { ...c, sale_platform: value } : c))
+        prev.map((c) =>
+          c.id === activeCard.id
+            ? { ...c, asking_price, listed_at, sale_platform }
+            : c
+        )
       );
 
-      setActiveCard((prev) => (prev ? { ...prev, sale_platform: value } : prev));
+      setActiveCard((prev) => (prev ? { ...prev, asking_price, listed_at, sale_platform } : prev));
     } finally {
-      setIsSavingLink(false);
+      setIsSavingDetails(false);
     }
   }
 
-  const activeHref = toUrl(activeCard?.sale_platform);
+  const activeHref = toUrl(editLink);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 pb-20">
@@ -331,12 +352,28 @@ export default function ListedPage() {
                   <div className="text-sm font-semibold text-slate-200">Listing details</div>
 
                   <div className="mt-4 space-y-3">
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-                      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Asking price</div>
-                      <div className="mt-2 text-2xl font-black text-white">
-                        {activeCard.asking_price != null ? formatMoney(Number(activeCard.asking_price)) : "—"}
-                      </div>
-                    </div>
+                    <label className="block">
+                      <div className="mb-2 text-sm font-semibold text-slate-200">Asking price</div>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        value={editAskingPrice}
+                        onChange={(e) => setEditAskingPrice(e.target.value)}
+                        placeholder="Optional"
+                        className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <div className="mb-2 text-sm font-semibold text-slate-200">Listed date</div>
+                      <input
+                        type="date"
+                        value={editListedAt}
+                        onChange={(e) => setEditListedAt(e.target.value)}
+                        className="w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white outline-none"
+                      />
+                    </label>
 
                     <label className="block">
                       <div className="mb-2 text-sm font-semibold text-slate-200">Sale link (URL) or platform</div>
@@ -364,11 +401,11 @@ export default function ListedPage() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <button
                         type="button"
-                        onClick={saveSalePlatform}
-                        disabled={isSavingLink}
+                        onClick={saveListingDetails}
+                        disabled={isSavingDetails}
                         className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
                       >
-                        {isSavingLink ? "Saving…" : "Save link"}
+                        {isSavingDetails ? "Saving…" : "Save listing"}
                       </button>
                       <button
                         type="button"

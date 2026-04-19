@@ -83,6 +83,17 @@ export default function PcPage() {
   const [estimateDraft, setEstimateDraft] = useState<string>("");
   const [estimateSaving, setEstimateSaving] = useState(false);
 
+  const [cardDetailsDraft, setCardDetailsDraft] = useState({
+    player_name: "",
+    year: "",
+    brand: "",
+    set_name: "",
+    parallel: "",
+    card_number: "",
+    serial_number_text: "",
+  });
+  const [cardDetailsSaving, setCardDetailsSaving] = useState(false);
+
   useEffect(() => {
     if (!imageModal) return;
     setShowBack(false);
@@ -92,6 +103,16 @@ export default function PcPage() {
         ? String(imageModal.card.estimated_price)
         : ""
     );
+
+    setCardDetailsDraft({
+      player_name: imageModal.card.player_name ?? "",
+      year: imageModal.card.year ?? "",
+      brand: imageModal.card.brand ?? "",
+      set_name: imageModal.card.set_name ?? "",
+      parallel: imageModal.card.parallel ?? "",
+      card_number: imageModal.card.card_number ?? "",
+      serial_number_text: imageModal.card.serial_number_text ?? "",
+    });
   }, [imageModal]);
 
   useEffect(() => {
@@ -213,6 +234,43 @@ export default function PcPage() {
       setStatusToast("Estimated price updated.");
     } finally {
       setEstimateSaving(false);
+    }
+  };
+
+  const updateCardDetails = async () => {
+    const cardId = imageModal?.card?.id;
+    if (!cardId) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const payload = {
+      player_name: cardDetailsDraft.player_name.trim(),
+      year: cardDetailsDraft.year.trim(),
+      brand: cardDetailsDraft.brand.trim(),
+      set_name: cardDetailsDraft.set_name.trim(),
+      parallel: cardDetailsDraft.parallel.trim(),
+      card_number: cardDetailsDraft.card_number.trim(),
+      serial_number_text: cardDetailsDraft.serial_number_text.trim(),
+    };
+
+    setCardDetailsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("cards")
+        .update(payload)
+        .eq("id", cardId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        alert(`Card details update failed: ${error.message}`);
+        return;
+      }
+
+      setPcCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, ...payload } : c)));
+      setImageModal((prev) => (prev ? { ...prev, card: { ...prev.card, ...payload } } : prev));
+      setStatusToast("Card details updated.");
+    } finally {
+      setCardDetailsSaving(false);
     }
   };
 
@@ -564,6 +622,86 @@ export default function PcPage() {
               >
                 Check Comps ↗
               </a>
+
+              <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Card details</div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <label className="block">
+                    <div className="mb-1 text-xs font-semibold text-slate-300">Player</div>
+                    <input
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                      value={cardDetailsDraft.player_name}
+                      onChange={(e) => setCardDetailsDraft((p) => ({ ...p, player_name: e.target.value }))}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <div className="mb-1 text-xs font-semibold text-slate-300">Year</div>
+                    <input
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                      value={cardDetailsDraft.year}
+                      onChange={(e) => setCardDetailsDraft((p) => ({ ...p, year: e.target.value }))}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <div className="mb-1 text-xs font-semibold text-slate-300">Brand</div>
+                    <input
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                      value={cardDetailsDraft.brand}
+                      onChange={(e) => setCardDetailsDraft((p) => ({ ...p, brand: e.target.value }))}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <div className="mb-1 text-xs font-semibold text-slate-300">Set</div>
+                    <input
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                      value={cardDetailsDraft.set_name}
+                      onChange={(e) => setCardDetailsDraft((p) => ({ ...p, set_name: e.target.value }))}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <div className="mb-1 text-xs font-semibold text-slate-300">Parallel</div>
+                    <input
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                      value={cardDetailsDraft.parallel}
+                      onChange={(e) => setCardDetailsDraft((p) => ({ ...p, parallel: e.target.value }))}
+                    />
+                  </label>
+
+                  <label className="block">
+                    <div className="mb-1 text-xs font-semibold text-slate-300">Card #</div>
+                    <input
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                      value={cardDetailsDraft.card_number}
+                      onChange={(e) => setCardDetailsDraft((p) => ({ ...p, card_number: e.target.value }))}
+                    />
+                  </label>
+
+                  <label className="block sm:col-span-2">
+                    <div className="mb-1 text-xs font-semibold text-slate-300">Serial</div>
+                    <input
+                      className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                      value={cardDetailsDraft.serial_number_text}
+                      onChange={(e) => setCardDetailsDraft((p) => ({ ...p, serial_number_text: e.target.value }))}
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={updateCardDetails}
+                    disabled={cardDetailsSaving}
+                    className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
+                  >
+                    {cardDetailsSaving ? "Saving…" : "Save details"}
+                  </button>
+                </div>
+              </div>
 
               <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Estimated price</div>
