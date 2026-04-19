@@ -1,6 +1,15 @@
 import React from 'react';
 
-const ShareCardPrompt = ({ card }) => {
+type Card = {
+    name: string;
+    year: string;
+    serial?: string;
+    parallel?: string;
+    setName: string;
+    image?: string;
+};
+
+const ShareCardPrompt: React.FC<{ card: Card }> = ({ card }) => {
     const { name, year, serial, parallel, setName, image } = card;
 
     return (
