@@ -61,14 +61,14 @@ const workflow = [
 const pricingTiers = [
   {
     name: "Collector",
-    price: "$10 / Month",
+    price: "$5 / Month",
     caption: "A Strong Starting Point For Personal Collections And Lighter Tracking.",
     features: ["Up To 100 Cards", "Manual Card Entry", "Personal Collection View", "Basic Sold Tracking"],
     accent: "border-white/10 bg-white/[0.04]",
   },
   {
     name: "Pro",
-    price: "$20 / Month",
+    price: "$12 / Month",
     caption: "For Bigger Inventories, Cleaner Workflows, And Deeper Tracking Tools.",
     features: ["CSV Import And Export", "Bulk Inventory Tools", "Advanced Sold Insights", "More Room To Grow"],
     accent: "border-amber-500/25 bg-amber-500/[0.08]",
@@ -253,6 +253,9 @@ export default function Home() {
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Made To Feel Like A Product, Not Just A Spreadsheet With A Logo On It</h2>
             <p className="mt-4 text-sm leading-7 text-slate-300">
               CardCat is opinionated about clarity. The goal is not to throw every possible feature at the screen. The goal is to help collectors stay organized and keep the important stuff easy to see.
+            </p>
+            <p className="mt-4 text-sm leading-7 text-slate-300">
+              Start cataloging for less than the cost of a cup of coffee.
             </p>
             <div className="mt-6 space-y-4 text-sm text-slate-200">
               {[
