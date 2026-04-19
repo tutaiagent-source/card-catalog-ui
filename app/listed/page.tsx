@@ -213,12 +213,6 @@ export default function ListedPage() {
                             {formatMoney(Number(c.asking_price))}
                           </div>
                         ) : null}
-
-                        {c.back_image_url ? (
-                          <div className="absolute right-2 top-2 z-10 rounded-full bg-slate-950/70 px-2 py-1 text-[10px] font-semibold text-slate-200 ring-1 ring-white/10">
-                            ⇄
-                          </div>
-                        ) : null}
                       </button>
                     );
                   })}
