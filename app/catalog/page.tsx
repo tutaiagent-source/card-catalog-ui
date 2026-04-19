@@ -12,6 +12,7 @@ import ShareCardPrompt from '@/components/shareCardPrompt'; // Import the ShareC
 
 const CardCatalogPage = () => {
   const cards = loadCards(); // your function to load cards
+console.log(cards); // Log the card data for debugging
   return (
     <div>
       {cards.map((card) => (
