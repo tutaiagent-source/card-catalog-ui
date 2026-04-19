@@ -121,11 +121,8 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
         }
         await navigator.share({ title, text: caption });
         return;
-      } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") {
-          return;
-        }
-        // fall through only for real failures
+      } catch {
+        return;
       }
     }
     await copyCaption();
@@ -303,7 +300,7 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                 </div>
                 <div className="flex flex-1 flex-col justify-between p-5">
                   <div className="text-center">
-                    <div className="text-3xl font-black tracking-tight text-white">{[card.year, card.player_name].filter(Boolean).join(" ")}</div>
+                    <div className="px-2 pb-2 text-3xl font-black tracking-tight text-white">{[card.year, card.player_name].filter(Boolean).join(" ")}</div>
                     <div className="mt-3 text-base text-slate-300">{card.set_name}</div>
                     {parallel ? <div className="mt-2 text-sm text-slate-400">{parallel}</div> : null}
                     {card.serial_number_text ? <div className="mt-2 text-sm text-slate-400">Serial: {card.serial_number_text}</div> : null}
