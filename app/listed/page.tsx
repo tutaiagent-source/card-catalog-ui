@@ -50,6 +50,7 @@ export default function ListedPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [activeCard, setActiveCard] = useState<ListedCard | null>(null);
+  const [showBack, setShowBack] = useState(false);
 
   const [editLink, setEditLink] = useState<string>("");
   const [isSavingLink, setIsSavingLink] = useState(false);
@@ -92,6 +93,7 @@ export default function ListedPage() {
 
   useEffect(() => {
     if (!activeCard) return;
+    setShowBack(false);
     setEditLink(String(activeCard.sale_platform || ""));
   }, [activeCard]);
 
@@ -266,14 +268,39 @@ export default function ListedPage() {
                 <div className="rounded-[24px] border border-white/10 bg-slate-900 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-slate-200">Image</div>
+                    <div />
                   </div>
 
                   <div className="mt-4">
-                    <div className="aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-950">
-                      {activeCard.image_url ? (
+                    <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-950">
+                      {activeCard.back_image_url ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowBack((v) => !v);
+                          }}
+                          className="absolute right-3 top-3 z-10 rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[11px] font-semibold text-slate-200 hover:bg-slate-950/85"
+                        >
+                          ⇄ Flip
+                        </button>
+                      ) : null}
+                      {showBack && activeCard.back_image_url ? (
+                        <img
+                          alt="back"
+                          src={driveToImageSrc(activeCard.back_image_url)}
+                          className="h-full w-full object-contain"
+                        />
+                      ) : activeCard.image_url ? (
                         <img
                           alt="front"
                           src={driveToImageSrc(activeCard.image_url)}
+                          className="h-full w-full object-contain"
+                        />
+                      ) : activeCard.back_image_url ? (
+                        <img
+                          alt="back"
+                          src={driveToImageSrc(activeCard.back_image_url)}
                           className="h-full w-full object-contain"
                         />
                       ) : (
