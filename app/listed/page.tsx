@@ -272,19 +272,20 @@ export default function ListedPage() {
                   </div>
 
                   <div className="mt-4">
-                    <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-950">
-                      {activeCard.back_image_url ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowBack((v) => !v);
-                          }}
-                          className="absolute right-3 top-3 z-10 rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-[11px] font-semibold text-slate-200 hover:bg-slate-950/85"
-                        >
-                          ⇄ Flip
-                        </button>
-                      ) : null}
+                    <div
+                      className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-950"
+                      role={activeCard.back_image_url ? "button" : undefined}
+                      tabIndex={activeCard.back_image_url ? 0 : -1}
+                      aria-label={activeCard.back_image_url ? "Flip card" : undefined}
+                      onClick={() => {
+                        if (!activeCard.back_image_url) return;
+                        setShowBack((v) => !v);
+                      }}
+                      onKeyDown={(e) => {
+                        if (!activeCard.back_image_url) return;
+                        if (e.key === "Enter" || e.key === " ") setShowBack((v) => !v);
+                      }}
+                    >
                       {showBack && activeCard.back_image_url ? (
                         <img
                           alt="back"
