@@ -269,9 +269,9 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
         <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
           <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="rounded-[32px] border border-white/10 bg-slate-900 p-4">
-            <div className="mx-auto aspect-square max-w-[560px] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-[0_25px_80px_rgba(2,6,23,0.45)]">
+            <div className="mx-auto aspect-[0.9] w-full max-w-[560px] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-[0_25px_80px_rgba(2,6,23,0.45)] sm:aspect-square">
               <div className="flex h-full flex-col">
-                <div className={`relative ${hasBackImage ? "flex-[0_0_70%] p-3" : "flex-[0_0_72%]"} overflow-hidden border-b border-white/10 bg-slate-950`}>
+                <div className={`relative ${hasBackImage ? "flex-[0_0_62%] p-3 sm:flex-[0_0_70%]" : "flex-[0_0_60%] sm:flex-[0_0_72%]"} overflow-hidden border-b border-white/10 bg-slate-950`}>
                   {hasBackImage ? (
                     <div className="grid h-full grid-cols-2 gap-3">
                       {[{ src: card.image_url, label: "Front" }, { src: card.back_image_url, label: "Back" }].map((image) => (
@@ -298,16 +298,16 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                     CardCat Share
                   </div>
                 </div>
-                <div className="flex flex-1 flex-col justify-between p-5">
+                <div className="flex flex-1 flex-col justify-between p-4 sm:p-5">
                   <div className="text-center">
-                    <div className="px-2 pb-2 text-3xl font-black tracking-tight text-white">{[card.year, card.player_name].filter(Boolean).join(" ")}</div>
-                    <div className="mt-3 text-base text-slate-300">{card.set_name}</div>
-                    {parallel ? <div className="mt-2 text-sm text-slate-400">{parallel}</div> : null}
-                    {card.serial_number_text ? <div className="mt-2 text-sm text-slate-400">Serial: {card.serial_number_text}</div> : null}
-                    {includePrice && price.trim() ? <div className="mt-4 text-2xl font-bold text-emerald-300">${price.trim()}</div> : null}
+                    <div className="px-2 pb-3 text-2xl font-black tracking-tight text-white sm:text-3xl">{[card.year, card.player_name].filter(Boolean).join(" ")}</div>
+                    <div className="mt-2 text-sm text-slate-300 sm:mt-3 sm:text-base">{card.set_name}</div>
+                    {parallel ? <div className="mt-1.5 text-xs text-slate-400 sm:mt-2 sm:text-sm">{parallel}</div> : null}
+                    {card.serial_number_text ? <div className="mt-1.5 text-xs text-slate-400 sm:mt-2 sm:text-sm">Serial: {card.serial_number_text}</div> : null}
+                    {includePrice && price.trim() ? <div className="mt-3 text-xl font-bold text-emerald-300 sm:mt-4 sm:text-2xl">${price.trim()}</div> : null}
                   </div>
-                  <div className="flex items-center justify-end gap-2 pt-4 text-right text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    <img src="/icon.svg" alt="CardCat" className="h-4 w-4" />
+                  <div className="flex items-center justify-end gap-2 pt-3 text-right text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 sm:pt-4 sm:text-sm">
+                    <img src="/icon.svg" alt="CardCat" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span>CardCat</span>
                   </div>
                 </div>
