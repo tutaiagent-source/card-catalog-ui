@@ -50,7 +50,6 @@ export default function ListedPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [activeCard, setActiveCard] = useState<ListedCard | null>(null);
-  const [showBack, setShowBack] = useState(false);
 
   const [editLink, setEditLink] = useState<string>("");
   const [isSavingLink, setIsSavingLink] = useState(false);
@@ -93,7 +92,6 @@ export default function ListedPage() {
 
   useEffect(() => {
     if (!activeCard) return;
-    setShowBack(false);
     setEditLink(String(activeCard.sale_platform || ""));
   }, [activeCard]);
 
@@ -245,7 +243,7 @@ export default function ListedPage() {
             onClick={() => setActiveCard(null)}
           >
             <div
-              className="w-full max-w-5xl overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl"
+              className="w-full max-w-5xl max-h-[92vh] overflow-y-auto overflow-x-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl [-webkit-overflow-scrolling:touch]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-4 sm:px-6">
@@ -268,26 +266,11 @@ export default function ListedPage() {
                 <div className="rounded-[24px] border border-white/10 bg-slate-900 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-slate-200">Image</div>
-                    {activeCard.back_image_url ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowBack((v) => !v)}
-                        className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
-                      >
-                        {showBack ? "Show front" : "Show back"}
-                      </button>
-                    ) : null}
                   </div>
 
                   <div className="mt-4">
                     <div className="aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-950">
-                      {showBack && activeCard.back_image_url ? (
-                        <img
-                          alt="back"
-                          src={driveToImageSrc(activeCard.back_image_url)}
-                          className="h-full w-full object-contain"
-                        />
-                      ) : activeCard.image_url ? (
+                      {activeCard.image_url ? (
                         <img
                           alt="front"
                           src={driveToImageSrc(activeCard.image_url)}
