@@ -121,8 +121,11 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
         }
         await navigator.share({ title, text: caption });
         return;
-      } catch {
-        // fall through
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+        // fall through only for real failures
       }
     }
     await copyCaption();
