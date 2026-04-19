@@ -16,7 +16,7 @@ const featureCards = [
   },
   {
     title: "Seller Tools When You Need Them",
-    body: "Track listed and sold cards cleanly, then open recent sold listings on eBay with a click when you need quicker context.",
+    body: "Create share-ready card images with optional pricing, then move faster when posting into Facebook groups or other selling communities.",
   },
 ];
 
@@ -167,6 +167,40 @@ export default function Home() {
               <p className="mt-2 text-sm leading-6 text-slate-300">{feature.body}</p>
             </div>
           ))}
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(6,95,70,0.18)] sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Built To Help You Sell Faster</div>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Turn any card into a share-ready sell sheet in seconds</h2>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
+                CardCat can turn a saved card into a clean square share image with the card details already filled in. Add a price if you want, include front and back images when available, and post it straight into Facebook groups or other selling communities without rebuilding the listing by hand.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <a href="/features#share-sheets" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100">
+                  See How Share Sheets Work
+                </a>
+                <a href="/catalog" className="rounded-xl border border-white/20 bg-black/15 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black/25">
+                  Open Catalog
+                </a>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                ["Optional price", "Add price only when you want it on the image"],
+                ["Front + back support", "If both images exist, the share layout can show both side by side"],
+                ["Mobile friendly", "Use Share / Save Image on your phone for fast posting"],
+                ["Less retyping", "Card name, set, serial, and parallel are pulled from the catalog automatically"],
+              ].map(([title, body]) => (
+                <div key={title} className="rounded-2xl border border-white/10 bg-slate-950/55 p-4">
+                  <div className="text-sm font-semibold text-white">{title}</div>
+                  <div className="mt-2 text-sm leading-6 text-slate-300">{body}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
 
         <section className="mt-12 grid gap-5 lg:grid-cols-2">

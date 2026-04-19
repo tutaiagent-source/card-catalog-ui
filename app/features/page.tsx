@@ -3,6 +3,11 @@ import { CatalogShowcase, ImportShowcase, PcShowcase, SoldShowcase } from "@/com
 
 const featureGroups = [
   {
+    title: "Share-Ready Sell Sheets",
+    body: "Turn any saved card into a clean square post image with the important details already filled in. It is built to make Facebook groups, Discord sales posts, Reddit listings, and other informal selling flows faster and more consistent.",
+    bullets: ["Optional Price On The Image", "Front + Back Layout When Both Images Exist", "Share / Save Image On Mobile", "Desktop-Friendly JPG Download", "Caption Copy For Faster Posting"],
+  },
+  {
     title: "Collection Management",
     body: "Keep your cards organized in a cleaner system with search, filters, status tracking, and a layout that feels more like a product than a spreadsheet.",
     bullets: ["Catalog Search And Filters", "Collection, Listed, And Sold Statuses", "Cleaner Mobile-Friendly Views", "Front And Back Card Images"],
@@ -39,7 +44,7 @@ export default function FeaturesPage() {
               Everything CardCat Gives Collectors In One Clear System.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-              CardCat is built to help collectors organize their collection, keep a Personal Collection view, manage listed and sold cards, and stay in control as the inventory grows.
+              CardCat is built to help collectors organize their collection, keep a Personal Collection view, manage listed and sold cards, and now create share-ready sell sheets without rebuilding every post from scratch.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="/login" className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]">
@@ -92,6 +97,115 @@ export default function FeaturesPage() {
               </ul>
             </div>
           ))}
+        </section>
+
+        <section id="share-sheets" className="mt-12 rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(6,95,70,0.18)] sm:p-8">
+          <div className="max-w-3xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Share-ready sell sheets</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A cleaner way to post cards for sale without rebuilding the listing every time</h2>
+            <p className="mt-4 text-sm leading-7 text-slate-100/85 sm:text-base">
+              Instead of screenshotting a card, typing out the same details again, and manually formatting a post, CardCat can generate a clean square image using the card data already stored in your catalog. It is designed for the exact moment when a collector wants to move from “I have this card saved” to “I can post this card for sale right now.”
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            {[
+              ["What the share image includes", "Card name, year, set, parallel, serial number, optional pricing, and front/back images when both are available."],
+              ["Why it matters", "It saves time, keeps posts consistent, reduces manual errors, and gives the seller a cleaner presentation in fast-moving group chats and selling feeds."],
+              ["Where it helps most", "Facebook groups, Discord sale channels, Reddit sales posts, text threads, and any place where a clean image plus a short caption works better than typing everything from scratch."],
+            ].map(([title, body]) => (
+              <div key={title} className="rounded-2xl border border-white/10 bg-slate-950/55 p-5">
+                <div className="text-lg font-semibold text-white">{title}</div>
+                <div className="mt-3 text-sm leading-6 text-slate-300">{body}</div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-12 grid gap-6 lg:grid-cols-2">
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">How it works</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">From saved card to shareable post</h2>
+            <div className="mt-6 space-y-4">
+              {[
+                ["1. Save the card normally", "Add the card to CardCat with the details and images you already keep in the catalog."],
+                ["2. Open Share", "From the catalog preview or PC preview, tap the Share button for that card."],
+                ["3. Choose whether to show price", "Turn pricing on only when you want the share image to act like a for-sale post."],
+                ["4. Share or save the image", "Use your phone share sheet or download the JPG on desktop, then post it wherever you sell."],
+              ].map(([title, body]) => (
+                <div key={title} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                  <div className="text-sm font-semibold text-white">{title}</div>
+                  <div className="mt-2 text-sm leading-6 text-slate-300">{body}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">How to use it</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Mobile and desktop usage</h2>
+            <div className="mt-6 grid gap-4">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                <div className="text-sm font-semibold text-white">On mobile</div>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+                  <li>Use <strong>Share / Save Image</strong> to open the phone share sheet.</li>
+                  <li>Choose <strong>Save Image</strong> or send it directly to another app when supported.</li>
+                  <li>Copy the caption if you want a cleaner text post alongside the image.</li>
+                </ul>
+              </div>
+
+              <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                <div className="text-sm font-semibold text-white">On desktop</div>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+                  <li>Download the JPG and upload it directly into the selling platform.</li>
+                  <li>Copy the caption to save time when building the post.</li>
+                  <li>Use it as a cleaner listing asset instead of ad-hoc screenshots or manually typed image edits.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Why this is valuable</div>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">It helps sellers move faster with less friction</h2>
+              <p className="mt-4 text-sm leading-7 text-slate-300 sm:text-base">
+                A lot of selling friction comes from the little repeat work, like uploading screenshots, retyping the title, checking serial details again, and deciding whether to include price. This feature removes a lot of that repetition.
+              </p>
+            </div>
+
+            <div className="space-y-4 text-sm text-slate-200">
+              {[
+                "It makes posts look more intentional and polished.",
+                "It reduces mistakes because the card details come from the catalog entry.",
+                "It works for collectors who only sell occasionally, not just full-time sellers.",
+                "It creates a real reason to keep card images and card details organized inside CardCat.",
+                "It turns the catalog into something actionable, not just something archival.",
+              ].map((item) => (
+                <div key={item} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">{item}</div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="max-w-3xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Important details</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A few blanks worth filling in</h2>
+            <div className="mt-4 space-y-4 text-sm leading-7 text-slate-300 sm:text-base">
+              <p>
+                The share feature works best when the card has a strong image, clean card data, and a good set of details already stored in CardCat. In other words, the better the catalog entry, the better the finished sale post.
+              </p>
+              <p>
+                Not every platform allows a website to post directly into an account or group, so CardCat is designed around the workflow that is most reliable: generate the image, copy the caption, and share or upload it wherever you sell.
+              </p>
+              <p>
+                Optional price matters because sometimes the image should act like a true sale listing, and sometimes it should just be a clean “show the card” image first. CardCat supports both use cases.
+              </p>
+            </div>
+          </div>
         </section>
 
         <section className="mt-12 space-y-8">
