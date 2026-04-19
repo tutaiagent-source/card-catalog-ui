@@ -129,7 +129,7 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
       : null;
 
     // 1) Try image share (when supported)
-    if (navigator.share && shareWithFile) {
+    if (shareWithFile) {
       try {
         const navAny = navigator as Navigator & { canShare?: (data: any) => boolean };
         const canShare = navAny.canShare?.(shareWithFile);
@@ -143,13 +143,11 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
     }
 
     // 2) Try text-only share
-    if (navigator.share) {
-      try {
-        await navigator.share(shareTextOnly);
-        return;
-      } catch {
-        // fall through to download fallback
-      }
+    try {
+      await navigator.share(shareTextOnly);
+      return;
+    } catch {
+      // fall through to download fallback
     }
 
     // 3) Fallback to downloading the image (works on most mobile browsers)
