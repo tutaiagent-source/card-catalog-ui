@@ -346,12 +346,6 @@ export default function PcPage() {
                           </div>
                         </button>
 
-                        {c.back_image_url ? (
-                          <div className="pointer-events-none absolute right-2 top-2 z-10 rounded-full bg-slate-950/60 px-2 py-1 text-[10px] font-semibold text-slate-200 ring-1 ring-white/10">
-                            ⇄ Flip
-                          </div>
-                        ) : null}
-
                       </div>
                     );
                   })}
@@ -427,11 +421,6 @@ export default function PcPage() {
                           }
                         >
                           <div className="relative">
-                            {c.back_image_url ? (
-                              <div className="pointer-events-none absolute right-2 top-2 z-10 rounded-full bg-slate-950/60 px-2 py-1 text-[10px] font-semibold text-slate-200 ring-1 ring-white/10">
-                                ⇄ Flip
-                              </div>
-                            ) : null}
                             <div
                               role="button"
                               tabIndex={0}
