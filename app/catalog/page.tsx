@@ -1,16 +1,24 @@
-// Import the ShareCardPrompt component at the top
-import ShareCardPrompt from '@/components/shareCardPrompt';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase, supabaseConfigured } from '@/lib/supabaseClient';
+import { useSupabaseUser } from '@/lib/useSupabaseUser';
+import { normalizeCatalogTaxonomy } from '@/lib/cardTaxonomy';
+import { buildSellerNotes, parseSellerMeta } from '@/lib/cardSellerMeta';
+import { driveToImageSrc } from '@/lib/googleDrive';
+import { usePlanPreview } from '@/lib/planPreview';
+import CardCatMobileNav from '@/components/CardCatMobileNav';
+import CardCatLogo from '@/components/CardCatLogo';
+import EmailVerificationNotice from '@/components/EmailVerificationNotice';
+import ShareCardPrompt from '@/components/shareCardPrompt'; // Import the ShareCardPrompt component
 
-// Inside the component that renders cards in your catalog, include:
 const CardCatalogPage = () => {
   const cards = loadCards(); // your function to load cards
   return (
     <div>
       {cards.map((card) => (
         <div key={card.id}>
-          {/* Render the card here */}
+          {/* Render the ShareCardPrompt */}
           <ShareCardPrompt card={card} />
-          {/* Other card details, if any */}
+          {/* Other card details can go here */}
         </div>
       ))}
     </div>
