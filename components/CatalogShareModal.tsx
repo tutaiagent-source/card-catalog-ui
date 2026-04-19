@@ -231,9 +231,9 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
-      <div className="w-full max-w-5xl rounded-[28px] border border-white/10 bg-slate-950 p-4 shadow-2xl sm:p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-4">
+    <div className="fixed inset-0 z-[80] bg-black/70 p-3 sm:flex sm:items-center sm:justify-center sm:p-4" onClick={onClose}>
+      <div className="mx-auto flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-4 sm:px-6">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Share card</div>
             <h3 className="mt-2 text-xl font-bold text-white">Create a clean post image for selling groups</h3>
@@ -244,7 +244,8 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
           </button>
         </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+          <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="rounded-[32px] border border-white/10 bg-slate-900 p-4">
             <div className="mx-auto aspect-square max-w-[560px] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-[0_25px_80px_rgba(2,6,23,0.45)]">
               <div className="flex h-full flex-col">
@@ -329,6 +330,7 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
 
             <p className="mt-4 text-xs leading-5 text-slate-500">Download saves a square JPG image sized for social posts and selling groups.</p>
           </div>
+        </div>
         </div>
       </div>
     </div>
