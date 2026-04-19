@@ -58,6 +58,12 @@ function loadImage(src: string, crossOrigin?: string) {
   });
 }
 
+function canvasToBlob(canvas: HTMLCanvasElement, type = "image/jpeg", quality = 0.92) {
+  return new Promise<Blob | null>((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), type, quality);
+  });
+}
+
 function cleanParallel(parallel: string) {
   const value = String(parallel || "").trim();
   if (!value || value.toLowerCase() === "n/a") return "";
@@ -102,6 +108,17 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
     const title = [card.year, card.player_name].filter(Boolean).join(" ");
     if (navigator.share) {
       try {
+        const canvas = await renderShareCanvas();
+        const blob = await canvasToBlob(canvas);
+        const name = `${slugify([card.year, card.player_name, card.set_name].filter(Boolean).join(" ")) || "cardcat-share"}.jpg`;
+        if (blob) {
+          const file = new File([blob], name, { type: "image/jpeg" });
+          const shareData = { title, text: caption, files: [file] };
+          if (!(navigator as Navigator & { canShare?: (data: ShareData) => boolean }).canShare || (navigator as Navigator & { canShare?: (data: ShareData) => boolean }).canShare?.(shareData)) {
+            await navigator.share(shareData);
+            return;
+          }
+        }
         await navigator.share({ title, text: caption });
         return;
       } catch {
@@ -111,12 +128,12 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
     await copyCaption();
   }
 
-  async function downloadShareImage() {
+  async function renderShareCanvas() {
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
     canvas.height = 1080;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) throw new Error("Canvas unavailable");
 
     ctx.fillStyle = "#020617";
     ctx.fillRect(0, 0, 1080, 1080);
@@ -221,6 +238,11 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
     ctx.font = "600 24px Inter, Arial, sans-serif";
     ctx.fillText("CardCat", 904, panelY + panelHeight - 32);
 
+    return canvas;
+  }
+
+  async function downloadShareImage() {
+    const canvas = await renderShareCanvas();
     const a = document.createElement("a");
     const name = slugify([card.year, card.player_name, card.set_name].filter(Boolean).join(" ")) || "cardcat-share";
     a.href = canvas.toDataURL("image/jpeg", 0.92);
