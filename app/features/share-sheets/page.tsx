@@ -2,7 +2,7 @@ import MarketingNav from "@/components/MarketingNav";
 import ShareSheetFeaturePreview from "@/components/ShareSheetFeaturePreview";
 
 const keyPoints = [
-  "Square share image built from the saved card record",
+  "Square card post image built from the saved card record",
   "Optional price on the image",
   "Front + back layout when both images exist",
   "Mobile Share / Save Image flow",
@@ -60,13 +60,13 @@ export default function ShareSheetsPage() {
           <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
-                Share-Ready Sell Sheets
+                Card Posts
               </div>
               <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-                A faster way to turn saved cards into clean sale posts.
+                A faster way to turn saved cards into clean card posts.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                CardCat can generate a square share image using the card details and images already stored in your catalog. It is built for the moment when you want to post a card quickly without rebuilding the listing by hand.
+                CardCat can generate a square card post image using the card details and images already stored in your catalog. It is built for the moment when you want to post a card quickly without rebuilding the listing by hand.
               </p>
               <ul className="mt-6 space-y-3 text-sm text-slate-200 sm:text-base">
                 {keyPoints.map((item) => (

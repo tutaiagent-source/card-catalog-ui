@@ -9,10 +9,10 @@ const featureCards = [
     label: "Open Catalog",
   },
   {
-    title: "Share Sheets",
-    body: "Turn saved cards into clean share-ready images with optional pricing.",
+    title: "Card Posts",
+    body: "Turn saved cards into clean post images with optional pricing.",
     href: "/features/share-sheets",
-    label: "See Share Sheets",
+    label: "See Card Posts",
   },
   {
     title: "CSV Import",
@@ -29,9 +29,9 @@ const featureCards = [
 ];
 
 const quickLinks = [
-  { title: "Share Sheets", body: "How the share image works, what it includes, and how to use it on mobile or desktop.", href: "/features/share-sheets" },
+  { title: "Card Posts", body: "How the card post image works, what it includes, and how to use it on mobile or desktop.", href: "/features/share-sheets" },
   { title: "CSV Import", body: "How to structure a file, map fields, and avoid common cleanup issues.", href: "/guides/csv" },
-  { title: "Image Uploads", body: "How front and back images work and how they improve previews and share sheets.", href: "/guides/images" },
+  { title: "Image Uploads", body: "How front and back images work and how they improve previews and card posts.", href: "/guides/images" },
   { title: "Sold Tracking", body: "How listed and sold records stay connected to the original card record.", href: "/guides/sold" },
 ];
 
@@ -50,7 +50,7 @@ export default function FeaturesPage() {
               The key features, without the wall of text.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-              CardCat helps collectors organize inventory, track sold cards, and create share-ready sale images without turning the workflow into spreadsheet chaos.
+              CardCat helps collectors organize inventory, track sold cards, and create clean card posts without turning the workflow into spreadsheet chaos.
             </p>
           </div>
         </section>
@@ -67,17 +67,17 @@ export default function FeaturesPage() {
           ))}
         </section>
 
-        <section className="mt-12 rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(6,95,70,0.18)] sm:p-8">
+        <section id="card-posts" className="mt-12 rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(6,95,70,0.18)] sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Featured seller tool</div>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Share-ready sell sheets</h2>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Card Posts</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
                 Turn a saved card into a square image that is easier to post into Facebook groups, Discord channels, Reddit sales threads, or text messages. Optional price, front/back support, and less retyping.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href="/features/share-sheets" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100">
-                  Full Share Sheet Details
+                  Full Card Post Details
                 </a>
                 <a href="/catalog" className="rounded-xl border border-white/20 bg-black/15 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black/25">
                   Open Catalog

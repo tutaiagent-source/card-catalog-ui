@@ -17,7 +17,7 @@ const featureCards = [
   },
   {
     title: "Seller Tools When You Need Them",
-    body: "Create share-ready card images with optional pricing, then move faster when posting into Facebook groups or other selling communities.",
+    body: "Create clean card posts with optional pricing, then move faster when posting into Facebook groups or other selling communities.",
   },
 ];
 
@@ -174,7 +174,7 @@ export default function Home() {
           <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Built To Help You Sell Faster</div>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Turn any card into a share-ready sell sheet in seconds</h2>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Turn any card into a Card Post in seconds</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
                 Use saved card data and images to create a clean post image with optional pricing. Built for Facebook groups, Discord sales posts, Reddit sales threads, and fast one-off listings.
               </p>
@@ -184,8 +184,8 @@ export default function Home() {
                 <li>• Mobile Share / Save Image flow</li>
               </ul>
               <div className="mt-6 flex flex-wrap gap-3">
-                <a href="/features#share-sheets" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100">
-                  See Share Sheets
+                <a href="/features#card-posts" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100">
+                  See Card Posts
                 </a>
                 <a href="/catalog" className="rounded-xl border border-white/20 bg-black/15 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black/25">
                   Open Catalog
