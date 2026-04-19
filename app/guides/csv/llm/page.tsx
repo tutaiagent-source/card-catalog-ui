@@ -52,10 +52,10 @@ export default function CsvLlmGuidePage() {
         </section>
 
         <section className="mt-10 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-            <div>
+          <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr] items-start">
+            <div className="min-w-0">
               <h2 className="text-2xl font-bold text-white">Copy/paste prompt</h2>
-              <pre className="mt-4 max-h-[560px] overflow-auto rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-xs leading-5 text-slate-200">
+              <pre className="mt-4 max-h-[560px] w-full min-w-0 overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-xs leading-5 text-slate-200">
                 {samplePrompt}
               </pre>
               <p className="mt-3 text-sm text-slate-400">
