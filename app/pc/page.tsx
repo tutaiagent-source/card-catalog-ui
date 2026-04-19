@@ -7,6 +7,7 @@ import { driveToImageSrc } from "@/lib/googleDrive";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
+import CatalogShareModal from "@/components/CatalogShareModal";
 
 type YesNo = "yes" | "no";
 
@@ -75,6 +76,7 @@ export default function PcPage() {
 
   // Image modal (mobile + desktop)
   const [imageModal, setImageModal] = useState<{ card: Card; src: string; backSrc?: string } | null>(null);
+  const [shareCard, setShareCard] = useState<Card | null>(null);
   const [showBack, setShowBack] = useState(false);
   const [isFlipping, setIsFlipping] = useState(false);
 
@@ -557,6 +559,14 @@ export default function PcPage() {
             </div>
 
             <div className="mt-3 flex flex-col gap-2 text-sm">
+              <button
+                type="button"
+                className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-center text-slate-200 hover:bg-white/[0.08]"
+                onClick={() => setShareCard(imageModal.card)}
+              >
+                Share
+              </button>
+
               <a
                 href={buildEbaySearchUrl(imageModal.card)}
                 target="_blank"
@@ -619,6 +629,8 @@ export default function PcPage() {
           </div>
         </div>
       ) : null}
+
+      {shareCard ? <CatalogShareModal card={shareCard} onClose={() => setShareCard(null)} /> : null}
 
       {statusToast ? (
         <div className="pointer-events-none fixed left-0 right-0 top-4 z-50 flex justify-center px-4">
