@@ -26,7 +26,7 @@ export default function ImagesGuidePage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
               Images
             </div>
-            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">Front & back images that look great in previews</h1>
+            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">Front & Back Images That Look Great in Previews</h1>
             <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
               CardCat supports front/back images for better browsing and flipping previews. If an image is too large, CardCat will resize/compress it before upload.
             </p>
@@ -35,7 +35,7 @@ export default function ImagesGuidePage() {
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-            <h2 className="text-2xl font-bold text-white">Supported formats</h2>
+            <h2 className="text-2xl font-bold text-white">Supported Formats</h2>
             <div className="mt-4 flex flex-wrap gap-2">
               {[
                 "PNG",
@@ -58,7 +58,7 @@ export default function ImagesGuidePage() {
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-            <h2 className="text-2xl font-bold text-white">How to set images (CSV)</h2>
+            <h2 className="text-2xl font-bold text-white">How to Set Images (CSV)</h2>
             <details className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4">
               <summary className="cursor-pointer text-sm font-semibold text-white">Use these fields</summary>
               <div className="mt-3 space-y-2 text-sm text-slate-200">
@@ -77,7 +77,7 @@ export default function ImagesGuidePage() {
         </section>
 
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-amber-500/[0.06] p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-white">Need a CSV first?</h2>
+          <h2 className="text-2xl font-bold text-white">Need a CSV First?</h2>
           <p className="mt-2 text-sm leading-7 text-amber-100/90">
             Start with the CSV guide, then use the LLM reformat prompt if your columns don’t match.
           </p>

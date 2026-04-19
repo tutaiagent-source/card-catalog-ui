@@ -1022,7 +1022,7 @@ export default function CatalogPage() {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
         <div className="mx-auto max-w-3xl px-4 py-16">
-          <h1 className="text-3xl font-bold">Sign in required</h1>
+          <h1 className="text-3xl font-bold">Sign In Required</h1>
           <p className="mt-3 text-slate-300">Please sign in to view and save your card collection.</p>
           <a
             href="/login"

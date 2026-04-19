@@ -174,7 +174,7 @@ export default function Home() {
           <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Built To Help You Sell Faster</div>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Turn any card into a Card Post in seconds</h2>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Turn Any Card into a Card Post in Seconds</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
                 Use saved card data and images to create a clean post image with optional pricing. Built for Facebook groups, Discord sales posts, Reddit sales threads, and fast one-off listings.
               </p>
@@ -234,7 +234,7 @@ export default function Home() {
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">On Your Phone</div>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A cleaner PC + sold workflow on iPhone</h2>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A Cleaner PC + Sold Workflow on iPhone</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
                 Star cards, tap into details, and review comps from your phone without losing the “inventory story.”
               </p>
@@ -368,7 +368,7 @@ export default function Home() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Guides</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Learn the workflow, step by step</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Learn the Workflow, Step by Step</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Prefer details over guesswork? Start with CSV import, then add images, then organize in PC.
             </p>
@@ -378,7 +378,7 @@ export default function Home() {
             {[
               { title: "CSV Import", href: "/guides/csv", body: "Export and match CardCat fields so imports are clean." },
               { title: "LLM Reformat", href: "/guides/csv/llm", body: "A copy/paste prompt that returns a downloadable CSV code block." },
-              { title: "Image Uploads", href: "/guides/images", body: "Supported formats + what happens when images are too large." },
+              { title: "Image Uploads", href: "/guides/images", body: "Supported Formats + what happens when images are too large." },
               { title: "PC ★ & Sold", href: "/guides/pc", body: "Favorites in PC, then sold history on the same card record." },
             ].map((g) => (
               <a

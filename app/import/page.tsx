@@ -881,7 +881,7 @@ export default function ImportPage() {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
         <div className="mx-auto max-w-3xl px-4 py-16">
-          <h1 className="text-3xl font-bold">Sign in required</h1>
+          <h1 className="text-3xl font-bold">Sign In Required</h1>
           <p className="mt-3 text-slate-300">Please sign in to import a collection.</p>
           <a href="/login" className="mt-6 inline-flex rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]">Go to sign in</a>
         </div>
@@ -896,7 +896,7 @@ export default function ImportPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardCatLogo />
-              <h1 className="mt-3 text-2xl font-bold">Import collection</h1>
+              <h1 className="mt-3 text-2xl font-bold">Import Collection</h1>
               <div className="mt-1 text-sm text-slate-400">Collector preview keeps this locked so you can feel the upgrade boundary.</div>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -907,7 +907,7 @@ export default function ImportPage() {
 
           <section className="mt-6 rounded-3xl border border-amber-500/20 bg-amber-500/[0.08] p-6 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
             <div className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-200">Pro feature preview</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">CSV import lives in Pro</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">CSV Import Lives in Pro</h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-200">Collector is for manual add/edit and basic tracking. Pro unlocks spreadsheet workflows for larger inventories.</p>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -942,7 +942,7 @@ export default function ImportPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardCatLogo />
-            <h1 className="mt-3 text-2xl font-bold">Import collection</h1>
+            <h1 className="mt-3 text-2xl font-bold">Import Collection</h1>
             <div className="mt-1 text-sm text-slate-400">Upload a CSV, review the mapping, then import only the rows that are ready.</div>
           </div>
           <div className="flex flex-wrap gap-3">

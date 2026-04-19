@@ -52,7 +52,7 @@ export default function ProPlanPage() {
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-            <h2 className="text-2xl font-bold text-white">What Pro unlocks</h2>
+            <h2 className="text-2xl font-bold text-white">What Pro Unlocks</h2>
             <ul className="mt-5 space-y-3 text-sm text-slate-200">
               {[
                 "CSV Import And Export",
@@ -71,7 +71,7 @@ export default function ProPlanPage() {
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-            <h2 className="text-2xl font-bold text-white">Best for</h2>
+            <h2 className="text-2xl font-bold text-white">Best For</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Sellers and serious collectors who want analytics beyond basic sold history. If you track costs, fees, and shipping, Pro helps you turn sales into numbers.
             </p>
@@ -87,7 +87,7 @@ export default function ProPlanPage() {
         <section className="mt-12 space-y-8">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Pro Screens</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Tools for import, cleanup, and profit decisions</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Tools for Import, Cleanup & Profit Decisions</h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
               Pro keeps your workflow moving: CSV import for cleaner rows, Sold tracking for context, and deeper analytics to help you understand ROI.
             </p>
@@ -100,7 +100,7 @@ export default function ProPlanPage() {
 
         <section className="mt-12 rounded-[32px] border border-amber-500/25 bg-amber-500/[0.06] p-6 sm:p-8">
           <div className="max-w-5xl">
-            <h2 className="text-2xl font-bold text-white">Collector vs Pro (quick visual)</h2>
+            <h2 className="text-2xl font-bold text-white">Collector vs Pro (Quick Visual)</h2>
             <p className="mt-3 text-sm leading-7 text-slate-200">
               Collector is built for organization. Pro is built for workflows that need import/export, bulk tools, and profit/ROI visibility.
             </p>
@@ -146,7 +146,7 @@ export default function ProPlanPage() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Plan comparison</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">Everything Pro adds (clearly)</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">Everything Pro Adds (Clearly)</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Collector covers organization and basic sold tracking. Pro expands workflows with import/export, bulk actions, and profit/ROI-ready analytics.
             </p>
@@ -207,7 +207,7 @@ export default function ProPlanPage() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Exports</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">Export your inventory + sold data at any time</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">Export Your Inventory + Sold Data at Any Time</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Pro keeps your workflow portable. When you want a spreadsheet backup or want to analyze your results elsewhere,
               export your inventory from Catalog and your sold history from Sold.
@@ -215,7 +215,7 @@ export default function ProPlanPage() {
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-[28px] border border-white/10 bg-slate-950/40 p-6">
-                <h3 className="text-lg font-semibold text-white">Inventory export (Catalog)</h3>
+                <h3 className="text-lg font-semibold text-white">Inventory Export (Catalog)</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-300">Back up your cards, do cleanup in Sheets/Excel, and keep your data portable.</p>
                 <ul className="mt-4 space-y-2 text-sm text-slate-200">
                   {[
@@ -232,7 +232,7 @@ export default function ProPlanPage() {
               </div>
 
               <div className="rounded-[28px] border border-amber-500/20 bg-amber-500/[0.08] p-6">
-                <h3 className="text-lg font-semibold text-white">Sales export (Sold)</h3>
+                <h3 className="text-lg font-semibold text-white">Sales Export (Sold)</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-200">Export sales with analytics fields so you can review performance quickly.</p>
                 <ul className="mt-4 space-y-2 text-sm text-slate-100/90">
                   {[
@@ -253,7 +253,7 @@ export default function ProPlanPage() {
 
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-3xl">
-            <h2 className="text-2xl font-bold text-white">Collector plan still included</h2>
+            <h2 className="text-2xl font-bold text-white">Collector Plan Still Included</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Pro includes all Collector capabilities, plus seller-focused tools and deeper sold analytics.
             </p>
@@ -271,7 +271,7 @@ export default function ProPlanPage() {
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-amber-500/[0.06] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">FAQ</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">Pro questions</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">Pro Questions</h2>
 
             <div className="mt-6 space-y-4">
               {[{

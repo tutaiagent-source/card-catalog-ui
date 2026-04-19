@@ -258,7 +258,7 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-4 sm:px-6">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Share card</div>
-            <h3 className="mt-2 text-xl font-bold text-white">Create a clean post image for selling groups</h3>
+            <h3 className="mt-2 text-xl font-bold text-white">Create a Clean Post Image for Selling Groups</h3>
             <p className="mt-1 text-sm text-slate-400">Price is optional. Download a square image or use your device share sheet.</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">

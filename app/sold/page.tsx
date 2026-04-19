@@ -387,7 +387,7 @@ export default function SoldPage() {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
         <div className="mx-auto max-w-3xl px-4 py-16">
-          <h1 className="text-3xl font-bold">Sign in required</h1>
+          <h1 className="text-3xl font-bold">Sign In Required</h1>
           <p className="mt-3 text-slate-300">Please sign in to view your sold history.</p>
           <a href="/login" className="mt-6 inline-flex rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]">Go to sign in</a>
         </div>
@@ -402,7 +402,7 @@ export default function SoldPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <CardCatLogo />
-            <h1 className="mt-3 text-3xl font-bold tracking-tight">Sales dashboard</h1>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight">Sales Dashboard</h1>
             <div className="mt-2 max-w-2xl text-sm text-slate-400">
               Your sold cards, revenue performance, and recent sales momentum in one cleaner view.
             </div>
@@ -509,13 +509,13 @@ export default function SoldPage() {
         {isCollectorPreview ? (
           <section className="mt-6 rounded-3xl border border-amber-500/20 bg-amber-500/[0.08] p-6 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
             <div className="text-sm font-semibold uppercase tracking-[0.18em] text-amber-200">Pro analytics preview</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">Advanced profit analytics live in Pro</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">Advanced Profit Analytics Live in Pro</h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-200">Collector keeps the basics: sold history, sale values, and simple dashboard stats. Pro unlocks profit breakdowns, ROI, platform mix, export, and richer trends.</p>
             <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 "Card cost, fees, and shipping rollups",
                 "Net profit and ROI detail",
-                "Revenue trend and platform mix",
+                "Revenue Trend and platform mix",
                 "Sales CSV export",
               ].map((item) => (
                 <div key={item} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-200">
@@ -545,7 +545,7 @@ export default function SoldPage() {
           <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-base sm:text-lg font-semibold text-white">Revenue trend</h2>
+                <h2 className="text-base sm:text-lg font-semibold text-white">Revenue Trend</h2>
                 <p className="mt-1 text-xs sm:text-sm text-slate-400">Last 6 months of sold revenue.</p>
               </div>
               <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300">
@@ -589,7 +589,7 @@ export default function SoldPage() {
               <div className="mt-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-base sm:text-lg font-semibold text-white">Net profit trend</h2>
+                    <h2 className="text-base sm:text-lg font-semibold text-white">Net Profit Trend</h2>
                     <p className="mt-1 text-xs sm:text-sm text-slate-400">Last 6 months of net profit.</p>
                   </div>
                   <div className="rounded-full border border-white/10 bg-slate-950/70 px-3 py-1 text-xs font-semibold text-slate-300">
@@ -641,7 +641,7 @@ export default function SoldPage() {
 
           <div className="grid gap-4">
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-              <h2 className="text-base sm:text-lg font-semibold text-white">Platform mix</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-white">Platform Mix</h2>
               <p className="mt-1 text-xs sm:text-sm text-slate-400">Where your sold revenue is coming from.</p>
 
               <div className="mt-5 space-y-4">
@@ -668,7 +668,7 @@ export default function SoldPage() {
 
               {!isCollectorPreview ? (
                 <div className="mt-6">
-                  <h2 className="text-base font-semibold text-white">Net profit by platform</h2>
+                  <h2 className="text-base font-semibold text-white">Net Profit by Platform</h2>
                   <p className="mt-1 text-xs text-slate-400">After card cost, fees, and shipping.</p>
 
                   <div className="mt-4 space-y-4">
@@ -706,7 +706,7 @@ export default function SoldPage() {
             </div>
 
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-              <h2 className="text-base sm:text-lg font-semibold text-white">Recent wins</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-white">Recent Wins</h2>
               <p className="mt-1 text-xs sm:text-sm text-slate-400">Latest completed sales.</p>
 
               <div className="mt-4 space-y-3">
@@ -742,7 +742,7 @@ export default function SoldPage() {
         <section className="mt-8">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-white">Sales history</h2>
+              <h2 className="text-xl font-semibold text-white">Sales History</h2>
               <p className="mt-1 text-sm text-slate-400">Every sold card, newest first.</p>
             </div>
           </div>

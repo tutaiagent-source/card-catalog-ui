@@ -709,7 +709,7 @@ export default function AddCardPage() {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
         <div className="mx-auto max-w-3xl px-4 py-16">
-          <h1 className="text-3xl font-bold">Sign in required</h1>
+          <h1 className="text-3xl font-bold">Sign In Required</h1>
           <p className="mt-3 text-slate-300">Please sign in before adding or editing cards.</p>
           <a
             href="/login"
@@ -821,7 +821,7 @@ export default function AddCardPage() {
               }}
             >
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold">Card identity</h2>
+                <h2 className="text-lg font-semibold">Card Identity</h2>
 
                 <label className="block">
                   <div className="mb-1 text-slate-300">Player name *</div>
@@ -898,7 +898,7 @@ export default function AddCardPage() {
               }}
             >
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold">Numbers & team</h2>
+                <h2 className="text-lg font-semibold">Numbers & Team</h2>
 
                 <label className="block">
                   <div className="mb-1 text-slate-300">Card number (back “No.”) *</div>
@@ -994,7 +994,7 @@ export default function AddCardPage() {
               }}
             >
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold">Flags & quantity</h2>
+                <h2 className="text-lg font-semibold">Flags & Quantity</h2>
 
                 <div className="grid grid-cols-3 gap-3">
                   <label className="block rounded border border-slate-800 p-3">
@@ -1283,7 +1283,7 @@ export default function AddCardPage() {
               }}
             >
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold">Images (optional)</h2>
+                <h2 className="text-lg font-semibold">Images (Optional)</h2>
 
                 <div className="text-xs text-slate-400">
                   Supabase configured: {supabaseConfigured ? "Yes" : "No"} (bucket: card-images)

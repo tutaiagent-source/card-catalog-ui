@@ -53,7 +53,7 @@ export default function CollectorPlanPage() {
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-            <h2 className="text-2xl font-bold text-white">What Collector gives you</h2>
+            <h2 className="text-2xl font-bold text-white">What Collector Gives You</h2>
             <ul className="mt-5 space-y-3 text-sm text-slate-200">
               {[
                 "Up To 150 Cards",
@@ -72,7 +72,7 @@ export default function CollectorPlanPage() {
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-            <h2 className="text-2xl font-bold text-white">Best for</h2>
+            <h2 className="text-2xl font-bold text-white">Best For</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Collectors who want organization first. If you mainly care about browsing your catalog, keeping PC separate, and recording sold dates and prices, Collector keeps it simple.
             </p>
@@ -88,7 +88,7 @@ export default function CollectorPlanPage() {
         <section className="mt-12 space-y-8">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Collector Screens</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">What you’ll actually use every day</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">What You’ll Actually Use Every Day</h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
               These are the core workflow screens the Collector plan focuses on: catalog browsing, PC organization, and sold tracking context.
             </p>
@@ -102,7 +102,7 @@ export default function CollectorPlanPage() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Collector Workflow</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">Simple, clean, and always connected</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">Simple, Clean & Always Connected</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Collector keeps your day-to-day flow tight: browse the catalog, keep PC separate, and record sold info on the same card record.
             </p>
@@ -149,7 +149,7 @@ export default function CollectorPlanPage() {
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-amber-500/[0.06] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Plan comparison</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">What’s different in Pro</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">What’s Different in Pro</h2>
             <p className="mt-3 text-sm leading-7 text-slate-200">
               Collector keeps your workflow clean. Pro adds seller-focused workflow upgrades, including import/export, bulk tools, and profit/ROI analytics.
             </p>
@@ -214,7 +214,7 @@ export default function CollectorPlanPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-start">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">When you should upgrade</div>
-              <h2 className="mt-3 text-2xl font-bold text-white">When your workflow starts becoming a seller workflow</h2>
+              <h2 className="mt-3 text-2xl font-bold text-white">When Your Workflow Starts Becoming a Seller Workflow</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300">
                 Pro adds CSV import/export, bulk inventory tools, and deeper sold analytics like profit and ROI. If you track costs and want export-ready insights, it’s the next step.
               </p>
@@ -239,7 +239,7 @@ export default function CollectorPlanPage() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">FAQ</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">Collector questions</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">Collector Questions</h2>
 
             <div className="mt-6 space-y-4">
               {[{

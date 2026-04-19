@@ -185,7 +185,7 @@ export default function AccountPage() {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
         <div className="mx-auto max-w-3xl px-4 py-16">
-          <h1 className="text-3xl font-bold">Sign in required</h1>
+          <h1 className="text-3xl font-bold">Sign In Required</h1>
           <p className="mt-3 text-slate-300">Please sign in to view your account.</p>
           <a
             href="/login"
@@ -240,7 +240,7 @@ export default function AccountPage() {
           </section>
 
           <section className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-5 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
-            <h2 className="text-lg font-semibold">Collection summary</h2>
+            <h2 className="text-lg font-semibold">Collection Summary</h2>
             <div className="mt-4 text-sm text-slate-300">Cards in collection</div>
             <div className="mt-1 text-2xl font-bold">{totalCards}</div>
 
@@ -250,7 +250,7 @@ export default function AccountPage() {
         </div>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-          <h2 className="text-lg font-semibold">Start here</h2>
+          <h2 className="text-lg font-semibold">Start Here</h2>
           <p className="mt-2 text-sm text-slate-400">The CardCat workflow is simple: load cards in, keep a backup, track what stays in the collection and what moves, then check sold performance when you need it.</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {[
@@ -270,7 +270,7 @@ export default function AccountPage() {
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold">Plans and usage</h2>
+              <h2 className="text-lg font-semibold">Plans & Usage</h2>
               <p className="mt-1 text-sm text-slate-400">2-tier preview for launch: a limited Collector plan and an expanded Pro plan with fair-use storage.</p>
             </div>
             <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
@@ -367,7 +367,7 @@ export default function AccountPage() {
         </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-          <h2 className="text-lg font-semibold">Quick actions</h2>
+          <h2 className="text-lg font-semibold">Quick Actions</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <a href="/catalog" className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-slate-900">
               Open catalog
@@ -385,7 +385,7 @@ export default function AccountPage() {
         </section>
 
         <section className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-          <h2 className="text-lg font-semibold">Danger zone</h2>
+          <h2 className="text-lg font-semibold">Danger Zone</h2>
           <p className="mt-2 text-sm text-slate-300">Use these when you need to rewind sales or wipe the whole catalog.</p>
 
           <div className="mt-4 rounded-2xl border border-amber-500/20 bg-amber-500/[0.05] p-4">
@@ -418,7 +418,7 @@ export default function AccountPage() {
         </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-          <h2 className="text-lg font-semibold">Change password</h2>
+          <h2 className="text-lg font-semibold">Change Password</h2>
           <p className="mt-2 text-sm text-slate-400">Use this if you want password-based sign-in for your account.</p>
 
           <form onSubmit={onPasswordUpdate} className="mt-4 space-y-4">

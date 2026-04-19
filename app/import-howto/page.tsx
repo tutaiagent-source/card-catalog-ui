@@ -94,7 +94,7 @@ export default function ImportHowtoPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-start">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">What CardCat expects</div>
-              <h2 className="mt-3 text-2xl font-bold text-white">Use these fields for the best results</h2>
+              <h2 className="mt-3 text-2xl font-bold text-white">Use These Fields for the Best Results</h2>
               <ul className="mt-5 space-y-3 text-sm text-slate-200">
                 {[
                   "Required for the best matching: player_name, year, brand, set_name, card_number, team, sport",
@@ -138,7 +138,7 @@ export default function ImportHowtoPage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div className="max-w-2xl">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Next up</div>
-              <h2 className="mt-3 text-2xl font-bold text-white">Move from “CSV import” to “better previews”</h2>
+              <h2 className="mt-3 text-2xl font-bold text-white">Move from “CSV Import” to “Better Previews”</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300">
                 After your rows import cleanly, add images so CardCat can show front/back flipping previews. Then organize in PC and attach sold history when cards move.
               </p>
@@ -155,7 +155,7 @@ export default function ImportHowtoPage() {
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-amber-500/[0.06] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Still Unsure?</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">Don’t stress the formatting</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">Don’t Stress the Formatting</h2>
             <p className="mt-3 text-sm leading-7 text-slate-200">
               CardCat’s import review exists for a reason. Even if your CSV is messy, upload it, review what the importer flags, and fix the rows quickly.
             </p>

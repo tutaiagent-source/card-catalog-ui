@@ -63,7 +63,7 @@ export default function ShareSheetsPage() {
                 Card Posts
               </div>
               <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-                A faster way to turn saved cards into clean card posts.
+                A Faster Way to Turn Saved Cards into Clean Card Posts.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
                 CardCat can generate a square card post image using the card details and images already stored in your catalog. It is built for the moment when you want to post a card quickly without rebuilding the listing by hand.
@@ -84,8 +84,8 @@ export default function ShareSheetsPage() {
 
         <section className="mt-12 grid gap-6 lg:grid-cols-2">
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">How it works</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Three quick steps</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">How It Works</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Three Quick Steps</h2>
             <div className="mt-6 space-y-4">
               {workflow.map((item, index) => (
                 <div key={item.title} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
@@ -98,7 +98,7 @@ export default function ShareSheetsPage() {
 
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Why it helps</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Good for casual sellers and regular sellers</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Good for Casual Sellers & Regular Sellers</h2>
             <div className="mt-6 space-y-4 text-sm text-slate-200">
               {benefits.map((item) => (
                 <div key={item} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">{item}</div>
@@ -110,7 +110,7 @@ export default function ShareSheetsPage() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Using it</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Mobile and desktop</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Mobile & Desktop</h2>
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-2">

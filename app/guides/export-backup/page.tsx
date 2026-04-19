@@ -26,7 +26,7 @@ export default function ExportBackupGuidePage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
               Exports & Backups
             </div>
-            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">Export your inventory + sold data any time</h1>
+            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">Export Your Inventory + Sold Data Any Time</h1>
             <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
               Your collection stays yours. Backup your inventory from Catalog and export your sold history from Sold.
             </p>
@@ -35,7 +35,7 @@ export default function ExportBackupGuidePage() {
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-            <h2 className="text-2xl font-bold text-white">Inventory export (Catalog)</h2>
+            <h2 className="text-2xl font-bold text-white">Inventory Export (Catalog)</h2>
             <div className="mt-3 text-sm leading-7 text-slate-300">
               Use Catalog exports as your portability layer. If you do cleanup in Sheets/Excel, you can always rebuild your import.
             </div>
@@ -48,7 +48,7 @@ export default function ExportBackupGuidePage() {
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-            <h2 className="text-2xl font-bold text-white">Sold export (Sold)</h2>
+            <h2 className="text-2xl font-bold text-white">Sold Export (Sold)</h2>
             <div className="mt-3 text-sm leading-7 text-slate-300">
               Sold exports keep history attached to the same card records. Pro exports can include deeper analytics fields for more useful downstream analysis.
             </div>
@@ -62,7 +62,7 @@ export default function ExportBackupGuidePage() {
         </section>
 
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-amber-500/[0.06] p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-white">Want the best import first?</h2>
+          <h2 className="text-2xl font-bold text-white">Want the Best Import First?</h2>
           <p className="mt-2 text-sm leading-7 text-amber-100/90">
             Clean inputs lead to clean exports. Start with the CSV guide and optionally use the LLM reformat prompt.
           </p>

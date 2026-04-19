@@ -29,7 +29,7 @@ export default function CsvGuidePage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
               CSV Import
             </div>
-            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">Turn a spreadsheet into a CardCat import</h1>
+            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">Turn a Spreadsheet into a CardCat Import</h1>
             <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
               CardCat’s import workflow is designed to be forgiving: you can upload a CSV, review duplicates, and fix messy rows before saving.
             </p>
@@ -38,7 +38,7 @@ export default function CsvGuidePage() {
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-            <h2 className="text-2xl font-bold text-white">Quick steps</h2>
+            <h2 className="text-2xl font-bold text-white">Quick Steps</h2>
             <ol className="mt-4 space-y-3 text-sm text-slate-200">
               <li className="flex items-start gap-3">
                 <span className="mt-1 text-amber-300">1</span>
@@ -65,7 +65,7 @@ export default function CsvGuidePage() {
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-            <h2 className="text-2xl font-bold text-white">Field expectations</h2>
+            <h2 className="text-2xl font-bold text-white">Field Expectations</h2>
 
             <details className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4">
               <summary className="cursor-pointer text-sm font-semibold text-white">Required fields (best matching)</summary>
@@ -96,7 +96,7 @@ export default function CsvGuidePage() {
         </section>
 
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-white">Want the fastest path?</h2>
+          <h2 className="text-2xl font-bold text-white">Want the Fastest Path?</h2>
           <div className="mt-2 text-sm text-slate-300">
             Most users do: <a className="font-semibold text-amber-200 hover:text-amber-100" href="/guides/csv/llm">LLM reformat</a> →
             <a className="ml-2 font-semibold text-amber-200 hover:text-amber-100" href="/guides/images"> image upload setup</a> →

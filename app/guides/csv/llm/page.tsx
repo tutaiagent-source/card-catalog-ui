@@ -44,7 +44,7 @@ export default function CsvLlmGuidePage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
               LLM Reformat
             </div>
-            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">Convert any spreadsheet into a CardCat-ready CSV</h1>
+            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">Convert Any Spreadsheet into a CardCat-Ready CSV</h1>
             <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
               Copy the prompt below into your LLM. Paste your CSV after “Here is my CSV:”. Ask it to return ONLY the CSV in a code block.
             </p>
@@ -54,7 +54,7 @@ export default function CsvLlmGuidePage() {
         <section className="mt-10 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr] items-start">
             <div className="min-w-0">
-              <h2 className="text-2xl font-bold text-white">Copy/paste prompt</h2>
+              <h2 className="text-2xl font-bold text-white">Copy/Paste Prompt</h2>
               <pre className="mt-4 max-h-[560px] w-full min-w-0 overflow-auto whitespace-pre-wrap break-words rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-xs leading-5 text-slate-200">
                 {samplePrompt}
               </pre>
@@ -64,7 +64,7 @@ export default function CsvLlmGuidePage() {
             </div>
 
             <div>
-              <h2 className="text-2xl font-bold text-white">How to use it</h2>
+              <h2 className="text-2xl font-bold text-white">How to Use It</h2>
               <ol className="mt-4 space-y-3 text-sm text-slate-200">
                 <li className="flex items-start gap-3">
                   <span className="mt-1 text-amber-300">1</span>
@@ -91,7 +91,7 @@ export default function CsvLlmGuidePage() {
         </section>
 
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-amber-500/[0.06] p-6 sm:p-8">
-          <h2 className="text-2xl font-bold text-white">Next: images</h2>
+          <h2 className="text-2xl font-bold text-white">Next: Images</h2>
           <p className="mt-2 text-sm leading-7 text-amber-100/90">
             Once your CSV imports cleanly, use image uploads to get better previews. See the image guide for supported formats and sizing.
           </p>

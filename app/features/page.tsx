@@ -47,7 +47,7 @@ export default function FeaturesPage() {
               CardCat Features
             </div>
             <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-              The key features, without the wall of text.
+              The Key Features, Without the Wall of Text.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
               CardCat helps collectors organize inventory, track sold cards, and create clean card posts without turning the workflow into spreadsheet chaos.
@@ -92,7 +92,7 @@ export default function FeaturesPage() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Need details?</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Use the focused pages for the deeper stuff</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Use the Focused Pages for the Deeper Stuff</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
               Keep the main features page short, then jump into the specific workflow you actually care about.
             </p>
