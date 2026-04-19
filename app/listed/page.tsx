@@ -306,27 +306,37 @@ export default function ListedPage() {
                           ⇄
                         </div>
                       ) : null}
-                      {showBack && activeCard.back_image_url ? (
-                        <img
-                          alt="back"
-                          src={driveToImageSrc(activeCard.back_image_url)}
-                          className="h-full w-full object-contain"
-                        />
-                      ) : activeCard.image_url ? (
-                        <img
-                          alt="front"
-                          src={driveToImageSrc(activeCard.image_url)}
-                          className="h-full w-full object-contain"
-                        />
-                      ) : activeCard.back_image_url ? (
-                        <img
-                          alt="back"
-                          src={driveToImageSrc(activeCard.back_image_url)}
-                          className="h-full w-full object-contain"
-                        />
-                      ) : (
-                        <div className="h-full w-full" />
-                      )}
+                      <div className="relative h-full w-full" style={{ perspective: 1200 }}>
+                        <div
+                          className="absolute inset-0 h-full w-full transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+                          style={{
+                            transformStyle: "preserve-3d",
+                            transform: showBack ? "rotateY(180deg)" : "rotateY(0deg)",
+                          }}
+                        >
+                          {activeCard.image_url ? (
+                            <img
+                              alt="front"
+                              src={driveToImageSrc(activeCard.image_url)}
+                              className="absolute inset-0 h-full w-full object-contain"
+                              style={{ backfaceVisibility: "hidden" }}
+                              draggable={false}
+                            />
+                          ) : (
+                            <div className="absolute inset-0 h-full w-full" style={{ backfaceVisibility: "hidden" }} />
+                          )}
+
+                          {activeCard.back_image_url ? (
+                            <img
+                              alt="back"
+                              src={driveToImageSrc(activeCard.back_image_url)}
+                              className="absolute inset-0 h-full w-full object-contain"
+                              style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                              draggable={false}
+                            />
+                          ) : null}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
