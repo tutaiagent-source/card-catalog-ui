@@ -106,25 +106,60 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
 
   async function nativeShare() {
     const title = [card.year, card.player_name].filter(Boolean).join(" ");
-    if (navigator.share) {
-      try {
-        const canvas = await renderShareCanvas();
-        const blob = await canvasToBlob(canvas);
-        const name = `${slugify([card.year, card.player_name, card.set_name].filter(Boolean).join(" ")) || "cardcat-share"}.jpg`;
-        if (blob) {
-          const file = new File([blob], name, { type: "image/jpeg" });
-          const shareData = { title, text: caption, files: [file] };
-          if (!(navigator as Navigator & { canShare?: (data: ShareData) => boolean }).canShare || (navigator as Navigator & { canShare?: (data: ShareData) => boolean }).canShare?.(shareData)) {
-            await navigator.share(shareData);
-            return;
-          }
+
+    let canvas: HTMLCanvasElement;
+    try {
+      canvas = await renderShareCanvas();
+    } catch {
+      alert("Could not generate the share image on this device. Please try again.");
+      await copyCaption();
+      return;
+    }
+
+    const blob = await canvasToBlob(canvas);
+    const name = `${slugify([card.year, card.player_name, card.set_name].filter(Boolean).join(" ")) || "cardcat-share"}.jpg`;
+
+    const shareTextOnly = { title, text: caption };
+    const shareWithFile = blob
+      ? {
+          title,
+          text: caption,
+          files: [new File([blob], name, { type: "image/jpeg" })],
         }
-        await navigator.share({ title, text: caption });
-        return;
+      : null;
+
+    // 1) Try image share (when supported)
+    if (navigator.share && shareWithFile) {
+      try {
+        const navAny = navigator as Navigator & { canShare?: (data: any) => boolean };
+        const canShare = navAny.canShare?.(shareWithFile);
+        if (navAny.canShare == null || canShare) {
+          await navAny.share(shareWithFile as any);
+          return;
+        }
       } catch {
-        return;
+        // fall through to download fallback
       }
     }
+
+    // 2) Try text-only share
+    if (navigator.share) {
+      try {
+        await navigator.share(shareTextOnly);
+        return;
+      } catch {
+        // fall through to download fallback
+      }
+    }
+
+    // 3) Fallback to downloading the image (works on most mobile browsers)
+    try {
+      await downloadShareImage();
+      return;
+    } catch {
+      // ignore
+    }
+
     await copyCaption();
   }
 
