@@ -56,7 +56,7 @@ export default function CollectorPlanPage() {
             <h2 className="text-2xl font-bold text-white">What Collector gives you</h2>
             <ul className="mt-5 space-y-3 text-sm text-slate-200">
               {[
-                "Up To 100 Cards",
+                "Up To 150 Cards",
                 "Manual Card Entry",
                 "Personal Collection (PC) View",
                 "Cleaner Catalog Browsing",
@@ -162,7 +162,7 @@ export default function CollectorPlanPage() {
               </div>
 
               {[
-                ["Up to 100 cards", true, true],
+                ["Up to 150 cards", true, true],
                 ["More room to grow", false, true],
                 ["Manual card entry", true, true],
                 ["CSV import/export", false, true],

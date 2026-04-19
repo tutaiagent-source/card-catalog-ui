@@ -50,9 +50,12 @@ export default function AccountPage() {
   const totalCards = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0), 0), [cards]);
   const estimatedTotal = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.estimated_price || 0), 0), [cards]);
   const soldRows = useMemo(() => cards.filter((card) => String(card.status || "") === "Sold"), [cards]);
-  const starterLimit = 100;
+  const collectorCardCap = 150;
+  const collectorAddOnCards = 100;
+  const collectorAddOnPricePerMonth = 2;
+  const proPricePerMonth = 12;
   const currentPlanPreview = isCollectorPreview ? "Collector" : "Pro";
-  const usagePct = Math.min(100, Math.round((totalCards / starterLimit) * 100));
+  const usagePct = Math.min(100, Math.round((totalCards / collectorCardCap) * 100));
 
   const providers = useMemo(() => {
     const list = Array.isArray(user?.app_metadata?.providers) ? user?.app_metadata?.providers : [];
@@ -299,11 +302,37 @@ export default function AccountPage() {
           <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
             <div className="flex items-center justify-between gap-3 text-sm">
               <div className="font-semibold text-slate-200">Collector plan usage</div>
-              <div className="text-slate-400">{totalCards} / {starterLimit} cards</div>
+              <div className="text-slate-400">{totalCards} / {collectorCardCap} cards</div>
             </div>
             <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-900">
               <div className="h-full rounded-full bg-[linear-gradient(90deg,rgba(245,158,11,0.95),rgba(239,68,68,0.9))]" style={{ width: `${usagePct}%` }} />
             </div>
+            {isCollectorPreview && totalCards >= collectorCardCap ? (
+              <div className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4">
+                <div className="text-sm font-semibold text-amber-200">Collector limit reached</div>
+                <p className="mt-2 text-sm leading-6 text-slate-200">
+                  Add +{collectorAddOnCards} cards for ${collectorAddOnPricePerMonth} / month, or switch to Pro for
+                  ${proPricePerMonth} / month and unlimited.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    className="rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-4 py-2 text-sm font-semibold text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled
+                  >
+                    +{collectorAddOnCards} add-on (${collectorAddOnPricePerMonth}/mo)
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-xl border border-white/10 bg-[#d50000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b80000]"
+                    onClick={() => setPlanPreview("pro")}
+                  >
+                    Switch to Pro (${proPricePerMonth}/mo)
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             <div className="mt-2 text-xs text-slate-500">Billing is not wired yet, but this gives the user-facing plan shape and pricing for launch.</div>
           </div>
 
@@ -315,7 +344,7 @@ export default function AccountPage() {
               </div>
               <div className="mt-1 text-sm text-slate-400">Starter tier, limited for personal collections and light selling.</div>
               <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li>• Up to 100 cards</li>
+                <li>• Up to 150 cards</li>
                 <li>• Manual add/edit</li>
                 <li>• Basic sold tracking</li>
                 <li>• Basic dashboard</li>

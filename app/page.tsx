@@ -63,7 +63,7 @@ const pricingTiers = [
     name: "Collector",
     price: "$5 / Month",
     caption: "A Strong Starting Point For Personal Collections And Lighter Tracking.",
-    features: ["Up To 100 Cards", "Manual Card Entry", "Personal Collection View", "Basic Sold Tracking"],
+    features: ["Up To 150 Cards", "Manual Card Entry", "Personal Collection View", "Basic Sold Tracking"],
     accent: "border-white/10 bg-white/[0.04]",
   },
   {

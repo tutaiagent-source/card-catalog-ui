@@ -159,7 +159,7 @@ export default function ProPlanPage() {
               </div>
 
               {[
-                ["Up to 100 cards", true, true],
+                ["Up to 150 cards", true, true],
                 ["More room to grow", false, true],
                 ["Manual card entry", true, true],
                 ["CSV import/export", false, true],
