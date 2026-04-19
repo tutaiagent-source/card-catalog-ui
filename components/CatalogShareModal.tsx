@@ -343,9 +343,10 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                 Copy caption
               </button>
               <button type="button" onClick={nativeShare} className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]">
-                Share
+                <span className="sm:hidden">Share / Save Image</span>
+                <span className="hidden sm:inline">Share</span>
               </button>
-              <button type="button" onClick={downloadShareImage} className="rounded-2xl bg-[#d50000] px-4 py-3 text-sm font-semibold text-white hover:bg-[#b80000]">
+              <button type="button" onClick={downloadShareImage} className="hidden rounded-2xl bg-[#d50000] px-4 py-3 text-sm font-semibold text-white hover:bg-[#b80000] sm:block">
                 Download image
               </button>
             </div>
