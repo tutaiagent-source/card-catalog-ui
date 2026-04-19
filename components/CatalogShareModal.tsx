@@ -269,7 +269,7 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
         <div className="overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
           <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="rounded-[32px] border border-white/10 bg-slate-900 p-4">
-            <div className="mx-auto aspect-[0.9] w-full max-w-[560px] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-[0_25px_80px_rgba(2,6,23,0.45)] sm:aspect-square">
+            <div className="mx-auto min-h-[720px] w-full max-w-[560px] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-[0_25px_80px_rgba(2,6,23,0.45)] sm:min-h-[820px]">
               <div className="flex h-full flex-col">
                 <div className={`relative ${hasBackImage ? "flex-[0_0_62%] p-3 sm:flex-[0_0_70%]" : "flex-[0_0_60%] sm:flex-[0_0_72%]"} overflow-hidden border-b border-white/10 bg-slate-950`}>
                   {hasBackImage ? (
