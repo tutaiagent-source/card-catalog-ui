@@ -64,6 +64,12 @@ function cleanParallel(parallel: string) {
   return value;
 }
 
+function proxyImageSrc(src?: string | null) {
+  const normalized = driveToImageSrc(src);
+  if (!normalized) return "";
+  return `/api/image-proxy?src=${encodeURIComponent(normalized)}`;
+}
+
 function buildCaption(card: ShareCard, includePrice: boolean, price: string) {
   const lines = [
     [card.year, card.player_name].filter(Boolean).join(" "),
@@ -135,7 +141,7 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
 
       if (box.src) {
         try {
-          const cardImage = await loadImage(driveToImageSrc(box.src), "anonymous");
+          const cardImage = await loadImage(proxyImageSrc(box.src));
           const imageRatio = cardImage.width / cardImage.height;
           const boxRatio = box.width / box.height;
           let drawWidth = box.width;
@@ -171,43 +177,49 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
     }
 
     const title = [card.year, card.player_name].filter(Boolean).join(" ");
-    const titleLines = wrapText(title, 24).slice(0, 3);
-    const detailLines = [card.set_name, cleanParallel(card.parallel), card.serial_number_text ? `Serial: ${card.serial_number_text}` : ""].filter(Boolean);
+    const titleLines = wrapText(title, 24).slice(0, 2);
+    const meta = [cleanParallel(card.parallel), card.serial_number_text ? `Serial: ${card.serial_number_text}` : ""].filter(Boolean).join(" • ");
+    const metaLines = wrapText(meta, 42).slice(0, 2);
+    const panelY = hasBackImage ? 805 : 820;
+    const panelHeight = hasBackImage ? 215 : 180;
 
     ctx.fillStyle = "#020617";
     ctx.beginPath();
-    ctx.roundRect(80, hasBackImage ? 810 : 830, 920, hasBackImage ? 190 : 170, 30);
+    ctx.roundRect(80, panelY, 920, panelHeight, 30);
     ctx.fill();
 
     ctx.textAlign = "center";
     ctx.fillStyle = "#f8fafc";
-    ctx.font = "700 46px Inter, Arial, sans-serif";
+    ctx.font = "700 44px Inter, Arial, sans-serif";
     titleLines.forEach((line, index) => {
-      ctx.fillText(line, 540, (hasBackImage ? 870 : 885) + index * 54);
+      ctx.fillText(line, 540, panelY + 58 + index * 48);
     });
 
     ctx.fillStyle = "#cbd5e1";
     ctx.font = "500 28px Inter, Arial, sans-serif";
-    detailLines.forEach((line, index) => {
-      ctx.fillText(line, 540, (hasBackImage ? 955 : 965) + index * 34);
+    ctx.fillText(card.set_name, 540, panelY + 118 + Math.max(0, titleLines.length - 1) * 18);
+    ctx.font = "500 24px Inter, Arial, sans-serif";
+    metaLines.forEach((line, index) => {
+      ctx.fillText(line, 540, panelY + 152 + Math.max(0, titleLines.length - 1) * 18 + index * 28);
     });
 
     if (includePrice && price.trim()) {
       ctx.fillStyle = "#86efac";
-      ctx.font = "700 42px Inter, Arial, sans-serif";
-      ctx.fillText(`$${price.trim()}`, 540, 1010);
+      ctx.font = "700 34px Inter, Arial, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(`$${price.trim()}`, 110, panelY + panelHeight - 22);
     }
 
     ctx.textAlign = "left";
     try {
       const logo = await loadImage("/icon.svg");
-      ctx.drawImage(logo, 850, 955, 42, 42);
+      ctx.drawImage(logo, 850, panelY + panelHeight - 62, 42, 42);
     } catch {
       // fall back to text only
     }
     ctx.fillStyle = "#94a3b8";
     ctx.font = "600 24px Inter, Arial, sans-serif";
-    ctx.fillText("CardCat", 904, 985);
+    ctx.fillText("CardCat", 904, panelY + panelHeight - 32);
 
     const a = document.createElement("a");
     const name = slugify([card.year, card.player_name, card.set_name].filter(Boolean).join(" ")) || "cardcat-share";
@@ -242,7 +254,7 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                       {[{ src: card.image_url, label: "Front" }, { src: card.back_image_url, label: "Back" }].map((image) => (
                         <div key={image.label} className="relative overflow-hidden rounded-[22px] bg-slate-900">
                           {image.src ? (
-                            <img src={driveToImageSrc(image.src)} alt={image.label} className="h-full w-full object-contain" />
+                            <img src={proxyImageSrc(image.src)} alt={image.label} className="h-full w-full object-contain" />
                           ) : (
                             <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{image.label}</div>
                           )}
@@ -253,7 +265,7 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                       ))}
                     </div>
                   ) : card.image_url ? (
-                    <img src={driveToImageSrc(card.image_url)} alt={card.player_name} className="h-full w-full object-contain" />
+                    <img src={proxyImageSrc(card.image_url)} alt={card.player_name} className="h-full w-full object-contain" />
                   ) : (
                     <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_35%),linear-gradient(180deg,#111827,#020617)] text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
                       Card image
