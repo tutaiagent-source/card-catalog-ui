@@ -301,6 +301,11 @@ export default function ListedPage() {
                         if (e.key === "Enter" || e.key === " ") setShowBack((v) => !v);
                       }}
                     >
+                      {activeCard.back_image_url ? (
+                        <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full bg-slate-950/70 px-3 py-1 text-[11px] font-semibold text-slate-200 ring-1 ring-white/10">
+                          ⇄
+                        </div>
+                      ) : null}
                       {showBack && activeCard.back_image_url ? (
                         <img
                           alt="back"
