@@ -1,7 +1,7 @@
 export default function ShareSheetFeaturePreview() {
   return (
     <div className="rounded-[32px] border border-white/10 bg-[#0f172a] p-5 shadow-[0_25px_80px_rgba(2,6,23,0.45)]">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-4">
         {[
           ["Front", "from-amber-200/30 via-slate-700/20 to-slate-950/60"],
           ["Back", "from-slate-200/20 via-slate-700/20 to-slate-950/60"],
