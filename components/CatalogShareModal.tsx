@@ -276,11 +276,11 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                 </div>
 
                 {hasBackImage ? (
-                  <div className="grid grid-cols-2 gap-3 pt-8 sm:pt-9">
+                  <div className="grid grid-cols-2 gap-3 pt-6 sm:pt-9">
                     {[{ src: card.image_url, label: "Front" }, { src: card.back_image_url, label: "Back" }].map((image) => (
                       <div key={image.label} className="relative aspect-[3/4] overflow-hidden rounded-[22px] bg-slate-900">
                         {image.src ? (
-                          <img src={proxyImageSrc(image.src)} alt={image.label} className="h-full w-full object-contain" />
+                          <img src={driveToImageSrc(image.src)} alt={image.label} className="h-full w-full object-contain" />
                         ) : (
                           <div className="flex h-full items-center justify-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{image.label}</div>
                         )}
@@ -291,10 +291,10 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                     ))}
                   </div>
                 ) : (
-                  <div className="pt-8 sm:pt-9">
+                  <div className="pt-6 sm:pt-9">
                     <div className="aspect-[4/3] overflow-hidden rounded-[22px] bg-slate-900">
                       {card.image_url ? (
-                        <img src={proxyImageSrc(card.image_url)} alt={card.player_name} className="h-full w-full object-contain" />
+                        <img src={driveToImageSrc(card.image_url)} alt={card.player_name} className="h-full w-full object-contain" />
                       ) : (
                         <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_35%),linear-gradient(180deg,#111827,#020617)] text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
                           Card image
