@@ -1,11 +1,11 @@
 import React from 'react';
 
 const ShareCardPrompt = ({ card }) => {
-    const { name, year, serial, parallel, setName } = card;
+    const { name, year, serial, parallel, setName, image } = card;
 
     return (
         <div className="flex bg-white p-4 rounded-md shadow-lg">
-            <img src={card.image} alt={name} className="w-1/3 h-auto rounded-md" />
+            <img src={image || 'path_to_placeholder_image.jpg'} alt={name} className="w-1/3 h-auto rounded-md" />
             <div className="ml-4 flex flex-col">
                 <h2 className="text-2xl font-bold">{name}</h2>
                 <p className="italic">Year: {year}</p>
