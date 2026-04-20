@@ -29,6 +29,9 @@ type ListedCard = {
   asking_price?: number | null;
   listed_at?: string | null;
   sale_platform?: string | null;
+
+  sold_price?: number | null;
+  sold_at?: string | null;
 };
 
 function toUrl(s?: string | null) {
@@ -40,6 +43,19 @@ function toUrl(s?: string | null) {
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
+}
+
+function normalizeStatusValue(status?: string | null): CardStatus {
+  const raw = String(status || "").trim().toLowerCase();
+  if (raw === "sold") return "Sold";
+  return "Listed";
+}
+
+function shortDate(value?: string | null) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export default function ListedPage() {
@@ -62,7 +78,16 @@ export default function ListedPage() {
   const sortedCards = useMemo(() => {
     return cards
       .slice()
-      .sort((a, b) => String(b.listed_at || "").localeCompare(String(a.listed_at || "")));
+      .sort((a, b) => {
+        if (a.status === "Sold" && b.status !== "Sold") return 1;
+        if (a.status !== "Sold" && b.status === "Sold") return -1;
+
+        if (a.status === "Sold" && b.status === "Sold") {
+          return String(b.sold_at || "").localeCompare(String(a.sold_at || ""));
+        }
+
+        return String(b.listed_at || "").localeCompare(String(a.listed_at || ""));
+      });
   }, [cards]);
 
   async function loadListedCards() {
@@ -72,16 +97,16 @@ export default function ListedPage() {
     try {
       const { data, error } = await supabase
         .from("cards")
-        .select("id, player_name, year, brand, set_name, parallel, serial_number_text, image_url, back_image_url, status, asking_price, listed_at, sale_platform")
+        .select("id, player_name, year, brand, set_name, parallel, serial_number_text, image_url, back_image_url, status, asking_price, listed_at, sale_platform, sold_price, sold_at")
         .eq("user_id", user.id)
-        .eq("status", "Listed");
+        .in("status", ["Listed", "Sold"]);
 
       if (error) {
         console.error("Failed to fetch listed cards:", error);
         return;
       }
 
-      setCards(((data ?? []) as ListedCard[]).map((c) => ({ ...c, status: "Listed" })));
+      setCards(((data ?? []) as ListedCard[]).map((c) => ({ ...c, status: normalizeStatusValue(c.status) })));
     } finally {
       setIsRefreshing(false);
     }
@@ -161,12 +186,12 @@ export default function ListedPage() {
               <span>📣</span>
               <span>Listed</span>
             </div>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">Actively listed cards</h1>
-            <p className="mt-2 text-slate-300">Tap a card to set (or update) the sale link where you’re selling it.</p>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">Listed and sold cards</h1>
+            <p className="mt-2 text-slate-300">Tap a card to set (or update) the sale link. Sold cards show sold date + price and jump to the Sold page.</p>
           </div>
 
           <div className="text-right">
-            <div className="text-sm text-slate-400">{sortedCards.length} active listing{sortedCards.length === 1 ? "" : "s"}</div>
+            <div className="text-sm text-slate-400">{sortedCards.length} tracked card{sortedCards.length === 1 ? "" : "s"}</div>
             <div className="mt-3 flex items-center justify-end gap-2">
               <button
                 type="button"
@@ -182,8 +207,8 @@ export default function ListedPage() {
 
         {sortedCards.length === 0 ? (
           <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.03] p-8">
-            <div className="text-lg font-semibold text-white">No active listings</div>
-            <div className="mt-2 text-sm text-slate-300">Mark cards as Listed in Catalog to see them here.</div>
+            <div className="text-lg font-semibold text-white">No listed/sold cards</div>
+            <div className="mt-2 text-sm text-slate-300">Mark cards as Listed in Catalog to see them here (sold cards will show too).</div>
           </div>
         ) : (
           <>
@@ -212,7 +237,11 @@ export default function ListedPage() {
                           {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
                         </div>
 
-                        {c.asking_price != null ? (
+                        {c.status === "Sold" && c.sold_price != null ? (
+                          <div className="absolute left-2 top-2 z-10 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-200 ring-1 ring-emerald-500/20">
+                            SOLD {formatMoney(Number(c.sold_price))}
+                          </div>
+                        ) : c.asking_price != null ? (
                           <div className="absolute left-2 top-2 z-10 rounded-full bg-slate-950/70 px-2.5 py-1 text-[10px] font-semibold text-slate-100 ring-1 ring-white/10">
                             {formatMoney(Number(c.asking_price))}
                           </div>
@@ -272,7 +301,13 @@ export default function ListedPage() {
                             </a>
                           ) : null}
 
-                          {c.asking_price != null ? (
+                          {c.status === "Sold" ? (
+                            c.sold_price != null ? (
+                              <div className="mt-3 text-center text-sm font-semibold text-emerald-200">SOLD {formatMoney(Number(c.sold_price))}</div>
+                            ) : (
+                              <div className="mt-3 text-center text-sm font-semibold text-slate-500">Sold</div>
+                            )
+                          ) : c.asking_price != null ? (
                             <div className="mt-3 text-center text-sm font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
                           ) : (
                             <div className="mt-3 text-center text-sm font-semibold text-slate-500">No price</div>
@@ -299,10 +334,19 @@ export default function ListedPage() {
             >
               <div className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-4 sm:px-6">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Listed card</div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
+                    {activeCard.status === "Sold" ? "Sold card" : "Listed card"}
+                  </div>
                   <div className="mt-2 text-xl font-bold text-white">
                     {[activeCard.year, activeCard.player_name].filter(Boolean).join(" ")}
                   </div>
+
+                  {activeCard.status === "Sold" ? (
+                    <div className="mt-2 text-sm text-emerald-200">
+                      {activeCard.sold_at ? `Sold ${shortDate(activeCard.sold_at)} ` : "Sold "}
+                      {activeCard.sold_price != null ? `· ${formatMoney(Number(activeCard.sold_price))}` : ""}
+                    </div>
+                  ) : null}
                 </div>
                 <button
                   type="button"
@@ -383,7 +427,18 @@ export default function ListedPage() {
                         <span className="text-slate-400">Parallel:</span> <span className="text-white">{activeCard.parallel}</span>
                       </div>
                     ) : null}
-                    {activeCard.listed_at ? (
+
+                    {activeCard.status === "Sold" ? (
+                      <div>
+                        <span className="text-slate-400">Sold:</span>{" "}
+                        <span className="text-white">
+                          {activeCard.sold_at ? String(activeCard.sold_at).slice(0, 10) : "?"}
+                          {activeCard.sold_price != null ? ` · ${formatMoney(Number(activeCard.sold_price))}` : ""}
+                        </span>
+                      </div>
+                    ) : null}
+
+                    {activeCard.status !== "Sold" && activeCard.listed_at ? (
                       <div>
                         <span className="text-slate-400">Listed:</span> <span className="text-white">{String(activeCard.listed_at)}</span>
                       </div>
@@ -442,14 +497,24 @@ export default function ListedPage() {
                     </label>
 
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        onClick={saveListingDetails}
-                        disabled={isSavingDetails}
-                        className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
-                      >
-                        {isSavingDetails ? "Saving…" : "Save listing"}
-                      </button>
+                      {activeCard.status === "Sold" ? (
+                        <a
+                          href="/sold"
+                          className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] text-center"
+                        >
+                          View sold page
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={saveListingDetails}
+                          disabled={isSavingDetails}
+                          className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
+                        >
+                          {isSavingDetails ? "Saving…" : "Save listing"}
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => {
