@@ -1127,7 +1127,7 @@ export default function CatalogPage() {
                 Add Card
               </a>
 
-              <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/55 px-2 py-2 shadow-[0_20px_70px_rgba(2,6,23,0.45)] backdrop-blur">
+              <div className="relative z-[9999] flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/55 px-2 py-2 shadow-[0_20px_70px_rgba(2,6,23,0.45)] backdrop-blur">
                 <a
                   href="/listed"
                   aria-label="Listings"
