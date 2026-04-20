@@ -1159,6 +1159,12 @@ export default function CatalogPage() {
                 Sold
               </a>
               <a
+                href="/listed"
+                className="rounded-lg border border-white/10 bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+              >
+                Listings
+              </a>
+              <a
                 href="/pc"
                 className="rounded-lg border border-white/10 bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
               >
