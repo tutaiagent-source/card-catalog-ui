@@ -49,17 +49,17 @@ export default function FeaturesPage() {
         <MarketingNav />
 
         <section className="rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-5 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.55)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/25 bg-blue-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
-              CardCat Features
-            </div>
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/25 bg-blue-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">
+                CardCat Features
+              </div>
             <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-              The Key Features, Without the Wall of Text.
+              The key features, without the wall of text.
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-              CardCat helps collectors organize inventory, track sold cards, and create clean card posts without turning the workflow into spreadsheet chaos.
-            </p>
-          </div>
+              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
+                CardCat helps collectors organize inventory, track sold cards, and create clean card posts without turning the workflow into spreadsheet chaos.
+              </p>
+            </div>
         </section>
 
         <section className="mt-8 grid gap-4 lg:grid-cols-4">

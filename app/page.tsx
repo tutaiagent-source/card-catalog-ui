@@ -137,9 +137,9 @@ export default function Home() {
 
               <div className="mt-5 max-w-xl rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Quick Comp Check</div>
-                <div className="mt-2 text-sm font-semibold text-white">Open Recent Sold Listings On eBay In One Click.</div>
+                <div className="mt-2 text-sm font-semibold text-white">Check recent sold comps on eBay in one click.</div>
                 <div className="mt-1 text-sm leading-6 text-slate-200">
-                  Jump straight from a card record to recent sold listings on eBay when you want a faster read on the market.
+                  From a card record, jump straight to eBay’s recent sold results for a faster market check.
                 </div>
               </div>
 
@@ -232,13 +232,13 @@ export default function Home() {
 
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">On Your Phone</div>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A Cleaner PC + Sold Workflow on iPhone</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
-                Star cards, tap into details, and review comps from your phone without losing the “inventory story.”
-              </p>
-            </div>
+              <div className="max-w-2xl">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">On Your Phone</div>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A cleaner PC + Sold workflow on iPhone</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
+                  Star cards, tap into details, and review comps from your phone without losing the “inventory story.”
+                </p>
+              </div>
 
             <div className="grid gap-4 sm:grid-cols-2 max-w-md">
               <img
