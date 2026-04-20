@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import MarketingNav from "@/components/MarketingNav";
+import PcPersonalLayoutPreview from "@/components/PcPersonalLayoutPreview";
 
 export const metadata: Metadata = {
   title: "PC Guide | CardCat",
@@ -30,6 +31,37 @@ export default function PcGuidePage() {
             <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
               Keep your favorites in PC without losing the full inventory context. PC cards are ordered for you and stay connected to the same underlying record.
             </p>
+          </div>
+        </section>
+
+        <section className="mt-10 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1fr_1fr] lg:items-center">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">PC ★ visual</div>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A clean shelf view for your favorites</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                PC keeps the “what is this card?” context from Catalog, then arranges the cards into an at-a-glance shelf so browsing feels like a hobby, not a spreadsheet.
+              </p>
+
+              <ul className="mt-5 space-y-3 text-sm text-slate-200">
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 text-emerald-300">✓</span>
+                  <span>Star in Catalog (★) to add cards to your PC shelf.</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 text-emerald-300">✓</span>
+                  <span>Reorder PC and the order is saved per-card.</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[#020617]">
+              <img
+                src="/pc-guide-pc-preview.jpg"
+                alt="PC layout preview"
+                className="block w-full h-auto object-contain"
+              />
+            </div>
           </div>
         </section>
 
@@ -67,6 +99,38 @@ export default function PcGuidePage() {
                 Tap the image to open the preview modal, then flip to see the back when a back image is available.
               </div>
             </details>
+          </div>
+        </section>
+
+        <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1fr_1.15fr] lg:items-start">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">PC side</div>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Where your cards live in PC</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                PC is your Personal Collection view of the same underlying card records. When you “★ in PC” from Catalog, CardCat keeps that
+                relationship and stores your ordering in PC for quick, readable browsing.
+              </p>
+
+              <ul className="mt-5 space-y-3 text-sm text-slate-200">
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 text-emerald-300">✓</span>
+                  <span>Cards keep their images and catalog details (same record).</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 text-emerald-300">✓</span>
+                  <span>Your PC order is saved (so your shelf stays readable).</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="mt-1 text-emerald-300">✓</span>
+                  <span>Removing from PC just clears the PC position (it doesn’t delete history).</span>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <PcPersonalLayoutPreview />
+            </div>
           </div>
         </section>
 
