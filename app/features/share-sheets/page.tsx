@@ -13,14 +13,17 @@ const workflow = [
   {
     title: "Open Share",
     body: "Start from a card inside Catalog or PC preview and open the Share action.",
+    icon: "📤",
   },
   {
     title: "Choose price or leave it off",
     body: "Use pricing only when the image should act like a true sale post.",
+    icon: "🏷️",
   },
   {
     title: "Share or save the image",
     body: "Use your phone share sheet or download the JPG on desktop and post it where you sell.",
+    icon: "📲",
   },
 ];
 
@@ -86,14 +89,19 @@ export default function ShareSheetsPage() {
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">How It Works</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Three Quick Steps</h2>
-            <div className="mt-6 space-y-4">
-              {workflow.map((item, index) => (
-                <div key={item.title} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+          <div className="mt-6 space-y-4">
+            {workflow.map((item, index) => (
+              <div key={item.title} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 shadow-[0_18px_60px_rgba(2,6,23,0.28)]">
+                <div className="flex items-start justify-between gap-4">
                   <div className="text-sm font-semibold text-white">{index + 1}. {item.title}</div>
-                  <div className="mt-2 text-sm leading-6 text-slate-300">{item.body}</div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03] text-lg">
+                    {item.icon}
+                  </div>
                 </div>
-              ))}
-            </div>
+                <div className="mt-2 text-sm leading-6 text-slate-300">{item.body}</div>
+              </div>
+            ))}
+          </div>
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
