@@ -298,7 +298,6 @@ export default function ListedPage() {
                   {sortedCards.map((c) => {
                     const src = c.image_url ? driveToImageSrc(c.image_url) : "";
                     const goHref = toUrl(c.sale_platform);
-                    const compsHref = buildEbayCompsUrl(c);
                     return (
                       <div
                         key={c.id}
@@ -337,17 +336,6 @@ export default function ListedPage() {
                           </a>
                         ) : null}
 
-                        {compsHref ? (
-                          <a
-                            href={compsHref}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="absolute left-2 bottom-2 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-950/90"
-                          >
-                            Check comps
-                          </a>
-                        ) : null}
                       </div>
                     );
                   })}
@@ -364,7 +352,6 @@ export default function ListedPage() {
                     {sortedCards.map((c) => {
                       const src = c.image_url ? driveToImageSrc(c.image_url) : "";
                       const goHref = toUrl(c.sale_platform);
-                      const compsHref = buildEbayCompsUrl(c);
                       return (
                         <div
                           key={c.id}
@@ -392,17 +379,6 @@ export default function ListedPage() {
                             </a>
                           ) : null}
 
-                          {compsHref ? (
-                            <a
-                              href={compsHref}
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="absolute left-3 top-3 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-950/90"
-                            >
-                              Check comps
-                            </a>
-                          ) : null}
 
                           {c.status === "Sold" ? (
                             c.sold_price != null ? (
@@ -597,6 +573,17 @@ export default function ListedPage() {
                           </a>
                         </div>
                       ) : null}
+
+                      <div className="mt-3">
+                        <a
+                          href={buildEbayCompsUrl(activeCard)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+                        >
+                          Check comps ↗
+                        </a>
+                      </div>
                     </label>
 
                     <div className="grid gap-3 sm:grid-cols-2">
