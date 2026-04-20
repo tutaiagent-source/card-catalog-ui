@@ -1119,19 +1119,25 @@ export default function CatalogPage() {
               </details>
             </div>
 
-            <div className="hidden md:flex flex-wrap gap-3">
+            <div className="hidden md:flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/55 px-2 py-2 shadow-[0_20px_70px_rgba(2,6,23,0.45)] backdrop-blur">
               <a
                 href="/add-card"
-                className="rounded-lg bg-[#d50000] px-4 py-2 font-semibold hover:bg-[#b80000]"
+                className="rounded-xl bg-gradient-to-b from-[#ff2d2d]/80 to-[#b80000] px-4 py-2 font-semibold text-slate-50 shadow-[0_18px_60px_rgba(213,0,0,0.22)] ring-1 ring-red-400/20 transition-all duration-200 hover:from-[#ff2d2d]/90 hover:to-[#b80000] hover:shadow-[0_22px_90px_rgba(213,0,0,0.32)]"
               >
                 Add Card
               </a>
               {isCollectorPreview ? (
                 <>
-                  <a href="/account" className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-200 hover:bg-amber-500/15">
+                  <a
+                    href="/account"
+                    className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-200 hover:bg-amber-500/15 transition-all duration-200"
+                  >
                     Import CSV (Pro)
                   </a>
-                  <a href="/account" className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-200 hover:bg-amber-500/15">
+                  <a
+                    href="/account"
+                    className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-200 hover:bg-amber-500/15 transition-all duration-200"
+                  >
                     Export CSV (Pro)
                   </a>
                 </>
@@ -1139,13 +1145,13 @@ export default function CatalogPage() {
                 <>
                   <a
                     href="/import"
-                    className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                    className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
                   >
                     Import CSV
                   </a>
                   <button
                     type="button"
-                    className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                    className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
                     onClick={exportCards}
                   >
                     Export CSV
@@ -1154,30 +1160,30 @@ export default function CatalogPage() {
               )}
               <a
                 href="/sold"
-                className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
               >
                 Sold
               </a>
               <a
                 href="/listed"
-                className="rounded-lg border border-white/10 bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 font-semibold text-emerald-200 hover:bg-emerald-500/15 transition-all duration-200"
               >
                 Listings
               </a>
               <a
                 href="/pc"
-                className="rounded-lg border border-white/10 bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
               >
                 PC ★
               </a>
               <a
                 href="/account"
-                className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
               >
                 My Account
               </a>
               <button
-                className="rounded-lg bg-slate-800 px-4 py-2 font-semibold hover:bg-slate-700"
+                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
                 onClick={async () => {
                   if (!supabaseConfigured || !supabase) return;
                   await supabase.auth.signOut();
