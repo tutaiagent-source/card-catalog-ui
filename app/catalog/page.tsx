@@ -292,6 +292,14 @@ export default function CatalogPage() {
     platform: string;
     askingPrice: string;
   } | null>(null);
+  const [bulkSoldModal, setBulkSoldModal] = useState<{
+    price: string;
+    date: string;
+    platform: string;
+    costBasis: string;
+    shippingCost: string;
+    platformFee: string;
+  } | null>(null);
   const [shareCard, setShareCard] = useState<Card | null>(null);
   const [showValuable, setShowValuable] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -858,6 +866,127 @@ export default function CatalogPage() {
                 .update(cardToDbPayload(snapshot))
                 .eq("id", snapshot.id)
                 .eq("user_id", user.id);
+              if (undoError) {
+                alert(`Undo failed: ${undoError.message}`);
+                return;
+              }
+            }
+            setStatusToast({ message: `Undid move for ${snapshots.length} card${snapshots.length === 1 ? "" : "s"}.`, tone: "success" });
+            sync();
+          }
+        : undefined,
+    });
+    sync();
+  };
+
+  const bulkMoveToSold = async () => {
+    if (!bulkSoldModal) return;
+    if (selectedCardIds.length === 0) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const sb = supabase;
+    const userId = user.id;
+
+    const snapshots = cards.filter((card) => card.id && selectedCardIds.includes(card.id));
+    const count = selectedCardIds.length;
+    const today = new Date().toISOString().slice(0, 10);
+
+    const priceRaw = bulkSoldModal.price.trim();
+    if (!priceRaw) {
+      alert("Enter the amount sold for.");
+      return;
+    }
+
+    const price = Number(priceRaw);
+    if (!Number.isFinite(price) || price < 0) {
+      alert("Enter a valid sold price.");
+      return;
+    }
+
+    const date = bulkSoldModal.date.trim() || today;
+    const platform = bulkSoldModal.platform.trim() || null;
+
+    const costBasisInput = bulkSoldModal.costBasis.trim();
+    const shippingCostInput = bulkSoldModal.shippingCost.trim();
+    const platformFeeInput = bulkSoldModal.platformFee.trim();
+
+    if (costBasisInput && (!Number.isFinite(Number(costBasisInput)) || Number(costBasisInput) < 0)) {
+      alert("Enter a valid card cost.");
+      return;
+    }
+    if (shippingCostInput && (!Number.isFinite(Number(shippingCostInput)) || Number(shippingCostInput) < 0)) {
+      alert("Enter a valid shipping cost.");
+      return;
+    }
+    if (platformFeeInput && (!Number.isFinite(Number(platformFeeInput)) || Number(platformFeeInput) < 0)) {
+      alert("Enter a valid fees amount.");
+      return;
+    }
+
+    // 1) Update sold fields in one shot.
+    const { error: statusError } = await sb
+      .from("cards")
+      .update({
+        status: "Sold",
+        sold_price: price,
+        sold_at: date,
+        sale_platform: platform,
+      })
+      .in("id", selectedCardIds)
+      .eq("user_id", userId);
+
+    if (statusError) {
+      alert(`Bulk move failed: ${statusError.message}`);
+      return;
+    }
+
+    // 2) Update notes per card so seller-meta block is correct.
+    const updates = snapshots.map(async (snapshot) => {
+      if (!snapshot.id) return;
+      const seller = parseSellerMeta(snapshot.notes);
+
+      const nextMeta = {
+        costBasis: costBasisInput !== "" ? Number(costBasisInput) : seller.meta.costBasis,
+        shippingCost: shippingCostInput !== "" ? Number(shippingCostInput) : seller.meta.shippingCost,
+        platformFee: platformFeeInput !== "" ? Number(platformFeeInput) : seller.meta.platformFee,
+      };
+
+      const nextNotes = buildSellerNotes(snapshot.notes, nextMeta);
+      const { error } = await sb
+        .from("cards")
+        .update({ notes: nextNotes })
+        .eq("id", snapshot.id)
+        .eq("user_id", userId);
+
+      if (error) throw new Error(error.message);
+    });
+
+    try {
+      await Promise.all(updates);
+    } catch (e: any) {
+      alert(`Failed to update seller meta: ${e?.message || String(e)}`);
+      return;
+    }
+
+    setSelectedCardIds([]);
+    setBulkSoldModal(null);
+
+    setStatusToast({
+      message: `Moved ${count} card${count === 1 ? "" : "s"} to Sold.`,
+      actionLabel: snapshots.length ? "Undo" : undefined,
+      tone: "success",
+      onAction: snapshots.length
+        ? async () => {
+            if (!supabaseConfigured || !sb) return;
+            for (const snapshot of snapshots) {
+              if (!snapshot.id) continue;
+              const { error: undoError } = await sb
+                .from("cards")
+                .update(cardToDbPayload(snapshot))
+                .eq("id", snapshot.id)
+                .eq("user_id", userId);
+
               if (undoError) {
                 alert(`Undo failed: ${undoError.message}`);
                 return;
@@ -2208,6 +2337,27 @@ export default function CatalogPage() {
           </button>
           <button
             type="button"
+            className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition-colors duration-150 hover:bg-emerald-500/15"
+            onClick={() => {
+              const firstSelected = cards.find((card) => card.id && selectedCardIds.includes(card.id));
+              const today = new Date().toISOString().slice(0, 10);
+              const seller = parseSellerMeta(firstSelected?.notes);
+
+              setBulkSoldModal({
+                price: "",
+                date: String(today),
+                platform: String(firstSelected?.sale_platform || ""),
+                costBasis: String(seller.meta.costBasis ?? ""),
+                shippingCost: String(seller.meta.shippingCost ?? ""),
+                platformFee: String(seller.meta.platformFee ?? ""),
+              });
+            }}
+            disabled={selectedCardIds.length === 0}
+          >
+            Sold
+          </button>
+          <button
+            type="button"
             className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition-colors duration-150 hover:bg-red-500/15"
             onClick={bulkDeleteSelected}
             disabled={selectedCardIds.length === 0}
@@ -2281,6 +2431,133 @@ export default function CatalogPage() {
         </div>
       </div>
     )}
+
+    {bulkSoldModal && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        onClick={() => setBulkSoldModal(null)}
+      >
+        <div
+          className="relative w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute right-3 top-3 z-50 rounded bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+            onClick={() => setBulkSoldModal(null)}
+          >
+            ✕
+          </button>
+
+          <div className="text-lg font-bold">Move to Sold</div>
+          <div className="mt-1 text-sm text-slate-300">{selectedCardIds.length} selected</div>
+
+          <div className="mt-4 space-y-4">
+            <label className="block">
+              <div className="mb-1 text-sm text-slate-300">Sold for</div>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                className="w-full rounded bg-slate-950 px-3 py-2"
+                value={bulkSoldModal.price}
+                onChange={(e) => setBulkSoldModal((prev) => (prev ? { ...prev, price: e.target.value } : prev))}
+                placeholder="e.g. 28.00"
+              />
+            </label>
+
+            <label className="block">
+              <div className="mb-1 text-sm text-slate-300">Date sold</div>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 rounded bg-slate-950 px-3 py-2"
+                  value={bulkSoldModal.date}
+                  onChange={(e) => setBulkSoldModal((prev) => (prev ? { ...prev, date: e.target.value } : prev))}
+                  placeholder="YYYY-MM-DD"
+                />
+                <button
+                  type="button"
+                  className="rounded bg-slate-800 px-3 py-2 text-xs font-semibold hover:bg-slate-700"
+                  onClick={() => setBulkSoldModal((prev) => (prev ? { ...prev, date: new Date().toISOString().slice(0, 10) } : prev))}
+                >
+                  Today
+                </button>
+              </div>
+            </label>
+
+            <label className="block">
+              <div className="mb-1 text-sm text-slate-300">App / site</div>
+              <input
+                className="w-full rounded bg-slate-950 px-3 py-2"
+                value={bulkSoldModal.platform}
+                onChange={(e) => setBulkSoldModal((prev) => (prev ? { ...prev, platform: e.target.value } : prev))}
+                placeholder="eBay, Whatnot, local..."
+              />
+            </label>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="block">
+                <div className="mb-1 text-sm text-slate-300">Card cost</div>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="w-full rounded bg-slate-950 px-3 py-2"
+                  value={bulkSoldModal.costBasis}
+                  onChange={(e) => setBulkSoldModal((prev) => (prev ? { ...prev, costBasis: e.target.value } : prev))}
+                  placeholder="0.00"
+                />
+              </label>
+
+              <label className="block">
+                <div className="mb-1 text-sm text-slate-300">Fees</div>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="w-full rounded bg-slate-950 px-3 py-2"
+                  value={bulkSoldModal.platformFee}
+                  onChange={(e) => setBulkSoldModal((prev) => (prev ? { ...prev, platformFee: e.target.value } : prev))}
+                  placeholder="0.00"
+                />
+              </label>
+
+              <label className="block">
+                <div className="mb-1 text-sm text-slate-300">Shipping</div>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="w-full rounded bg-slate-950 px-3 py-2"
+                  value={bulkSoldModal.shippingCost}
+                  onChange={(e) => setBulkSoldModal((prev) => (prev ? { ...prev, shippingCost: e.target.value } : prev))}
+                  placeholder="0.00"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700"
+              onClick={() => setBulkSoldModal(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="rounded bg-[#d50000] px-4 py-2 text-sm font-semibold hover:bg-[#b80000]"
+              onClick={() => bulkMoveToSold()}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
     {statusModal && (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"

@@ -360,7 +360,7 @@ export default function SoldPage() {
       card.metrics.roi != null ? Number(card.metrics.roi.toFixed(2)) : "",
       card.graded || "",
       card.grade ?? "",
-      card.publicNotes || "",
+      card.notes || "",
     ]);
 
     const csv = [headers, ...rows].map((row) => row.map(csvCell).join(",")).join("\n");
