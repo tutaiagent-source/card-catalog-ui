@@ -200,7 +200,7 @@ export default function AccountPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-3xl px-4 py-8 pb-24 md:pb-8">
+      <div className="mx-auto max-w-3xl px-4 py-8 pb-24 md:pb-24">
         <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>

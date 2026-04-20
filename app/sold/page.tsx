@@ -397,7 +397,7 @@ export default function SoldPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 pb-24 md:pb-24">
         <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
