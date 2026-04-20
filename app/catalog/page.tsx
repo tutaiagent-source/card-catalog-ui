@@ -1159,7 +1159,7 @@ export default function CatalogPage() {
                   >
                     ⋯
                   </summary>
-                  <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-white/10 bg-slate-950 p-2 shadow-2xl backdrop-blur">
+                  <div className="absolute right-0 top-full z-[9999] mt-2 w-56 rounded-2xl border border-white/10 bg-slate-950 p-2 shadow-2xl backdrop-blur">
                     {isCollectorPreview ? (
                       <>
                         <a
