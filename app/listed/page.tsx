@@ -195,14 +195,18 @@ export default function ListedPage() {
                 <div className="grid grid-cols-4 gap-2" role="list" aria-label="Listed cards">
                   {sortedCards.map((c) => {
                     const src = c.image_url ? driveToImageSrc(c.image_url) : "";
+                    const goHref = toUrl(c.sale_platform);
                     return (
-                      <button
+                      <div
                         key={c.id}
-                        type="button"
                         role="listitem"
+                        tabIndex={0}
                         onClick={() => setActiveCard(c)}
                         className="relative rounded-xl border border-slate-800 bg-slate-950/40 p-0"
                         aria-label={`View ${c.player_name}`}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") setActiveCard(c);
+                        }}
                       >
                         <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
                           {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
@@ -213,7 +217,19 @@ export default function ListedPage() {
                             {formatMoney(Number(c.asking_price))}
                           </div>
                         ) : null}
-                      </button>
+
+                        {goHref ? (
+                          <a
+                            href={goHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute right-2 bottom-2 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-950/90"
+                          >
+                            Go ↗
+                          </a>
+                        ) : null}
+                      </div>
                     );
                   })}
                 </div>
@@ -228,22 +244,40 @@ export default function ListedPage() {
                   <div className="mt-4 grid grid-cols-6 gap-4">
                     {sortedCards.map((c) => {
                       const src = c.image_url ? driveToImageSrc(c.image_url) : "";
+                      const goHref = toUrl(c.sale_platform);
                       return (
-                        <button
+                        <div
                           key={c.id}
-                          type="button"
+                          role="button"
+                          tabIndex={0}
                           onClick={() => setActiveCard(c)}
                           className="relative rounded-2xl border border-white/10 bg-slate-950/40 p-3 hover:bg-slate-950/55"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") setActiveCard(c);
+                          }}
                         >
                           <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950">
                             {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
                           </div>
+
+                          {goHref ? (
+                            <a
+                              href={goHref}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute right-3 top-3 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-950/90"
+                            >
+                              Go ↗
+                            </a>
+                          ) : null}
+
                           {c.asking_price != null ? (
                             <div className="mt-3 text-center text-sm font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
                           ) : (
                             <div className="mt-3 text-center text-sm font-semibold text-slate-500">No price</div>
                           )}
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
