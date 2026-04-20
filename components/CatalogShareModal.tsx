@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { driveToImageSrc } from "@/lib/googleDrive";
 
 type ShareCard = {
@@ -95,6 +95,55 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
   const hasBackImage = Boolean(card.back_image_url);
   const caption = useMemo(() => buildCaption(card, includePrice, price), [card, includePrice, price]);
 
+  const renderKey = useMemo(
+    () =>
+      JSON.stringify({
+        includePrice,
+        price,
+        year: card.year,
+        player_name: card.player_name,
+        set_name: card.set_name,
+        parallel: parallel,
+        serial_number_text: card.serial_number_text,
+        image_url: card.image_url,
+        back_image_url: card.back_image_url,
+      }),
+    [includePrice, price, card.year, card.player_name, card.set_name, parallel, card.serial_number_text, card.image_url, card.back_image_url]
+  );
+
+  const preparedRef = useRef<{ key: string; canvas: HTMLCanvasElement; blob: Blob | null } | null>(null);
+  const [isPreparingShareImage, setIsPreparingShareImage] = useState(false);
+
+  async function getPreparedCanvasAndBlob() {
+    const cached = preparedRef.current;
+    if (cached?.key === renderKey) return { canvas: cached.canvas, blob: cached.blob };
+
+    const canvas = await renderShareCanvas();
+    const blob = await canvasToBlob(canvas);
+    preparedRef.current = { key: renderKey, canvas, blob };
+    return { canvas, blob };
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setIsPreparingShareImage(true);
+        const canvas = await renderShareCanvas();
+        const blob = await canvasToBlob(canvas);
+        if (cancelled) return;
+        preparedRef.current = { key: renderKey, canvas, blob };
+      } catch {
+        // ignore preparation failures, we'll try again on click
+      } finally {
+        if (!cancelled) setIsPreparingShareImage(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [renderKey]);
+
   async function copyCaption() {
     try {
       await navigator.clipboard.writeText(caption);
@@ -108,15 +157,16 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
     const title = [card.year, card.player_name].filter(Boolean).join(" ");
 
     let canvas: HTMLCanvasElement;
+    let blob: Blob | null;
     try {
-      canvas = await renderShareCanvas();
+      const prepared = await getPreparedCanvasAndBlob();
+      canvas = prepared.canvas;
+      blob = prepared.blob;
     } catch {
       alert("Could not generate the share image on this device. Please try again.");
       await copyCaption();
       return;
     }
-
-    const blob = await canvasToBlob(canvas);
     const name = `${slugify([card.year, card.player_name, card.set_name].filter(Boolean).join(" ")) || "cardcat-share"}.jpg`;
 
     const shareTextOnly = { title, text: caption };
@@ -275,7 +325,8 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
   }
 
   async function downloadShareImage() {
-    const canvas = await renderShareCanvas();
+    const prepared = await getPreparedCanvasAndBlob();
+    const canvas = prepared.canvas;
     const a = document.createElement("a");
     const name = slugify([card.year, card.player_name, card.set_name].filter(Boolean).join(" ")) || "cardcat-share";
     a.href = canvas.toDataURL("image/jpeg", 0.92);
@@ -381,12 +432,28 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
               <button type="button" onClick={copyCaption} className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]">
                 Copy caption
               </button>
-              <button type="button" onClick={nativeShare} className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]">
-                <span className="sm:hidden">Share / Save Image</span>
-                <span className="hidden sm:inline">Share</span>
+              <button
+                type="button"
+                onClick={nativeShare}
+                disabled={isPreparingShareImage}
+                className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isPreparingShareImage ? (
+                  "Preparing…"
+                ) : (
+                  <>
+                    <span className="sm:hidden">Share / Save Image</span>
+                    <span className="hidden sm:inline">Share</span>
+                  </>
+                )}
               </button>
-              <button type="button" onClick={downloadShareImage} className="hidden rounded-2xl bg-[#d50000] px-4 py-3 text-sm font-semibold text-white hover:bg-[#b80000] sm:block">
-                Download image
+              <button
+                type="button"
+                onClick={downloadShareImage}
+                disabled={isPreparingShareImage}
+                className="hidden rounded-2xl bg-[#d50000] px-4 py-3 text-sm font-semibold text-white hover:bg-[#b80000] disabled:opacity-60 disabled:cursor-not-allowed sm:block"
+              >
+                {isPreparingShareImage ? "Preparing…" : "Download image"}
               </button>
             </div>
 
