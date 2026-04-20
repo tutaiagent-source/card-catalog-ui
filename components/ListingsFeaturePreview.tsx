@@ -15,7 +15,7 @@ export default function ListingsFeaturePreview() {
             <div className="text-sm font-semibold text-slate-200">Listed shelf</div>
             <div className="mt-1 text-xs text-slate-400">Tap to edit asking price + sale link</div>
           </div>
-          <div className="rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-200">
+          <div className="whitespace-nowrap rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-semibold text-emerald-200">
             Ready to post
           </div>
         </div>
@@ -51,9 +51,9 @@ export default function ListingsFeaturePreview() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="text-sm font-semibold text-white">Listing details</div>
-              <div className="mt-1 text-xs font-semibold text-slate-400">Square card + your sale link</div>
+              <div className="mt-1 max-w-[190px] leading-4 text-[11px] font-semibold text-slate-400">Square card + your sale link</div>
             </div>
-            <div className="rounded-full bg-blue-500/15 px-3 py-1 text-[11px] font-semibold text-blue-200">
+            <div className="whitespace-nowrap rounded-full bg-blue-500/15 px-3 py-1 text-[11px] font-semibold text-blue-200">
               Link attached
             </div>
           </div>
@@ -68,7 +68,7 @@ export default function ListingsFeaturePreview() {
               <div className="text-sm font-bold text-white">Apr 19</div>
             </div>
             <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-xs font-semibold text-slate-200">
-              https://whatnot.com/…
+              <div className="truncate whitespace-nowrap">https://whatnot.com/…</div>
             </div>
           </div>
 
@@ -76,7 +76,7 @@ export default function ListingsFeaturePreview() {
             <button className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-[0_20px_60px_rgba(255,255,255,0.10)] hover:bg-slate-100">
               Open listing ↗
             </button>
-            <button className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]">
+            <button className="whitespace-nowrap rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]">
               Share post
             </button>
           </div>
