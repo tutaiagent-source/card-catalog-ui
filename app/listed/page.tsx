@@ -45,6 +45,26 @@ function formatMoney(value: number) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
 }
 
+function buildEbayCompsUrl(card: ListedCard) {
+  const serialRaw = String(card.serial_number_text ?? "").trim();
+  const slashIdx = serialRaw.indexOf("/");
+  const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
+
+  const parts: string[] = [
+    card.player_name,
+    card.brand,
+    card.set_name,
+    card.parallel,
+    serialForEbay,
+  ]
+    .map((p) => String(p ?? "").trim())
+    .filter(Boolean)
+    .filter((p) => p.toLowerCase() !== "n/a");
+
+  const query = parts.join(" ");
+  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}&LH_Sold=1&LH_Complete=1`;
+}
+
 function normalizeStatusValue(status?: string | null): CardStatus {
   const raw = String(status || "").trim().toLowerCase();
   if (raw === "sold") return "Sold";
@@ -278,6 +298,7 @@ export default function ListedPage() {
                   {sortedCards.map((c) => {
                     const src = c.image_url ? driveToImageSrc(c.image_url) : "";
                     const goHref = toUrl(c.sale_platform);
+                    const compsHref = buildEbayCompsUrl(c);
                     return (
                       <div
                         key={c.id}
@@ -315,6 +336,18 @@ export default function ListedPage() {
                             Go ↗
                           </a>
                         ) : null}
+
+                        {compsHref ? (
+                          <a
+                            href={compsHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute left-2 bottom-2 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-950/90"
+                          >
+                            Check comps
+                          </a>
+                        ) : null}
                       </div>
                     );
                   })}
@@ -331,6 +364,7 @@ export default function ListedPage() {
                     {sortedCards.map((c) => {
                       const src = c.image_url ? driveToImageSrc(c.image_url) : "";
                       const goHref = toUrl(c.sale_platform);
+                      const compsHref = buildEbayCompsUrl(c);
                       return (
                         <div
                           key={c.id}
@@ -355,6 +389,18 @@ export default function ListedPage() {
                               className="absolute right-3 top-3 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-950/90"
                             >
                               Go ↗
+                            </a>
+                          ) : null}
+
+                          {compsHref ? (
+                            <a
+                              href={compsHref}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute left-3 top-3 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-950/90"
+                            >
+                              Check comps
                             </a>
                           ) : null}
 
