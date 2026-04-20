@@ -15,6 +15,12 @@ const featureCards = [
     label: "See Card Posts",
   },
   {
+    title: "Listings",
+    body: "One place to view and update every active card you’re selling.",
+    href: "/features/listings",
+    label: "See Listings",
+  },
+  {
     title: "CSV Import",
     body: "Bring in larger collections faster and clean up messy spreadsheets before saving.",
     href: "/guides/csv",
@@ -30,6 +36,7 @@ const featureCards = [
 
 const quickLinks = [
   { title: "Card Posts", body: "How the card post image works, what it includes, and how to use it on mobile or desktop.", href: "/features/share-sheets" },
+  { title: "Listings", body: "How active listings move from Catalog into your single Listings page.", href: "/features/listings" },
   { title: "CSV Import", body: "How to structure a file, map fields, and avoid common cleanup issues.", href: "/guides/csv" },
   { title: "Image Uploads", body: "How front and back images work and how they improve previews and card posts.", href: "/guides/images" },
   { title: "Sold Tracking", body: "How listed and sold records stay connected to the original card record.", href: "/guides/sold" },
