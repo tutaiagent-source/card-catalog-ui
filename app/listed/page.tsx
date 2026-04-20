@@ -73,6 +73,9 @@ export default function ListedPage() {
   const [editListedAt, setEditListedAt] = useState<string>("");
   const [isSavingDetails, setIsSavingDetails] = useState(false);
 
+  const [markSoldModal, setMarkSoldModal] = useState<{ price: string; date: string } | null>(null);
+  const [isMarkingSold, setIsMarkingSold] = useState(false);
+
   const [shareCard, setShareCard] = useState<any | null>(null);
 
   const sortedCards = useMemo(() => {
@@ -168,6 +171,60 @@ export default function ListedPage() {
       setActiveCard((prev) => (prev ? { ...prev, asking_price, listed_at, sale_platform } : prev));
     } finally {
       setIsSavingDetails(false);
+    }
+  }
+
+  function openMarkSoldModal() {
+    const today = new Date().toISOString().slice(0, 10);
+    setMarkSoldModal({
+      price: editAskingPrice.trim(),
+      date: today,
+    });
+  }
+
+  async function markAsSold() {
+    if (!activeCard?.id) return;
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+    if (!markSoldModal) return;
+
+    const priceRaw = markSoldModal.price.trim();
+    if (!priceRaw) {
+      alert("Enter the sold price.");
+      return;
+    }
+
+    const sold_price = Number(priceRaw);
+    if (!Number.isFinite(sold_price) || sold_price < 0) {
+      alert("Enter a valid sold price.");
+      return;
+    }
+
+    const sold_at = markSoldModal.date.trim();
+    if (!sold_at) {
+      alert("Enter the sold date.");
+      return;
+    }
+
+    const sale_platform = editLink.trim() || activeCard.sale_platform || null;
+
+    setIsMarkingSold(true);
+    try {
+      const { error } = await supabase
+        .from("cards")
+        .update({ status: "Sold", sold_price, sold_at, sale_platform })
+        .eq("id", activeCard.id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        alert(`Could not mark as sold: ${error.message}`);
+        return;
+      }
+
+      setActiveCard(null);
+      setMarkSoldModal(null);
+      window.location.href = "/sold";
+    } finally {
+      setIsMarkingSold(false);
     }
   }
 
@@ -505,14 +562,24 @@ export default function ListedPage() {
                           View sold page
                         </a>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={saveListingDetails}
-                          disabled={isSavingDetails}
-                          className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
-                        >
-                          {isSavingDetails ? "Saving…" : "Save listing"}
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={saveListingDetails}
+                            disabled={isSavingDetails}
+                            className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
+                          >
+                            {isSavingDetails ? "Saving…" : "Save listing"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={openMarkSoldModal}
+                            disabled={isMarkingSold}
+                            className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200 hover:bg-red-500/15 disabled:opacity-60"
+                          >
+                            {isMarkingSold ? "Marking…" : "Mark sold"}
+                          </button>
+                        </>
                       )}
 
                       <button
@@ -544,6 +611,87 @@ export default function ListedPage() {
             </div>
           </div>
         ) : null}
+
+      {markSoldModal ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4"
+          onClick={() => setMarkSoldModal(null)}
+        >
+          <div
+            className="relative w-full max-w-md rounded-xl border border-slate-700 bg-slate-900 p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              aria-label="Close"
+              className="absolute right-3 top-3 rounded bg-slate-800 px-2 py-1 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+              onClick={() => setMarkSoldModal(null)}
+            >
+              ✕
+            </button>
+
+            <div className="text-lg font-bold">Mark as sold</div>
+            <div className="mt-1 text-sm text-slate-300">
+              {activeCard ? `${activeCard.player_name} · ${activeCard.year} · ${activeCard.brand}` : ""}
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <label className="block">
+                <div className="mb-1 text-sm text-slate-300">Sold price</div>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="w-full rounded bg-slate-950 px-3 py-2 text-white"
+                  value={markSoldModal.price}
+                  onChange={(e) => setMarkSoldModal((prev) => (prev ? { ...prev, price: e.target.value } : prev))}
+                  placeholder="e.g. 28.00"
+                />
+              </label>
+
+              <label className="block">
+                <div className="mb-1 text-sm text-slate-300">Sold date</div>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    className="flex-1 rounded bg-slate-950 px-3 py-2 text-white"
+                    value={markSoldModal.date}
+                    onChange={(e) => setMarkSoldModal((prev) => (prev ? { ...prev, date: e.target.value } : prev))}
+                  />
+                  <button
+                    type="button"
+                    className="rounded bg-slate-800 px-3 py-2 text-xs font-semibold hover:bg-slate-700"
+                    onClick={() =>
+                      setMarkSoldModal((prev) => (prev ? { ...prev, date: new Date().toISOString().slice(0, 10) } : prev))
+                    }
+                  >
+                    Today
+                  </button>
+                </div>
+              </label>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700"
+                onClick={() => setMarkSoldModal(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="rounded bg-[#d50000] px-4 py-2 text-sm font-semibold hover:bg-[#b80000] disabled:opacity-60"
+                disabled={isMarkingSold}
+                onClick={() => markAsSold()}
+              >
+                {isMarkingSold ? "Marking…" : "Mark sold"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       </div>
     </main>
   );
