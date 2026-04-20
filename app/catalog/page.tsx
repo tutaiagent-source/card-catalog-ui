@@ -1119,79 +1119,102 @@ export default function CatalogPage() {
               </details>
             </div>
 
-            <div className="hidden md:flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/55 px-2 py-2 shadow-[0_20px_70px_rgba(2,6,23,0.45)] backdrop-blur">
+            <div className="hidden md:flex items-center gap-3">
               <a
                 href="/add-card"
                 className="rounded-xl bg-gradient-to-b from-[#ff2d2d]/80 to-[#b80000] px-4 py-2 font-semibold text-slate-50 shadow-[0_18px_60px_rgba(213,0,0,0.22)] ring-1 ring-red-400/20 transition-all duration-200 hover:from-[#ff2d2d]/90 hover:to-[#b80000] hover:shadow-[0_22px_90px_rgba(213,0,0,0.32)]"
               >
                 Add Card
               </a>
-              {isCollectorPreview ? (
-                <>
-                  <a
-                    href="/account"
-                    className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-200 hover:bg-amber-500/15 transition-all duration-200"
+
+              <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/55 px-2 py-2 shadow-[0_20px_70px_rgba(2,6,23,0.45)] backdrop-blur">
+                <a
+                  href="/listed"
+                  aria-label="Listings"
+                  title="Listings"
+                  className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2 text-lg font-semibold text-emerald-200 hover:bg-emerald-500/15 transition-all duration-200"
+                >
+                  📣
+                </a>
+                <a
+                  href="/pc"
+                  aria-label="PC ★"
+                  title="PC ★"
+                  className="rounded-xl border border-white/10 bg-white/[0.04] p-2 text-lg font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
+                >
+                  ☆
+                </a>
+                <a
+                  href="/sold"
+                  aria-label="Sold"
+                  title="Sold"
+                  className="rounded-xl border border-white/10 bg-white/[0.04] p-2 text-lg font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
+                >
+                  💰
+                </a>
+
+                <details className="relative" data-inventory-menu="true">
+                  <summary
+                    className="list-none cursor-pointer select-none rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
                   >
-                    Import CSV (Pro)
-                  </a>
-                  <a
-                    href="/account"
-                    className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 font-semibold text-amber-200 hover:bg-amber-500/15 transition-all duration-200"
-                  >
-                    Export CSV (Pro)
-                  </a>
-                </>
-              ) : (
-                <>
-                  <a
-                    href="/import"
-                    className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
-                  >
-                    Import CSV
-                  </a>
-                  <button
-                    type="button"
-                    className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
-                    onClick={exportCards}
-                  >
-                    Export CSV
-                  </button>
-                </>
-              )}
-              <a
-                href="/sold"
-                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
-              >
-                Sold
-              </a>
-              <a
-                href="/listed"
-                className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 font-semibold text-emerald-200 hover:bg-emerald-500/15 transition-all duration-200"
-              >
-                Listings
-              </a>
-              <a
-                href="/pc"
-                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
-              >
-                PC ★
-              </a>
-              <a
-                href="/account"
-                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
-              >
-                My Account
-              </a>
-              <button
-                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 font-semibold text-slate-100 hover:bg-white/[0.08] hover:border-white/20 transition-all duration-200"
-                onClick={async () => {
-                  if (!supabaseConfigured || !supabase) return;
-                  await supabase.auth.signOut();
-                  window.location.href = "/login";
-                }}
-              >
-                Sign out
-              </button>
+                    ⋯
+                  </summary>
+                  <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-2xl border border-white/10 bg-slate-950 p-2 shadow-2xl backdrop-blur">
+                    {isCollectorPreview ? (
+                      <>
+                        <a
+                          href="/account"
+                          className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-amber-200 hover:bg-amber-500/10"
+                        >
+                          Import CSV (Pro)
+                        </a>
+                        <a
+                          href="/account"
+                          className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-amber-200 hover:bg-amber-500/10"
+                        >
+                          Export CSV (Pro)
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <a
+                          href="/import"
+                          className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-100 hover:bg-white/[0.06]"
+                        >
+                          Import CSV
+                        </a>
+                        <button
+                          type="button"
+                          className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-100 hover:bg-white/[0.06]"
+                          onClick={exportCards}
+                        >
+                          Export CSV
+                        </button>
+                      </>
+                    )}
+
+                    <div className="my-1 h-px bg-white/8" />
+
+                    <a
+                      href="/account"
+                      className="block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-100 hover:bg-white/[0.06]"
+                    >
+                      My Account
+                    </a>
+                    <button
+                      type="button"
+                      className="mt-1 block w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-100 hover:bg-white/[0.06]"
+                      onClick={async () => {
+                        if (!supabaseConfigured || !supabase) return;
+                        await supabase.auth.signOut();
+                        window.location.href = "/login";
+                      }}
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </details>
+              </div>
             </div>
           </div>
         </div>
