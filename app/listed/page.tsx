@@ -102,7 +102,7 @@ export default function ListedPage() {
         .from("cards")
         .select("id, player_name, year, brand, set_name, parallel, serial_number_text, image_url, back_image_url, status, asking_price, listed_at, sale_platform, sold_price, sold_at")
         .eq("user_id", user.id)
-        .in("status", ["Listed", "Sold"]);
+        .eq("status", "Listed");
 
       if (error) {
         console.error("Failed to fetch listed cards:", error);
@@ -243,12 +243,12 @@ export default function ListedPage() {
               <span>📣</span>
               <span>Listed</span>
             </div>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">Listed and sold cards</h1>
-            <p className="mt-2 text-slate-300">Tap a card to set (or update) the sale link. Sold cards show sold date + price and jump to the Sold page.</p>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">Actively listed cards</h1>
+            <p className="mt-2 text-slate-300">Tap a card to set (or update) the sale link. When you mark it sold, it moves to the Sold page.</p>
           </div>
 
           <div className="text-right">
-            <div className="text-sm text-slate-400">{sortedCards.length} tracked card{sortedCards.length === 1 ? "" : "s"}</div>
+            <div className="text-sm text-slate-400">{sortedCards.length} active listing{sortedCards.length === 1 ? "" : "s"}</div>
             <div className="mt-3 flex items-center justify-end gap-2">
               <button
                 type="button"
@@ -264,8 +264,8 @@ export default function ListedPage() {
 
         {sortedCards.length === 0 ? (
           <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.03] p-8">
-            <div className="text-lg font-semibold text-white">No listed/sold cards</div>
-            <div className="mt-2 text-sm text-slate-300">Mark cards as Listed in Catalog to see them here (sold cards will show too).</div>
+            <div className="text-lg font-semibold text-white">No active listings</div>
+            <div className="mt-2 text-sm text-slate-300">Mark cards as Listed in Catalog to see them here.</div>
           </div>
         ) : (
           <>
