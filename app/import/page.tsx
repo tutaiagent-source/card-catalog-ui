@@ -170,6 +170,36 @@ const FIELD_OPTIONS: ImportField[] = [
   "back_image_url",
 ];
 
+// Fields that actually land on the CardCat `cards` row via createInsertPayload.
+const IMPORTED_CARD_FIELDS: ImportField[] = [
+  "player_name",
+  "year",
+  "brand",
+  "set_name",
+  "parallel",
+  "card_number",
+  "team",
+  "sport",
+  "competition",
+  "quantity",
+  "estimated_price",
+  "status",
+  "asking_price",
+  "listed_at",
+  "sold_price",
+  "sold_at",
+  "sale_platform",
+  "rookie",
+  "is_autograph",
+  "has_memorabilia",
+  "graded",
+  "grade",
+  "serial_number_text",
+  "notes",
+  "image_url",
+  "back_image_url",
+];
+
 const FIELD_ALIASES: Record<Exclude<ImportField, "__ignore">, string[]> = {
   player_name: ["player", "player name", "name", "athlete", "subject"],
   year: ["year", "season"],
@@ -573,6 +603,10 @@ export default function ImportPage() {
   const [importing, setImporting] = useState(false);
   const [cleaningUp, setCleaningUp] = useState(false);
   const [previewFocus, setPreviewFocus] = useState<"all" | PreviewRow["action"]>("all");
+  const [expandedPreviewRows, setExpandedPreviewRows] = useState<Record<number, boolean>>({});
+  const [editedPreviewPayloadByRowNumber, setEditedPreviewPayloadByRowNumber] = useState<
+    Record<number, Partial<Card>>
+  >({});
 
   const loadExistingCards = async () => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -706,6 +740,8 @@ export default function ImportPage() {
           setRows(cleanedRows);
           setDuplicateChoices({});
           setAttentionChoices({});
+          setExpandedPreviewRows({});
+          setEditedPreviewPayloadByRowNumber({});
           setParseErrors((results.errors || []).map((error) => `Row ${error.row}: ${error.message}`));
         },
         error: (error) => {
@@ -766,12 +802,18 @@ export default function ImportPage() {
         setRows(cleanedRows);
         setDuplicateChoices({});
         setAttentionChoices({});
+        setExpandedPreviewRows({});
+        setEditedPreviewPayloadByRowNumber({});
       } catch (e: any) {
         setParseErrors([e?.message || "Failed to parse spreadsheet."]);
       }
     };
     reader.onerror = () => setParseErrors(["Failed to read spreadsheet file."]);
     reader.readAsArrayBuffer(file);
+  };
+
+  const togglePreviewRowExpanded = (rowNumber: number) => {
+    setExpandedPreviewRows((prev) => ({ ...prev, [rowNumber]: !prev[rowNumber] }));
   };
 
   const onImport = async () => {
@@ -794,8 +836,9 @@ export default function ImportPage() {
     const failures: string[] = [];
 
     for (const row of readyRows) {
+      const effectivePayload = editedPreviewPayloadByRowNumber[row.rowNumber] ?? row.payload;
       if (row.action === "create" || (row.action === "needs_attention" && !row.matchId)) {
-        const { error } = await supabase.from("cards").insert(createInsertPayload(row.payload, user.id));
+        const { error } = await supabase.from("cards").insert(createInsertPayload(effectivePayload, user.id));
         if (error) {
           failed += 1;
           failures.push(`Row ${row.rowNumber}: ${error.message}`);
@@ -807,13 +850,13 @@ export default function ImportPage() {
       if ((row.action === "update" || row.action === "needs_attention") && row.matchId) {
         const choice = duplicateChoices[row.rowNumber] || "add_quantity";
         const existingQty = Number(row.matchedCard?.quantity || 0);
-        const importQty = Number(row.payload.quantity || 1);
+        const importQty = Number(effectivePayload.quantity || 1);
         const payload =
           row.action === "needs_attention"
-            ? compactUpdatePayload(row.payload)
+            ? compactUpdatePayload(effectivePayload)
             : choice === "add_quantity"
-            ? compactUpdatePayload({ ...row.payload, quantity: existingQty + importQty })
-            : compactUpdatePayload(row.payload);
+            ? compactUpdatePayload({ ...effectivePayload, quantity: existingQty + importQty })
+            : compactUpdatePayload(effectivePayload);
 
         const { error } = await supabase
           .from("cards")
@@ -1236,20 +1279,145 @@ export default function ImportPage() {
               <div className="mt-4 space-y-3">
                 {focusedPreviewRows.map((row) => (
                   <div key={row.rowNumber} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                      <div>
-                        <div className="text-sm font-semibold text-slate-200">Row {row.rowNumber}</div>
-                        <div className="mt-1 text-sm text-slate-300">
-                          {row.payload.player_name || "(no player)"} · {row.payload.year || "(no year)"} · {row.payload.brand || "(no brand)"}
-                        </div>
-                        <div className="text-sm text-slate-400">
-                          {row.payload.set_name || "(no set)"} · #{row.payload.card_number || "?"}
-                        </div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-200">Row {row.rowNumber}</div>
+                      <div className="mt-1 text-sm text-slate-300">
+                        {row.payload.player_name || "(no player)"} · {row.payload.year || "(no year)"} · {row.payload.brand || "(no brand)"}
                       </div>
-                      <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${row.action === "create" ? "bg-emerald-500/15 text-emerald-200" : row.action === "update" ? "bg-blue-500/15 text-blue-200" : row.action === "needs_attention" ? "bg-amber-500/15 text-amber-200" : "bg-slate-800 text-slate-300"}`}>
-                        {row.action === "create" ? "Create" : row.action === "update" ? "Update" : row.action === "needs_attention" ? "Needs attention" : "Skip"}
+                      <div className="text-sm text-slate-400">
+                        {row.payload.set_name || "(no set)"} · #{row.payload.card_number || "?"}
                       </div>
                     </div>
+                    <div className="flex items-center gap-3">
+                        <div
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                            row.action === "create"
+                              ? "bg-emerald-500/15 text-emerald-200"
+                              : row.action === "update"
+                                ? "bg-blue-500/15 text-blue-200"
+                                : row.action === "needs_attention"
+                                  ? "bg-amber-500/15 text-amber-200"
+                                  : "bg-slate-800 text-slate-300"
+                          }`}
+                        >
+                          {row.action === "create"
+                            ? "Create"
+                            : row.action === "update"
+                              ? "Update"
+                              : row.action === "needs_attention"
+                                ? "Needs attention"
+                                : "Skip"}
+                        </div>
+
+                        <button
+                          type="button"
+                          className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                            expandedPreviewRows[row.rowNumber]
+                              ? "bg-white/[0.08] text-white"
+                              : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                          }`}
+                          onClick={() => togglePreviewRowExpanded(row.rowNumber)}
+                        >
+                        {expandedPreviewRows[row.rowNumber] ? "Hide fields" : "Edit import fields"}
+                    </button>
+                  </div>
+                </div>
+
+                {expandedPreviewRows[row.rowNumber] ? (
+                  <div className="mt-4 rounded-xl border border-white/10 bg-slate-900/40 p-4">
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Import fields (editable)</div>
+                        <div className="mt-1 text-sm text-slate-300">These are the values CardCat will import for this row.</div>
+                      </div>
+                      <div className="text-xs text-slate-500">Leave blank to use defaults (create) or keep existing values (update).</div>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {IMPORTED_CARD_FIELDS.map((field) => {
+                        const basePayload = editedPreviewPayloadByRowNumber[row.rowNumber] ?? row.payload;
+                        const rawVal = (basePayload as any)?.[field];
+                        const value = rawVal == null ? "" : String(rawVal);
+
+                        const isYesNoField =
+                          field === "rookie" || field === "is_autograph" || field === "has_memorabilia" || field === "graded";
+
+                        const isNumberField =
+                          field === "quantity" ||
+                          field === "estimated_price" ||
+                          field === "asking_price" ||
+                          field === "sold_price" ||
+                          field === "grade";
+
+                        const label = FIELD_LABELS[field] ?? field;
+
+                        return (
+                          <label key={field} className="block">
+                            <div className="mb-1 text-xs font-semibold text-slate-400">{label}</div>
+
+                            {isYesNoField ? (
+                              <select
+                                className="w-full rounded bg-slate-950 px-3 py-2 text-sm"
+                                value={value}
+                                onChange={(e) => {
+                                  const nextRaw = e.target.value;
+                                  setEditedPreviewPayloadByRowNumber((prev) => {
+                                    const base = prev[row.rowNumber] ?? row.payload;
+                                    const next: any = { ...base };
+                                    if (!nextRaw) delete next[field];
+                                    else next[field] = nextRaw;
+                                    return { ...prev, [row.rowNumber]: next };
+                                  });
+                                }}
+                              >
+                                <option value="">(blank)</option>
+                                <option value="yes">yes</option>
+                                <option value="no">no</option>
+                              </select>
+                            ) : isNumberField ? (
+                              <input
+                                className="w-full rounded bg-slate-950 px-3 py-2 text-sm"
+                                value={value}
+                                onChange={(e) => {
+                                  const nextRaw = e.target.value;
+                                  setEditedPreviewPayloadByRowNumber((prev) => {
+                                    const base = prev[row.rowNumber] ?? row.payload;
+                                    const next: any = { ...base };
+                                    if (!nextRaw.trim()) {
+                                      delete next[field];
+                                      return { ...prev, [row.rowNumber]: next };
+                                    }
+                                    const n = Number(nextRaw);
+                                    if (Number.isFinite(n)) next[field] = n;
+                                    else delete next[field];
+                                    return { ...prev, [row.rowNumber]: next };
+                                  });
+                                }}
+                                placeholder="(blank)"
+                              />
+                            ) : (
+                              <input
+                                className="w-full rounded bg-slate-950 px-3 py-2 text-sm"
+                                value={value}
+                                onChange={(e) => {
+                                  const nextRaw = e.target.value;
+                                  setEditedPreviewPayloadByRowNumber((prev) => {
+                                    const base = prev[row.rowNumber] ?? row.payload;
+                                    const next: any = { ...base };
+                                    if (!nextRaw.trim()) delete next[field];
+                                    else next[field] = nextRaw;
+                                    return { ...prev, [row.rowNumber]: next };
+                                  });
+                                }}
+                              />
+                            )}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
 
                     {row.issues.length > 0 ? (
                       <div className="mt-3 space-y-3">

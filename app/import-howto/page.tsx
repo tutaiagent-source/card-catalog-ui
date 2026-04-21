@@ -21,7 +21,7 @@ My input: a CSV exported from my existing spreadsheet.
 
 Task:
 1) Convert my CSV into the CardCat import format.
-2) Output ONLY a CSV (no explanations). Wrap it in a single \`\`\`csv\`\`\` code block so it’s copy/download-friendly (I can save it as a .csv file).
+2) Output ONLY the CSV (no explanations). Wrap it in a single \`\`\`csv\`\`\` block so I can save it as a downloadable .csv file and import it directly.
 3) Preserve the original values as much as possible.
 4) Normalize column meanings to these fields:
    - Required (best matching): player_name, year, brand, set_name, card_number, team, sport
@@ -76,7 +76,7 @@ export default function ImportHowtoPage() {
             },
             {
               title: "2) (Optional) Reformat with an LLM",
-              body: "Paste your CSV into ChatGPT (or another LLM) and ask it to output a CardCat-ready CSV in a single downloadable/copyable code block.",
+              body: "Paste your CSV into ChatGPT (or another LLM) and ask it to output an updated CardCat-ready CSV as a single downloadable .csv block.",
             },
             {
               title: "3) Upload + review in CardCat",
@@ -121,15 +121,17 @@ export default function ImportHowtoPage() {
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Copy/Paste Prompt</div>
               <h3 className="mt-3 text-xl font-bold text-white">LLM Prompt You Can Reuse</h3>
 
-              <div className="mt-3 flex justify-end">
-                <CopyButton text={samplePrompt} buttonLabel="Copy prompt" />
+              <div className="mt-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                <div className="flex justify-end">
+                  <CopyButton text={samplePrompt} buttonLabel="Copy prompt" />
+                </div>
+                <pre className="mt-3 max-h-[520px] overflow-auto bg-transparent p-0 text-xs leading-5 text-slate-200">
+                  {samplePrompt}
+                </pre>
+                <p className="mt-3 text-xs leading-6 text-slate-400">
+                  Paste your CSV after “Here is my CSV:”. The model should return ONLY the updated, downloadable CardCat-ready CSV in a single ```csv``` block. Save it as a .csv file and import it.
+                </p>
               </div>
-              <pre className="mt-4 max-h-[520px] overflow-auto rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-xs leading-5 text-slate-200">
-                {samplePrompt}
-              </pre>
-              <p className="mt-3 text-xs leading-6 text-slate-400">
-                Paste your CSV after “Here is my CSV:”. Ask the model to output ONLY the CSV in a single ```csv``` code block.
-              </p>
             </div>
           </div>
         </section>
