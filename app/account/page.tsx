@@ -20,6 +20,7 @@ export default function AccountPage() {
   const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
   const { planPreview, setPlanPreview, isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<CardSummary[]>([]);
+  const [realTier, setRealTier] = useState<"collector" | "pro" | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -44,18 +45,65 @@ export default function AccountPage() {
       }
 
       setCards((data ?? []) as CardSummary[]);
+
+      // Entitlements (Stripe-synced)
+      try {
+        const { data: ent, error: entErr } = await supabase
+          .from("user_entitlements")
+          .select("tier")
+          .eq("user_id", user.id)
+          .single();
+
+        if (!entErr && ent?.tier) {
+          setRealTier(ent.tier === "pro" ? "pro" : "collector");
+        }
+      } catch (e) {
+        // Ignore until migration is applied / table exists.
+      }
     })();
   }, [user?.id]);
 
   const totalCards = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0), 0), [cards]);
   const estimatedTotal = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.estimated_price || 0), 0), [cards]);
   const soldRows = useMemo(() => cards.filter((card) => String(card.status || "") === "Sold"), [cards]);
-  const collectorCardCap = 150;
+  const collectorCardCap = 100;
   const collectorAddOnCards = 100;
   const collectorAddOnPricePerMonth = 2;
   const proPricePerMonth = 12;
   const currentPlanPreview = isCollectorPreview ? "Collector" : "Pro";
   const usagePct = Math.min(100, Math.round((totalCards / collectorCardCap) * 100));
+
+  const effectiveTier: "collector" | "pro" = realTier ?? (isCollectorPreview ? "collector" : "pro");
+
+  const startStripeCheckout = async (tier: "collector" | "pro", interval: "month" | "annual") => {
+    if (!supabaseConfigured || !supabase || !user?.id) return;
+
+    setMessage("");
+    setError("");
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not signed in (missing session token). Try signing out/in.");
+
+      const res = await fetch("/api/stripe/checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ tier, interval }),
+      });
+
+      const payload = await res.json();
+      if (!res.ok) throw new Error(payload?.error || "Checkout failed");
+      if (!payload?.url) throw new Error("Stripe did not return a checkout URL");
+
+      window.location.href = payload.url;
+    } catch (e: any) {
+      setError(e?.message || "Checkout error");
+    }
+  };
 
   const providers = useMemo(() => {
     const list = Array.isArray(user?.app_metadata?.providers) ? user?.app_metadata?.providers : [];
@@ -333,37 +381,77 @@ export default function AccountPage() {
               </div>
             ) : null}
 
-            <div className="mt-2 text-xs text-slate-500">Billing is not wired yet, but this gives the user-facing plan shape and pricing for launch.</div>
+            <div className="mt-2 text-xs text-slate-500">
+              Stripe subscriptions wired. Your Stripe-synced plan is: {realTier ? (realTier === "pro" ? "Pro" : "Collector") : "Loading..."}
+            </div>
           </div>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-slate-100">Collector</div>
-                <div className="text-sm font-semibold text-white">$5 / Month</div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-slate-100">Collector</div>
+                  <div className="text-sm font-semibold text-white">$5 / month ($50 / yr)</div>
+                </div>
+                <div className="mt-1 text-sm text-slate-400">Starter tier, limited for personal collections and light selling.</div>
+                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                <li>• Up to 100 cards</li>
+                  <li>• Manual add/edit</li>
+                  <li>• Basic sold tracking</li>
+                  <li>• Basic dashboard</li>
+                </ul>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    className="rounded-xl border border-white/10 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => startStripeCheckout("collector", "month")}
+                    disabled={effectiveTier === "collector"}
+                  >
+                    Collector Monthly
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-xl border border-white/10 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => startStripeCheckout("collector", "annual")}
+                    disabled={effectiveTier === "collector"}
+                  >
+                    Collector Annual ($50/yr)
+                  </button>
+                </div>
               </div>
-              <div className="mt-1 text-sm text-slate-400">Starter tier, limited for personal collections and light selling.</div>
-              <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li>• Up to 150 cards</li>
-                <li>• Manual add/edit</li>
-                <li>• Basic sold tracking</li>
-                <li>• Basic dashboard</li>
-              </ul>
-            </div>
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-slate-100">Pro</div>
-                <div className="text-sm font-semibold text-white">$12 / Month</div>
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-slate-100">Pro</div>
+                  <div className="text-sm font-semibold text-white">$12 / month ($120 / yr)</div>
+                </div>
+                <div className="mt-1 text-sm text-slate-400">Higher card limits, CSV workflows, and deeper seller analytics.</div>
+                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                  <li>• Higher card limits, fair-use image storage</li>
+                  <li>• CSV import/export</li>
+                  <li>• Revenue, net profit, ROI, platform analytics</li>
+                  <li>• Bulk inventory tools</li>
+                </ul>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    className="rounded-xl border border-white/10 bg-[#d50000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b80000] disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => startStripeCheckout("pro", "month")}
+                    disabled={effectiveTier === "pro"}
+                  >
+                    Pro Monthly
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-xl border border-white/10 bg-[#d50000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b80000] disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => startStripeCheckout("pro", "annual")}
+                    disabled={effectiveTier === "pro"}
+                  >
+                    Pro Annual ($120/yr)
+                  </button>
+                </div>
               </div>
-              <div className="mt-1 text-sm text-slate-400">Higher card limits, CSV workflows, and deeper seller analytics.</div>
-              <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li>• Higher card limits, fair-use image storage</li>
-                <li>• CSV import/export</li>
-                <li>• Revenue, net profit, ROI, platform analytics</li>
-                <li>• Bulk inventory tools</li>
-              </ul>
             </div>
-          </div>
         </section>
 
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
