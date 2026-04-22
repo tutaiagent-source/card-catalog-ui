@@ -66,8 +66,14 @@ export async function POST(req: Request) {
 
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok) {
+      const message =
+        (data as any)?.error?.message ??
+        (data as any)?.message ??
+        (data as any)?.error ??
+        JSON.stringify(data);
+
       return NextResponse.json(
-        { error: "Failed to send email", details: data },
+        { error: message, details: data },
         { status: 400 }
       );
     }
