@@ -98,6 +98,23 @@ export default function ListedPage() {
 
   const [shareCard, setShareCard] = useState<any | null>(null);
 
+  type ListingShare = {
+    id?: string;
+    share_token: string;
+    created_at?: string;
+    expires_at?: string | null;
+    revoked_at?: string | null;
+    show_pricing: boolean;
+  };
+
+  const [listingShares, setListingShares] = useState<ListingShare[]>([]);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [manageSharesOpen, setManageSharesOpen] = useState(false);
+  const [shareShowPricing, setShareShowPricing] = useState(true);
+  const [shareDuration, setShareDuration] = useState<"24h" | "7d" | "1m" | "permanent">("7d");
+  const [generatedShareLink, setGeneratedShareLink] = useState<string | null>(null);
+  const [isCreatingShare, setIsCreatingShare] = useState(false);
+
   const sortedCards = useMemo(() => {
     return cards
       .slice()
@@ -135,9 +152,27 @@ export default function ListedPage() {
     }
   }
 
+  async function loadListingShares() {
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+
+    const { data, error } = await supabase
+      .from("listing_shares")
+      .select("id, share_token, created_at, expires_at, revoked_at, show_pricing")
+      .eq("owner_user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Failed to load listing shares:", error);
+      return;
+    }
+
+    setListingShares((data ?? []) as ListingShare[]);
+  }
+
   useEffect(() => {
     if (!user?.id || !supabaseConfigured) return;
     loadListedCards();
+    loadListingShares();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
@@ -148,6 +183,79 @@ export default function ListedPage() {
     setEditAskingPrice(activeCard.asking_price != null ? String(activeCard.asking_price) : "");
     setEditListedAt(activeCard.listed_at ? String(activeCard.listed_at).slice(0, 10) : "");
   }, [activeCard]);
+
+  async function createListingShare() {
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+    setIsCreatingShare(true);
+    setGeneratedShareLink(null);
+    try {
+      const token = crypto.randomUUID().replace(/-/g, "");
+
+      let expires_at: string | null = null;
+      const now = Date.now();
+      if (shareDuration !== "permanent") {
+        const ms =
+          shareDuration === "24h"
+            ? 24 * 60 * 60 * 1000
+            : shareDuration === "7d"
+              ? 7 * 24 * 60 * 60 * 1000
+              : 30 * 24 * 60 * 60 * 1000;
+        expires_at = new Date(now + ms).toISOString();
+      }
+
+      const { error } = await supabase.from("listing_shares").insert({
+        owner_user_id: user.id,
+        share_token: token,
+        expires_at,
+        show_pricing: shareShowPricing,
+      });
+
+      if (error) {
+        alert(`Could not create share link: ${error.message}`);
+        return;
+      }
+
+      const url = `${window.location.origin}/listed/share/${token}`;
+      setGeneratedShareLink(url);
+      await loadListingShares();
+    } finally {
+      setIsCreatingShare(false);
+    }
+  }
+
+  async function revokeListingShare(shareId?: string) {
+    if (!shareId) return;
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+
+    const ok = confirm("Disable this shared listings link?");
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from("listing_shares")
+      .update({ revoked_at: new Date().toISOString() })
+      .eq("id", shareId);
+
+    if (error) {
+      alert(`Could not disable link: ${error.message}`);
+      return;
+    }
+
+    setGeneratedShareLink(null);
+    await loadListingShares();
+  }
+
+  function shareDurationLabel(s: ListingShare) {
+    if (!s.expires_at) return "Permanent";
+    if (!s.created_at) return "Limited";
+    const created = new Date(s.created_at);
+    const expires = new Date(s.expires_at);
+    const diffMs = expires.getTime() - created.getTime();
+    if (!Number.isFinite(diffMs)) return "Limited";
+
+    if (diffMs <= 36 * 60 * 60 * 1000) return "24h";
+    if (diffMs <= 10 * 24 * 60 * 60 * 1000) return "7 days";
+    return "1 month";
+  }
 
   async function saveListingDetails() {
     if (!user?.id || !supabaseConfigured || !supabase || !activeCard?.id) return;
@@ -250,6 +358,17 @@ export default function ListedPage() {
 
   const activeHref = toUrl(editLink);
 
+  const nowMs = Date.now();
+  const activeListingShares = listingShares.filter((s) => {
+    if (s.revoked_at) return false;
+    if (s.expires_at) {
+      const exp = new Date(s.expires_at);
+      if (Number.isFinite(exp.getTime())) return exp.getTime() > nowMs;
+      return false;
+    }
+    return true;
+  });
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 pb-20">
       <div className="mx-auto max-w-6xl px-4 py-8">
@@ -272,6 +391,17 @@ export default function ListedPage() {
             <div className="mt-3 flex items-center justify-end gap-2">
               <button
                 type="button"
+                onClick={() => {
+                  setGeneratedShareLink(null);
+                  setShareModalOpen(true);
+                }}
+                className="rounded-lg border border-white/10 bg-emerald-500/[0.14] px-3 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/[0.18] disabled:opacity-60"
+                disabled={loading}
+              >
+                Share listings
+              </button>
+              <button
+                type="button"
                 onClick={loadListedCards}
                 className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
                 disabled={loading || isRefreshing}
@@ -281,6 +411,19 @@ export default function ListedPage() {
             </div>
           </div>
         </div>
+
+        {activeListingShares.length > 0 ? (
+          <div className="mt-4 rounded-3xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            ⚠️ {activeListingShares.length} active share link{activeListingShares.length === 1 ? "" : "s"} for your listings.
+            <button
+              type="button"
+              className="ml-3 inline-flex items-center rounded-xl border border-amber-500/30 bg-amber-500/[0.12] px-3 py-1.5 text-sm font-semibold text-amber-100 hover:bg-amber-500/[0.18]"
+              onClick={() => setManageSharesOpen(true)}
+            >
+              Manage / disable
+            </button>
+          </div>
+        ) : null}
 
         {sortedCards.length === 0 ? (
           <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.03] p-8">
@@ -644,6 +787,192 @@ export default function ListedPage() {
             </div>
           </div>
         ) : null}
+
+      {shareModalOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3" onClick={() => setShareModalOpen(false)}>
+          <div
+            className="w-full max-w-lg rounded-xl border border-white/10 bg-slate-950 p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-lg font-bold">Share your active listings</div>
+                <div className="mt-1 text-sm text-slate-300">Generate a time-limited view-only link.</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShareModalOpen(false)}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="text-sm font-semibold text-slate-200">Pricing on the shared page</div>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <div className="text-sm text-slate-300">{shareShowPricing ? "Show prices" : "Hide prices"}</div>
+                  <button
+                    type="button"
+                    className={`rounded-xl px-4 py-2 text-sm font-semibold ${shareShowPricing ? "bg-emerald-500/15 text-emerald-200" : "bg-slate-800 text-slate-200"}`}
+                    onClick={() => setShareShowPricing((v) => !v)}
+                  >
+                    Toggle
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="text-sm font-semibold text-slate-200">Link duration</div>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  {([
+                    { key: "24h", label: "24 hours" },
+                    { key: "7d", label: "7 days" },
+                    { key: "1m", label: "1 month" },
+                    { key: "permanent", label: "Permanent" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setShareDuration(opt.key)}
+                      className={`rounded-xl border px-3 py-2 text-sm font-semibold ${shareDuration === opt.key ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-200" : "border-white/10 bg-slate-900/20 text-slate-200"}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  disabled={isCreatingShare}
+                  onClick={() => createListingShare()}
+                  className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                >
+                  {isCreatingShare ? "Generating…" : "Generate share link"}
+                </button>
+
+                {generatedShareLink ? (
+                  <div className="mt-3 rounded-xl border border-white/10 bg-slate-900/30 p-3">
+                    <div className="text-sm font-semibold text-slate-200">Your link</div>
+                    <a href={generatedShareLink} target="_blank" rel="noreferrer" className="mt-1 block break-all text-sm text-slate-300">
+                      {generatedShareLink}
+                    </a>
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+                        onClick={() => {
+                          navigator.clipboard?.writeText(generatedShareLink);
+                        }}
+                      >
+                        Copy
+                      </button>
+                      <button
+                        type="button"
+                        className="flex-1 rounded-xl bg-emerald-500 px-3 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
+                        onClick={() => {
+                          setShareModalOpen(false);
+                          setManageSharesOpen(true);
+                        }}
+                      >
+                        Manage
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {manageSharesOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3" onClick={() => setManageSharesOpen(false)}>
+          <div
+            className="w-full max-w-2xl rounded-xl border border-white/10 bg-slate-950 p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-lg font-bold">Shared listings links</div>
+                <div className="mt-1 text-sm text-slate-300">Disable a link to stop sharing (images are also blocked after disable/expiry).</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setManageSharesOpen(false)}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {listingShares.length === 0 ? (
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">No share links yet.</div>
+              ) : (
+                listingShares
+                  .slice()
+                  .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
+                  .map((s) => {
+                    const url = `${window.location.origin}/listed/share/${s.share_token}`;
+                    const isActive = !s.revoked_at && (!s.expires_at || new Date(s.expires_at).getTime() > nowMs);
+
+                    return (
+                      <div key={s.id} className={`rounded-xl border p-4 ${isActive ? "border-emerald-400/20 bg-emerald-500/10" : "border-white/10 bg-white/[0.03]"}`}>
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-200">{shareDurationLabel(s)}</div>
+                            <div className="mt-1 text-xs text-slate-400">Created {s.created_at ? String(s.created_at).slice(0, 10) : ""}</div>
+                            <a className="mt-2 block break-all text-sm text-slate-300" href={url} target="_blank" rel="noreferrer">
+                              {url}
+                            </a>
+                          </div>
+
+                          <div className="flex flex-col gap-2">
+                            <button
+                              type="button"
+                              className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+                              onClick={() => navigator.clipboard?.writeText(url)}
+                            >
+                              Copy
+                            </button>
+
+                            {isActive ? (
+                              <button
+                                type="button"
+                                className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/15"
+                                onClick={() => revokeListingShare(s.id)}
+                              >
+                                Disable
+                              </button>
+                            ) : null}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setManageSharesOpen(false);
+                  setShareModalOpen(true);
+                  setGeneratedShareLink(null);
+                }}
+                className="w-full rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
+              >
+                Create a new share link
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {markSoldModal ? (
         <div

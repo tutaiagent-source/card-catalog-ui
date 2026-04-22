@@ -1,0 +1,307 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { driveToImageSrc } from "@/lib/googleDrive";
+
+type YesNo = "yes" | "no";
+
+type SharedCard = {
+  id?: string;
+
+  player_name: string;
+  year: string;
+  brand: string;
+  set_name: string;
+  parallel: string;
+  card_number: string;
+  serial_number_text: string;
+
+  grading_company?: string | null;
+  auto_grade?: number | null;
+  grading_cert_number_text?: string | null;
+  graded?: YesNo | string | null;
+  grade?: number | null;
+
+  image_url?: string;
+  back_image_url?: string;
+
+  asking_price?: number | null;
+  sale_platform?: string | null;
+};
+
+export default function ListingsSharedView({
+  token,
+  showPricing,
+  cards,
+}: {
+  token: string;
+  showPricing: boolean;
+  cards: SharedCard[];
+}) {
+  const [activeCard, setActiveCard] = useState<SharedCard | null>(null);
+  const [showBack, setShowBack] = useState(false);
+
+  useEffect(() => {
+    setShowBack(false);
+  }, [activeCard?.id]);
+
+  function toUrl(s?: string | null) {
+    const raw = String(s || "").trim();
+    if (!raw) return null;
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return null;
+  }
+
+  function formatMoney(value: number) {
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
+  }
+
+  const sortedCards = useMemo(() => {
+    return cards
+      .slice()
+      .sort((a, b) => String(b.year || "").localeCompare(String(a.year || "")) || a.player_name.localeCompare(b.player_name));
+  }, [cards]);
+
+  const proxyImageSrc = (imageUrl?: string | null) => {
+    const src = imageUrl ? driveToImageSrc(imageUrl) : "";
+    if (!src) return "";
+    return `/api/listings-share-image?token=${encodeURIComponent(token)}&src=${encodeURIComponent(src)}`;
+  };
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-100 pb-16">
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200">
+              🔗 Shared listings
+            </div>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">View-only</h1>
+            <p className="mt-2 text-slate-300">Tap a card for a larger view.</p>
+          </div>
+        </div>
+
+        {sortedCards.length === 0 ? (
+          <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.03] p-8">
+            <div className="text-lg font-semibold text-white">No active listings</div>
+            <div className="mt-2 text-sm text-slate-300">This share may be empty or expired.</div>
+          </div>
+        ) : (
+          <section className="mt-6">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="mb-3 text-sm font-semibold text-slate-200">Shared shelf</div>
+
+              {/* Mobile: grid */}
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-5" role="list" aria-label="Shared listed cards">
+                {sortedCards.map((c) => {
+                  const goHref = toUrl(c.sale_platform);
+                  return (
+                    <div
+                      key={c.id}
+                      role="listitem"
+                      tabIndex={0}
+                      onClick={() => setActiveCard(c)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") setActiveCard(c);
+                      }}
+                      className="relative cursor-pointer rounded-xl border border-slate-800 bg-slate-950/40 p-0"
+                      aria-label={`View ${c.player_name}`}
+                    >
+                      <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
+                        {c.image_url ? (
+                          <img alt={c.player_name} src={proxyImageSrc(c.image_url)} className="h-full w-full object-contain" />
+                        ) : (
+                          <div className="h-full w-full" />
+                        )}
+                      </div>
+
+                      {showPricing && c.asking_price != null ? (
+                        <div className="absolute left-2 top-2 z-10 rounded-full bg-slate-950/70 px-2.5 py-1 text-[10px] font-semibold text-slate-100 ring-1 ring-white/10">
+                          {formatMoney(Number(c.asking_price))}
+                        </div>
+                      ) : null}
+
+                      {goHref ? (
+                        <div className="absolute right-2 bottom-2 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
+                          ↗
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeCard ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4" onClick={() => setActiveCard(null)}>
+            <div
+              className="w-full max-w-5xl max-h-[92vh] overflow-y-auto overflow-x-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl [-webkit-overflow-scrolling:touch]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-4 sm:px-6">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Listed card</div>
+                  <div className="mt-2 text-xl font-bold text-white">{[activeCard.year, activeCard.player_name].filter(Boolean).join(" ")}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveCard(null)}
+                  className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[1.1fr_0.9fr]">
+                <div className="rounded-[24px] border border-white/10 bg-slate-900 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-slate-200">Image</div>
+                    <div />
+                  </div>
+
+                  <div className="mt-4">
+                    <div
+                      className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-950"
+                      role={activeCard.back_image_url ? "button" : undefined}
+                      tabIndex={activeCard.back_image_url ? 0 : -1}
+                      aria-label={activeCard.back_image_url ? "Flip card" : undefined}
+                      onClick={() => {
+                        if (!activeCard.back_image_url) return;
+                        setShowBack((v) => !v);
+                      }}
+                      onKeyDown={(e) => {
+                        if (!activeCard.back_image_url) return;
+                        if (e.key === "Enter" || e.key === " ") setShowBack((v) => !v);
+                      }}
+                    >
+                      {activeCard.back_image_url ? (
+                        <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full bg-slate-950/70 px-3 py-1 text-[11px] font-semibold text-slate-200 ring-1 ring-white/10">
+                          ⇄
+                        </div>
+                      ) : null}
+
+                      <div className="relative h-full w-full" style={{ perspective: 1200 }}>
+                        <div
+                          className="absolute inset-0 h-full w-full transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+                          style={{
+                            transformStyle: "preserve-3d",
+                            transform: showBack ? "rotateY(180deg)" : "rotateY(0deg)",
+                          }}
+                        >
+                          {activeCard.image_url ? (
+                            <img
+                              alt="front"
+                              src={proxyImageSrc(activeCard.image_url)}
+                              className="absolute inset-0 h-full w-full object-contain"
+                              style={{ backfaceVisibility: "hidden" }}
+                              draggable={false}
+                            />
+                          ) : (
+                            <div className="absolute inset-0 h-full w-full" style={{ backfaceVisibility: "hidden" }} />
+                          )}
+
+                          {activeCard.back_image_url ? (
+                            <img
+                              alt="back"
+                              src={proxyImageSrc(activeCard.back_image_url)}
+                              className="absolute inset-0 h-full w-full object-contain"
+                              style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                              draggable={false}
+                            />
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-4">
+                    <div className="text-sm font-semibold text-white">Card details</div>
+
+                    <div className="mt-4 space-y-2 text-sm text-slate-300">
+                      <div>
+                        <span className="text-slate-400">Brand/Set:</span>{" "}
+                        <span className="text-white">{activeCard.brand} · {activeCard.set_name}</span>
+                      </div>
+                      {activeCard.parallel ? (
+                        <div>
+                          <span className="text-slate-400">Parallel:</span>{" "}
+                          <span className="text-white">{activeCard.parallel}</span>
+                        </div>
+                      ) : null}
+                      <div>
+                        <span className="text-slate-400">Card:</span>{" "}
+                        <span className="text-white">#{activeCard.card_number}</span>
+                      </div>
+                      {activeCard.serial_number_text ? (
+                        <div>
+                          <span className="text-slate-400">Serial:</span>{" "}
+                          <span className="text-white">{activeCard.serial_number_text}</span>
+                        </div>
+                      ) : null}
+
+                      {showPricing && activeCard.asking_price != null ? (
+                        <div className="pt-1">
+                          <span className="text-slate-400">Asking:</span>{" "}
+                          <span className="text-white font-semibold">{formatMoney(Number(activeCard.asking_price))}</span>
+                        </div>
+                      ) : null}
+
+                      {String(activeCard.graded || "no") === "yes" && activeCard.grade != null ? (
+                        <div className="pt-2">
+                          <span className="text-slate-400">Grade:</span>{" "}
+                          <span className="text-white">{activeCard.grade}</span>
+                        </div>
+                      ) : null}
+
+                      {String(activeCard.graded || "no") === "yes" && activeCard.grading_company ? (
+                        <div>
+                          <span className="text-slate-400">Company:</span>{" "}
+                          <span className="text-white">{activeCard.grading_company}</span>
+                        </div>
+                      ) : null}
+
+                      {String(activeCard.graded || "no") === "yes" && activeCard.auto_grade != null ? (
+                        <div>
+                          <span className="text-slate-400">Auto grade:</span>{" "}
+                          <span className="text-white">{activeCard.auto_grade}</span>
+                        </div>
+                      ) : null}
+
+                      {String(activeCard.graded || "no") === "yes" && activeCard.grading_cert_number_text ? (
+                        <div>
+                          <span className="text-slate-400">Cert:</span>{" "}
+                          <span className="text-white">{activeCard.grading_cert_number_text}</span>
+                        </div>
+                      ) : null}
+
+                      {(() => {
+                        const href = toUrl(activeCard.sale_platform);
+                        if (!href) return null;
+                        return (
+                          <div className="pt-2">
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+                            >
+                              Open listing ↗
+                            </a>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </main>
+  );
+}
