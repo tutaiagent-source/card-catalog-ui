@@ -101,7 +101,7 @@ export default function TermsAndConditionsPage() {
             <div>
               <h2 className="text-base font-bold text-white">10. Governing law</h2>
               <p className="mt-2">
-                These Terms are governed by the laws of <span className="font-semibold">[State/Country]</span>.
+                These Terms are governed by the laws of the State of Oregon.
                 Any disputes will be resolved in the appropriate courts in that jurisdiction.
               </p>
             </div>
