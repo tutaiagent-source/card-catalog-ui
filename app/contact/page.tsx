@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import MarketingNav from "@/components/MarketingNav";
 
+// Support email used for the contact mailto link (so messages can be filtered by subject).
 const SUPPORT_EMAIL = "support@cardcat.io";
 
 type SubjectKey =
