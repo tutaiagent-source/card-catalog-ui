@@ -19,11 +19,8 @@ export default function MarketingNav() {
             <a href="/#pricing" className="rounded-full px-3 py-2 transition-colors hover:bg-white/[0.06] hover:text-white">
               Pricing
             </a>
-            <a href="/privacy" className="rounded-full px-3 py-2 transition-colors hover:bg-white/[0.06] hover:text-white">
-              Privacy
-            </a>
-            <a href="/terms" className="rounded-full px-3 py-2 transition-colors hover:bg-white/[0.06] hover:text-white">
-              Terms
+            <a href="/contact" className="rounded-full px-3 py-2 transition-colors hover:bg-white/[0.06] hover:text-white">
+              Contact Us
             </a>
             <a href="/login" className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-slate-100 transition-colors hover:bg-white/[0.08]">
               Sign In
