@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_30px_90px_rgba(2,6,23,0.35)] sm:p-8">
           <h1 className="text-3xl font-black tracking-[-0.03em]">Privacy Policy</h1>
           <p className="mt-3 text-sm leading-6 text-slate-300">
-            Effective date: <span className="font-semibold">[YYYY-MM-DD]</span>
+            Effective date: <span className="font-semibold">2026-04-21</span>
             <br />
             Please note: this is a template. You should review it with legal counsel and
             update placeholders before publishing.
@@ -90,7 +90,7 @@ export default function PrivacyPolicyPage() {
               <p className="mt-2">
                 Depending on where you live, you may have rights to access, correct,
                 or delete certain information. To exercise rights, contact us at
-                <span className="font-semibold"> [support email]</span>.
+                <span className="font-semibold">support@cardcat.io</span>.
               </p>
             </div>
 
@@ -106,7 +106,7 @@ export default function PrivacyPolicyPage() {
               <h2 className="text-base font-bold text-white">8. Contact us</h2>
               <p className="mt-2">
                 Questions about this policy should be sent to
-                <span className="font-semibold"> [support email]</span>.
+                <span className="font-semibold">support@cardcat.io</span>.
               </p>
             </div>
           </div>
