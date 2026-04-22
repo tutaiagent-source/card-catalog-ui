@@ -67,10 +67,12 @@ export default function ContactPage() {
   );
 
   const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
 
   async function submitContact() {
     setSending(true);
+    setSent(false);
     setSendError(null);
     try {
       const resp = await fetch("/api/contact", {
@@ -94,9 +96,11 @@ export default function ContactPage() {
       setName("");
       setEmail("");
       setMessage(subjectMeta.template);
+      setSent(true);
       // keep subject as-is
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Failed to send message";
+      setSent(false);
       setSendError(msg);
     } finally {
       setSending(false);
@@ -207,20 +211,26 @@ export default function ContactPage() {
               {sending ? (
                 <div className="text-xs text-slate-400">Sending…</div>
               ) : null}
+              {sent ? (
+                <div className="text-xs text-emerald-200">
+                  Sent! Check your inbox in a minute.
+                </div>
+              ) : null}
 
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="submit"
-                  disabled={sending}
+                  disabled={sending || sent}
                   className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000] disabled:opacity-60 disabled:hover:bg-[#d50000]"
                 >
-                  {sending ? "Sending…" : "Send Message"}
+                  {sent ? "Sent ✓" : sending ? "Sending…" : "Send Message"}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
                     setName("");
                     setEmail("");
+                    setSent(false);
                     const feedback = SUBJECTS.find(
                       (s) => s.key === "feedback"
                     )!;
