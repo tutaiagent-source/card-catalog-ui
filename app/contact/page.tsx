@@ -59,7 +59,11 @@ export default function ContactPage() {
   const [subject, setSubject] = useState<SubjectKey>("feedback");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState(() => SUBJECTS.find((s) => s.key === "feedback")!.template);
+  const [message, setMessage] = useState(() =>
+    SUBJECTS.find((s) => s.key === "feedback")!.template
+  );
+  // Honeypot: bots often fill this; real users won’t.
+  const [honeypot, setHoneypot] = useState("");
 
   const subjectMeta = useMemo(
     () => SUBJECTS.find((s) => s.key === subject)!,
@@ -85,6 +89,7 @@ export default function ContactPage() {
           name,
           email,
           message,
+          honeypot,
         }),
       });
 
@@ -96,6 +101,7 @@ export default function ContactPage() {
       setName("");
       setEmail("");
       setMessage(subjectMeta.template);
+      setHoneypot("");
       setSent(true);
       // keep subject as-is
     } catch (e) {
@@ -136,6 +142,17 @@ export default function ContactPage() {
           </p>
 
           <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/40 p-5">
+            {/* Honeypot field (hidden) */}
+            <input
+              type="text"
+              name="honeypot"
+              autoComplete="off"
+              tabIndex={-1}
+              aria-hidden="true"
+              className="hidden"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+            />
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -230,6 +247,7 @@ export default function ContactPage() {
                   onClick={() => {
                     setName("");
                     setEmail("");
+                    setHoneypot("");
                     setSent(false);
                     const feedback = SUBJECTS.find(
                       (s) => s.key === "feedback"

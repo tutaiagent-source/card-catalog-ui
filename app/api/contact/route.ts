@@ -28,13 +28,22 @@ export async function POST(req: Request) {
     const subjectLabel = String(body.subjectLabel ?? "").trim();
     const name = String(body.name ?? "").trim();
     const email = String(body.email ?? "").trim();
+    const honeypot = String(body.honeypot ?? "").trim();
     const message = String(body.message ?? "").trim();
+
+    // Honeypot: spambots often fill it. Real users won’t touch it.
+    if (honeypot) {
+      return NextResponse.json({ error: "Spam detected" }, { status: 400 });
+    }
 
     if (!subjectLabel) {
       return NextResponse.json({ error: "Missing subject" }, { status: 400 });
     }
     if (!message) {
       return NextResponse.json({ error: "Missing message" }, { status: 400 });
+    }
+    if (message.length < 10) {
+      return NextResponse.json({ error: "Message too short" }, { status: 400 });
     }
 
     const safeEmail = email && isValidEmail(email) ? email : "";
