@@ -15,6 +15,7 @@ type SubjectKey =
   | "bug"
   | "other";
 
+// Subject templates (used to prefill the email body)
 const SUBJECTS: Array<{ key: SubjectKey; label: string; template: string }> =
   [
     {
