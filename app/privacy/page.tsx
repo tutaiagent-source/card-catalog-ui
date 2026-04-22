@@ -112,9 +112,6 @@ export default function PrivacyPolicyPage() {
           </div>
         </section>
 
-        <div className="mt-6 text-center text-xs text-slate-400">
-          © {new Date().getFullYear()} CardCat. All rights reserved.
-        </div>
       </div>
     </main>
   );
