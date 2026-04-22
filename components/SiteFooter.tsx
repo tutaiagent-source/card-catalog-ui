@@ -12,6 +12,12 @@ export default function SiteFooter() {
             Privacy
           </Link>
           <Link
+            href="/contact"
+            className="hover:text-white transition-colors"
+          >
+            Contact
+          </Link>
+          <Link
             href="/terms"
             className="hover:text-white transition-colors"
           >
