@@ -564,6 +564,21 @@ export default function AccountPage() {
             </button>
           </form>
         </section>
+
+        <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+          <h2 className="text-lg font-semibold">Questions? Suggestions? We would love to hear your feedback</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            CardCat is built for collectors. If something feels off, or you have
+            an idea to improve the experience, drop us a note.
+          </p>
+
+          <a
+            href="/contact"
+            className="mt-4 inline-flex rounded-lg bg-[#d50000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b80000]"
+          >
+            Contact Us
+          </a>
+        </section>
       </div>
       <CardCatMobileNav />
     </main>
