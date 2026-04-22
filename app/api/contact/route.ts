@@ -87,6 +87,37 @@ export async function POST(req: Request) {
       );
     }
 
+    // Optional auto-acknowledgement to the sender (so they know we received it)
+    if (safeEmail) {
+      const ackSubject = `[CardCat] We received your message: ${subjectLabel}`;
+      const ackText = [
+        `Hi${name ? ` ${name}` : ""},`,
+        "",
+        "Thanks for reaching out to CardCat! We received your message and we’ll review it soon.",
+        `Topic: ${subjectLabel}`,
+        "",
+        "— CardCat Support",
+      ].join("\n");
+
+      try {
+        await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${resendApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: fromEmail,
+            to: safeEmail,
+            subject: ackSubject,
+            text: ackText,
+          }),
+        });
+      } catch {
+        // Don’t fail the contact submission if auto-ack fails.
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json(
