@@ -59,7 +59,7 @@ export default function ContactPage() {
   const [subject, setSubject] = useState<SubjectKey>("feedback");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState(() => SUBJECTS.find((s) => s.key === "feedback")!.template);
 
   const subjectMeta = useMemo(
     () => SUBJECTS.find((s) => s.key === subject)!,
@@ -106,7 +106,13 @@ export default function ContactPage() {
   function maybePrefill(nextSubject: SubjectKey) {
     setSubject(nextSubject);
     setMessage((prev) => {
-      if (prev.trim().length > 0) return prev;
+      const prevTemplate = SUBJECTS.find((s) => s.key === subject)!.template;
+      if (
+        prev.trim().length > 0 &&
+        prev.trim() !== prevTemplate.trim()
+      )
+        return prev;
+
       const nextTemplate = SUBJECTS.find((s) => s.key === nextSubject)!.template;
       return nextTemplate;
     });
