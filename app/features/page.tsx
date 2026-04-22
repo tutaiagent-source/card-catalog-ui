@@ -62,16 +62,44 @@ export default function FeaturesPage() {
             </div>
         </section>
 
-        <section className="mt-8 grid gap-4 lg:grid-cols-4">
-          {featureCards.map((card) => (
-            <div key={card.title} className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-              <div className="text-lg font-semibold text-white">{card.title}</div>
-              <p className="mt-2 text-sm leading-6 text-slate-300">{card.body}</p>
-              <a href={card.href} className="mt-5 inline-flex rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">
-                {card.label}
-              </a>
-            </div>
-          ))}
+        <section className="mt-8 space-y-4 lg:space-y-6">
+          {/* 3 above */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {featureCards.slice(0, 3).map((card) => (
+              <div
+                key={card.title}
+                className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]"
+              >
+                <div className="text-lg font-semibold text-white">{card.title}</div>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{card.body}</p>
+                <a
+                  href={card.href}
+                  className="mt-5 flex w-full justify-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
+                >
+                  {card.label}
+                </a>
+              </div>
+            ))}
+          </div>
+
+          {/* 2 below */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+            {featureCards.slice(3).map((card) => (
+              <div
+                key={card.title}
+                className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]"
+              >
+                <div className="text-lg font-semibold text-white">{card.title}</div>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{card.body}</p>
+                <a
+                  href={card.href}
+                  className="mt-5 flex w-full justify-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
+                >
+                  {card.label}
+                </a>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section id="card-posts" className="mt-12 rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(6,95,70,0.18)] sm:p-8">
