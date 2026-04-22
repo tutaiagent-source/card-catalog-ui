@@ -66,21 +66,42 @@ export default function ContactPage() {
     [subject]
   );
 
-  const mailtoUrl = useMemo(() => {
-    const subjectLine = `[CardCat Contact] ${subjectMeta.label}`;
-    const body = [
-      message.trim() ? message.trim() : "",
-      "",
-      name.trim() ? `From: ${name.trim()}` : "",
-      email.trim() ? `Email: ${email.trim()}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n");
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
-    return `mailto:${encodeURIComponent(SUPPORT_EMAIL)}?subject=${encodeURIComponent(
-      subjectLine
-    )}&body=${encodeURIComponent(body)}`;
-  }, [email, message, name, subjectMeta.label]);
+  async function submitContact() {
+    setSending(true);
+    setSendError(null);
+    try {
+      const resp = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          subjectLabel: subjectMeta.label,
+          name,
+          email,
+          message,
+        }),
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => null);
+        throw new Error(data?.error || "Failed to send message");
+      }
+
+      setName("");
+      setEmail("");
+      setMessage(subjectMeta.template);
+      // keep subject as-is
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Failed to send message";
+      setSendError(msg);
+    } finally {
+      setSending(false);
+    }
+  }
 
   function maybePrefill(nextSubject: SubjectKey) {
     setSubject(nextSubject);
@@ -108,7 +129,7 @@ export default function ContactPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                window.location.href = mailtoUrl;
+                if (!sending) submitContact();
               }}
               className="space-y-4"
             >
@@ -167,17 +188,27 @@ export default function ContactPage() {
               </div>
 
               <div className="text-xs leading-5 text-slate-400">
-                Submitting will open your email client addressed to{' '}
-                <span className="font-semibold text-slate-200">{SUPPORT_EMAIL}</span> with
-                a prefilled subject so you can filter messages easily.
+                Submitting sends your message directly to{" "}
+                <span className="font-semibold text-slate-200">{SUPPORT_EMAIL}</span>.
+                We include the dropdown subject so you can filter easily.
               </div>
+
+              {sendError ? (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  {sendError}
+                </div>
+              ) : null}
+              {sending ? (
+                <div className="text-xs text-slate-400">Sending…</div>
+              ) : null}
 
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="submit"
-                  className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
+                  disabled={sending}
+                  className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000] disabled:opacity-60 disabled:hover:bg-[#d50000]"
                 >
-                  Send Message
+                  {sending ? "Sending…" : "Send Message"}
                 </button>
                 <button
                   type="button"
