@@ -191,7 +191,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                    Your email (optional)
+                    Your email (required)
                   </label>
                   <input
                     value={email}

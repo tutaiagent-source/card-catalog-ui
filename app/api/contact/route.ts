@@ -39,6 +39,12 @@ export async function POST(req: Request) {
     if (!subjectLabel) {
       return NextResponse.json({ error: "Missing subject" }, { status: 400 });
     }
+    if (!email || !isValidEmail(email)) {
+      return NextResponse.json(
+        { error: "Email is required (please enter a valid email)." },
+        { status: 400 }
+      );
+    }
     if (!message) {
       return NextResponse.json({ error: "Missing message" }, { status: 400 });
     }
