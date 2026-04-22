@@ -45,8 +45,7 @@ const SUBJECTS: Array<{ key: SubjectKey; label: string; template: string }> =
       key: "bug",
       label: "Bug report",
       template:
-        "Hi CardCat team,\n\nBug report:\n\n• Expected behavior:\n• Actual behavior:\n• Steps to reproduce:\n• Platform/device/browser:
-\n\nThanks!",
+        "Hi CardCat team,\n\nBug report:\n\n• Expected behavior:\n• Actual behavior:\n• Steps to reproduce:\n• Platform/device/browser:\n\n\nThanks!",
     },
     {
       key: "other",
