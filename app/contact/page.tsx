@@ -183,8 +183,11 @@ export default function ContactPage() {
                   onClick={() => {
                     setName("");
                     setEmail("");
-                    setMessage(subjectMeta.template);
+                    const feedback = SUBJECTS.find(
+                      (s) => s.key === "feedback"
+                    )!;
                     setSubject("feedback");
+                    setMessage(feedback.template);
                   }}
                   className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
                 >
