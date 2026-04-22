@@ -40,6 +40,14 @@ type Card = {
   graded: YesNo;
   grade: number | null;
 
+  // Grading details (for graded cards)
+  // - grading_company can be PSA/BGS/SGC/CGC or "Other" (UI-only) and is resolved on save.
+  // - grading_cert_number_text is the grading company cert number (separate from serial_number_text).
+  grading_company: string;
+  grading_company_other?: string;
+  auto_grade?: number | null;
+  grading_cert_number_text: string;
+
   serial_number_text: string;
   quantity: number;
 
@@ -77,6 +85,15 @@ function validate(card: Partial<Card>) {
     const v = (card as any)[f];
     if (!v || String(v).trim() === "" || String(v).trim().toLowerCase() === "n/a") missing.push(f);
   }
+
+  const gradedYes = String(card.graded || "no") === "yes";
+  if (gradedYes) {
+    if (card.grade == null || card.grade === ("" as any)) missing.push("grade");
+    const companyResolved =
+      card.grading_company === "Other" ? String(card.grading_company_other || "").trim() : String(card.grading_company || "").trim();
+    if (!companyResolved) missing.push("grading company");
+  }
+
   return missing;
 }
 
@@ -209,6 +226,10 @@ export default function AddCardPage() {
     has_memorabilia: "no",
     graded: "no",
     grade: 1,
+    grading_company: "",
+    grading_company_other: "",
+    auto_grade: null,
+    grading_cert_number_text: "",
     serial_number_text: "",
     quantity: 1,
     status: "Collection",
@@ -269,12 +290,20 @@ export default function AddCardPage() {
         const normalizedStatus = normalizeStatusValue((data as any)?.status);
         const normalized = normalizeCatalogTaxonomy({ ...(data as any), status: normalizedStatus });
         const seller = parseSellerMeta(normalized.notes);
+
+        const savedCompany = String((data as any)?.grading_company || "").trim();
+        const knownCompanies = new Set(["PSA", "BGS", "SGC", "CGC"]);
+        const companyIsKnown = knownCompanies.has(savedCompany);
+
         setCard({
           ...normalized,
           notes: seller.publicNotes,
           cost_basis: seller.meta.costBasis,
           shipping_cost: seller.meta.shippingCost,
           platform_fee: seller.meta.platformFee,
+
+          grading_company: companyIsKnown ? savedCompany : "Other",
+          grading_company_other: companyIsKnown ? "" : savedCompany,
         });
         setAddToPC((data as any)?.pc_position != null);
         setStep(normalizedStatus === "Sold" ? 3 : 1);
@@ -322,6 +351,15 @@ export default function AddCardPage() {
         platformFee: card.platform_fee ?? null,
       });
 
+      const gradedYes = ((card.graded as YesNo) || "no") === "yes";
+      const gradingCompanyFinal = gradedYes
+        ? card.grading_company === "Other"
+          ? String(card.grading_company_other || "").trim()
+          : String(card.grading_company || "").trim()
+        : "";
+      const autoGradeFinal = gradedYes ? (card.auto_grade == null || card.auto_grade === ("" as any) ? null : Number(card.auto_grade)) : null;
+      const gradingCertNumberFinal = gradedYes ? String(card.grading_cert_number_text || "").trim() : "";
+
       const cleaned = normalizeCatalogTaxonomy({
         id: card.id ?? crypto.randomUUID(),
 
@@ -341,7 +379,10 @@ export default function AddCardPage() {
         has_memorabilia: (card.has_memorabilia as YesNo) || "no",
 
         graded: (card.graded as YesNo) || "no",
-        grade: ((card.graded as YesNo) || "no") === "yes" ? Number(card.grade || 1) : null,
+        grade: gradedYes ? (card.grade == null || card.grade === ("" as any) ? null : Number(card.grade)) : null,
+        grading_company: gradingCompanyFinal,
+        auto_grade: autoGradeFinal,
+        grading_cert_number_text: gradingCertNumberFinal,
         estimated_price: card.estimated_price == null ? null : Number(card.estimated_price),
 
         serial_number_text: String(card.serial_number_text || ""),
@@ -392,6 +433,9 @@ export default function AddCardPage() {
 
         graded: cleaned.graded,
         grade: cleaned.grade,
+        grading_company: cleaned.grading_company,
+        auto_grade: cleaned.auto_grade,
+        grading_cert_number_text: cleaned.grading_cert_number_text,
         estimated_price: cleaned.estimated_price,
 
         serial_number_text: cleaned.serial_number_text,
@@ -449,6 +493,10 @@ export default function AddCardPage() {
         .eq("is_autograph", cleaned.is_autograph)
         .eq("has_memorabilia", cleaned.has_memorabilia)
         .eq("graded", cleaned.graded)
+        .eq("grade", cleaned.grade)
+        .eq("grading_company", cleaned.grading_company)
+        .eq("auto_grade", cleaned.auto_grade)
+        .eq("grading_cert_number_text", cleaned.grading_cert_number_text)
         .eq("serial_number_text", cleaned.serial_number_text);
 
       if (String(cleaned.competition || "").trim()) {
@@ -467,12 +515,15 @@ export default function AddCardPage() {
         );
 
         if (ok) {
-          const updatePayload: any = {
-            quantity: existingQty + addQty,
-            graded: cleaned.graded,
-            grade: cleaned.grade,
-            estimated_price: cleaned.estimated_price,
-          };
+        const updatePayload: any = {
+          quantity: existingQty + addQty,
+          graded: cleaned.graded,
+          grade: cleaned.grade,
+          grading_company: cleaned.grading_company,
+          auto_grade: cleaned.auto_grade,
+          grading_cert_number_text: cleaned.grading_cert_number_text,
+          estimated_price: cleaned.estimated_price,
+        };
 
           if (addToPC) updatePayload.pc_position = Date.now();
           if (cleaned.image_url !== undefined) updatePayload.image_url = cleaned.image_url;
@@ -1047,19 +1098,76 @@ export default function AddCardPage() {
                   </select>
 
                   {String(card.graded || "no") === "yes" && (
-                    <div className="mt-3">
-                      <div className="text-slate-300 text-sm">Grade (1–10)</div>
-                      <select
-                        className="mt-1 w-full rounded bg-slate-950 px-3 py-2"
-                        value={String(card.grade ?? 1)}
-                        onChange={(e) => set("grade", Number(e.target.value))}
-                      >
-                        {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                          <option key={n} value={n}>
-                            {n}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="mt-3 space-y-3">
+                      <label className="block">
+                        <div className="text-slate-300 text-sm">Grading company</div>
+                        <select
+                          className="mt-1 w-full rounded bg-slate-950 px-3 py-2"
+                          value={String(card.grading_company || "")}
+                          onChange={(e) => set("grading_company", e.target.value)}
+                        >
+                          <option value="" disabled>Select company</option>
+                          <option value="PSA">PSA</option>
+                          <option value="BGS">BGS</option>
+                          <option value="SGC">SGC</option>
+                          <option value="CGC">CGC</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </label>
+
+                      {String(card.grading_company || "") === "Other" && (
+                        <label className="block">
+                          <div className="text-slate-300 text-sm">Other company (manual)</div>
+                          <input
+                            className="mt-1 w-full rounded bg-slate-950 px-3 py-2"
+                            value={String(card.grading_company_other || "")}
+                            onChange={(e) => set("grading_company_other", e.target.value)}
+                            placeholder="e.g. KSA"
+                          />
+                        </label>
+                      )}
+
+                      <label className="block">
+                        <div className="text-slate-300 text-sm">Grade on card</div>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.5"
+                          min={0}
+                          max={10}
+                          className="mt-1 w-full rounded bg-slate-950 px-3 py-2"
+                          value={card.grade ?? ""}
+                          onChange={(e) => set("grade", e.target.value === "" ? null : Number(e.target.value))}
+                          placeholder="e.g. 9, 9.5"
+                        />
+                      </label>
+
+                      <label className="block">
+                        <div className="text-slate-300 text-sm">Auto grade</div>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          step="0.5"
+                          min={0}
+                          max={10}
+                          className="mt-1 w-full rounded bg-slate-950 px-3 py-2"
+                          value={card.auto_grade ?? ""}
+                          onChange={(e) => set("auto_grade", e.target.value === "" ? null : Number(e.target.value))}
+                          placeholder="optional (e.g. 9.5)"
+                        />
+                      </label>
+
+                      <label className="block">
+                        <div className="text-slate-300 text-sm">Grading cert / serial on the slab</div>
+                        <input
+                          className="mt-1 w-full rounded bg-slate-950 px-3 py-2"
+                          value={String(card.grading_cert_number_text || "")}
+                          onChange={(e) => set("grading_cert_number_text", e.target.value)}
+                          placeholder="e.g. PSA cert #"
+                        />
+                      </label>
+
+                      <div className="text-xs text-slate-400">Supports .5 grades for companies with half scales.</div>
                     </div>
                   )}
                 </div>
@@ -1487,6 +1595,10 @@ export default function AddCardPage() {
                     has_memorabilia: "no",
                     graded: "no",
                     grade: 1,
+                    grading_company: "",
+                    grading_company_other: "",
+                    auto_grade: null,
+                    grading_cert_number_text: "",
                     serial_number_text: "",
                     quantity: 1,
                     status: "Collection",

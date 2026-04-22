@@ -37,6 +37,10 @@ type Card = {
   graded?: YesNo;
   grade?: number | null;
 
+  grading_company?: string | null;
+  auto_grade?: number | null;
+  grading_cert_number_text?: string | null;
+
   serial_number_text: string;
   quantity: number;
 
@@ -135,6 +139,9 @@ function cardToDbPayload(card: Card) {
     has_memorabilia: card.has_memorabilia,
     graded: card.graded || "no",
     grade: card.grade ?? null,
+    grading_company: card.grading_company || "",
+    auto_grade: card.auto_grade ?? null,
+    grading_cert_number_text: card.grading_cert_number_text || "",
     serial_number_text: card.serial_number_text,
     quantity: card.quantity,
     estimated_price: card.estimated_price ?? null,
@@ -390,6 +397,9 @@ export default function CatalogPage() {
         has_memorabilia: card.has_memorabilia,
         graded: card.graded || "no",
         grade: card.grade ?? "",
+        grading_company: card.grading_company || "",
+        auto_grade: card.auto_grade ?? "",
+        grading_cert_number_text: card.grading_cert_number_text || "",
         serial_number_text: card.serial_number_text,
         quantity: card.quantity,
         estimated_price: card.estimated_price ?? "",
@@ -1726,6 +1736,23 @@ export default function CatalogPage() {
                               {previewCard.graded === "yes" && previewCard.grade != null && (
                                 <span className="rounded bg-blue-800 px-2 py-1 text-xs">Grade {previewCard.grade}</span>
                               )}
+
+                              {previewCard.graded === "yes" && previewCard.grading_company ? (
+                                <span className="rounded bg-slate-800 px-2 py-1 text-[11px]">{previewCard.grading_company}</span>
+                              ) : null}
+
+                              {previewCard.graded === "yes" && previewCard.auto_grade != null ? (
+                                <span className="rounded bg-emerald-900 px-2 py-1 text-[11px]">Auto {previewCard.auto_grade}</span>
+                              ) : null}
+
+                              {previewCard.graded === "yes" && previewCard.grading_cert_number_text ? (
+                                <span
+                                  className="max-w-[120px] truncate rounded bg-slate-700 px-2 py-1 text-[11px]"
+                                  title={previewCard.grading_cert_number_text}
+                                >
+                                  Cert {previewCard.grading_cert_number_text}
+                                </span>
+                              ) : null}
                             </div>
                           </div>
 
