@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import MarketingNav from "@/components/MarketingNav";
 import PcPersonalLayoutPreview from "@/components/PcPersonalLayoutPreview";
+import MarketingImageLightbox from "@/components/MarketingImageLightbox";
 
 export const metadata: Metadata = {
   title: "PC Guide | CardCat",
@@ -55,13 +56,15 @@ export default function PcGuidePage() {
               </ul>
             </div>
 
-            <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[#020617]">
-              <img
-                src="/pc-guide-pc-preview.jpg"
-                alt="PC layout preview"
-                className="block w-full h-auto object-contain"
-              />
-            </div>
+            <MarketingImageLightbox src="/pc-guide-pc-preview.jpg" alt="PC layout preview">
+              <div className="overflow-hidden rounded-[28px] border border-white/10 bg-[#020617]">
+                <img
+                  src="/pc-guide-pc-preview.jpg"
+                  alt="PC layout preview"
+                  className="block w-full h-auto object-contain"
+                />
+              </div>
+            </MarketingImageLightbox>
           </div>
         </section>
 
