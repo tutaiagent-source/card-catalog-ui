@@ -19,7 +19,7 @@ export default async function ListedSharePage({ params }: { params: { token: str
 
   const { data: share, error: shareErr } = await supabaseAdmin
     .from("listing_shares")
-    .select("share_token, owner_user_id, expires_at, revoked_at, show_pricing")
+    .select("*")
     .eq("share_token", token)
     .maybeSingle();
 
@@ -59,12 +59,30 @@ export default async function ListedSharePage({ params }: { params: { token: str
     }
   }
 
+  const ownerUserId =
+    (share as any)?.owner_user_id ??
+    (share as any)?.ownerId ??
+    (share as any)?.user_id ??
+    (share as any)?.owner_user ??
+    null;
+
+  if (!ownerUserId) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-3xl px-4 py-16">
+          <h1 className="text-3xl font-bold">Share record is missing an owner</h1>
+          <p className="mt-3 text-slate-300">Your `public.listing_shares` table is missing the owner user id field needed to load listings.</p>
+        </div>
+      </main>
+    );
+  }
+
   const { data: cards, error: cardsErr } = await supabaseAdmin
     .from("cards")
     .select(
       "id, player_name, year, brand, set_name, parallel, card_number, serial_number_text, grading_company, auto_grade, grading_cert_number_text, graded, grade, image_url, back_image_url, asking_price, sale_platform"
     )
-    .eq("user_id", share.owner_user_id)
+    .eq("user_id", ownerUserId)
     .eq("status", "Listed");
 
   if (cardsErr) {
@@ -78,5 +96,5 @@ export default async function ListedSharePage({ params }: { params: { token: str
     );
   }
 
-  return <ListingsSharedView token={token} showPricing={Boolean(share.show_pricing)} cards={(cards ?? []) as any} />;
+  return <ListingsSharedView token={token} showPricing={Boolean((share as any)?.show_pricing)} cards={(cards ?? []) as any} />;
 }

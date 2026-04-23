@@ -194,6 +194,8 @@ export default function ContactPage() {
                     Your email (required)
                   </label>
                   <input
+                    type="email"
+                    required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-100"

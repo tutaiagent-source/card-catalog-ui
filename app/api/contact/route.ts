@@ -76,6 +76,7 @@ export async function POST(req: Request) {
         to: toEmail,
         subject,
         text,
+        reply_to: safeEmail,
       }),
     });
 
