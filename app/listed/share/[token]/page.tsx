@@ -19,11 +19,22 @@ export default async function ListedSharePage({ params }: { params: { token: str
 
   const { data: share, error: shareErr } = await supabaseAdmin
     .from("listing_shares")
-    .select("*")
+    .select("created_at, expires_at, revoked_at, show_pricing, owner_user_id")
     .eq("share_token", token)
     .maybeSingle();
 
-  if (shareErr || !share) {
+  if (shareErr) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-3xl px-4 py-16">
+          <h1 className="text-3xl font-bold">Share lookup error</h1>
+          <p className="mt-3 text-slate-300">{String(shareErr.message || shareErr)}</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!share) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
         <div className="mx-auto max-w-3xl px-4 py-16">
