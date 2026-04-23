@@ -274,6 +274,14 @@ export default function ListedPage() {
 
   async function toggleMarketVisibility(cardId?: string, nextValue?: boolean) {
     if (!cardId || !user?.id || !supabaseConfigured || !supabase) return;
+    if (!profile?.username) {
+      alert("Choose a username first, then you can post cards to Market.");
+      return;
+    }
+
+    if (String(profile?.market_visibility_mode || "none") !== "selected_cards") {
+      await setMarketMode("selected_cards");
+    }
 
     const { error } = await supabase
       .from("cards")
@@ -505,26 +513,26 @@ export default function ListedPage() {
             <div>
               <div className="text-sm font-semibold text-white">Marketplace visibility</div>
               <div className="mt-1 text-sm text-slate-300">
-                Post your whole listings shelf to Market, or switch to selected cards and control cards one by one in preview.
+                All listing cards are private. Select individual cards in preview to post them to Market, or use the button here to post your whole listing collection.
               </div>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-3">
-              {([
-                ["none", "Private"],
-                ["selected_cards", "Selected cards only"],
-                ["all_listed", "Post whole listing collection"],
-              ] as const).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setMarketMode(value)}
-                  disabled={marketModeSaving || !profile?.username}
-                  className={`rounded-xl border px-3 py-2 text-sm font-semibold ${String(profile?.market_visibility_mode || "none") === value ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-200" : "border-white/10 bg-slate-900/20 text-slate-200"} disabled:opacity-60`}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className="flex flex-col items-start gap-2 sm:items-end">
+              <div className="text-xs text-slate-400">
+                {String(profile?.market_visibility_mode || "none") === "all_listed"
+                  ? "Currently posting your whole listing collection to Market"
+                  : "Currently using individual card selection"}
+              </div>
+              <button
+                type="button"
+                onClick={() => setMarketMode(String(profile?.market_visibility_mode || "none") === "all_listed" ? "selected_cards" : "all_listed")}
+                disabled={marketModeSaving || !profile?.username}
+                className={`rounded-xl border px-4 py-2 text-sm font-semibold ${String(profile?.market_visibility_mode || "none") === "all_listed" ? "border-white/10 bg-slate-900/20 text-slate-200" : "border-emerald-400/30 bg-emerald-500/15 text-emerald-200"} disabled:opacity-60`}
+              >
+                {String(profile?.market_visibility_mode || "none") === "all_listed"
+                  ? "Use individual card selection"
+                  : "Post whole listing collection to Market"}
+              </button>
             </div>
           </div>
 
