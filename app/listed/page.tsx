@@ -519,7 +519,7 @@ export default function ListedPage() {
         <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
         <UsernamePromptBanner userId={user?.id} />
 
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <CardCatLogo />
             <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-200">
@@ -530,9 +530,9 @@ export default function ListedPage() {
             <p className="mt-2 text-slate-300">Tap a card to set (or update) the sale link. When you mark it sold, it moves to the Sold page.</p>
           </div>
 
-          <div className="text-right">
+          <div className="text-left lg:text-right">
             <div className="text-sm text-slate-400">{sortedCards.length} active listing{sortedCards.length === 1 ? "" : "s"}</div>
-            <div className="mt-3 flex items-center justify-end gap-2">
+            <div className="mt-3 flex flex-wrap items-center justify-start gap-2 lg:justify-end">
               <a
                 href="/messages"
                 className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
