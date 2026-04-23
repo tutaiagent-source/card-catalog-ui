@@ -726,7 +726,9 @@ export default function ListedPage() {
                           {isOnMarket ? "Market" : "Unlisted"}
                         </div>
 
-                        <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
+                        <div
+                          className={`aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 ${isOnMarket ? "border border-emerald-500/80" : "border border-red-500/80"}`}
+                        >
                           {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
                         </div>
 
