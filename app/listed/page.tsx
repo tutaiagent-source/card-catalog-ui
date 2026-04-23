@@ -123,6 +123,10 @@ export default function ListedPage() {
   const [isCreatingShare, setIsCreatingShare] = useState(false);
   const [marketModeSaving, setMarketModeSaving] = useState(false);
 
+  const [bulkSelectingCards, setBulkSelectingCards] = useState(false);
+  const [bulkSelectedCardIds, setBulkSelectedCardIds] = useState<string[]>([]);
+  const [bulkUpdatingMarketVisibility, setBulkUpdatingMarketVisibility] = useState(false);
+
   const sortedCards = useMemo(() => {
     return cards
       .slice()
@@ -326,6 +330,45 @@ export default function ListedPage() {
     }
 
     await refreshProfile();
+  }
+
+  async function postSelectedCardsToMarket() {
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+    if (!profile?.username) {
+      alert("Choose a username first.");
+      return;
+    }
+    if (bulkSelectedCardIds.length === 0) {
+      alert("Select at least one card first.");
+      return;
+    }
+
+    setBulkUpdatingMarketVisibility(true);
+    try {
+      // Ensure we’re in selected-cards mode so the per-card flag controls visibility.
+      if (profile.market_visibility_mode !== "selected_cards") {
+        await setMarketMode("selected_cards");
+      }
+
+      const { error } = await supabase
+        .from("cards")
+        .update({ public_market_visible: true })
+        .in("id", bulkSelectedCardIds)
+        .eq("user_id", user.id);
+
+      if (error) {
+        alert(`Could not post selected cards: ${error.message}`);
+        return;
+      }
+
+      setCards((prev) => prev.map((card) => (card.id && bulkSelectedCardIds.includes(card.id) ? { ...card, public_market_visible: true } : card)));
+      setActiveCard((prev) => (prev?.id && bulkSelectedCardIds.includes(prev.id) ? { ...prev, public_market_visible: true } : prev));
+
+      setBulkSelectedCardIds([]);
+      setBulkSelectingCards(false);
+    } finally {
+      setBulkUpdatingMarketVisibility(false);
+    }
   }
 
   function shareDurationLabel(s: ListingShare) {
@@ -556,6 +599,48 @@ export default function ListedPage() {
           {!profile?.username ? (
             <div className="mt-3 text-xs text-amber-200">Choose a username first, then you can post cards to Market.</div>
           ) : null}
+
+          {profile?.market_visibility_mode === "selected_cards" ? (
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+              {!bulkSelectingCards ? (
+                <button
+                  type="button"
+                  onClick={() => setBulkSelectingCards(true)}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+                  disabled={marketModeSaving || isRefreshing}
+                >
+                  Select multiple cards to post
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="text-sm text-slate-300">
+                    Selected {bulkSelectedCardIds.length} card{bulkSelectedCardIds.length === 1 ? "" : "s"}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={postSelectedCardsToMarket}
+                      disabled={bulkUpdatingMarketVisibility || bulkSelectedCardIds.length === 0}
+                      className="rounded-xl bg-emerald-500/[0.14] px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/[0.18] disabled:opacity-60"
+                    >
+                      {bulkUpdatingMarketVisibility ? "Posting…" : "Post selected to Market"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBulkSelectingCards(false);
+                        setBulkSelectedCardIds([]);
+                      }}
+                      disabled={bulkUpdatingMarketVisibility}
+                      className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : null}
         </section>
 
         {activeListingShares.length > 0 ? (
@@ -592,6 +677,7 @@ export default function ListedPage() {
                       marketMode === "whole_collection" ||
                       (marketMode === "all_listed" && c.status === "Listed") ||
                       (marketMode === "selected_cards" && Boolean(c.public_market_visible));
+                    const isSelected = c.id ? bulkSelectedCardIds.includes(c.id) : false;
                     return (
                       <div
                         key={c.id}
@@ -604,6 +690,22 @@ export default function ListedPage() {
                           if (e.key === "Enter" || e.key === " ") setActiveCard(c);
                         }}
                       >
+                        {marketMode === "selected_cards" && bulkSelectingCards && c.id ? (
+                          <button
+                            type="button"
+                            aria-label={isSelected ? "Remove from selection" : "Add to selection"}
+                            className={`absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${isSelected ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200" : "border-white/10 bg-slate-950/60 text-slate-200"}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBulkSelectedCardIds((prev) =>
+                                prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
+                              );
+                            }}
+                          >
+                            {isSelected ? "✓" : "+"}
+                          </button>
+                        ) : null}
+
                         <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
                           {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
                         </div>
@@ -651,6 +753,7 @@ export default function ListedPage() {
                         marketMode === "whole_collection" ||
                         (marketMode === "all_listed" && c.status === "Listed") ||
                         (marketMode === "selected_cards" && Boolean(c.public_market_visible));
+                      const isSelected = c.id ? bulkSelectedCardIds.includes(c.id) : false;
                       return (
                         <div
                           key={c.id}
@@ -678,7 +781,25 @@ export default function ListedPage() {
                             </a>
                           ) : null}
 
-                          {isOnMarket ? (
+                          {marketMode === "selected_cards" && bulkSelectingCards && c.id ? (
+                            <button
+                              type="button"
+                              aria-label={isSelected ? "Remove from selection" : "Add to selection"}
+                              className={`absolute left-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${
+                                isSelected
+                                  ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+                                  : "border-white/10 bg-slate-950/60 text-slate-200"
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setBulkSelectedCardIds((prev) =>
+                                  prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
+                                );
+                              }}
+                            >
+                              {isSelected ? "✓" : "+"}
+                            </button>
+                          ) : isOnMarket ? (
                             <div className="absolute left-3 top-3 z-20 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
                               Market
                             </div>
