@@ -694,27 +694,35 @@ export default function ListedPage() {
                         key={c.id}
                         role="listitem"
                         tabIndex={0}
-                        onClick={() => setActiveCard(c)}
+                        onClick={() => {
+                          if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
+                            setBulkSelectedCardIds((prev) =>
+                              prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
+                            );
+                            return;
+                          }
+                          setActiveCard(c);
+                        }}
                         className={`relative rounded-xl border p-0 ${isOnMarket ? "border-emerald-500/20 bg-emerald-500/10" : "border-red-500/20 bg-red-500/10"}`}
                         aria-label={`View ${c.player_name}`}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") setActiveCard(c);
+                          if (!(e.key === "Enter" || e.key === " ")) return;
+                          if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
+                            setBulkSelectedCardIds((prev) =>
+                              prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
+                            );
+                            return;
+                          }
+                          setActiveCard(c);
                         }}
                       >
                         {marketMode === "selected_cards" && bulkSelectingCards && c.id ? (
-                          <button
-                            type="button"
-                            aria-label={isSelected ? "Remove from selection" : "Add to selection"}
+                          <div
+                            aria-hidden="true"
                             className={`absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${isSelected ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200" : "border-white/10 bg-slate-950/60 text-slate-200"}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setBulkSelectedCardIds((prev) =>
-                                prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
-                              );
-                            }}
                           >
                             {isSelected ? "✓" : "+"}
-                          </button>
+                          </div>
                         ) : null}
 
                         <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
@@ -770,10 +778,25 @@ export default function ListedPage() {
                           key={c.id}
                           role="button"
                           tabIndex={0}
-                          onClick={() => setActiveCard(c)}
+                          onClick={() => {
+                            if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
+                              setBulkSelectedCardIds((prev) =>
+                                prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
+                              );
+                              return;
+                            }
+                            setActiveCard(c);
+                          }}
                           className={`relative rounded-2xl border p-3 ${isOnMarket ? "border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/15" : "border-red-500/20 bg-red-500/10 hover:bg-red-500/15"}`}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") setActiveCard(c);
+                            if (!(e.key === "Enter" || e.key === " ")) return;
+                            if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
+                              setBulkSelectedCardIds((prev) =>
+                                prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
+                              );
+                              return;
+                            }
+                            setActiveCard(c);
                           }}
                         >
                           <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950">
@@ -793,23 +816,16 @@ export default function ListedPage() {
                           ) : null}
 
                           {marketMode === "selected_cards" && bulkSelectingCards && c.id ? (
-                            <button
-                              type="button"
-                              aria-label={isSelected ? "Remove from selection" : "Add to selection"}
+                            <div
+                              aria-hidden="true"
                               className={`absolute left-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${
                                 isSelected
                                   ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
                                   : "border-white/10 bg-slate-950/60 text-slate-200"
                               }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setBulkSelectedCardIds((prev) =>
-                                  prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
-                                );
-                              }}
                             >
                               {isSelected ? "✓" : "+"}
-                            </button>
+                            </div>
                           ) : null}
 
 
