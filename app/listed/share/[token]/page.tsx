@@ -136,7 +136,7 @@ export default async function ListedSharePage({
     const { data: cards, error: cardsErr } = await supabaseAdmin
       .from("cards")
       .select(
-        "id, player_name, year, brand, set_name, parallel, card_number, serial_number_text, grading_company, auto_grade, grading_cert_number_text, graded, grade, image_url, back_image_url, asking_price, sale_platform"
+        "id, player_name, year, brand, set_name, parallel, card_number, serial_number_text, graded, grade, image_url, back_image_url, asking_price, sale_platform"
       )
       .eq("user_id", ownerUserId)
       .eq("status", "Listed");
