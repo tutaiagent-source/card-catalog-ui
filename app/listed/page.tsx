@@ -513,7 +513,7 @@ export default function ListedPage() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 pb-28 sm:pb-20">
+    <main className="min-h-screen bg-slate-950 text-slate-100 pb-32 sm:pb-20">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
         <CardCatMobileNav />
         <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
