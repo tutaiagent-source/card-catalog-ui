@@ -8,6 +8,7 @@ export type UserProfileRecord = {
   username: string;
   display_name?: string;
   allow_messages?: boolean;
+  market_visibility_mode?: string;
 };
 
 export function useUserProfile(userId?: string | null) {
@@ -25,7 +26,7 @@ export function useUserProfile(userId?: string | null) {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, display_name, allow_messages")
+      .select("id, username, display_name, allow_messages, market_visibility_mode")
       .eq("id", userId)
       .maybeSingle();
 

@@ -30,6 +30,7 @@ type ListedCard = {
   asking_price?: number | null;
   listed_at?: string | null;
   sale_platform?: string | null;
+  public_market_visible?: boolean;
 
   sold_price?: number | null;
   sold_at?: string | null;
@@ -140,7 +141,7 @@ export default function ListedPage() {
     try {
       const { data, error } = await supabase
         .from("cards")
-        .select("id, player_name, year, brand, set_name, parallel, serial_number_text, image_url, back_image_url, status, asking_price, listed_at, sale_platform, sold_price, sold_at")
+        .select("id, player_name, year, brand, set_name, parallel, serial_number_text, image_url, back_image_url, status, asking_price, listed_at, sale_platform, sold_price, sold_at, public_market_visible")
         .eq("user_id", user.id)
         .eq("status", "Listed");
 
@@ -266,6 +267,24 @@ export default function ListedPage() {
 
     setGeneratedShareLink(null);
     await loadListingShares();
+  }
+
+  async function toggleMarketVisibility(cardId?: string, nextValue?: boolean) {
+    if (!cardId || !user?.id || !supabaseConfigured || !supabase) return;
+
+    const { error } = await supabase
+      .from("cards")
+      .update({ public_market_visible: Boolean(nextValue) })
+      .eq("id", cardId)
+      .eq("user_id", user.id);
+
+    if (error) {
+      alert(`Could not update market visibility: ${error.message}`);
+      return;
+    }
+
+    setCards((prev) => prev.map((card) => (card.id === cardId ? { ...card, public_market_visible: Boolean(nextValue) } : card)));
+    setActiveCard((prev) => (prev?.id === cardId ? { ...prev, public_market_visible: Boolean(nextValue) } : prev));
   }
 
   function shareDurationLabel(s: ListingShare) {
@@ -420,6 +439,12 @@ export default function ListedPage() {
               >
                 Messages
               </a>
+              <a
+                href="/market"
+                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+              >
+                Market
+              </a>
               <button
                 type="button"
                 onClick={() => {
@@ -551,6 +576,12 @@ export default function ListedPage() {
                             >
                               Go ↗
                             </a>
+                          ) : null}
+
+                          {c.public_market_visible ? (
+                            <div className="absolute left-3 top-3 z-20 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
+                              Market
+                            </div>
                           ) : null}
 
 
@@ -759,6 +790,21 @@ export default function ListedPage() {
                         </a>
                       </div>
                     </label>
+
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                      <div className="text-sm font-semibold text-slate-200">Market visibility</div>
+                      <div className="mt-2 text-sm text-slate-400">Use this if your account is set to <span className="text-slate-200">Selected cards</span> for Market visibility.</div>
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <div className="text-sm text-slate-300">{activeCard.public_market_visible ? "Visible on Market" : "Hidden from Market"}</div>
+                        <button
+                          type="button"
+                          onClick={() => toggleMarketVisibility(activeCard.id, !activeCard.public_market_visible)}
+                          className={`rounded-xl px-4 py-2 text-sm font-semibold ${activeCard.public_market_visible ? "bg-emerald-500/15 text-emerald-200" : "bg-slate-800 text-slate-200"}`}
+                        >
+                          Toggle
+                        </button>
+                      </div>
+                    </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
                       {activeCard.status === "Sold" ? (

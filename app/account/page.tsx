@@ -35,12 +35,14 @@ export default function AccountPage() {
   const [error, setError] = useState("");
   const [usernameDraft, setUsernameDraft] = useState("");
   const [allowMessages, setAllowMessages] = useState(true);
+  const [marketVisibilityMode, setMarketVisibilityMode] = useState<"none" | "selected_cards" | "all_listed" | "whole_collection">("none");
   const { profile, tableReady, refreshProfile } = useUserProfile(user?.id);
 
   useEffect(() => {
     setUsernameDraft(String(profile?.username || ""));
     setAllowMessages(profile?.allow_messages ?? true);
-  }, [profile?.username, profile?.allow_messages]);
+    setMarketVisibilityMode(((profile?.market_visibility_mode as any) || "none") as "none" | "selected_cards" | "all_listed" | "whole_collection");
+  }, [profile?.username, profile?.allow_messages, profile?.market_visibility_mode]);
 
   useEffect(() => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -186,6 +188,7 @@ export default function AccountPage() {
         id: user.id,
         username: normalized,
         allow_messages: allowMessages,
+        market_visibility_mode: marketVisibilityMode,
       },
       { onConflict: "id" }
     );
@@ -320,6 +323,9 @@ export default function AccountPage() {
             <a href="/messages" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
               Messages
             </a>
+            <a href="/market" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
+              Market
+            </a>
             <a href="/sold" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
               Sold
             </a>
@@ -369,6 +375,25 @@ export default function AccountPage() {
                   />
                   Allow other members to message me
                 </label>
+
+                <div className="mt-4 text-sm text-slate-300">Market visibility</div>
+                <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {([
+                    ["none", "Private"],
+                    ["selected_cards", "Selected cards"],
+                    ["all_listed", "All listed cards"],
+                    ["whole_collection", "Whole collection"],
+                  ] as const).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setMarketVisibilityMode(value)}
+                      className={`rounded-xl border px-3 py-2 text-sm font-semibold ${marketVisibilityMode === value ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-200" : "border-white/10 bg-slate-900/20 text-slate-200"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
 
                 <button
                   type="button"

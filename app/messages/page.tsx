@@ -259,6 +259,7 @@ export default function MessagesPage() {
           </div>
           <div className="flex gap-3">
             <a href="/catalog" className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]">Catalog</a>
+            <a href="/market" className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]">Market</a>
             <a href="/account" className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]">Account</a>
           </div>
         </div>
