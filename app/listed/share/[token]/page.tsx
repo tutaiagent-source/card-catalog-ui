@@ -1,10 +1,17 @@
-import { notFound } from "next/navigation";
-
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import ListingsSharedView from "@/components/ListingsSharedView";
 
 export default async function ListedSharePage({ params }: { params: { token: string } }) {
-  if (!supabaseAdmin) notFound();
+  if (!supabaseAdmin) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-3xl px-4 py-16">
+          <h1 className="text-3xl font-bold">Share unavailable</h1>
+          <p className="mt-3 text-slate-300">Server is missing Supabase service-role configuration.</p>
+        </div>
+      </main>
+    );
+  }
 
   const token = params.token;
 
@@ -15,7 +22,14 @@ export default async function ListedSharePage({ params }: { params: { token: str
     .maybeSingle();
 
   if (shareErr || !share) {
-    notFound();
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-3xl px-4 py-16">
+          <h1 className="text-3xl font-bold">Invalid share link</h1>
+          <p className="mt-3 text-slate-300">Ask the lister to generate a new shared listings link.</p>
+        </div>
+      </main>
+    );
   }
 
   if (share.revoked_at) {
@@ -52,7 +66,14 @@ export default async function ListedSharePage({ params }: { params: { token: str
     .eq("status", "Listed");
 
   if (cardsErr) {
-    notFound();
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto max-w-3xl px-4 py-16">
+          <h1 className="text-3xl font-bold">Couldn’t load listings</h1>
+          <p className="mt-3 text-slate-300">Please try again later.</p>
+        </div>
+      </main>
+    );
   }
 
   return <ListingsSharedView token={token} showPricing={Boolean(share.show_pricing)} cards={(cards ?? []) as any} />;
