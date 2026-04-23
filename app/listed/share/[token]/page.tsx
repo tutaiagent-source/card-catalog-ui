@@ -133,13 +133,33 @@ export default async function ListedSharePage({
       );
     }
 
-    const { data: cards, error: cardsErr } = await supabaseAdmin
+    const richCardsSelect =
+      "id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, rookie, is_autograph, has_memorabilia, serial_number_text, graded, grade, grading_company, auto_grade, grading_cert_number_text, estimated_price, image_url, back_image_url, asking_price, sale_platform";
+    const fallbackCardsSelect =
+      "id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, rookie, is_autograph, has_memorabilia, serial_number_text, graded, grade, estimated_price, image_url, back_image_url, asking_price, sale_platform";
+
+    let cards: any[] | null = null;
+    let cardsErr: any = null;
+
+    const richCardsRes = await supabaseAdmin
       .from("cards")
-      .select(
-        "id, player_name, year, brand, set_name, parallel, card_number, serial_number_text, graded, grade, image_url, back_image_url, asking_price, sale_platform"
-      )
+      .select(richCardsSelect)
       .eq("user_id", ownerUserId)
       .eq("status", "Listed");
+
+    cards = richCardsRes.data as any[] | null;
+    cardsErr = richCardsRes.error;
+
+    if (cardsErr && String(cardsErr.message || "").toLowerCase().includes("does not exist")) {
+      const fallbackCardsRes = await supabaseAdmin
+        .from("cards")
+        .select(fallbackCardsSelect)
+        .eq("user_id", ownerUserId)
+        .eq("status", "Listed");
+
+      cards = fallbackCardsRes.data as any[] | null;
+      cardsErr = fallbackCardsRes.error;
+    }
 
     if (cardsErr) {
       return (

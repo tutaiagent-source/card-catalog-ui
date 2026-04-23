@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     headers: {
       "user-agent": "CardCat Listings Share Image Proxy",
     },
-    cache: "no-store",
+    cache: "force-cache",
   });
 
   if (!upstream.ok) {
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
   return new NextResponse(arrayBuffer, {
     headers: {
       "content-type": contentType,
-      "cache-control": "no-store",
+      "cache-control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
     },
   });
 }

@@ -14,6 +14,12 @@ type SharedCard = {
   set_name: string;
   parallel: string;
   card_number: string;
+  team?: string;
+  sport?: string;
+  competition?: string | null;
+  rookie?: YesNo | string | null;
+  is_autograph?: YesNo | string | null;
+  has_memorabilia?: YesNo | string | null;
   serial_number_text: string;
 
   grading_company?: string | null;
@@ -26,6 +32,7 @@ type SharedCard = {
   back_image_url?: string;
 
   asking_price?: number | null;
+  estimated_price?: number | null;
   sale_platform?: string | null;
 };
 
@@ -54,6 +61,10 @@ export default function ListingsSharedView({
 
   function formatMoney(value: number) {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
+  }
+
+  function yes(value?: string | null) {
+    return String(value || "").toLowerCase() === "yes";
   }
 
   const sortedCards = useMemo(() => {
@@ -109,7 +120,7 @@ export default function ListingsSharedView({
                     >
                       <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
                         {c.image_url ? (
-                          <img alt={c.player_name} src={proxyImageSrc(c.image_url)} className="h-full w-full object-contain" />
+                          <img alt={c.player_name} src={proxyImageSrc(c.image_url)} className="h-full w-full object-contain" loading="lazy" decoding="async" />
                         ) : (
                           <div className="h-full w-full" />
                         )}
@@ -222,6 +233,15 @@ export default function ListingsSharedView({
                     <div className="text-sm font-semibold text-white">Card details</div>
 
                     <div className="mt-4 space-y-2 text-sm text-slate-300">
+                      <div className="text-base font-semibold text-white">{activeCard.player_name}</div>
+                      <div>
+                        <span className="text-white">{[activeCard.year, activeCard.brand, activeCard.set_name].filter(Boolean).join(" · ")}</span>
+                      </div>
+                      {(activeCard.team || activeCard.sport || activeCard.competition) ? (
+                        <div>
+                          <span className="text-white">{[activeCard.team, activeCard.sport, activeCard.competition].filter(Boolean).join(" · ")}</span>
+                        </div>
+                      ) : null}
                       <div>
                         <span className="text-slate-400">Brand/Set:</span>{" "}
                         <span className="text-white">{activeCard.brand} · {activeCard.set_name}</span>
@@ -249,6 +269,27 @@ export default function ListingsSharedView({
                           <span className="text-white font-semibold">{formatMoney(Number(activeCard.asking_price))}</span>
                         </div>
                       ) : null}
+
+                      {activeCard.estimated_price != null ? (
+                        <div>
+                          <span className="text-slate-400">Est. value:</span>{" "}
+                          <span className="text-white">{formatMoney(Number(activeCard.estimated_price))}</span>
+                        </div>
+                      ) : null}
+
+                      <div className="flex flex-wrap gap-2 pt-2 text-xs">
+                        {yes(activeCard.is_autograph) ? <span className="rounded bg-[#d50000] px-2 py-1 text-white">Auto</span> : null}
+                        {yes(activeCard.has_memorabilia) ? <span className="rounded bg-[#d50000] px-2 py-1 text-white">Mem</span> : null}
+                        {yes(activeCard.rookie) ? <span className="rounded bg-amber-500 px-2 py-1 text-black">RC</span> : null}
+                        {yes(activeCard.graded) && activeCard.grade != null ? <span className="rounded bg-blue-800 px-2 py-1 text-white">Grade {activeCard.grade}</span> : null}
+                        {yes(activeCard.graded) && activeCard.grading_company ? <span className="rounded bg-slate-800 px-2 py-1 text-white">{activeCard.grading_company}</span> : null}
+                        {yes(activeCard.graded) && activeCard.auto_grade != null ? <span className="rounded bg-emerald-900 px-2 py-1 text-white">Auto {activeCard.auto_grade}</span> : null}
+                        {yes(activeCard.graded) && activeCard.grading_cert_number_text ? (
+                          <span className="max-w-[180px] truncate rounded bg-slate-700 px-2 py-1 text-white" title={activeCard.grading_cert_number_text}>
+                            Cert {activeCard.grading_cert_number_text}
+                          </span>
+                        ) : null}
+                      </div>
 
                       {String(activeCard.graded || "no") === "yes" && activeCard.grade != null ? (
                         <div className="pt-2">
