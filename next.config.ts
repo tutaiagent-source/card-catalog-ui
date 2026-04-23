@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
+// next-pwa has no bundled TypeScript types in this setup, so we require it.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const withPWA = require("next-pwa");
+
 const nextConfig: NextConfig = {
+  turbopack: {},
   async headers() {
     return [
       {
@@ -20,4 +25,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withPWA({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+})(nextConfig);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SiteFooter from "@/components/SiteFooter";
+import PwaRegister from "@/components/PwaRegister";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,6 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CardCat",
   description: "Card inventory for collectors, with pricing and sold tracking in CardCat.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -30,6 +32,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <div className="flex-1">{children}</div>
+        <PwaRegister />
         <SiteFooter />
       </body>
     </html>
