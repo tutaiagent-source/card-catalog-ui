@@ -47,6 +47,7 @@ export default function ListingsSharedView({
 }) {
   const [activeCard, setActiveCard] = useState<SharedCard | null>(null);
   const [showBack, setShowBack] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     setShowBack(false);
@@ -72,6 +73,12 @@ export default function ListingsSharedView({
       .slice()
       .sort((a, b) => String(b.year || "").localeCompare(String(a.year || "")) || a.player_name.localeCompare(b.player_name));
   }, [cards]);
+
+  const filteredCards = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return sortedCards;
+    return sortedCards.filter((card) => String(card.player_name || "").toLowerCase().includes(q));
+  }, [sortedCards, searchQuery]);
 
   const proxyImageSrc = (imageUrl?: string | null) => {
     const src = imageUrl ? driveToImageSrc(imageUrl) : "";
@@ -100,11 +107,25 @@ export default function ListingsSharedView({
         ) : (
           <section className="mt-6">
             <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-              <div className="mb-3 text-sm font-semibold text-slate-200">Shared shelf</div>
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm font-semibold text-slate-200">Shared shelf</div>
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by player name"
+                  className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none sm:max-w-xs"
+                  aria-label="Search shared listings by player name"
+                />
+              </div>
 
-              {/* Mobile: grid */}
+              {filteredCards.length === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">
+                  No cards match that search.
+                </div>
+              ) : (
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-5" role="list" aria-label="Shared listed cards">
-                {sortedCards.map((c) => {
+                {filteredCards.map((c) => {
                   const goHref = toUrl(c.sale_platform);
                   return (
                     <div
@@ -141,6 +162,7 @@ export default function ListingsSharedView({
                   );
                 })}
               </div>
+              )}
             </div>
           </section>
         )}
