@@ -39,10 +39,12 @@ type SharedCard = {
 export default function ListingsSharedView({
   token,
   showPricing,
+  showCompCheck,
   cards,
 }: {
   token: string;
   showPricing: boolean;
+  showCompCheck: boolean;
   cards: SharedCard[];
 }) {
   const [activeCard, setActiveCard] = useState<SharedCard | null>(null);
@@ -62,6 +64,18 @@ export default function ListingsSharedView({
 
   function formatMoney(value: number) {
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(value);
+  }
+
+  function buildEbaySearchUrl(card: SharedCard) {
+    const serialRaw = String(card.serial_number_text ?? "").trim();
+    const slashIdx = serialRaw.indexOf("/");
+    const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
+
+    const parts = [card.player_name, card.brand, card.set_name, card.card_number, serialForEbay]
+      .map((part) => String(part ?? "").trim())
+      .filter(Boolean);
+
+    return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(parts.join(" "))}&LH_Sold=1&LH_Complete=1`;
   }
 
   function yes(value?: string | null) {
@@ -307,13 +321,6 @@ export default function ListingsSharedView({
                         </div>
                       ) : null}
 
-                      {activeCard.estimated_price != null ? (
-                        <div>
-                          <span className="text-slate-400">Est. value:</span>{" "}
-                          <span className="text-white">{formatMoney(Number(activeCard.estimated_price))}</span>
-                        </div>
-                      ) : null}
-
                       <div className="flex flex-wrap gap-2 pt-2 text-xs">
                         {yes(activeCard.is_autograph) ? <span className="rounded bg-[#d50000] px-2 py-1 text-white">Auto</span> : null}
                         {yes(activeCard.has_memorabilia) ? <span className="rounded bg-[#d50000] px-2 py-1 text-white">Mem</span> : null}
@@ -358,17 +365,30 @@ export default function ListingsSharedView({
 
                       {(() => {
                         const href = toUrl(activeCard.sale_platform);
-                        if (!href) return null;
+                        if (!href && !showCompCheck) return null;
                         return (
-                          <div className="pt-2">
-                            <a
-                              href={href}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
-                            >
-                              Open listing ↗
-                            </a>
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            {href ? (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+                              >
+                                Open listing ↗
+                              </a>
+                            ) : null}
+
+                            {showCompCheck ? (
+                              <a
+                                href={buildEbaySearchUrl(activeCard)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/15"
+                              >
+                                Comp check ↗
+                              </a>
+                            ) : null}
                           </div>
                         );
                       })()}

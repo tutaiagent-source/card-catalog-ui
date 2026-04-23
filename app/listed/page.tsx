@@ -105,12 +105,14 @@ export default function ListedPage() {
     expires_at?: string | null;
     revoked_at?: string | null;
     show_pricing: boolean;
+    show_comp_check?: boolean;
   };
 
   const [listingShares, setListingShares] = useState<ListingShare[]>([]);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [manageSharesOpen, setManageSharesOpen] = useState(false);
   const [shareShowPricing, setShareShowPricing] = useState(true);
+  const [shareShowCompCheck, setShareShowCompCheck] = useState(false);
   const [shareDuration, setShareDuration] = useState<"24h" | "7d" | "1m" | "permanent">("7d");
   const [generatedShareLink, setGeneratedShareLink] = useState<string | null>(null);
   const [isCreatingShare, setIsCreatingShare] = useState(false);
@@ -155,11 +157,21 @@ export default function ListedPage() {
   async function loadListingShares() {
     if (!user?.id || !supabaseConfigured || !supabase) return;
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from("listing_shares")
-      .select("id, share_token, created_at, expires_at, revoked_at, show_pricing")
+      .select("id, share_token, created_at, expires_at, revoked_at, show_pricing, show_comp_check")
       .eq("owner_user_id", user.id)
       .order("created_at", { ascending: false });
+
+    if (error && String(error.message || "").toLowerCase().includes("show_comp_check")) {
+      const fallback = await supabase
+        .from("listing_shares")
+        .select("id, share_token, created_at, expires_at, revoked_at, show_pricing")
+        .eq("owner_user_id", user.id)
+        .order("created_at", { ascending: false });
+      data = (fallback.data ?? []).map((row: any) => ({ ...row, show_comp_check: false }));
+      error = fallback.error;
+    }
 
     if (error) {
       console.error("Failed to load listing shares:", error);
@@ -203,12 +215,23 @@ export default function ListedPage() {
         expires_at = new Date(now + ms).toISOString();
       }
 
-      const { error } = await supabase.from("listing_shares").insert({
+      let { error } = await supabase.from("listing_shares").insert({
         owner_user_id: user.id,
         share_token: token,
         expires_at,
         show_pricing: shareShowPricing,
+        show_comp_check: shareShowCompCheck,
       });
+
+      if (error && String(error.message || "").toLowerCase().includes("show_comp_check")) {
+        const fallback = await supabase.from("listing_shares").insert({
+          owner_user_id: user.id,
+          share_token: token,
+          expires_at,
+          show_pricing: shareShowPricing,
+        });
+        error = fallback.error;
+      }
 
       if (error) {
         alert(`Could not create share link: ${error.message}`);
@@ -824,6 +847,20 @@ export default function ListedPage() {
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="text-sm font-semibold text-slate-200">Comp check button</div>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <div className="text-sm text-slate-300">{shareShowCompCheck ? "Show eBay comp check button" : "Hide comp check button"}</div>
+                  <button
+                    type="button"
+                    className={`rounded-xl px-4 py-2 text-sm font-semibold ${shareShowCompCheck ? "bg-emerald-500/15 text-emerald-200" : "bg-slate-800 text-slate-200"}`}
+                    onClick={() => setShareShowCompCheck((v) => !v)}
+                  >
+                    Toggle
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
                 <div className="text-sm font-semibold text-slate-200">Link duration</div>
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   {([
@@ -927,6 +964,9 @@ export default function ListedPage() {
                           <div>
                             <div className="text-sm font-semibold text-slate-200">{shareDurationLabel(s)}</div>
                             <div className="mt-1 text-xs text-slate-400">Created {s.created_at ? String(s.created_at).slice(0, 10) : ""}</div>
+                            <div className="mt-1 text-xs text-slate-400">
+                              {s.show_pricing ? "Pricing visible" : "Pricing hidden"} · {s.show_comp_check ? "Comp button on" : "Comp button off"}
+                            </div>
                             <a className="mt-2 block break-all text-sm text-slate-300" href={url} target="_blank" rel="noreferrer">
                               {url}
                             </a>

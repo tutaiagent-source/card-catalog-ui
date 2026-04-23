@@ -25,11 +25,21 @@ export default async function ListedSharePage({
     const rawToken = String(tokenParam || "");
     const token = rawToken.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
 
-    const { data: share, error: shareErr } = await supabaseAdmin
+    let { data: share, error: shareErr } = await supabaseAdmin
       .from("listing_shares")
-      .select("created_at, expires_at, revoked_at, show_pricing")
+      .select("created_at, expires_at, revoked_at, show_pricing, show_comp_check")
       .eq("share_token", token)
       .maybeSingle();
+
+    if (shareErr && String(shareErr.message || "").toLowerCase().includes("show_comp_check")) {
+      const fallback = await supabaseAdmin
+        .from("listing_shares")
+        .select("created_at, expires_at, revoked_at, show_pricing")
+        .eq("share_token", token)
+        .maybeSingle();
+      share = fallback.data ? ({ ...fallback.data, show_comp_check: false } as any) : fallback.data;
+      shareErr = fallback.error;
+    }
 
     if (shareErr) {
       return (
@@ -176,6 +186,7 @@ export default async function ListedSharePage({
       <ListingsSharedView
         token={token}
         showPricing={Boolean((share as any)?.show_pricing)}
+        showCompCheck={Boolean((share as any)?.show_comp_check)}
         cards={(cards ?? []) as any}
       />
     );
