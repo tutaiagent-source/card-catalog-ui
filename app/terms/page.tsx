@@ -76,7 +76,23 @@ export default function TermsAndConditionsPage() {
             </div>
 
             <div>
-              <h2 className="text-base font-bold text-white">7. Disclaimers</h2>
+              <h2 className="text-base font-bold text-white">7. Listings, sharing, and member-to-member transactions</h2>
+              <p className="mt-2">
+                CardCat may let users create listings, share view-only listing pages, and communicate
+                with other members about cards. CardCat is a cataloging, listing, and connection platform
+                only. CardCat is not the buyer, seller, consignor, broker, payment processor, shipper,
+                authenticator, escrow provider, or insurer for any transaction between users.
+              </p>
+              <ul className="mt-2 list-disc pl-5 space-y-2">
+                <li>All sales, trades, payments, shipping arrangements, returns, refunds, and disputes are solely between the users involved.</li>
+                <li>Users are responsible for the accuracy of listing details, descriptions, photos, condition disclosures, and grading information.</li>
+                <li>CardCat does not guarantee authenticity, condition, delivery, payment, or performance by any user.</li>
+                <li>CardCat may remove listings or suspend accounts for fraud, abuse, prohibited items, or behavior that creates risk for other users or the Service.</li>
+              </ul>
+            </div>
+
+            <div>
+              <h2 className="text-base font-bold text-white">8. Disclaimers</h2>
               <p className="mt-2">
                 The Service is provided “as is” and “as available”. We do not guarantee that
                 the Service will be uninterrupted or error-free.
@@ -84,7 +100,7 @@ export default function TermsAndConditionsPage() {
             </div>
 
             <div>
-              <h2 className="text-base font-bold text-white">8. Limitation of liability</h2>
+              <h2 className="text-base font-bold text-white">9. Limitation of liability</h2>
               <p className="mt-2">
                 To the maximum extent permitted by law, CardCat will not be liable for indirect,
                 incidental, special, consequential, or punitive damages.
@@ -92,14 +108,14 @@ export default function TermsAndConditionsPage() {
             </div>
 
             <div>
-              <h2 className="text-base font-bold text-white">9. Termination</h2>
+              <h2 className="text-base font-bold text-white">10. Termination</h2>
               <p className="mt-2">
                 We may suspend or terminate access if we believe you violate these Terms.
               </p>
             </div>
 
             <div>
-              <h2 className="text-base font-bold text-white">10. Governing law</h2>
+              <h2 className="text-base font-bold text-white">11. Governing law</h2>
               <p className="mt-2">
                 These Terms are governed by the laws of the State of Oregon.
                 Any disputes will be resolved in the appropriate courts in that jurisdiction.
@@ -107,7 +123,7 @@ export default function TermsAndConditionsPage() {
             </div>
 
             <div>
-              <h2 className="text-base font-bold text-white">11. Contact</h2>
+              <h2 className="text-base font-bold text-white">12. Contact</h2>
               <p className="mt-2">
                 Questions about these Terms should be sent to
                 <span className="font-semibold">support@cardcat.io</span>.

@@ -197,6 +197,48 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="mt-12 rounded-[32px] border border-blue-500/20 bg-[linear-gradient(135deg,rgba(59,130,246,0.14),rgba(16,185,129,0.08))] p-6 shadow-[0_30px_90px_rgba(30,64,175,0.16)] sm:p-8">
+          <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">New listing sharing</div>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Share your active listings with one clean link</h2>
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
+                Create a view-only link for the cards you currently have listed. Great for card shows, Discord, Reddit, Facebook groups, local trade nights, or sending your available inventory to one interested buyer.
+              </p>
+
+              <ul className="mt-5 space-y-2 text-sm text-slate-100/85">
+                <li>• Choose whether to show or hide pricing</li>
+                <li>• Share for 24 hours, 7 days, 1 month, or permanently</li>
+                <li>• Disable the link whenever you want</li>
+                <li>• Let people browse images, front/back views, and card details in one place</li>
+              </ul>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <a href="/features/listings" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100">
+                  See listing sharing
+                </a>
+                <a href="/listed" className="rounded-xl border border-white/20 bg-black/15 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black/25">
+                  Open Listings
+                </a>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                ["Before a card show", "Share the cards you plan to bring so collectors can look before you even arrive."],
+                ["In community posts", "Drop one shelf link into Discord, Reddit, or Facebook instead of posting a pile of screenshots."],
+                ["For local deals", "Give buyers or traders a view-only page so they can browse what is available without touching your catalog."],
+                ["For repeat buyers", "Send one clean link whenever your listed inventory changes."],
+              ].map(([title, body]) => (
+                <div key={title} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
+                  <div className="text-sm font-semibold text-white">{title}</div>
+                  <div className="mt-2 text-sm leading-6 text-slate-300">{body}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="mt-12 grid gap-5 lg:grid-cols-2">
           {audienceCards.map((card) => (
             <div key={card.title} className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">

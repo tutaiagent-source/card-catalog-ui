@@ -19,6 +19,35 @@ const steps = [
   },
 ];
 
+const shareUseCases = [
+  {
+    title: "Before a card show",
+    body: "Share the cards you plan to bring so people can browse ahead of time and message you before the show starts.",
+  },
+  {
+    title: "Discord, Reddit, and Facebook",
+    body: "Post one clean link instead of a long message thread or a pile of screenshots whenever you want people to browse your active cards.",
+  },
+  {
+    title: "Local meetups and trade nights",
+    body: "Let other collectors quickly scan what is available without giving them edit access to your catalog.",
+  },
+];
+
+const safetyTips = [
+  "Use protected payment methods like PayPal Goods & Services.",
+  "Confirm card condition, front/back photos, and grading details before payment.",
+  "Use tracked shipping and insurance for higher-value cards.",
+  "Keep proof of packaging, shipment, and any agreement made in messages.",
+];
+
+const connectionFlow = [
+  "Share your listing publicly or with a specific community.",
+  "Interested buyers or traders review the cards in a view-only page.",
+  "They contact you directly to discuss price, trade terms, shipping, and payment.",
+  "The transaction happens off-platform, while CardCat stays focused on cataloging and discovery.",
+];
+
 export default function ListingsFeaturePage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -44,7 +73,7 @@ export default function ListingsFeaturePage() {
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                {["💸 Update asking price", "📅 Keep listed date", "🔗 Sale link stays attached", "↗ Open + share fast"].map((t) => (
+                {["💸 Update asking price", "📅 Keep listed date", "🔗 Sale link stays attached", "🌐 Share your listings shelf"].map((t) => (
                   <div
                     key={t}
                     className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-100"
@@ -126,6 +155,54 @@ export default function ListingsFeaturePage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="mt-10 rounded-[32px] border border-blue-500/20 bg-[linear-gradient(135deg,rgba(59,130,246,0.14),rgba(16,185,129,0.08))] p-6 shadow-[0_30px_90px_rgba(30,64,175,0.16)] sm:p-8">
+          <div className="max-w-3xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Shared listing links</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Share your whole listings shelf without exposing your full catalog</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-100/90 sm:text-base">
+              Generate a view-only link for the cards you currently have listed. Choose whether to show pricing, keep the link for a limited time or permanently, and disable it whenever you want.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+            {shareUseCases.map((item) => (
+              <div key={item.title} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
+                <div className="text-lg font-semibold text-white">{item.title}</div>
+                <p className="mt-3 text-sm leading-6 text-slate-300">{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-10 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">How member-to-member deals can work</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">CardCat can help people connect without becoming the checkout layer</h2>
+            <ol className="mt-6 space-y-3 text-sm leading-7 text-slate-300">
+              {connectionFlow.map((step, idx) => (
+                <li key={step} className="flex gap-4">
+                  <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-200">{idx + 1}</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div className="rounded-[32px] border border-amber-500/20 bg-amber-500/[0.08] p-6 sm:p-8">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Safety note</div>
+            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">CardCat is a connection platform, not the seller of record</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-100/90">
+              CardCat helps collectors show cards and connect with each other. Payments, shipping, condition disputes, refunds, and delivery arrangements stay between the buyer and seller.
+            </p>
+
+            <ul className="mt-5 space-y-2 text-sm text-slate-100/90">
+              {safetyTips.map((tip) => (
+                <li key={tip}>• {tip}</li>
+              ))}
+            </ul>
           </div>
         </section>
       </div>
