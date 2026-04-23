@@ -7,6 +7,7 @@ import { driveToImageSrc } from "@/lib/googleDrive";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
+import UsernamePromptBanner from "@/components/UsernamePromptBanner";
 import CatalogShareModal from "@/components/CatalogShareModal";
 
 type YesNo = "yes" | "no";
@@ -312,6 +313,7 @@ export default function PcPage() {
     <main className="flex-1 min-h-screen bg-slate-950 bg-cover bg-center text-slate-100 pb-20" style={{ backgroundImage: "url('/pc-wall.png')" }}>
       <div className="mx-auto max-w-6xl px-4 py-8">
         <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
+        <UsernamePromptBanner userId={user?.id} />
         <div className="flex items-end justify-between gap-4">
           <div>
             <CardCatLogo />

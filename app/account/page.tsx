@@ -4,9 +4,12 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { usePlanPreview } from "@/lib/planPreview";
+import { useUserProfile } from "@/lib/useUserProfile";
+import { normalizeUsername, validateUsername } from "@/lib/username";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
+import UsernamePromptBanner from "@/components/UsernamePromptBanner";
 
 type CardSummary = {
   id?: string;
@@ -25,10 +28,19 @@ export default function AccountPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
   const [clearingCatalog, setClearingCatalog] = useState(false);
   const [resettingSales, setResettingSales] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [usernameDraft, setUsernameDraft] = useState("");
+  const [allowMessages, setAllowMessages] = useState(true);
+  const { profile, tableReady, refreshProfile } = useUserProfile(user?.id);
+
+  useEffect(() => {
+    setUsernameDraft(String(profile?.username || ""));
+    setAllowMessages(profile?.allow_messages ?? true);
+  }, [profile?.username, profile?.allow_messages]);
 
   useEffect(() => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -149,6 +161,49 @@ export default function AccountPage() {
     setMessage("Password updated.");
   };
 
+  const saveProfileSettings = async () => {
+    setMessage("");
+    setError("");
+
+    if (!supabaseConfigured || !supabase) {
+      setError("Supabase is not configured yet.");
+      return;
+    }
+
+    if (!user?.id) return;
+
+    const normalized = normalizeUsername(usernameDraft);
+    const validationError = validateUsername(normalized);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setProfileSaving(true);
+    const { error: profileError } = await supabase.from("profiles").upsert(
+      {
+        id: user.id,
+        username: normalized,
+        allow_messages: allowMessages,
+      },
+      { onConflict: "id" }
+    );
+    setProfileSaving(false);
+
+    if (profileError) {
+      if (String(profileError.message || "").toLowerCase().includes("duplicate") || String(profileError.message || "").toLowerCase().includes("unique")) {
+        setError("That username is already taken.");
+      } else {
+        setError(profileError.message);
+      }
+      return;
+    }
+
+    setUsernameDraft(normalized);
+    await refreshProfile();
+    setMessage(`Profile saved. Your username is @${normalized}.`);
+  };
+
   const clearCatalog = async () => {
     setMessage("");
     setError("");
@@ -250,6 +305,7 @@ export default function AccountPage() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-3xl px-4 py-8 pb-24 md:pb-24">
         <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
+        <UsernamePromptBanner userId={user?.id} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardCatLogo />
@@ -282,6 +338,45 @@ export default function AccountPage() {
             <h2 className="text-lg font-semibold">Profile</h2>
             <div className="mt-4 text-sm text-slate-300">Email</div>
             <div className="mt-1 font-medium">{user.email}</div>
+
+            <div className="mt-4 text-sm text-slate-300">Username</div>
+            <div className="mt-1 font-medium">{profile?.username ? `@${profile.username}` : tableReady ? "Not set yet" : "Run the profiles migration first"}</div>
+
+            {tableReady ? (
+              <>
+                <div className="mt-4 text-sm text-slate-300">Choose your username</div>
+                <div className="mt-2 flex items-center rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-sm text-slate-200">
+                  <span className="mr-1 text-slate-500">@</span>
+                  <input
+                    value={usernameDraft}
+                    onChange={(e) => setUsernameDraft(normalizeUsername(e.target.value))}
+                    placeholder="choose_a_username"
+                    className="w-full bg-transparent outline-none"
+                    maxLength={24}
+                  />
+                </div>
+
+                <label className="mt-4 flex items-center gap-3 text-sm text-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={allowMessages}
+                    onChange={(e) => setAllowMessages(e.target.checked)}
+                  />
+                  Allow other members to message me
+                </label>
+
+                <button
+                  type="button"
+                  onClick={saveProfileSettings}
+                  disabled={profileSaving}
+                  className="mt-4 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                >
+                  {profileSaving ? "Saving…" : "Save profile settings"}
+                </button>
+
+                <div className="mt-2 text-xs text-slate-400">Lowercase letters, numbers, and underscores only.</div>
+              </>
+            ) : null}
 
             <div className="mt-4 text-sm text-slate-300">Sign-in methods</div>
             <div className="mt-1 text-sm text-slate-200">{providers.length ? providers.join(", ") : "email"}</div>

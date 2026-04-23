@@ -7,6 +7,7 @@ import { driveToImageSrc } from "@/lib/googleDrive";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
+import UsernamePromptBanner from "@/components/UsernamePromptBanner";
 import CatalogShareModal from "@/components/CatalogShareModal";
 
 type CardStatus = "Collection" | "Listed" | "Sold";
@@ -397,6 +398,7 @@ export default function ListedPage() {
       <div className="mx-auto max-w-6xl px-4 py-8">
         <CardCatMobileNav />
         <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
+        <UsernamePromptBanner userId={user?.id} />
 
         <div className="flex items-end justify-between gap-4">
           <div>
