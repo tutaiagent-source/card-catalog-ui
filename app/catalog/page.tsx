@@ -278,7 +278,13 @@ export default function CatalogPage() {
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [modalShowBack, setModalShowBack] = useState(false);
   const [modalIsFlipping, setModalIsFlipping] = useState(false);
-  const [imageModal, setImageModal] = useState<{ src: string; alt: string; backSrc?: string; backAlt?: string } | null>(null);
+  const [imageModal, setImageModal] = useState<{
+    card: Card;
+    src: string;
+    alt: string;
+    backSrc?: string;
+    backAlt?: string;
+  } | null>(null);
   const [statusToast, setStatusToast] = useState<{
     message: string;
     href?: string;
@@ -1669,6 +1675,7 @@ export default function CatalogPage() {
                             type="button"
                             onClick={() =>
                               setImageModal({
+                                card: previewCard,
                                 src: driveToImageSrc(previewCard.image_url),
                                 alt: "front",
                                 backSrc: previewCard.back_image_url
@@ -1689,6 +1696,7 @@ export default function CatalogPage() {
                             type="button"
                             onClick={() =>
                               setImageModal({
+                                card: previewCard,
                                 src: driveToImageSrc(previewCard.back_image_url),
                                 alt: "back",
                               })
@@ -1856,6 +1864,7 @@ export default function CatalogPage() {
                           type="button"
                           onClick={() =>
                             setImageModal({
+                              card: c,
                               src: driveToImageSrc(c.image_url as string),
                               alt: "front",
                               backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url as string) : undefined,
@@ -2022,6 +2031,7 @@ export default function CatalogPage() {
                               type="button"
                               onClick={() =>
                                 setImageModal({
+                                  card: c,
                                   src: driveToImageSrc(c.image_url as string),
                                   alt: "front",
                                   backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url as string) : undefined,
@@ -2174,6 +2184,7 @@ export default function CatalogPage() {
                           type="button"
                           onClick={() =>
                             setImageModal({
+                              card: c,
                               src: driveToImageSrc(c.image_url as string),
                               alt: "front",
                               backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url as string) : undefined,
@@ -2193,6 +2204,7 @@ export default function CatalogPage() {
                           type="button"
                           onClick={() =>
                             setImageModal({
+                              card: c,
                               src: driveToImageSrc(c.back_image_url as string),
                               alt: "back",
                             })
@@ -2717,69 +2729,84 @@ export default function CatalogPage() {
     )}
     {imageModal && (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
         onClick={() => setImageModal(null)}
       >
         <div
-          className="relative w-full max-w-3xl rounded-xl border border-slate-700 bg-slate-900 p-3"
+          className="w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-2xl border border-white/10 bg-slate-950 p-4 shadow-[0_30px_120px_rgba(0,0,0,0.7)]"
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            type="button"
-            className="absolute right-2 top-2 rounded bg-slate-800 px-2 py-1 text-xs font-semibold hover:bg-slate-700"
-            onClick={() => setImageModal(null)}
-          >
-            Close
-          </button>
-          <div className="max-h-[75vh] overflow-y-auto space-y-3">
-            {imageModal.backSrc ? (
-              <button
-                type="button"
-                className="relative h-[70vh] max-h-[70vh] w-full overflow-hidden rounded border border-slate-800 bg-slate-950"
-                onClick={() => {
-                  if (modalIsFlipping) return;
-                  setModalIsFlipping(true);
-                  setModalShowBack((v) => !v);
-                  window.setTimeout(() => setModalIsFlipping(false), 520);
-                }}
-                aria-label="Flip card"
-              >
-                <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full bg-slate-950/60 px-2 py-1 text-[11px] font-semibold text-slate-200 ring-1 ring-white/10">
-                  ↻ Flip
-                </div>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Catalog</div>
+              <div className="mt-2 text-lg font-bold text-white">{imageModal.card.player_name}</div>
+              <div className="mt-1 text-sm text-slate-300">
+                {imageModal.card.year} · {imageModal.card.brand} · {imageModal.card.set_name}
+              </div>
+            </div>
 
-                <div className="relative h-full w-full" style={{ perspective: 1200 }}>
-                  <div
-                    className="absolute inset-0 transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
-                    style={{
-                      transformStyle: "preserve-3d",
-                      transform: modalShowBack ? "rotateY(180deg)" : "rotateY(0deg)",
-                    }}
-                  >
-                    <img
-                      src={imageModal.src}
-                      alt={imageModal.alt}
-                      className="absolute inset-0 h-full w-full object-contain"
-                      style={{ backfaceVisibility: "hidden" }}
-                      draggable={false}
-                    />
-                    <img
-                      src={imageModal.backSrc}
-                      alt={imageModal.backAlt || "back"}
-                      className="absolute inset-0 h-full w-full object-contain"
-                      style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
-                      draggable={false}
-                    />
-                  </div>
-                </div>
-              </button>
-            ) : (
-              <img
-                src={imageModal.src}
-                alt={imageModal.alt}
-                className="max-h-[70vh] w-full rounded border border-slate-800 bg-slate-950 object-contain"
-              />
-            )}
+            <button
+              type="button"
+              className="rounded-full border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-200 hover:bg-slate-900"
+              onClick={() => setImageModal(null)}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div
+            className="relative mt-4 h-[60vh] max-h-[560px] w-full overflow-hidden rounded-xl border border-slate-800 bg-slate-950"
+            role={imageModal.backSrc ? "button" : undefined}
+            tabIndex={imageModal.backSrc ? 0 : undefined}
+            onClick={() => {
+              if (!imageModal.backSrc || modalIsFlipping) return;
+              setModalIsFlipping(true);
+              setModalShowBack((v) => !v);
+              window.setTimeout(() => setModalIsFlipping(false), 520);
+            }}
+            onKeyDown={(e) => {
+              if (!imageModal.backSrc || modalIsFlipping) return;
+              if (e.key !== "Enter" && e.key !== " ") return;
+              e.preventDefault();
+              setModalIsFlipping(true);
+              setModalShowBack((v) => !v);
+              window.setTimeout(() => setModalIsFlipping(false), 520);
+            }}
+          >
+            {imageModal.backSrc ? (
+              <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full bg-slate-950/70 px-3 py-1 text-[11px] font-semibold text-slate-200 ring-1 ring-white/10">
+                ⇄
+              </div>
+            ) : null}
+
+            <div className="relative h-full w-full" style={{ perspective: 1200 }}>
+              <div
+                className="absolute inset-0 h-full w-full transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+                style={{
+                  transformStyle: "preserve-3d",
+                  transform: modalShowBack ? "rotateY(180deg)" : "rotateY(0deg)",
+                }}
+              >
+                <img
+                  alt={imageModal.alt}
+                  src={imageModal.src}
+                  className="absolute inset-0 h-full w-full object-contain"
+                  style={{ backfaceVisibility: "hidden" }}
+                  draggable={false}
+                />
+
+                {imageModal.backSrc ? (
+                  <img
+                    alt={imageModal.backAlt || "back"}
+                    src={imageModal.backSrc}
+                    className="absolute inset-0 h-full w-full object-contain"
+                    style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                    draggable={false}
+                  />
+                ) : null}
+              </div>
+            </div>
           </div>
         </div>
       </div>
