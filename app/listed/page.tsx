@@ -717,16 +717,6 @@ export default function ListedPage() {
                         ) : null}
 
                         <div
-                          className={`absolute right-2 top-2 z-20 rounded-full border px-2 py-1 text-[10px] font-semibold ${
-                            isOnMarket
-                              ? "border-emerald-500/70 bg-emerald-500/20 text-emerald-100"
-                              : "border-red-500/70 bg-red-500/20 text-red-100"
-                          }`}
-                        >
-                          {isOnMarket ? "Market" : "Unlisted"}
-                        </div>
-
-                        <div
                           className={`aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 ${isOnMarket ? "border border-emerald-500/80" : "border border-red-500/80"}`}
                         >
                           {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
