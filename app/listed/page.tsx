@@ -513,8 +513,8 @@ export default function ListedPage() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 pb-20">
-      <div className="mx-auto max-w-6xl px-4 py-8">
+    <main className="min-h-screen bg-slate-950 text-slate-100 pb-28 sm:pb-20">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
         <CardCatMobileNav />
         <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
         <UsernamePromptBanner userId={user?.id} />
@@ -526,7 +526,7 @@ export default function ListedPage() {
               <span>📣</span>
               <span>Listed</span>
             </div>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">Actively listed cards</h1>
+            <h1 className="mt-3 text-3xl leading-tight font-bold tracking-tight text-white">Actively listed cards</h1>
             <p className="mt-2 text-slate-300">Tap a card to set (or update) the sale link. When you mark it sold, it moves to the Sold page.</p>
           </div>
 
