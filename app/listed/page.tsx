@@ -600,6 +600,17 @@ export default function ListedPage() {
             <div className="mt-3 text-xs text-amber-200">Choose a username first, then you can post cards to Market.</div>
           ) : null}
 
+          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-slate-300">
+            <div className="inline-flex items-center gap-2">
+              <span className="h-3.5 w-8 rounded border border-emerald-500/30 bg-emerald-500/10" />
+              Market
+            </div>
+            <div className="inline-flex items-center gap-2">
+              <span className="h-3.5 w-8 rounded border border-red-500/30 bg-red-500/10" />
+              Unlisted / Private
+            </div>
+          </div>
+
           {profile?.market_visibility_mode === "selected_cards" ? (
             <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
               {!bulkSelectingCards ? (
@@ -799,10 +810,6 @@ export default function ListedPage() {
                             >
                               {isSelected ? "✓" : "+"}
                             </button>
-                          ) : isOnMarket ? (
-                            <div className="absolute left-3 top-3 z-20 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
-                              Market
-                            </div>
                           ) : null}
 
 
