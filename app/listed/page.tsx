@@ -696,7 +696,7 @@ export default function ListedPage() {
                           }
                           setActiveCard(c);
                         }}
-                        className={`relative rounded-xl border p-0 ${isOnMarket ? "border-emerald-500/20 bg-emerald-500/10" : "border-red-500/20 bg-red-500/10"}`}
+                        className={`relative rounded-xl border p-0 ${isOnMarket ? "border-emerald-500/60 bg-emerald-500/25" : "border-red-500/60 bg-red-500/20"}`}
                         aria-label={`View ${c.player_name}`}
                         onKeyDown={(e) => {
                           if (!(e.key === "Enter" || e.key === " ")) return;
@@ -715,6 +715,16 @@ export default function ListedPage() {
                             ✓
                           </div>
                         ) : null}
+
+                        <div
+                          className={`absolute right-2 top-2 z-20 rounded-full border px-2 py-1 text-[10px] font-semibold ${
+                            isOnMarket
+                              ? "border-emerald-500/70 bg-emerald-500/20 text-emerald-100"
+                              : "border-red-500/70 bg-red-500/20 text-red-100"
+                          }`}
+                        >
+                          {isOnMarket ? "Market" : "Unlisted"}
+                        </div>
 
                         <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
                           {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
