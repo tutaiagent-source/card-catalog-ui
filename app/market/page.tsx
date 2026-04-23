@@ -64,6 +64,13 @@ function buildEbaySearchUrl(card: MarketCard) {
   return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(parts.join(" "))}&LH_Sold=1&LH_Complete=1`;
 }
 
+function toUrl(value?: string | null) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return null;
+}
+
 function yes(value?: string | null) {
   return String(value || "").toLowerCase() === "yes";
 }
@@ -332,6 +339,17 @@ export default function MarketPage() {
                     </div>
 
                     <div className="flex flex-wrap gap-2 pt-3">
+                      {toUrl(activeCard.sale_platform) ? (
+                        <a
+                          href={toUrl(activeCard.sale_platform) || "#"}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+                        >
+                          Open listing ↗
+                        </a>
+                      ) : null}
+
                       {String(sellerMap.get(activeCard.user_id) || "").trim() && activeCard.user_id !== user.id ? (
                         <button
                           type="button"
