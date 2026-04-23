@@ -168,8 +168,23 @@ export default function ListingsSharedView({
               <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[1.1fr_0.9fr]">
                 <div className="rounded-[24px] border border-white/10 bg-slate-900 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-slate-200">Image</div>
-                    <div />
+                    <div>
+                      <div className="text-sm font-semibold text-slate-200">Image</div>
+                      {activeCard.back_image_url ? (
+                        <div className="mt-1 text-xs text-slate-400">Use the button to view the back of the card.</div>
+                      ) : null}
+                    </div>
+                    {activeCard.back_image_url ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowBack((v) => !v)}
+                        className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                      >
+                        {showBack ? "Show front" : "Show back"}
+                      </button>
+                    ) : (
+                      <div />
+                    )}
                   </div>
 
                   <div className="mt-4">
