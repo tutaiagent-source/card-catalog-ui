@@ -86,6 +86,7 @@ export default function AccountPage() {
   const usagePct = Math.min(100, Math.round((totalCards / collectorCardCap) * 100));
 
   const effectiveTier: "collector" | "pro" = realTier ?? (isCollectorPreview ? "collector" : "pro");
+  const usernameLocked = Boolean(String(profile?.username || "").trim());
 
   const startStripeCheckout = async (tier: "collector" | "pro", interval: "month" | "annual") => {
     if (!supabaseConfigured || !supabase || !user?.id) return;
@@ -353,6 +354,7 @@ export default function AccountPage() {
                     placeholder="choose_a_username"
                     className="w-full bg-transparent outline-none"
                     maxLength={24}
+                    disabled={usernameLocked}
                   />
                 </div>
 
@@ -374,7 +376,11 @@ export default function AccountPage() {
                   {profileSaving ? "Saving…" : "Save profile settings"}
                 </button>
 
-                <div className="mt-2 text-xs text-slate-400">Lowercase letters, numbers, and underscores only.</div>
+                <div className="mt-2 text-xs text-slate-400">
+                  {usernameLocked
+                    ? "Your username is locked after it is chosen. You can still change your messaging preference below."
+                    : "Lowercase letters, numbers, and underscores only. Once chosen, usernames are locked."}
+                </div>
               </>
             ) : null}
 
