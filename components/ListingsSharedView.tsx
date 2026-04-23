@@ -66,6 +66,7 @@ export default function ListingsSharedView({
     const raw = String(s || "").trim();
     if (!raw) return null;
     if (/^https?:\/\//i.test(raw)) return raw;
+    if (/^[a-z0-9.-]+\.[a-z]{2,}(?:[/?#].*)?$/i.test(raw)) return `https://${raw}`;
     return null;
   }
 
