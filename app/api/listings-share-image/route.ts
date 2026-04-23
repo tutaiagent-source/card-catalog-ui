@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 
 export async function GET(request: NextRequest) {
-  const token = request.nextUrl.searchParams.get("token");
+  const rawToken = request.nextUrl.searchParams.get("token");
+  const token = String(rawToken || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
   const src = request.nextUrl.searchParams.get("src");
 
   if (!token || !src) {

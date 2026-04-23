@@ -13,7 +13,9 @@ export default async function ListedSharePage({ params }: { params: { token: str
     );
   }
 
-  const token = params.token;
+  const token = String(params.token || "")
+    .replace(/[^a-zA-Z0-9]/g, "")
+    .toLowerCase();
 
   const { data: share, error: shareErr } = await supabaseAdmin
     .from("listing_shares")
