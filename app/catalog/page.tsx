@@ -285,6 +285,21 @@ export default function CatalogPage() {
     backSrc?: string;
     backAlt?: string;
   } | null>(null);
+
+  // Image modal (inline edit)
+  const [estimateDraft, setEstimateDraft] = useState<string>("");
+  const [estimateSaving, setEstimateSaving] = useState(false);
+  const [cardDetailsDraft, setCardDetailsDraft] = useState({
+    player_name: "",
+    year: "",
+    brand: "",
+    set_name: "",
+    parallel: "",
+    card_number: "",
+    serial_number_text: "",
+  });
+  const [cardDetailsSaving, setCardDetailsSaving] = useState(false);
+
   const [statusToast, setStatusToast] = useState<{
     message: string;
     href?: string;
@@ -357,6 +372,26 @@ export default function CatalogPage() {
   useEffect(() => {
     setModalShowBack(false);
     setModalIsFlipping(false);
+  }, [imageModal]);
+
+  useEffect(() => {
+    if (!imageModal) return;
+
+    setEstimateDraft(
+      imageModal.card.estimated_price != null && Number.isFinite(Number(imageModal.card.estimated_price))
+        ? String(imageModal.card.estimated_price)
+        : ""
+    );
+
+    setCardDetailsDraft({
+      player_name: imageModal.card.player_name ?? "",
+      year: imageModal.card.year ?? "",
+      brand: imageModal.card.brand ?? "",
+      set_name: imageModal.card.set_name ?? "",
+      parallel: imageModal.card.parallel ?? "",
+      card_number: imageModal.card.card_number ?? "",
+      serial_number_text: imageModal.card.serial_number_text ?? "",
+    });
   }, [imageModal]);
 
   useEffect(() => {
@@ -1125,6 +1160,82 @@ export default function CatalogPage() {
       platformFee: statusModal.platformFee,
     });
     setStatusModal(null);
+  };
+
+  const updateEstimatedPrice = async () => {
+    const cardId = imageModal?.card?.id;
+    if (!cardId) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const trimmed = estimateDraft.trim();
+    let next: number | null = null;
+
+    if (trimmed !== "") {
+      const parsed = Number(trimmed);
+      if (!Number.isFinite(parsed)) {
+        alert("Enter a valid estimated price (numbers only). ");
+        return;
+      }
+      next = parsed;
+    }
+
+    setEstimateSaving(true);
+    try {
+      const { error } = await supabase
+        .from("cards")
+        .update({ estimated_price: next })
+        .eq("id", cardId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        alert(`Catalog estimate update failed: ${error.message}`);
+        return;
+      }
+
+      setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, estimated_price: next } : c)));
+      setImageModal((prev) => (prev ? { ...prev, card: { ...prev.card, estimated_price: next } } : prev));
+      setStatusToast({ message: "Estimated price updated.", tone: "success" });
+    } finally {
+      setEstimateSaving(false);
+    }
+  };
+
+  const updateCardDetails = async () => {
+    const cardId = imageModal?.card?.id;
+    if (!cardId) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const payload = {
+      player_name: cardDetailsDraft.player_name.trim(),
+      year: cardDetailsDraft.year.trim(),
+      brand: cardDetailsDraft.brand.trim(),
+      set_name: cardDetailsDraft.set_name.trim(),
+      parallel: cardDetailsDraft.parallel.trim(),
+      card_number: cardDetailsDraft.card_number.trim(),
+      serial_number_text: cardDetailsDraft.serial_number_text.trim(),
+    };
+
+    setCardDetailsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("cards")
+        .update(payload)
+        .eq("id", cardId)
+        .eq("user_id", user.id);
+
+      if (error) {
+        alert(`Catalog card details update failed: ${error.message}`);
+        return;
+      }
+
+      setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, ...payload } : c)));
+      setImageModal((prev) => (prev ? { ...prev, card: { ...prev.card, ...payload } } : prev));
+      setStatusToast({ message: "Card details updated.", tone: "success" });
+    } finally {
+      setCardDetailsSaving(false);
+    }
   };
 
   const qLower = q.trim().toLowerCase();
@@ -2808,6 +2919,144 @@ export default function CatalogPage() {
               </div>
             </div>
           </div>
+
+          <div className="mt-3 flex flex-col gap-2 text-sm">
+            <button
+              type="button"
+              className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-center text-slate-200 hover:bg-white/[0.08]"
+              onClick={() => setShareCard(imageModal.card)}
+            >
+              Share
+            </button>
+
+            <a
+              href={buildEbaySearchUrl(imageModal.card)}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-center text-slate-200 hover:bg-white/[0.08]"
+            >
+              Check Comps ↗
+            </a>
+
+            <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Card details</div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Player</div>
+                  <input
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    value={cardDetailsDraft.player_name}
+                    onChange={(e) => setCardDetailsDraft((p) => ({ ...p, player_name: e.target.value }))}
+                  />
+                </label>
+
+                <label className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Year</div>
+                  <input
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    value={cardDetailsDraft.year}
+                    onChange={(e) => setCardDetailsDraft((p) => ({ ...p, year: e.target.value }))}
+                  />
+                </label>
+
+                <label className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Brand</div>
+                  <input
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    value={cardDetailsDraft.brand}
+                    onChange={(e) => setCardDetailsDraft((p) => ({ ...p, brand: e.target.value }))}
+                  />
+                </label>
+
+                <label className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Set</div>
+                  <input
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    value={cardDetailsDraft.set_name}
+                    onChange={(e) => setCardDetailsDraft((p) => ({ ...p, set_name: e.target.value }))}
+                  />
+                </label>
+
+                <label className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Parallel</div>
+                  <input
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    value={cardDetailsDraft.parallel}
+                    onChange={(e) => setCardDetailsDraft((p) => ({ ...p, parallel: e.target.value }))}
+                  />
+                </label>
+
+                <label className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Card #</div>
+                  <input
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    value={cardDetailsDraft.card_number}
+                    onChange={(e) => setCardDetailsDraft((p) => ({ ...p, card_number: e.target.value }))}
+                  />
+                </label>
+
+                <label className="block sm:col-span-2">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Serial</div>
+                  <input
+                    className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    value={cardDetailsDraft.serial_number_text}
+                    onChange={(e) => setCardDetailsDraft((p) => ({ ...p, serial_number_text: e.target.value }))}
+                  />
+                </label>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={updateCardDetails}
+                  disabled={cardDetailsSaving}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
+                >
+                  {cardDetailsSaving ? "Saving…" : "Save details"}
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Estimated price</div>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2">
+                  <span className="text-slate-300">$</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    className="w-28 bg-transparent text-sm text-white outline-none"
+                    value={estimateDraft}
+                    onChange={(e) => setEstimateDraft(e.target.value)}
+                    placeholder="0.00"
+                    aria-label="Estimated price"
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
+                  onClick={() => updateEstimatedPrice()}
+                  disabled={estimateSaving}
+                >
+                  {estimateSaving ? "Updating…" : "Update"}
+                </button>
+
+                <button
+                  type="button"
+                  className="rounded-xl border border-white/10 bg-transparent px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06] disabled:opacity-60"
+                  onClick={() => setEstimateDraft("")}
+                  disabled={estimateSaving}
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="mt-2 text-xs text-slate-400">Used in the Catalog total value at the top of the page.</div>
+            </div>
+          </div>
+
         </div>
       </div>
     )}
