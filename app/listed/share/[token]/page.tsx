@@ -21,9 +21,8 @@ export default async function ListedSharePage({
       );
     }
 
-    const token = String(params.token || "")
-      .replace(/[^a-zA-Z0-9]/g, "")
-      .toLowerCase();
+    const rawToken = String(params.token || "");
+    const token = rawToken.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
 
     const { data: share, error: shareErr } = await supabaseAdmin
       .from("listing_shares")
@@ -43,11 +42,36 @@ export default async function ListedSharePage({
     }
 
     if (!share) {
+      // Extra sanity checks: debugging why debug endpoint finds the token but this page doesn’t.
+      let foundByRaw = false;
+      let foundByNormalized = false;
+      try {
+        const rawRes = await supabaseAdmin
+          .from("listing_shares")
+          .select("share_token")
+          .eq("share_token", rawToken)
+          .maybeSingle();
+        foundByRaw = Boolean((rawRes.data as any) ?? null);
+
+        const normRes = await supabaseAdmin
+          .from("listing_shares")
+          .select("share_token")
+          .eq("share_token", token)
+          .maybeSingle();
+        foundByNormalized = Boolean((normRes.data as any) ?? null);
+      } catch {
+        // ignore
+      }
+
       return (
         <main className="min-h-screen bg-slate-950 text-slate-100">
           <div className="mx-auto max-w-3xl px-4 py-16">
             <h1 className="text-3xl font-bold">Invalid share link</h1>
-            <p className="mt-3 text-slate-300">Ask the lister to generate a new shared listings link.</p>
+            <p className="mt-3 text-slate-300">
+              Ask the lister to generate a new shared listings link.
+              <br />
+              Debug: foundByRaw={String(foundByRaw)} foundByNormalized={String(foundByNormalized)} rawLen={rawToken.length} normLen={token.length}
+            </p>
           </div>
         </main>
       );
