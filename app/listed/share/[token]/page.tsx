@@ -7,7 +7,7 @@ export const revalidate = 0;
 export default async function ListedSharePage({
   params,
 }: {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }) {
   try {
     if (!supabaseAdmin) {
@@ -21,7 +21,8 @@ export default async function ListedSharePage({
       );
     }
 
-    const rawToken = String(params.token || "");
+    const { token: tokenParam } = await params;
+    const rawToken = String(tokenParam || "");
     const token = rawToken.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
 
     const { data: share, error: shareErr } = await supabaseAdmin
