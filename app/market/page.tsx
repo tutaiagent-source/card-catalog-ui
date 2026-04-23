@@ -38,11 +38,13 @@ type MarketCard = {
   asking_price?: number | null;
   listed_at?: string | null;
   sale_platform?: string | null;
+  public_market_visible?: boolean;
 };
 
 type SellerProfile = {
   id: string;
   username: string;
+  market_visibility_mode?: string;
 };
 
 function formatMoney(value: number) {
@@ -93,7 +95,7 @@ export default function MarketPage() {
 
       const { data: cardRows, error: cardError } = await supabase
         .from("cards")
-        .select("id, user_id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, rookie, is_autograph, has_memorabilia, serial_number_text, graded, grade, grading_company, auto_grade, grading_cert_number_text, image_url, back_image_url, asking_price, listed_at, sale_platform")
+        .select("id, user_id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, rookie, is_autograph, has_memorabilia, serial_number_text, graded, grade, grading_company, auto_grade, grading_cert_number_text, image_url, back_image_url, asking_price, listed_at, sale_platform, public_market_visible")
         .eq("status", "Listed")
         .order("listed_at", { ascending: false });
 
@@ -115,7 +117,7 @@ export default function MarketPage() {
 
       const { data: profileRows, error: profileError } = await supabase
         .from("profiles")
-        .select("id, username")
+        .select("id, username, market_visibility_mode")
         .in("id", sellerIds);
 
       if (profileError) {
@@ -136,7 +138,12 @@ export default function MarketPage() {
     const sellerQ = sellerFilter.trim().toLowerCase();
 
     return cards.filter((card) => {
-      const sellerUsername = String(sellerMap.get(card.user_id) || "").toLowerCase();
+      const seller = profiles.find((profile) => profile.id === card.user_id);
+      const sellerUsername = String(seller?.username || "").toLowerCase();
+      const marketMode = String(seller?.market_visibility_mode || "none").toLowerCase();
+      const visibleInMarket = marketMode === "all_listed" || marketMode === "whole_collection" || (marketMode === "selected_cards" && Boolean(card.public_market_visible));
+      if (!visibleInMarket) return false;
+
       const matchesSeller = !sellerQ || sellerUsername === sellerQ;
       if (!matchesSeller) return false;
       if (!q) return true;
@@ -157,7 +164,7 @@ export default function MarketPage() {
 
       return haystack.includes(q);
     });
-  }, [cards, searchQuery, sellerFilter, sellerMap]);
+  }, [cards, searchQuery, sellerFilter, sellerMap, profiles]);
 
   async function handleMessageSeller(card: MarketCard) {
     const sellerUsername = String(sellerMap.get(card.user_id) || "").trim();
