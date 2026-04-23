@@ -587,13 +587,18 @@ export default function ListedPage() {
                   {sortedCards.map((c) => {
                     const src = c.image_url ? driveToImageSrc(c.image_url) : "";
                     const goHref = toUrl(c.sale_platform);
+                    const marketMode = profile?.market_visibility_mode || "none";
+                    const isOnMarket =
+                      marketMode === "whole_collection" ||
+                      (marketMode === "all_listed" && c.status === "Listed") ||
+                      (marketMode === "selected_cards" && Boolean(c.public_market_visible));
                     return (
                       <div
                         key={c.id}
                         role="listitem"
                         tabIndex={0}
                         onClick={() => setActiveCard(c)}
-                        className="relative rounded-xl border border-slate-800 bg-slate-950/40 p-0"
+                        className={`relative rounded-xl border p-0 ${isOnMarket ? "border-emerald-500/20 bg-emerald-500/10" : "border-red-500/20 bg-red-500/10"}`}
                         aria-label={`View ${c.player_name}`}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") setActiveCard(c);
@@ -641,13 +646,18 @@ export default function ListedPage() {
                     {sortedCards.map((c) => {
                       const src = c.image_url ? driveToImageSrc(c.image_url) : "";
                       const goHref = toUrl(c.sale_platform);
+                      const marketMode = profile?.market_visibility_mode || "none";
+                      const isOnMarket =
+                        marketMode === "whole_collection" ||
+                        (marketMode === "all_listed" && c.status === "Listed") ||
+                        (marketMode === "selected_cards" && Boolean(c.public_market_visible));
                       return (
                         <div
                           key={c.id}
                           role="button"
                           tabIndex={0}
                           onClick={() => setActiveCard(c)}
-                          className="relative rounded-2xl border border-white/10 bg-slate-950/40 p-3 hover:bg-slate-950/55"
+                          className={`relative rounded-2xl border p-3 ${isOnMarket ? "border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/15" : "border-red-500/20 bg-red-500/10 hover:bg-red-500/15"}`}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") setActiveCard(c);
                           }}
@@ -668,7 +678,7 @@ export default function ListedPage() {
                             </a>
                           ) : null}
 
-                          {c.public_market_visible ? (
+                          {isOnMarket ? (
                             <div className="absolute left-3 top-3 z-20 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
                               Market
                             </div>
