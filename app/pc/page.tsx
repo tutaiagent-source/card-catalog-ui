@@ -51,6 +51,7 @@ function buildEbaySearchUrl(card: Card) {
     card.player_name,
     card.brand,
     card.set_name,
+    card.parallel,
     card.card_number,
     serialForEbay,
   ]
