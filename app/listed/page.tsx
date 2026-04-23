@@ -8,6 +8,7 @@ import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
 import UsernamePromptBanner from "@/components/UsernamePromptBanner";
+import { useUserProfile } from "@/lib/useUserProfile";
 import CatalogShareModal from "@/components/CatalogShareModal";
 
 type CardStatus = "Collection" | "Listed" | "Sold";
@@ -83,6 +84,7 @@ function shortDate(value?: string | null) {
 export default function ListedPage() {
   const { user, loading } = useSupabaseUser();
   const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
+  const { profile, refreshProfile } = useUserProfile(user?.id);
 
   const [cards, setCards] = useState<ListedCard[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -118,6 +120,7 @@ export default function ListedPage() {
   const [shareDuration, setShareDuration] = useState<"24h" | "7d" | "1m" | "permanent">("7d");
   const [generatedShareLink, setGeneratedShareLink] = useState<string | null>(null);
   const [isCreatingShare, setIsCreatingShare] = useState(false);
+  const [marketModeSaving, setMarketModeSaving] = useState(false);
 
   const sortedCards = useMemo(() => {
     return cards
@@ -285,6 +288,35 @@ export default function ListedPage() {
 
     setCards((prev) => prev.map((card) => (card.id === cardId ? { ...card, public_market_visible: Boolean(nextValue) } : card)));
     setActiveCard((prev) => (prev?.id === cardId ? { ...prev, public_market_visible: Boolean(nextValue) } : prev));
+  }
+
+  async function setMarketMode(nextMode: "none" | "selected_cards" | "all_listed") {
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+    if (!profile?.username) {
+      alert("Choose a username first, then you can post cards to Market.");
+      return;
+    }
+
+    setMarketModeSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: user.id,
+          username: String(profile.username || ""),
+          allow_messages: profile.allow_messages ?? true,
+          market_visibility_mode: nextMode,
+        },
+        { onConflict: "id" }
+      );
+    setMarketModeSaving(false);
+
+    if (error) {
+      alert(`Could not update market visibility: ${error.message}`);
+      return;
+    }
+
+    await refreshProfile();
   }
 
   function shareDurationLabel(s: ListingShare) {
@@ -467,6 +499,39 @@ export default function ListedPage() {
             </div>
           </div>
         </div>
+
+        <section className="mt-4 rounded-3xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-white">Marketplace visibility</div>
+              <div className="mt-1 text-sm text-slate-300">
+                Post your whole listings shelf to Market, or switch to selected cards and control cards one by one in preview.
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-3">
+              {([
+                ["none", "Private"],
+                ["selected_cards", "Selected cards only"],
+                ["all_listed", "Post whole listing collection"],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setMarketMode(value)}
+                  disabled={marketModeSaving || !profile?.username}
+                  className={`rounded-xl border px-3 py-2 text-sm font-semibold ${String(profile?.market_visibility_mode || "none") === value ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-200" : "border-white/10 bg-slate-900/20 text-slate-200"} disabled:opacity-60`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {!profile?.username ? (
+            <div className="mt-3 text-xs text-amber-200">Choose a username first, then you can post cards to Market.</div>
+          ) : null}
+        </section>
 
         {activeListingShares.length > 0 ? (
           <div className="mt-4 rounded-3xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
