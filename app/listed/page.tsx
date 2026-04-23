@@ -616,26 +616,21 @@ export default function ListedPage() {
               {!bulkSelectingCards ? (
                 <button
                   type="button"
-                  onClick={() => setBulkSelectingCards(true)}
+                  onClick={() => {
+                    setBulkSelectedCardIds([]);
+                    setBulkSelectingCards(true);
+                  }}
                   className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
                   disabled={marketModeSaving || isRefreshing}
                 >
                   Select multiple cards to post
                 </button>
               ) : (
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="text-sm text-slate-300">
-                    Selected {bulkSelectedCardIds.length} card{bulkSelectedCardIds.length === 1 ? "" : "s"}
+                    Tap cards to toggle Market visibility (green = on Market, red = off).
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={postSelectedCardsToMarket}
-                      disabled={bulkUpdatingMarketVisibility || bulkSelectedCardIds.length === 0}
-                      className="rounded-xl bg-emerald-500/[0.14] px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/[0.18] disabled:opacity-60"
-                    >
-                      {bulkUpdatingMarketVisibility ? "Posting…" : "Post selected to Market"}
-                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -696,9 +691,7 @@ export default function ListedPage() {
                         tabIndex={0}
                         onClick={() => {
                           if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
-                            setBulkSelectedCardIds((prev) =>
-                              prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
-                            );
+                            void toggleMarketVisibility(c.id as string, !isOnMarket);
                             return;
                           }
                           setActiveCard(c);
@@ -708,20 +701,18 @@ export default function ListedPage() {
                         onKeyDown={(e) => {
                           if (!(e.key === "Enter" || e.key === " ")) return;
                           if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
-                            setBulkSelectedCardIds((prev) =>
-                              prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
-                            );
+                            void toggleMarketVisibility(c.id as string, !isOnMarket);
                             return;
                           }
                           setActiveCard(c);
                         }}
                       >
-                        {marketMode === "selected_cards" && bulkSelectingCards && c.id ? (
+                        {marketMode === "selected_cards" && bulkSelectingCards && c.id && isSelected ? (
                           <div
                             aria-hidden="true"
                             className={`absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${isSelected ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200" : "border-white/10 bg-slate-950/60 text-slate-200"}`}
                           >
-                            {isSelected ? "✓" : "+"}
+                            ✓
                           </div>
                         ) : null}
 
@@ -778,22 +769,18 @@ export default function ListedPage() {
                           key={c.id}
                           role="button"
                           tabIndex={0}
-                          onClick={() => {
-                            if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
-                              setBulkSelectedCardIds((prev) =>
-                                prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
-                              );
-                              return;
-                            }
-                            setActiveCard(c);
-                          }}
+                        onClick={() => {
+                          if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
+                            void toggleMarketVisibility(c.id as string, !isOnMarket);
+                            return;
+                          }
+                          setActiveCard(c);
+                        }}
                           className={`relative rounded-2xl border p-3 ${isOnMarket ? "border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/15" : "border-red-500/20 bg-red-500/10 hover:bg-red-500/15"}`}
                           onKeyDown={(e) => {
                             if (!(e.key === "Enter" || e.key === " ")) return;
                             if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
-                              setBulkSelectedCardIds((prev) =>
-                                prev.includes(c.id as string) ? prev.filter((id) => id !== c.id) : [...prev, c.id as string]
-                              );
+                              void toggleMarketVisibility(c.id as string, !isOnMarket);
                               return;
                             }
                             setActiveCard(c);
@@ -815,7 +802,7 @@ export default function ListedPage() {
                             </a>
                           ) : null}
 
-                          {marketMode === "selected_cards" && bulkSelectingCards && c.id ? (
+                          {marketMode === "selected_cards" && bulkSelectingCards && c.id && isSelected ? (
                             <div
                               aria-hidden="true"
                               className={`absolute left-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${
@@ -824,7 +811,7 @@ export default function ListedPage() {
                                   : "border-white/10 bg-slate-950/60 text-slate-200"
                               }`}
                             >
-                              {isSelected ? "✓" : "+"}
+                              ✓
                             </div>
                           ) : null}
 
