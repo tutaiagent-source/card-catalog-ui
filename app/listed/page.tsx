@@ -910,10 +910,11 @@ export default function ListedPage() {
             </div>
 
             <div className="mt-4 space-y-3">
-              {listingShares.length === 0 ? (
+              {listingShares.filter((s) => !s.revoked_at).length === 0 ? (
                 <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-300">No share links yet.</div>
               ) : (
                 listingShares
+                  .filter((s) => !s.revoked_at)
                   .slice()
                   .sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))
                   .map((s) => {
