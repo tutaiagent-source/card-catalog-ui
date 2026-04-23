@@ -440,6 +440,22 @@ export default function ListedPage() {
   }
 
   const activeHref = toUrl(editLink);
+  const normalizedEditLink = editLink.trim();
+  const normalizedEditListedAt = editListedAt.trim();
+  const normalizedEditAskingPrice = (() => {
+    const raw = editAskingPrice.trim();
+    if (!raw) return "";
+    const n = Number(raw);
+    return Number.isFinite(n) ? String(n) : raw;
+  })();
+  const activeAskingPrice = activeCard?.asking_price != null ? String(Number(activeCard.asking_price)) : "";
+  const activeListedAtValue = activeCard?.listed_at ? String(activeCard.listed_at).slice(0, 10) : "";
+  const activeLinkValue = String(activeCard?.sale_platform || "").trim();
+  const isListingDirty = Boolean(activeCard) && (
+    normalizedEditLink !== activeLinkValue ||
+    normalizedEditListedAt !== activeListedAtValue ||
+    normalizedEditAskingPrice !== activeAskingPrice
+  );
 
   const nowMs = Date.now();
   const activeListingShares = listingShares.filter((s) => {
@@ -892,10 +908,10 @@ export default function ListedPage() {
                           <button
                             type="button"
                             onClick={saveListingDetails}
-                            disabled={isSavingDetails}
+                            disabled={isSavingDetails || !isListingDirty}
                             className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
                           >
-                            {isSavingDetails ? "Saving…" : "Save listing"}
+                            {isSavingDetails ? "Saving…" : isListingDirty ? "Save listing" : "Saved"}
                           </button>
                           <button
                             type="button"
