@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import CardCatLogo from "@/components/CardCatLogo";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
@@ -25,6 +25,16 @@ function formatTimestamp(value?: string | null) {
 export default function MessagesPage() {
   const { user, loading } = useSupabaseUser();
   const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
+  const [conversationParam, setConversationParam] = useState("");
+  const [prefillParam, setPrefillParam] = useState("");
+  const prefillAppliedRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setConversationParam(String(params.get("conversation") || "").trim());
+    setPrefillParam(String(params.get("prefill") || "").trim());
+  }, []);
 
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
   const [participants, setParticipants] = useState<ConversationParticipantRow[]>([]);
@@ -124,13 +134,18 @@ export default function MessagesPage() {
       return;
     }
 
-    setConversations((conversationRows ?? []) as ConversationRow[]);
+    const nextConversations = (conversationRows ?? []) as ConversationRow[];
+    setConversations(nextConversations);
     setParticipants((participantRows ?? []) as ConversationParticipantRow[]);
     setProfiles(profileRows);
     setMessages((messageRows ?? []) as MessageRow[]);
-    setActiveConversationId((prev) => prev && conversationIds.includes(prev) ? prev : conversationIds[0]);
+    setActiveConversationId((prev) => {
+      if (conversationParam && conversationIds.includes(conversationParam)) return conversationParam;
+      if (prev && conversationIds.includes(prev)) return prev;
+      return nextConversations[0]?.id ?? conversationIds[0] ?? null;
+    });
     setLoadingInbox(false);
-  }, [user?.id]);
+  }, [user?.id, conversationParam]);
 
   useEffect(() => {
     loadInbox();
@@ -153,6 +168,13 @@ export default function MessagesPage() {
         // quiet for shell v1
       });
   }, [activeConversationId, user?.id]);
+
+  useEffect(() => {
+    if (!prefillParam || !activeConversationId || prefillAppliedRef.current) return;
+    if (conversationParam && conversationParam !== activeConversationId) return;
+    setDraftMessage(prefillParam);
+    prefillAppliedRef.current = true;
+  }, [prefillParam, activeConversationId, conversationParam]);
 
   const conversationViews = useMemo(() => {
     return conversations.map((conversation) => {

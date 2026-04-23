@@ -131,6 +131,7 @@ export default async function ListedSharePage({
     }
 
     const ownerUserId = (ownerRow as any)?.owner_user_id ?? null;
+    let ownerUsername: string | null = null;
 
     if (!ownerUserId) {
       return (
@@ -141,6 +142,20 @@ export default async function ListedSharePage({
           </div>
         </main>
       );
+    }
+
+    try {
+      const { data: ownerProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("username, allow_messages")
+        .eq("id", ownerUserId)
+        .maybeSingle();
+
+      if ((ownerProfile as any)?.allow_messages !== false) {
+        ownerUsername = String((ownerProfile as any)?.username || "").trim() || null;
+      }
+    } catch {
+      ownerUsername = null;
     }
 
     const richCardsSelect =
@@ -187,6 +202,7 @@ export default async function ListedSharePage({
         token={token}
         showPricing={Boolean((share as any)?.show_pricing)}
         showCompCheck={Boolean((share as any)?.show_comp_check)}
+        ownerUsername={ownerUsername}
         cards={(cards ?? []) as any}
       />
     );

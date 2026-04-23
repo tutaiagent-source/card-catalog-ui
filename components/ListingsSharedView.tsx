@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { driveToImageSrc } from "@/lib/googleDrive";
+import { useSupabaseUser } from "@/lib/useSupabaseUser";
+import { startDirectConversation } from "@/lib/messaging";
 
 type YesNo = "yes" | "no";
 
@@ -40,16 +42,21 @@ export default function ListingsSharedView({
   token,
   showPricing,
   showCompCheck,
+  ownerUsername,
   cards,
 }: {
   token: string;
   showPricing: boolean;
   showCompCheck: boolean;
+  ownerUsername?: string | null;
   cards: SharedCard[];
 }) {
+  const { user } = useSupabaseUser();
   const [activeCard, setActiveCard] = useState<SharedCard | null>(null);
   const [showBack, setShowBack] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [messageStarting, setMessageStarting] = useState(false);
+  const [messageError, setMessageError] = useState("");
 
   useEffect(() => {
     setShowBack(false);
@@ -100,6 +107,27 @@ export default function ListingsSharedView({
     return `/api/listings-share-image?token=${encodeURIComponent(token)}&src=${encodeURIComponent(src)}`;
   };
 
+  async function handleMessageSeller(card: SharedCard) {
+    if (!ownerUsername) return;
+
+    if (!user?.id) {
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
+
+    setMessageStarting(true);
+    setMessageError("");
+
+    try {
+      const prefill = `Hey, I'm interested in your ${[card.year, card.player_name, card.brand, card.set_name].filter(Boolean).join(" ")}. Is it still available?`;
+      const conversationId = await startDirectConversation(ownerUsername, undefined, card.id ?? undefined);
+      window.location.href = `/messages?conversation=${encodeURIComponent(conversationId)}&prefill=${encodeURIComponent(prefill)}`;
+    } catch (err: any) {
+      setMessageError(err?.message || "Could not start a conversation.");
+      setMessageStarting(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 pb-16">
       <div className="mx-auto max-w-6xl px-4 py-8">
@@ -110,8 +138,13 @@ export default function ListingsSharedView({
             </div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight text-white">View-only</h1>
             <p className="mt-2 text-slate-300">Tap a card for a larger view.</p>
+            {ownerUsername ? <p className="mt-2 text-sm text-slate-400">Seller: <span className="text-slate-200">@{ownerUsername}</span></p> : null}
           </div>
         </div>
+
+        {messageError ? (
+          <div className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/[0.08] px-4 py-3 text-sm text-red-100">{messageError}</div>
+        ) : null}
 
         {sortedCards.length === 0 ? (
           <div className="mt-10 rounded-3xl border border-white/10 bg-white/[0.03] p-8">
@@ -365,9 +398,20 @@ export default function ListingsSharedView({
 
                       {(() => {
                         const href = toUrl(activeCard.sale_platform);
-                        if (!href && !showCompCheck) return null;
+                        if (!href && !showCompCheck && !ownerUsername) return null;
                         return (
                           <div className="flex flex-wrap gap-2 pt-2">
+                            {ownerUsername ? (
+                              <button
+                                type="button"
+                                onClick={() => handleMessageSeller(activeCard)}
+                                disabled={messageStarting}
+                                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-500/15 disabled:opacity-60"
+                              >
+                                {messageStarting ? "Opening…" : user?.id ? "Message seller" : "Sign in to message seller"}
+                              </button>
+                            ) : null}
+
                             {href ? (
                               <a
                                 href={href}
