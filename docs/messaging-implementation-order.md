@@ -79,6 +79,11 @@ Ship member-to-member messaging without turning CardCat into a full marketplace 
   - interested in trade
   - what’s your best price?
 
+### Future permission rule to keep in plan
+- users can choose to make their whole listing public on the site, or choose individual cards to publish
+- only users with public listings should be messageable by non-friends
+- if two users become friends later, messaging can expand beyond public listings
+
 ### Done when
 - shared listing viewer can message seller from a card flow
 

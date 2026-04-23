@@ -7,6 +7,7 @@ const items = [
   { href: "/catalog", label: "Catalog", icon: <CardCatMark className="h-4.5 w-4.5" /> },
   { href: "/pc", label: "PC ★", icon: "☆" },
   { href: "/listed", label: "Listings", icon: "📣" },
+  { href: "/messages", label: "Msgs", icon: "✉️" },
   { href: "/add-card", label: "Add", icon: "＋" },
   { href: "/import", label: "Import", icon: "⬆️" },
   { href: "/sold", label: "Sold", icon: "💰" },
@@ -18,7 +19,7 @@ export default function CardCatMobileNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-slate-950/95 backdrop-blur">
-      <div className="mx-auto grid max-w-md grid-cols-7 gap-1 px-1 py-1">
+      <div className="mx-auto grid max-w-md grid-cols-8 gap-1 px-1 py-1">
         {items.map((item) => {
           const active = pathname === item.href;
           return (

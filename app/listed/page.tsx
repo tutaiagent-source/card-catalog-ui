@@ -414,6 +414,12 @@ export default function ListedPage() {
           <div className="text-right">
             <div className="text-sm text-slate-400">{sortedCards.length} active listing{sortedCards.length === 1 ? "" : "s"}</div>
             <div className="mt-3 flex items-center justify-end gap-2">
+              <a
+                href="/messages"
+                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+              >
+                Messages
+              </a>
               <button
                 type="button"
                 onClick={() => {

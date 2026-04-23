@@ -411,6 +411,7 @@ export default function SoldPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <a href="/catalog" className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 font-semibold text-slate-100 hover:bg-white/[0.08]">Catalog</a>
+            <a href="/messages" className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2.5 font-semibold text-slate-100 hover:bg-white/[0.08]">Messages</a>
             {isCollectorPreview ? (
               <a href="/account" className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 font-semibold text-amber-200 hover:bg-amber-500/15">
                 Export sales CSV (Pro)

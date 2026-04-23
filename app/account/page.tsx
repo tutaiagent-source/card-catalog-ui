@@ -317,6 +317,9 @@ export default function AccountPage() {
             <a href="/catalog" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
               Catalog
             </a>
+            <a href="/messages" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
+              Messages
+            </a>
             <a href="/sold" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
               Sold
             </a>
