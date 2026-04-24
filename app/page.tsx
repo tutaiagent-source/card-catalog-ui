@@ -5,19 +5,19 @@ import ShareSheetFeaturePreview from "@/components/ShareSheetFeaturePreview";
 const featureCards = [
   {
     title: "Cleaner Catalog Control",
-    body: "Search, filter, and move through your collection without getting buried in spreadsheet clutter.",
+    body: "Search, filter, and move cards between Collection, Active Listings, and Sold without spreadsheet clutter.",
   },
   {
     title: "Built For Real Collections",
-    body: "Keep Personal Collection cards, listed inventory, and sold history connected in one clear system.",
+    body: "Keep Personal Collection (PC ★), Active Listings, and Sold history connected to the same card record.",
   },
   {
     title: "Guided Import Workflow",
-    body: "Bring in CSV files, review duplicates, and fix messy rows before they become bigger problems.",
+    body: "Import from CSV, review duplicates, and fix messy rows before you save.",
   },
   {
     title: "Seller Tools When You Need Them",
-    body: "Create clean card posts with optional pricing, then move faster when posting into Facebook groups or other selling communities.",
+    body: "Create Card Posts with optional pricing, and share Active Listings with view-only links.",
   },
 ];
 
@@ -25,13 +25,13 @@ const audienceCards = [
   {
     eyebrow: "For Casual Collectors",
     title: "Simple Enough To Start Fast",
-    body: "Add the cards you care about, keep your PC organized, and stop losing track of what you own.",
-    bullets: ["Easy Card Entry", "Personal Collection View", "Cleaner Mobile Experience"],
+    body: "Add the cards you care about, star your PC, and stop losing track of what you own. When you list, share with one clean link and post with Card Posts.",
+    bullets: ["Easy Card Entry", "PC ★ Preview", "Active Listings Sharing"],
   },
   {
     eyebrow: "For Serious Collectors",
     title: "Strong Enough To Scale With You",
-    body: "Import larger inventories, manage listed and sold cards, and keep your collection data portable.",
+    body: "Import larger inventories, manage Active Listings and Sold history, and keep your collection data portable with exports and backups.",
     bullets: ["CSV Import And Export", "Bulk Inventory Actions", "One-Click eBay Sold Search"],
   },
 ];
@@ -45,17 +45,17 @@ const workflow = [
   {
     step: "02",
     title: "Organize What Matters",
-    body: "Keep the full catalog clean while still separating out the cards in your PC.",
+    body: "Keep your Catalog clean while starring cards into your PC (PC ★).",
   },
   {
     step: "03",
     title: "Track What Moves",
-    body: "Mark cards as listed or sold and keep the history attached to the card record.",
+    body: "Mark cards as Active Listings or Sold, and keep the story tied to the same card record.",
   },
   {
     step: "04",
     title: "Stay In Control",
-    body: "Export backups, review sold history, and keep everything easy to find later.",
+    body: "Export backups, review sold history, and share your Active Listings shelf whenever you want.",
   },
 ];
 
@@ -103,7 +103,7 @@ export default function Home() {
           <div className="relative grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-                Card Inventory For Collectors
+                Catalog For Collectors
               </div>
 
               <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
@@ -111,7 +111,7 @@ export default function Home() {
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                CardCat gives collectors a cleaner way to manage inventory without getting buried in rows, tabs, and messy spreadsheets. Use it for the cards you keep, the ones you list, and the ones you sell.
+                CardCat helps collectors keep their Catalog tidy, star their PC, and manage the cards they list and sell. Keep everything connected: PC, Active Listings, Sold history, and Card Posts.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -137,17 +137,17 @@ export default function Home() {
 
               <div className="mt-5 max-w-xl rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Quick Comp Check</div>
-                <div className="mt-2 text-sm font-semibold text-white">Check recent sold comps on eBay in one click.</div>
+                <div className="mt-2 text-sm font-semibold text-white">Jump to eBay Recent Sold Comps in one click.</div>
                 <div className="mt-1 text-sm leading-6 text-slate-200">
-                  From a card record, jump straight to eBay’s recent sold results for a faster market check.
+                  From any card record, open the exact recent sold results you want to compare.
                 </div>
               </div>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
                 {[
-                  ["Personal Collection", "Keep favorite cards separate without losing the full picture"],
+                  ["Personal Collection (PC ★)", "Star your favorites in PC without losing the full inventory story"],
                   ["Sold Tracking", "Track what moved, when it sold, and what stays in the collection"],
-                  ["Portable Data", "Import and export cleanly so your collection stays yours"],
+                  ["Export & Backups", "Import and export cleanly so your collection stays yours"],
                 ].map(([label, body]) => (
                   <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/55 p-4 backdrop-blur-sm">
                     <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</div>
@@ -176,7 +176,7 @@ export default function Home() {
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Built To Help You Sell Faster</div>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Turn Any Card Into A Card Post In Seconds</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
-                Use your saved catalog card data and front/back images to generate a clean post image with optional pricing. Built for Facebook groups, Discord sales posts, Reddit sales threads, and quick one-off listings.
+                Use your saved Catalog details and front/back images to generate a clean Card Post with optional pricing. Built for the places you already sell: Facebook groups, Discord, Reddit, and quick one-off listings.
               </p>
               <ul className="mt-5 space-y-2 text-sm text-slate-100/85">
                 <li>• Optional price on the image</li>
@@ -203,8 +203,8 @@ export default function Home() {
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">New Listing Sharing</div>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Share Your Active Listings With One Clean Link</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
-                Generate a view-only link for the cards you currently have listed. Ideal for card shows and community posts, so people can browse your active inventory without touching your catalog.
-                You can choose whether to show pricing and disable the link whenever you want.
+                Generate a view-only share link for your Active Listings shelf. Ideal for card shows and community posts, so people can browse your active inventory without touching your Catalog.
+                Choose whether to show pricing, pick an expiration, and disable the link whenever you want.
               </p>
 
               <ul className="mt-5 space-y-2 text-sm text-slate-100/85">

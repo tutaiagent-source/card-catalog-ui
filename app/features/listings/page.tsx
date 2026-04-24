@@ -4,7 +4,7 @@ import ListingsFeaturePreview from "@/components/ListingsFeaturePreview";
 const steps = [
   {
     title: "Mark A Card As Listed",
-    body: "In your Catalog, set a card’s status to Listed and add its Asking price + Listed date + sale link (eBay/Whatnot/local/etc.).",
+    body: "In your Catalog, set a card’s status to Listed and add its asking price, listed date, and sale link (eBay/Whatnot/local/etc.).",
     icon: "📌",
   },
   {
@@ -14,7 +14,7 @@ const steps = [
   },
   {
     title: "View + Edit Quickly",
-    body: "Open a card to update the asking price, listed date, and sale link, and share your post when you’re ready.",
+    body: "Open a card to update the asking price, listed date, and sale link, then share your Active Listing when you’re ready.",
     icon: "✍️",
   },
 ];
@@ -68,7 +68,7 @@ export default function ListingsFeaturePage() {
                 One Place To View And Update Every Item You’re Selling
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                Post your card once, then keep everything you need attached to the card record: asking price, listed date, and the exact sale link.
+                Save your listing once, then keep everything attached to the card record: asking price, listed date, and the exact sale link.
                 Your Active Listings shelf stays in sync.
               </p>
 
@@ -109,7 +109,7 @@ export default function ListingsFeaturePage() {
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">How It Works</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">3 Quick Steps</h2>
             <p className="mt-3 text-sm leading-7 text-slate-100/85">
-              No extra spreadsheet for selling. Listings is just your Catalog, filtered into a clean shelf.
+              No extra spreadsheet for selling. Listings is your Catalog, filtered into your Active Listings shelf.
             </p>
           </div>
 
@@ -163,7 +163,7 @@ export default function ListingsFeaturePage() {
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Shared Listing Links</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Share Your Whole Listings Shelf Without Exposing Your Full Catalog</h2>
             <p className="mt-3 text-sm leading-7 text-slate-100/90 sm:text-base">
-              Generate a view-only link for the cards you currently have listed. Choose whether to show pricing, keep the link for a limited time or permanently, and disable it whenever you want.
+              Generate a view-only share link for your Active Listings shelf. Choose whether to show pricing, pick an expiration (24 hours, 7 days, 1 month, or permanently), and disable it anytime.
             </p>
           </div>
 

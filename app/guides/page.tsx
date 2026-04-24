@@ -4,10 +4,10 @@ import MarketingNav from "@/components/MarketingNav";
 
 export const metadata: Metadata = {
   title: "Guides | CardCat",
-  description: "Practical guides for CSV import, LLM reformatting, image uploads, PC organization, sold tracking, and exports.",
+  description: "Practical guides for CSV import, LLM reformatting, image uploads, PC organization, active listings sharing, sold tracking, and exports.",
   openGraph: {
     title: "Guides | CardCat",
-    description: "Practical guides for CSV import, LLM reformatting, image uploads, PC organization, sold tracking, and exports.",
+    description: "Practical guides for CSV import, LLM reformatting, image uploads, PC organization, active listings sharing, sold tracking, and exports.",
     type: "website",
   },
 };
@@ -40,6 +40,13 @@ const guides = [
     desc: "How PC works, how to reorder, and how estimates fit in.",
     emoji: "★",
     tag: "PC",
+  },
+  {
+    title: "Active Listings Sharing",
+    href: "/features/listings",
+    desc: "Create view-only share links for your Active Listings shelf.",
+    emoji: "🔗",
+    tag: "Listings",
   },
   {
     title: "Sold Tracking",

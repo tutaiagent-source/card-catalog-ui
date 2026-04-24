@@ -4,42 +4,42 @@ import ShareSheetFeaturePreview from "@/components/ShareSheetFeaturePreview";
 const featureCards = [
   {
     title: "Catalog",
-    body: "Keep cards organized with cleaner search, filters, images, and status tracking.",
+    body: "Keep cards organized with cleaner search, images, and status tracking across Collection, Active Listings, and Sold.",
     href: "/catalog",
     label: "Open Catalog",
   },
   {
     title: "Card Posts",
-    body: "Turn saved cards into clean post images with optional pricing.",
+    body: "Turn saved cards into Card Post images with optional pricing and front/back layout.",
     href: "/features/share-sheets",
     label: "See Card Posts",
   },
   {
     title: "Listings",
-    body: "View, update, and share your active cards from one clean shelf.",
+    body: "View, update, and share your Active Listings from one shelf with view-only links.",
     href: "/features/listings",
     label: "See Listings",
   },
   {
     title: "CSV Import",
-    body: "Bring in larger collections faster and clean up messy spreadsheets before saving.",
+    body: "Import larger collections from CSV, then clean up duplicates and messy rows before saving.",
     href: "/guides/csv",
     label: "CSV Guide",
   },
   {
     title: "PC + Sold",
-    body: "Keep favorites separate, track sold history, and keep the inventory story intact.",
+    body: "Star cards in PC (PC ★) and keep Sold history attached to the same record.",
     href: "/guides/pc",
     label: "PC Guide",
   },
 ];
 
 const quickLinks = [
-  { title: "Card Posts", body: "How the card post image works, what it includes, and how to use it on mobile or desktop.", href: "/features/share-sheets" },
-  { title: "Listings", body: "How active listings move from Catalog into your single Listings page, plus how shared listing links work.", href: "/features/listings" },
-  { title: "CSV Import", body: "How to structure a file, map fields, and avoid common cleanup issues.", href: "/guides/csv" },
-  { title: "Image Uploads", body: "How front and back images work and how they improve previews and card posts.", href: "/guides/images" },
-  { title: "Sold Tracking", body: "How listed and sold records stay connected to the original card record.", href: "/guides/sold" },
+  { title: "Card Posts", body: "How Card Post images are generated, what they include, and how to share or download on mobile and desktop.", href: "/features/share-sheets" },
+  { title: "Listings", body: "How Active Listings move from Catalog into your Listings shelf, plus how view-only listing share links work.", href: "/features/listings" },
+  { title: "CSV Import", body: "How to structure a CSV file, map fields, and avoid common cleanup issues.", href: "/guides/csv" },
+  { title: "Image Uploads", body: "How front/back images power flip previews and improve Card Posts.", href: "/guides/images" },
+  { title: "Sold Tracking", body: "How Listed and Sold records stay connected to the original card record.", href: "/guides/sold" },
 ];
 
 export default function FeaturesPage() {
@@ -57,7 +57,7 @@ export default function FeaturesPage() {
               The Key Features, Without The Wall Of Text.
             </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                CardCat helps collectors organize inventory, track sold cards, and create clean card posts without turning the workflow into spreadsheet chaos.
+                CardCat keeps your Catalog organized, connects PC (PC ★) and Sold history, and helps you sell with Card Posts and view-only Active Listings sharing.
               </p>
             </div>
         </section>
@@ -105,10 +105,10 @@ export default function FeaturesPage() {
         <section id="card-posts" className="mt-12 rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(6,95,70,0.18)] sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Featured seller tool</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Featured Seller Tool</div>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Card Posts</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
-                Turn a saved card into a square image that is easier to post into Facebook groups, Discord channels, Reddit sales threads, or text messages. Optional price, front/back support, and less retyping.
+                Turn a saved card into a Card Post image that is easier to share in Facebook groups, Discord, Reddit sales threads, or text messages. Optional price, front/back layout, and less retyping.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href="/features/share-sheets" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100">
@@ -128,9 +128,9 @@ export default function FeaturesPage() {
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Need Details?</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Use The Focused Pages For The Deeper Stuff</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
-              Keep the main features page short, then jump into the specific workflow you actually care about.
-            </p>
+              <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
+                Keep this page focused, then jump into the exact workflow you care about: Catalog, Card Posts, Active Listings sharing, or PC + Sold.
+              </p>
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-2">

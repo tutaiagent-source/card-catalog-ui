@@ -2,11 +2,11 @@ import MarketingNav from "@/components/MarketingNav";
 import ShareSheetFeaturePreview from "@/components/ShareSheetFeaturePreview";
 
 const keyPoints = [
-  "Square card post image built from the saved card record",
-  "Optional price on the image",
-  "Front + back layout when both images exist",
-  "Mobile Share / Save Image flow",
-  "Desktop JPG download + caption copy",
+  "Square Card Post Image Built From The Saved Card Record",
+  "Optional Price On The Image",
+  "Front + Back Layout When Both Images Exist",
+  "Mobile Share / Save Image Flow",
+  "Desktop JPG Download + Caption Copy",
 ];
 
 const workflow = [
@@ -16,12 +16,12 @@ const workflow = [
     icon: "📤",
   },
   {
-    title: "Choose price or leave it off",
+    title: "Choose Price Or Leave It Off",
     body: "Use pricing only when the image should act like a true sale post.",
     icon: "🏷️",
   },
   {
-    title: "Share or save the image",
+    title: "Share Or Save The Image",
     body: "Use your phone share sheet or download the JPG on desktop and post it where you sell.",
     icon: "📲",
   },
@@ -69,7 +69,7 @@ export default function ShareSheetsPage() {
                 A Faster Way to Turn Saved Cards into Clean Card Posts.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                CardCat can generate a square card post image using the card details and images already stored in your catalog. It is built for the moment when you want to post a card quickly without rebuilding the listing by hand.
+                CardCat generates a Card Post image using the card details and images already stored in your Catalog. It’s built for quick posting without rebuilding the listing by hand.
               </p>
               <ul className="mt-6 space-y-3 text-sm text-slate-200 sm:text-base">
                 {keyPoints.map((item) => (
