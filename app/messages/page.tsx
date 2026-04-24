@@ -180,11 +180,34 @@ export default function MessagesPage() {
       return;
     }
 
-    const conversationIds = Array.from(new Set((myParticipantRows ?? []).map((row: any) => String(row.conversation_id || "")).filter(Boolean)));
+    let nextMyParticipantRows = (myParticipantRows ?? []) as ConversationParticipantRow[];
+    let conversationIds = Array.from(new Set(nextMyParticipantRows.map((row: any) => String(row.conversation_id || "")).filter(Boolean)));
+
+    if (conversationParam && !conversationIds.includes(conversationParam)) {
+      const { error: restoreError } = await supabase.rpc("restore_conversation_access", {
+        p_conversation_id: conversationParam,
+      });
+
+      if (!restoreError) {
+        const { data: refreshedMyParticipantRows, error: refreshedMyParticipantError } = await supabase
+          .from("conversation_participants")
+          .select("conversation_id, user_id, joined_at, last_read_at, is_muted, is_blocked")
+          .eq("user_id", user.id);
+
+        if (refreshedMyParticipantError) {
+          setLoadingInbox(false);
+          setError(refreshedMyParticipantError.message);
+          return;
+        }
+
+        nextMyParticipantRows = (refreshedMyParticipantRows ?? []) as ConversationParticipantRow[];
+        conversationIds = Array.from(new Set(nextMyParticipantRows.map((row: any) => String(row.conversation_id || "")).filter(Boolean)));
+      }
+    }
 
     if (conversationIds.length === 0) {
       setConversations([]);
-      setParticipants((myParticipantRows ?? []) as ConversationParticipantRow[]);
+      setParticipants(nextMyParticipantRows);
       setProfiles([]);
       setMessages([]);
       setConversationContextCards([]);
@@ -559,23 +582,10 @@ export default function MessagesPage() {
         .map((r: any) => String(r.id || ""))
         .filter(Boolean);
 
-      const conversationsWithNonDeletedMessages = Array.from(
-        new Set((messageRows ?? []).map((r: any) => String(r.conversation_id || "")).filter(Boolean))
-      );
-
-      const emptyOrClearedConversationIds = selectedConversationIds.filter(
-        (id) => !conversationsWithNonDeletedMessages.includes(id)
-      );
-
-      // Soft-delete each message via the secure RPC (allows inbox cleanup).
+      // Soft-delete each message so threads move to Deleted without removing
+      // the current user's participant row.
       for (const id of messageIds) {
         const { error: rpcError } = await supabase.rpc("delete_message", { p_message_id: id });
-        if (rpcError) throw rpcError;
-      }
-
-      // If a conversation has no messages, remove it from the current user's inbox.
-      for (const conversationId of emptyOrClearedConversationIds) {
-        const { error: rpcError } = await supabase.rpc("delete_conversation_for_user", { p_conversation_id: conversationId });
         if (rpcError) throw rpcError;
       }
 
