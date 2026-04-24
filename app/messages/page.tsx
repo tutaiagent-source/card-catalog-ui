@@ -684,7 +684,7 @@ export default function MessagesPage() {
         ) : null}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
-          <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
+          <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col h-[calc(100vh-220px)] overflow-hidden">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-white">Messages</div>
 
@@ -758,7 +758,7 @@ export default function MessagesPage() {
 
 
             {displayConversationViews.length === 0 ? (
-              <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
+              <div className="mt-4 flex flex-1 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-slate-950/40 px-5 py-10 text-center text-sm text-slate-400">
                 {messageFolder === "deleted"
                   ? "No deleted messages yet."
                   : messageFolder === "unread"
@@ -766,7 +766,7 @@ export default function MessagesPage() {
                     : "No conversations yet. Once members can message sellers from listings, threads will show up here."}
               </div>
             ) : (
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 flex-1 space-y-2 overflow-y-auto pr-1 pb-2">
                 {displayConversationViews.map((row) => {
                   const previewMessage =
                     messageFolder === "deleted" ? row.latestDeletedMessage : row.latestNonDeletedMessage;
