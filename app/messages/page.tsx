@@ -419,8 +419,9 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!activeConversationId) return;
     if (displayConversationViews.some((v) => v.conversation.id === activeConversationId)) return;
+    if (conversationViews.some((v) => v.conversation.id === activeConversationId)) return;
     setActiveConversationId(displayConversationViews[0]?.conversation.id ?? null);
-  }, [displayConversationViews, activeConversationId]);
+  }, [displayConversationViews, conversationViews, activeConversationId]);
 
   const activeConversation = conversationViews.find((row) => row.conversation.id === activeConversationId) ?? null;
 
@@ -789,11 +790,13 @@ export default function MessagesPage() {
 
             {displayConversationViews.length === 0 ? (
               <div className="mt-4 flex flex-1 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-slate-950/40 px-5 py-10 text-center text-sm text-slate-400">
-                {messageFolder === "deleted"
-                  ? "No deleted messages yet."
-                  : messageFolder === "unread"
-                    ? "No unread conversations."
-                    : "No conversations yet. Once members can message sellers from listings, threads will show up here."}
+                {activeConversation && messageFolder === "inbox"
+                  ? "This thread is open, but its earlier messages are cleared from Inbox. You can still reply from the conversation panel."
+                  : messageFolder === "deleted"
+                    ? "No deleted messages yet."
+                    : messageFolder === "unread"
+                      ? "No unread conversations."
+                      : "No conversations yet. Once members can message sellers from listings, threads will show up here."}
               </div>
             ) : (
               <div className="mt-4 flex-1 space-y-2 overflow-y-auto pr-1 pb-2">
