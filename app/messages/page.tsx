@@ -382,8 +382,11 @@ export default function MessagesPage() {
         return conversationViews.filter((v) => v.hasNonDeletedMessages && !v.unread);
       case "inbox":
       default:
-        // Inbox shows all threads (including ones with zero messages yet). Deleted threads are handled by the Deleted folder.
-        return conversationViews;
+        // Inbox shows threads with non-deleted messages, plus truly empty (no-message-yet) threads.
+        // Threads with only deleted messages belong in the Deleted folder.
+        return conversationViews.filter(
+          (v) => v.hasNonDeletedMessages || (!v.hasDeletedMessages && !v.hasNonDeletedMessages)
+        );
     }
   }, [conversationViews, messageFolder]);
 
@@ -576,7 +579,7 @@ export default function MessagesPage() {
       }
 
       setSelectedConversationIds([]);
-      setMessageFolder("inbox");
+      setMessageFolder("deleted");
       await loadInbox();
     } catch (err: any) {
       setBulkDeleteError(err?.message || "Could not delete selected conversations.");
