@@ -60,6 +60,33 @@ export default function MessagesPage() {
 
   const [activeConversationCard, setActiveConversationCard] = useState<CardContext | null>(null);
 
+  const [friendUsernamesLocal, setFriendUsernamesLocal] = useState<string[]>([]);
+  const [friendUsernameInput, setFriendUsernameInput] = useState("");
+  const [addingFriend, setAddingFriend] = useState(false);
+  const [friendsError, setFriendsError] = useState("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem("cardcat_friend_usernames_v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed))
+        setFriendUsernamesLocal(parsed.map((x) => String(x).toLowerCase().trim()).filter(Boolean));
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem("cardcat_friend_usernames_v1", JSON.stringify(friendUsernamesLocal));
+    } catch {
+      // ignore
+    }
+  }, [friendUsernamesLocal]);
+
   const loadInbox = useCallback(async () => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
 
@@ -207,6 +234,7 @@ export default function MessagesPage() {
         latestMessage,
         myParticipant,
         otherProfile,
+        otherUserId: otherParticipant?.user_id ?? null,
         unread,
         title: otherProfile?.username ? `@${otherProfile.username}` : "Conversation",
       };
@@ -216,6 +244,41 @@ export default function MessagesPage() {
   const activeConversation = conversationViews.find((row) => row.conversation.id === activeConversationId) ?? null;
 
   const activeConversationContextCardId = activeConversation?.conversation.context_card_id ?? null;
+
+  const friendThreadViews = useMemo(() => {
+    return conversationViews
+      .filter((v) => Boolean(v.conversation.context_card_id) && Boolean(v.otherProfile) && Boolean(v.otherUserId))
+      .sort((a, b) => new Date(b.conversation.last_message_at).getTime() - new Date(a.conversation.last_message_at).getTime());
+  }, [conversationViews]);
+
+  const friendThreadsByUser = useMemo(() => {
+    const map = new Map<string, typeof friendThreadViews[number]>();
+    for (const v of friendThreadViews) {
+      const key = String(v.otherUserId);
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, v);
+        continue;
+      }
+      if (new Date(v.conversation.last_message_at).getTime() > new Date(existing.conversation.last_message_at).getTime()) {
+        map.set(key, v);
+      }
+    }
+    return Array.from(map.values()).sort(
+      (a, b) => new Date(b.conversation.last_message_at).getTime() - new Date(a.conversation.last_message_at).getTime()
+    );
+  }, [friendThreadViews]);
+
+  const friendThreadUsernames = useMemo(() => {
+    return new Set(friendThreadsByUser.map((f) => String(f.otherProfile?.username || "").toLowerCase()).filter(Boolean));
+  }, [friendThreadsByUser]);
+
+  const localFriendsToShow = useMemo(() => {
+    return friendUsernamesLocal
+      .map((u) => String(u).toLowerCase().trim().replace(/^@/, ""))
+      .filter(Boolean)
+      .filter((u) => !friendThreadUsernames.has(u));
+  }, [friendUsernamesLocal, friendThreadUsernames]);
 
   useEffect(() => {
     let cancelled = false;
@@ -266,6 +329,43 @@ export default function MessagesPage() {
       setError(err?.message || "Could not send message.");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function onAddFriend() {
+    if (!supabaseConfigured || !supabase) return;
+    const username = friendUsernameInput.trim().replace(/^@/, "").toLowerCase();
+    if (!username) return;
+
+    setAddingFriend(true);
+    setFriendsError("");
+
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, username, allow_messages")
+        .eq("username", username)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+      if (!profile) {
+        setFriendsError("User not found.");
+        return;
+      }
+      if (!profile.allow_messages) {
+        setFriendsError("This user is not accepting messages.");
+        return;
+      }
+
+      setFriendUsernamesLocal((prev) => {
+        const next = Array.from(new Set([...prev.map((u) => u.toLowerCase()), username]));
+        return next.slice(0, 50);
+      });
+      setFriendUsernameInput("");
+    } catch (err: any) {
+      setFriendsError(err?.message || "Could not add friend.");
+    } finally {
+      setAddingFriend(false);
     }
   }
 
@@ -357,6 +457,91 @@ export default function MessagesPage() {
                 ))}
               </div>
             )}
+
+            <div className="mt-6 border-t border-white/10 pt-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-white">Friends</div>
+                <div className="text-xs text-slate-500">{friendThreadsByUser.length} Ready</div>
+              </div>
+
+              <div className="mt-3 flex gap-2">
+                <input
+                  value={friendUsernameInput}
+                  onChange={(e) => setFriendUsernameInput(e.target.value)}
+                  placeholder="Add Friend (Username)"
+                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={onAddFriend}
+                  disabled={addingFriend || !friendUsernameInput.trim()}
+                  className="rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                >
+                  {addingFriend ? "Adding…" : "Add"}
+                </button>
+              </div>
+
+              {friendsError ? (
+                <div className="mt-3 rounded-xl border border-red-500/25 bg-red-500/[0.08] px-3 py-2 text-xs text-red-100">{friendsError}</div>
+              ) : null}
+
+              <div className="mt-3 space-y-2">
+                {friendThreadsByUser.length === 0 && localFriendsToShow.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
+                    Your friends list starts when you initiate a message from a card listing.
+                  </div>
+                ) : null}
+
+                {friendThreadsByUser.map((f) => (
+                  <button
+                    key={f.conversation.id}
+                    type="button"
+                    onClick={() => setActiveConversationId(f.conversation.id)}
+                    className={`w-full rounded-2xl border border-white/10 bg-slate-950/30 p-3 text-left transition-colors hover:bg-slate-950/60 ${
+                      f.conversation.id === activeConversationId ? "border-amber-500/40" : ""
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-white">{f.title}</span>
+                          {f.unread ? <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">Unread</span> : null}
+                        </div>
+                        <div className="mt-1 line-clamp-1 text-xs text-slate-400">{f.latestMessage?.body || "No messages yet."}</div>
+                      </div>
+                      <div className="shrink-0 text-[11px] text-slate-500">{formatTimestamp(f.conversation.last_message_at)}</div>
+                    </div>
+                  </button>
+                ))}
+
+                {localFriendsToShow.map((username) => (
+                  <div key={username} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-white">@{username}</div>
+                        <div className="mt-1 text-xs text-slate-400">No Thread Yet</div>
+                      </div>
+                      <div className="shrink-0">
+                        <button type="button" disabled className="rounded-lg bg-white/[0.05] px-3 py-2 text-sm font-semibold text-slate-500 disabled:opacity-100">
+                          Message
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <a
+                        href="/market"
+                        className="text-xs font-semibold text-emerald-200 hover:text-emerald-100"
+                      >
+                        Start From Listing
+                      </a>
+                      <div className="text-[11px] text-slate-500">Required: listing-initiated thread</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-3 text-xs text-slate-500">To message someone, you must start the thread from a card listing first.</div>
+            </div>
           </section>
 
           <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
