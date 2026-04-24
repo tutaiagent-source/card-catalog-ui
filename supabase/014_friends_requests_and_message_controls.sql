@@ -189,8 +189,14 @@ grant execute on function public.respond_friend_request(uuid, boolean) to authen
 
 -- ==========================
 -- Messaging enforcement updates
--- Direct messaging without context_card_id requires an accepted friendship.
+-- Direct messaging without context_card_id is allowed only after friendship acceptance.
+--
+-- We track that with conversations.cardless_allowed so message inserts don’t need
+-- to query “the other participant” (which was causing RLS/policy issues).
 -- ==========================
+
+alter table public.conversations
+  add column if not exists cardless_allowed boolean not null default false;
 
 -- Re-write start_direct_conversation to allow p_context_card_id NULL iff caller and target are friends.
 create or replace function public.start_direct_conversation(
@@ -259,9 +265,17 @@ begin
       and (context_card_id is null or context_card_id <> p_context_card_id);
   end if;
 
+  -- If we are starting cardless messaging (i.e., no context card),
+  -- mark this conversation as allowed for cardless inserts.
+  if v_conversation_id is not null and p_context_card_id is null then
+    update public.conversations
+    set cardless_allowed = true
+    where id = v_conversation_id;
+  end if;
+
   if v_conversation_id is null then
-    insert into public.conversations (conversation_type, created_by, context_card_id)
-    values ('direct', v_caller, p_context_card_id)
+    insert into public.conversations (conversation_type, created_by, context_card_id, cardless_allowed)
+    values ('direct', v_caller, p_context_card_id, p_context_card_id is null)
     returning id into v_conversation_id;
 
     insert into public.conversation_participants (conversation_id, user_id)
@@ -301,18 +315,7 @@ create policy "messages_insert_as_participant"
       where c.id = messages.conversation_id
         and (
           c.context_card_id is not null
-          or exists (
-            select 1
-            from public.conversation_participants cp_other
-            where cp_other.conversation_id = messages.conversation_id
-              and cp_other.user_id <> auth.uid()
-              and exists (
-                select 1
-                from public.friends f
-                where f.user_id = auth.uid()
-                  and f.friend_user_id = cp_other.user_id
-              )
-          )
+          or c.cardless_allowed = true
         )
     )
   );
