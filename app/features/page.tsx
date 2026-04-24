@@ -35,6 +35,7 @@ const featureCards = [
 ];
 
 const quickLinks = [
+  { title: "Market", body: "View member listings, check comps, and message sellers directly from the card preview.", href: "/features/market" },
   { title: "Card Posts", body: "How Card Post images are generated, what they include, and how to share or download on mobile and desktop.", href: "/features/share-sheets" },
   { title: "Listings", body: "How Active Listings move from Catalog into your Listings shelf, plus how view-only listing share links work.", href: "/features/listings" },
   { title: "CSV Import", body: "How to structure a CSV file, map fields, and avoid common cleanup issues.", href: "/guides/csv" },

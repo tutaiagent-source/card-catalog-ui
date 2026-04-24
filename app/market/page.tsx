@@ -255,6 +255,9 @@ export default function MarketPage() {
               <p className="mt-1 text-sm text-emerald-100/90">
                 Listings posted to Market appear here. Tap <span className="font-semibold">Message seller</span> to start a listing-initiated thread, then use Messages to manage what you sent and what you received.
               </p>
+              <a href="/features/market" className="mt-3 inline-flex w-fit items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/[0.10] px-4 py-2 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/[0.16]">
+                Market Features & How It Works
+              </a>
             </div>
             <div className="flex flex-col gap-2 text-sm text-emerald-100/90">
               <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2">
