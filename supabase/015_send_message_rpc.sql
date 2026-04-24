@@ -9,7 +9,7 @@ create or replace function public.send_message(
 returns void
 language plpgsql
 security definer
-set search_path = public, auth
+set search_path = public, auth, row_security = off
 as $$
 declare
   v_sender uuid := auth.uid();
