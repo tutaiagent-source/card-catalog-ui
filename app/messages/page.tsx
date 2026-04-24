@@ -363,8 +363,10 @@ export default function MessagesPage() {
 
       const otherUserId = (() => {
         if (!user?.id) return null;
-        const other = convoMessages.find((m) => m.sender_user_id !== user.id);
-        return other?.sender_user_id ?? null;
+        const otherParticipant = convoParticipants.find((row) => row.user_id !== user.id);
+        if (otherParticipant?.user_id) return otherParticipant.user_id;
+        const otherMessageSender = convoMessages.find((m) => m.sender_user_id !== user.id);
+        return otherMessageSender?.sender_user_id ?? null;
       })();
 
       const otherProfile = profiles.find((profile) => profile.id === otherUserId);
@@ -425,7 +427,15 @@ export default function MessagesPage() {
 
   const activeConversation = conversationViews.find((row) => row.conversation.id === activeConversationId) ?? null;
 
+  const unreadConversationCount = useMemo(
+    () => conversationViews.filter((row) => row.hasNonDeletedMessages && row.unread).length,
+    [conversationViews]
+  );
+
   const activeConversationContextCardId = activeConversation?.conversation.context_card_id ?? null;
+  const activeRecipientLabel = activeConversation?.otherProfile?.username
+    ? `@${activeConversation.otherProfile.username}`
+    : activeConversation?.otherProfile?.display_name || activeConversation?.title || "This Conversation";
 
   const friendsUserIdSet = useMemo(() => {
     return new Set(friends.map((f) => String(f.id)));
@@ -464,6 +474,12 @@ export default function MessagesPage() {
         !outgoingFriendToUserIdSet.has(String(c.otherUserId))
     );
   }, [listingContacts, friendsUserIdSet, incomingFriendFromUserIdSet, outgoingFriendToUserIdSet]);
+
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.title = unreadConversationCount > 0 ? `(${unreadConversationCount}) Messages | CardCat` : "Messages | CardCat";
+    }
+  }, [unreadConversationCount]);
 
   useEffect(() => {
     let cancelled = false;
@@ -701,7 +717,14 @@ export default function MessagesPage() {
           <div>
             <CardCatLogo />
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-white">Messages</h1>
-            <div className="mt-2 text-sm text-slate-400">A simple inbox shell for member-to-member card conversations.</div>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
+              <span>A simple inbox shell for member-to-member card conversations.</span>
+              {unreadConversationCount > 0 ? (
+                <span className="inline-flex items-center rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-200">
+                  {unreadConversationCount} New {unreadConversationCount === 1 ? "Message" : "Messages"}
+                </span>
+              ) : null}
+            </div>
           </div>
           <div className="flex gap-3">
             <a href="/catalog" className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]">Catalog</a>
@@ -770,20 +793,28 @@ export default function MessagesPage() {
                 ["inbox", "Inbox"],
                 ["unread", "Unread"],
                 ["deleted", "Deleted"],
-              ] as const).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setMessageFolder(key)}
-                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    messageFolder === key
-                      ? "border-amber-500/40 bg-amber-500/[0.10] text-amber-100"
-                      : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.07]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+              ] as const).map(([key, label]) => {
+                const badgeCount = key === "deleted" ? 0 : unreadConversationCount;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setMessageFolder(key)}
+                    className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      messageFolder === key
+                        ? "border-amber-500/40 bg-amber-500/[0.10] text-amber-100"
+                        : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.07]"
+                    }`}
+                  >
+                    <span>{label}</span>
+                    {badgeCount > 0 ? (
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${messageFolder === key ? "bg-amber-500/20 text-amber-100" : "bg-emerald-500/20 text-emerald-200"}`}>
+                        {badgeCount}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
             </div>
 
 
@@ -1005,7 +1036,8 @@ export default function MessagesPage() {
               <>
                 <div className="border-b border-white/10 pb-4">
                   <div className="text-lg font-semibold text-white">{activeConversation.title}</div>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-400">
+                  <div className="mt-1 text-sm font-medium text-emerald-200">Messaging {activeRecipientLabel}</div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
                     <span>Direct conversation</span>
                     {activeConversationContextCardId && activeConversationCard ? (
                       <span className="inline-flex items-center rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-semibold text-slate-200">
@@ -1083,21 +1115,28 @@ export default function MessagesPage() {
                 {messageFolder !== "deleted" ? (
                   <div className="mt-4 border-t border-white/10 pt-4">
                     <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
+                      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-3 py-2">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Sending To</div>
+                        <div className="mt-1 text-sm font-semibold text-white">{activeRecipientLabel}</div>
+                        {activeConversationContextCardId && activeConversationCard ? (
+                          <div className="mt-1 text-xs text-emerald-100/90">About {activeConversationCard.year} {activeConversationCard.player_name}</div>
+                        ) : null}
+                      </div>
                       <textarea
                         value={draftMessage}
                         onChange={(e) => setDraftMessage(e.target.value)}
-                        placeholder="Write a message..."
-                        className="min-h-[100px] w-full resize-none bg-transparent text-sm text-white outline-none"
+                        placeholder={`Write a message to ${activeRecipientLabel}...`}
+                        className="mt-3 min-h-[100px] w-full resize-none bg-transparent text-sm text-white outline-none"
                       />
                       <div className="mt-3 flex items-center justify-between gap-3">
-                        <div className="text-xs text-slate-500">Card-centered inbox v1</div>
+                        <div className="text-xs text-slate-500">Your Reply Will Go To {activeRecipientLabel}</div>
                         <button
                           type="button"
                           onClick={onSendMessage}
                           disabled={sending || !draftMessage.trim()}
                           className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
                         >
-                          {sending ? "Sending…" : "Send"}
+                          {sending ? "Sending…" : `Send To ${activeRecipientLabel}`}
                         </button>
                       </div>
                     </div>
