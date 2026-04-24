@@ -243,6 +243,9 @@ begin
     end if;
   end if;
 
+  -- Reuse only the matching conversation type:
+  -- - card-context threads are unique per target user + card
+  -- - cardless friend threads stay in their own cardless chat
   select c.id
   into v_conversation_id
   from public.conversations c
@@ -253,17 +256,12 @@ begin
     on them.conversation_id = c.id
    and them.user_id = v_target
   where c.conversation_type = 'direct'
+    and (
+      (p_context_card_id is null and c.context_card_id is null)
+      or (p_context_card_id is not null and c.context_card_id = p_context_card_id)
+    )
   order by c.last_message_at desc
   limit 1;
-
-  -- If a conversation already exists but was created without listing context,
-  -- upgrade it to the listing context so listing-based messaging works.
-  if v_conversation_id is not null and p_context_card_id is not null then
-    update public.conversations
-    set context_card_id = p_context_card_id
-    where id = v_conversation_id
-      and (context_card_id is null or context_card_id <> p_context_card_id);
-  end if;
 
   -- If we are starting cardless messaging (i.e., no context card),
   -- mark this conversation as allowed for cardless inserts.

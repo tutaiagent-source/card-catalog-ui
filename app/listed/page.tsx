@@ -674,7 +674,7 @@ export default function ListedPage() {
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
                 <div className="mb-3 text-sm font-semibold text-slate-200">Listed shelf</div>
 
-                <div className="grid grid-cols-4 gap-2" role="list" aria-label="Listed cards">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" role="list" aria-label="Listed cards">
                   {sortedCards.map((c) => {
                     const src = c.image_url ? driveToImageSrc(c.image_url) : "";
                     const goHref = toUrl(c.sale_platform);
@@ -696,7 +696,7 @@ export default function ListedPage() {
                           }
                           setActiveCard(c);
                         }}
-                        className={`relative rounded-xl border p-2 ${isOnMarket ? "border-emerald-500/60 bg-emerald-500/25" : "border-red-500/60 bg-red-500/20"}`}
+                        className={`relative rounded-2xl border p-3 ${isOnMarket ? "border-emerald-500/60 bg-emerald-500/25" : "border-red-500/60 bg-red-500/20"}`}
                         aria-label={`View ${c.player_name}`}
                         onKeyDown={(e) => {
                           if (!(e.key === "Enter" || e.key === " ")) return;
@@ -722,19 +722,19 @@ export default function ListedPage() {
                           {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
                         </div>
 
-                        <div className="mt-2 text-center">
-                          <div className="line-clamp-2 text-[12px] font-semibold text-white">{c.player_name}</div>
-                          <div className="mt-1 text-[10px] text-slate-300">
+                        <div className="mt-3 text-center">
+                          <div className="line-clamp-2 text-sm font-semibold leading-tight text-white">{c.player_name}</div>
+                          <div className="mt-1 text-[11px] text-slate-300">
                             {c.year} · {c.brand}
                           </div>
-                          <div className="mt-1 text-[10px] text-slate-400">
+                          <div className="mt-1 line-clamp-2 text-[11px] text-slate-400">
                             {c.set_name} · {c.parallel}
                           </div>
 
                           {c.status === "Sold" && c.sold_price != null ? (
-                            <div className="mt-2 text-[11px] font-semibold text-emerald-200">SOLD {formatMoney(Number(c.sold_price))}</div>
+                            <div className="mt-2 text-xs font-semibold text-emerald-200">SOLD {formatMoney(Number(c.sold_price))}</div>
                           ) : c.asking_price != null ? (
-                            <div className="mt-2 text-[11px] font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
+                            <div className="mt-2 text-xs font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
                           ) : null}
                         </div>
 
