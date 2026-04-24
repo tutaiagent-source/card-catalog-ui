@@ -687,14 +687,51 @@ export default function MessagesPage() {
           <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-white">Messages</div>
-              <button
-                type="button"
-                onClick={() => loadInbox()}
-                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
-                disabled={loadingInbox}
-              >
-                {loadingInbox ? "Refreshing…" : "Refresh"}
-              </button>
+
+              <div className="flex items-center gap-2">
+                {!isSelectingConversations ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsSelectingConversations(true)}
+                    disabled={bulkDeleting}
+                    className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+                  >
+                    Select
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSelectingConversations(false);
+                        setSelectedConversationIds([]);
+                      }}
+                      disabled={bulkDeleting}
+                      className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    <div className="text-xs text-slate-500">{selectedConversationIds.length} selected</div>
+                    <button
+                      type="button"
+                      onClick={() => void onBulkDeleteSelectedConversations()}
+                      disabled={bulkDeleting || selectedConversationIds.length === 0}
+                      className="rounded-lg border border-red-500/30 bg-red-500/[0.08] px-3 py-1.5 text-xs font-semibold text-red-100 hover:bg-red-500/[0.14] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {bulkDeleting ? "Deleting…" : "Delete"}
+                    </button>
+                  </>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => loadInbox()}
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                  disabled={loadingInbox}
+                >
+                  {loadingInbox ? "Refreshing…" : "Refresh"}
+                </button>
+              </div>
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
@@ -718,47 +755,7 @@ export default function MessagesPage() {
               ))}
             </div>
 
-            {!isSelectingConversations ? (
-              <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsSelectingConversations(true)}
-                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
-                >
-                  Select
-                </button>
-              </div>
-            ) : (
-              <div className="mt-4 flex flex-col gap-2">
-                <div className="flex items-center justify-between gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsSelectingConversations(false);
-                      setSelectedConversationIds([]);
-                    }}
-                    disabled={bulkDeleting}
-                    className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
-                  >
-                    Cancel
-                  </button>
-                  <div className="text-xs text-slate-500">{selectedConversationIds.length} selected</div>
-                  <button
-                    type="button"
-                    onClick={() => void onBulkDeleteSelectedConversations()}
-                    disabled={bulkDeleting || selectedConversationIds.length === 0}
-                    className="rounded-lg border border-red-500/30 bg-red-500/[0.08] px-3 py-1.5 text-xs font-semibold text-red-100 hover:bg-red-500/[0.14] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {bulkDeleting ? "Deleting…" : "Delete Selected"}
-                  </button>
-                </div>
-                {bulkDeleteError ? (
-                  <div className="rounded-xl border border-red-500/25 bg-red-500/[0.08] px-3 py-2 text-xs text-red-100">
-                    {bulkDeleteError}
-                  </div>
-                ) : null}
-              </div>
-            )}
+
 
             {displayConversationViews.length === 0 ? (
               <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
