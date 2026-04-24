@@ -63,5 +63,22 @@ export async function sendMessage(conversationId: string, senderUserId: string, 
     p_body: trimmed,
   });
 
-  if (error) throw error;
+  if (error) {
+    // If migrations haven't applied yet, fall back to the old direct insert.
+    const msg = String(error.message || "").toLowerCase();
+    const shouldFallback =
+      msg.includes("could not find function") ||
+      msg.includes("function") && msg.includes("does not exist") ||
+      msg.includes("send_message") && (msg.includes("missing") || msg.includes("not exist"));
+
+    if (!shouldFallback) throw error;
+
+    const { error: insertError } = await supabase.from("messages").insert({
+      conversation_id: conversationId,
+      sender_user_id: senderUserId,
+      body: trimmed,
+    });
+
+    if (insertError) throw insertError;
+  }
 }
