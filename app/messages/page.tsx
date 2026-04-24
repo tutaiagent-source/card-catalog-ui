@@ -800,15 +800,15 @@ export default function MessagesPage() {
                     key={key}
                     type="button"
                     onClick={() => setMessageFolder(key)}
-                    className={`inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors ${
                       messageFolder === key
-                        ? "border-amber-500/40 bg-amber-500/[0.10] text-amber-100"
-                        : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.07]"
+                        ? "border-white/20 bg-white/[0.08] text-white"
+                        : "border-transparent bg-white/[0.02] text-slate-300 hover:bg-white/[0.06]"
                     }`}
                   >
                     <span>{label}</span>
                     {badgeCount > 0 ? (
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${messageFolder === key ? "bg-amber-500/20 text-amber-100" : "bg-emerald-500/20 text-emerald-200"}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${messageFolder === key ? "bg-emerald-500/25 text-emerald-100" : "bg-emerald-500/20 text-emerald-200"}`}>
                         {badgeCount}
                       </span>
                     ) : null}
@@ -839,10 +839,10 @@ export default function MessagesPage() {
                     key={row.conversation.id}
                     type="button"
                     onClick={() => setActiveConversationId(row.conversation.id)}
-                    className={`w-full rounded-2xl border p-4 text-left transition-colors ${row.conversation.id === activeConversationId ? "border-amber-500/30 bg-amber-500/[0.08]" : "border-white/10 bg-slate-950/40 hover:bg-slate-950/70"}`}
+                    className={`w-full rounded-xl border p-3 text-left transition-colors ${row.conversation.id === activeConversationId ? "border-white/20 bg-white/[0.07]" : "border-white/10 bg-slate-950/30 hover:bg-slate-950/60"}`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           {isSelectingConversations ? (
                             <input
@@ -862,14 +862,21 @@ export default function MessagesPage() {
                               aria-label={`Select conversation with ${row.title}`}
                             />
                           ) : null}
-                          <span className="text-sm font-semibold text-white">{row.title}</span>
-                          {row.unread ? <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">Unread</span> : null}
+
+                          <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${row.unread ? "text-white" : "text-slate-200"}`}>
+                            {row.title}
+                          </span>
+
+                          {row.unread ? <span className="h-2 w-2 rounded-full bg-emerald-400" aria-label="Unread" /> : null}
                         </div>
-                        <div className="mt-1 text-xs text-slate-400">{formatTimestamp(previewMessage?.created_at ?? row.conversation.last_message_at)}</div>
+
+                        <div className="mt-1 text-xs text-slate-400">
+                          {formatTimestamp(previewMessage?.created_at ?? row.conversation.last_message_at)}
+                        </div>
+                        <div className={`mt-2 line-clamp-1 text-sm ${row.unread ? "text-white" : "text-slate-300"}`}>
+                          {previewMessage?.body || "No messages yet."}
+                        </div>
                       </div>
-                    </div>
-                    <div className="mt-3 line-clamp-2 text-sm text-slate-300">
-                      {previewMessage?.body || "No messages yet."}
                     </div>
                   </button>
                   );
@@ -878,18 +885,18 @@ export default function MessagesPage() {
             )}
 
             <details className="mt-6 border-t border-white/10 pt-4">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="text-sm font-semibold text-white">Friends</div>
-                  <div className="text-xs text-slate-500">{friends.length} Friend{friends.length === 1 ? "" : "s"}</div>
-                </div>
-                <div className="text-xs text-slate-500">{friends.length + incomingFriendRequests.length + outgoingFriendRequests.length > 0 ? "Open" : ""}</div>
-              </summary>
+	              <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+	                <div className="flex items-center gap-3">
+	                  <div className="text-sm font-semibold text-white">Contacts</div>
+	                  <div className="text-xs text-slate-500">{friends.length} Friend{friends.length === 1 ? "" : "s"}</div>
+	                </div>
+	                <div className="text-xs text-slate-500">{friends.length + incomingFriendRequests.length + outgoingFriendRequests.length > 0 ? "Open" : ""}</div>
+	              </summary>
 
-              <div className="mt-3">
-                {friendsError ? (
-                  <div className="rounded-xl border border-red-500/25 bg-red-500/[0.08] px-3 py-2 text-xs text-red-100">{friendsError}</div>
-                ) : null}
+	              <div className="mt-3 max-h-72 overflow-y-auto">
+	                {friendsError ? (
+	                  <div className="rounded-xl border border-red-500/25 bg-red-500/[0.08] px-3 py-2 text-xs text-red-100">{friendsError}</div>
+	                ) : null}
 
                 <div className="mt-3 space-y-2">
                   {incomingFriendRequests.length > 0 ? (
@@ -1031,14 +1038,14 @@ export default function MessagesPage() {
             </details>
           </section>
 
-          <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
-            {activeConversation ? (
-              <>
-                <div className="border-b border-white/10 pb-4">
-                  <div className="text-lg font-semibold text-white">{activeConversation.title}</div>
-                  <div className="mt-1 text-sm font-medium text-emerald-200">Messaging {activeRecipientLabel}</div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
-                    <span>Direct conversation</span>
+	          <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col min-h-0 lg:h-[calc(100vh-220px)] lg:overflow-hidden">
+	            {activeConversation ? (
+	              <>
+	                <div className="border-b border-white/10 pb-4 flex-shrink-0">
+	                  <div className="text-lg font-semibold text-white">{activeConversation.title}</div>
+	                  <div className="mt-1 text-sm text-slate-300">From {activeRecipientLabel}</div>
+	                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
+	                    <span>Direct conversation</span>
                     {activeConversationContextCardId && activeConversationCard ? (
                       <span className="inline-flex items-center rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-semibold text-slate-200">
                         About {activeConversationCard.year} {activeConversationCard.player_name}
@@ -1059,89 +1066,96 @@ export default function MessagesPage() {
                   ) : null}
                 </div>
 
-                <div className="mt-4 space-y-3">
-                  {activeMessages.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
-                      {messageFolder === "deleted" ? "No deleted messages in this thread." : "No messages yet. This thread is ready for the first message."}
-                    </div>
-                  ) : (
-                    activeMessages.map((message) => {
-                      const mine = message.sender_user_id === user.id;
-                      const senderProfile = profiles.find((p) => p.id === message.sender_user_id) ?? null;
-                      const senderLabel = mine
-                        ? "You"
-                        : senderProfile?.username
-                          ? `@${senderProfile.username}`
-                          : senderProfile?.display_name
-                            ? senderProfile.display_name
-                            : "User";
-                      return (
-                        <div key={message.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-                          <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${mine ? "bg-emerald-500/15 text-emerald-50" : "bg-slate-900 text-slate-100"}`}>
-                            <div className={`mb-1 text-xs font-semibold ${mine ? "text-emerald-100" : "text-slate-300"}`}>{senderLabel}</div>
-                            <div>{message.body}</div>
-                            <div className="mt-2 text-[11px] text-slate-400">{formatTimestamp(message.created_at)}</div>
+	                <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1">
+	                  {activeMessages.length === 0 ? (
+	                    <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
+	                      {messageFolder === "deleted" ? "No deleted messages in this thread." : "No messages yet. This thread is ready for the first message."}
+	                    </div>
+	                  ) : (
+	                    <div className="space-y-3">
+	                      {activeMessages.map((message) => {
+	                        const mine = message.sender_user_id === user.id;
+	                        const senderProfile = profiles.find((p) => p.id === message.sender_user_id) ?? null;
+	                        const senderLabel = mine
+	                          ? "You"
+	                          : senderProfile?.username
+	                            ? `@${senderProfile.username}`
+	                            : senderProfile?.display_name
+	                              ? senderProfile.display_name
+	                              : "User";
 
-                            {mine && messageFolder === "deleted" ? (
-                              <div className="mt-3 flex justify-end">
-                                <button
-                                  type="button"
-                                  onClick={() => void onRestoreMessage(message.id)}
-                                  className="text-[11px] font-semibold text-emerald-200 hover:text-emerald-100"
-                                >
-                                  Restore
-                                </button>
-                              </div>
-                            ) : null}
+	                        return (
+	                          <div
+	                            key={message.id}
+	                            className={`rounded-2xl border border-white/10 p-4 ${mine ? "border-emerald-500/20 bg-emerald-500/[0.05]" : "bg-slate-950/20"}`}
+	                          >
+	                            <div className="flex items-start justify-between gap-3">
+	                              <div className="min-w-0">
+	                                <div className={`text-xs font-semibold ${mine ? "text-emerald-100" : "text-slate-300"}`}>
+	                                  {mine ? "From: You" : `From: ${senderLabel}`}
+	                                </div>
+	                                <div className="mt-1 text-[11px] text-slate-400">{formatTimestamp(message.created_at)}</div>
+	                              </div>
 
-                            {mine && messageFolder !== "deleted" ? (
-                              <div className="mt-3 flex justify-end">
-                                <button
-                                  type="button"
-                                  onClick={() => void onDeleteMessage(message.id)}
-                                  className="text-[11px] font-semibold text-slate-300 hover:text-white"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            ) : null}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+	                              {mine ? (
+	                                messageFolder === "deleted" ? (
+	                                  <button
+	                                    type="button"
+	                                    onClick={() => void onRestoreMessage(message.id)}
+	                                    className="rounded-lg bg-emerald-500/10 px-3 py-2 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-100"
+	                                  >
+	                                    Restore
+	                                  </button>
+	                                ) : (
+	                                  <button
+	                                    type="button"
+	                                    onClick={() => void onDeleteMessage(message.id)}
+	                                    className="rounded-lg bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-slate-300 hover:bg-white/[0.08] hover:text-white"
+	                                  >
+	                                    Delete
+	                                  </button>
+	                                )
+	                              ) : null}
+	                            </div>
 
-                {messageFolder !== "deleted" ? (
-                  <div className="mt-4 border-t border-white/10 pt-4">
-                    <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-3 py-2">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Sending To</div>
-                        <div className="mt-1 text-sm font-semibold text-white">{activeRecipientLabel}</div>
-                        {activeConversationContextCardId && activeConversationCard ? (
-                          <div className="mt-1 text-xs text-emerald-100/90">About {activeConversationCard.year} {activeConversationCard.player_name}</div>
-                        ) : null}
-                      </div>
-                      <textarea
-                        value={draftMessage}
-                        onChange={(e) => setDraftMessage(e.target.value)}
-                        placeholder={`Write a message to ${activeRecipientLabel}...`}
-                        className="mt-3 min-h-[100px] w-full resize-none bg-transparent text-sm text-white outline-none"
-                      />
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <div className="text-xs text-slate-500">Your Reply Will Go To {activeRecipientLabel}</div>
-                        <button
-                          type="button"
-                          onClick={onSendMessage}
-                          disabled={sending || !draftMessage.trim()}
-                          className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
-                        >
-                          {sending ? "Sending…" : `Send To ${activeRecipientLabel}`}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
+	                            <div className="mt-3 whitespace-pre-wrap text-sm text-slate-100">{message.body}</div>
+	                          </div>
+	                        );
+	                      })}
+	                    </div>
+	                  )}
+	                </div>
+
+	                {messageFolder !== "deleted" ? (
+	                  <div className="mt-4 border-t border-white/10 pt-4 flex-shrink-0">
+	                    <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-3">
+	                      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-3 py-2">
+	                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">To</div>
+	                        <div className="mt-1 text-sm font-semibold text-white">{activeRecipientLabel}</div>
+	                        {activeConversationContextCardId && activeConversationCard ? (
+	                          <div className="mt-1 text-xs text-emerald-100/90">About {activeConversationCard.year} {activeConversationCard.player_name}</div>
+	                        ) : null}
+	                      </div>
+	                      <textarea
+	                        value={draftMessage}
+	                        onChange={(e) => setDraftMessage(e.target.value)}
+	                        placeholder={`Write a reply to ${activeRecipientLabel}...`}
+	                        className="mt-3 min-h-[110px] w-full resize-none rounded-xl bg-white/[0.03] px-3 py-2 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-emerald-500/20"
+	                      />
+	                      <div className="mt-3 flex items-center justify-between gap-3">
+	                        <div className="text-xs text-slate-500">Replying to {activeRecipientLabel}</div>
+	                        <button
+	                          type="button"
+	                          onClick={onSendMessage}
+	                          disabled={sending || !draftMessage.trim()}
+	                          className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                        >
+	                          {sending ? "Sending…" : "Send"}
+	                        </button>
+	                      </div>
+	                    </div>
+	                  </div>
+	                ) : null}
               </>
             ) : (
               <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-6 text-sm text-slate-400">
