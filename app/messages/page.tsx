@@ -188,7 +188,9 @@ export default function MessagesPage() {
         p_conversation_id: conversationParam,
       });
 
-      if (!restoreError) {
+      if (restoreError) {
+        setError(restoreError.message || "Could not restore this conversation.");
+      } else {
         const { data: refreshedMyParticipantRows, error: refreshedMyParticipantError } = await supabase
           .from("conversation_participants")
           .select("conversation_id, user_id, joined_at, last_read_at, is_muted, is_blocked")
@@ -509,6 +511,24 @@ export default function MessagesPage() {
       setDraftMessage("");
       await loadInbox();
     } catch (err: any) {
+      if (supabaseConfigured && supabase) {
+        const { error: restoreError } = await supabase.rpc("restore_conversation_access", {
+          p_conversation_id: activeConversationId,
+        });
+
+        if (!restoreError) {
+          try {
+            await sendMessage(activeConversationId, user.id, trimmed);
+            setDraftMessage("");
+            await loadInbox();
+            return;
+          } catch (retryErr: any) {
+            setError(retryErr?.message || err?.message || "Could not send message.");
+            return;
+          }
+        }
+      }
+
       setError(err?.message || "Could not send message.");
     } finally {
       setSending(false);
