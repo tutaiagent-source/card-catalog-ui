@@ -250,6 +250,15 @@ begin
   order by c.last_message_at desc
   limit 1;
 
+  -- If a conversation already exists but was created without listing context,
+  -- upgrade it to the listing context so listing-based messaging works.
+  if v_conversation_id is not null and p_context_card_id is not null then
+    update public.conversations
+    set context_card_id = p_context_card_id
+    where id = v_conversation_id
+      and (context_card_id is null or context_card_id <> p_context_card_id);
+  end if;
+
   if v_conversation_id is null then
     insert into public.conversations (conversation_type, created_by, context_card_id)
     values ('direct', v_caller, p_context_card_id)
