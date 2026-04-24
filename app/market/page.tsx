@@ -232,7 +232,7 @@ export default function MarketPage() {
           <div>
             <CardCatLogo />
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-white">Market</h1>
-            <div className="mt-2 text-sm text-slate-400">Browse active public listings from other CardCat users.</div>
+            <div className="mt-2 text-sm text-slate-400">Member-Only Market Feed: browse active listings from other CardCat members, then message sellers directly from the card.</div>
           </div>
           <div className="flex gap-3">
             <a href="/listed" className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]">Listings</a>
@@ -242,9 +242,29 @@ export default function MarketPage() {
 
         {error ? <div className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/[0.08] px-4 py-3 text-sm text-red-100">{error}</div> : null}
 
+        <section className="mt-4 rounded-3xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-200">Market Spotlight</div>
+              <h2 className="mt-2 text-xl font-bold text-white">How It Works</h2>
+              <p className="mt-1 text-sm text-emerald-100/90">
+                Listings posted to Market appear here. Tap <span className="font-semibold">Message seller</span> to start a listing-initiated thread, then use Messages to manage what you sent and what you received.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 text-sm text-emerald-100/90">
+              <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2">
+                <span aria-hidden="true">✅</span> Posted listings show up instantly
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2">
+                <span aria-hidden="true">💬</span> Message sellers from the card
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.04] p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm font-semibold text-slate-200">Active public listings</div>
+            <div className="text-sm font-semibold text-slate-200">Active Market Listings</div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
               <input
                 type="search"

@@ -573,7 +573,7 @@ export default function ListedPage() {
             <div>
               <div className="text-sm font-semibold text-white">Marketplace visibility</div>
               <div className="mt-1 text-sm text-slate-300">
-                All listing cards are private. Select individual cards in preview to post them to Market, or use the button here to post your whole listing collection.
+                Your listed cards are private by default. Use Marketplace visibility to post selected/listed cards into the Member Market feed at <span className="font-semibold text-slate-200">/market</span>. Use Share listings to generate a token-based private link you can send to a buyer (pricing and comp check can be toggled), and you can revoke/expire it anytime.
               </div>
             </div>
 
