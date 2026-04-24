@@ -102,10 +102,10 @@ export default function ListingsSharedView({
     return sortedCards.filter((card) => String(card.player_name || "").toLowerCase().includes(q));
   }, [sortedCards, searchQuery]);
 
-  const proxyImageSrc = (imageUrl?: string | null) => {
-    const src = imageUrl ? driveToImageSrc(imageUrl) : "";
+  const proxyImageSrc = (imageUrl?: string | null, variant: "grid" | "detail" = "detail") => {
+    const src = imageUrl ? driveToImageSrc(imageUrl, { variant }) : "";
     if (!src) return "";
-    return `/api/listings-share-image?token=${encodeURIComponent(token)}&src=${encodeURIComponent(src)}`;
+    return `/api/listings-share-image?token=${encodeURIComponent(token)}&src=${encodeURIComponent(src)}&variant=${encodeURIComponent(variant)}`;
   };
 
   async function handleMessageSeller(card: SharedCard) {
@@ -194,7 +194,7 @@ export default function ListingsSharedView({
                     >
                       <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
                         {c.image_url ? (
-                          <img alt={c.player_name} src={proxyImageSrc(c.image_url)} className="h-full w-full object-contain" loading="lazy" decoding="async" />
+                          <img alt={c.player_name} src={proxyImageSrc(c.image_url, "grid")} className="h-full w-full object-contain" loading="lazy" decoding="async" />
                         ) : (
                           <div className="h-full w-full" />
                         )}
@@ -302,7 +302,7 @@ export default function ListingsSharedView({
                           {activeCard.image_url ? (
                             <img
                               alt="front"
-                              src={proxyImageSrc(activeCard.image_url)}
+                              src={proxyImageSrc(activeCard.image_url, "detail")}
                               className="absolute inset-0 h-full w-full object-contain"
                               style={{ backfaceVisibility: "hidden" }}
                               draggable={false}
@@ -314,7 +314,7 @@ export default function ListingsSharedView({
                           {activeCard.back_image_url ? (
                             <img
                               alt="back"
-                              src={proxyImageSrc(activeCard.back_image_url)}
+                              src={proxyImageSrc(activeCard.back_image_url, "detail")}
                               className="absolute inset-0 h-full w-full object-contain"
                               style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                               draggable={false}

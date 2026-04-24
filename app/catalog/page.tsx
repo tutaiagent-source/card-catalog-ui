@@ -1985,8 +1985,10 @@ export default function CatalogPage() {
                         >
                           <img
                             alt="front"
-                            src={driveToImageSrc(c.image_url as string)}
+                            src={driveToImageSrc(c.image_url as string, { variant: "grid" })}
                             className="h-20 w-14 rounded border border-slate-800 object-contain bg-slate-950"
+                            loading="lazy"
+                            decoding="async"
                           />
                         </button>
                       ) : (
@@ -2150,7 +2152,7 @@ export default function CatalogPage() {
                                 })
                               }
                             >
-                              <img alt="front" src={driveToImageSrc(c.image_url as string)} className="h-14 w-10 rounded border border-slate-800 object-contain bg-slate-950" />
+                              <img alt="front" src={driveToImageSrc(c.image_url as string, { variant: "grid" })} className="h-14 w-10 rounded border border-slate-800 object-contain bg-slate-950" loading="lazy" decoding="async" />
                             </button>
                           ) : (
                             <div className="h-14 w-10 rounded border border-slate-800 bg-slate-950" />
@@ -2306,8 +2308,10 @@ export default function CatalogPage() {
                         >
                           <img
                             alt="front"
-                            src={driveToImageSrc(c.image_url as string)}
+                            src={driveToImageSrc(c.image_url as string, { variant: "grid" })}
                             className="h-full w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"
+                            loading="lazy"
+                            decoding="async"
                           />
                         </button>
                       ) : c.back_image_url ? (
@@ -2324,8 +2328,10 @@ export default function CatalogPage() {
                         >
                           <img
                             alt="back"
-                            src={driveToImageSrc(c.back_image_url as string)}
+                            src={driveToImageSrc(c.back_image_url as string, { variant: "grid" })}
                             className="h-full w-full rounded border border-slate-800 object-contain bg-slate-900 cursor-zoom-in"
+                            loading="lazy"
+                            decoding="async"
                           />
                         </button>
                       ) : null}

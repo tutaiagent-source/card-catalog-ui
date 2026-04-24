@@ -5,6 +5,8 @@ export async function GET(request: NextRequest) {
   const rawToken = request.nextUrl.searchParams.get("token");
   const token = String(rawToken || "").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
   const src = request.nextUrl.searchParams.get("src");
+  const variantParam = String(request.nextUrl.searchParams.get("variant") || "detail").toLowerCase();
+  const variant = variantParam === "grid" ? "grid" : "detail";
 
   if (!token || !src) {
     return NextResponse.json({ error: "Missing token or src" }, { status: 400 });
@@ -63,7 +65,9 @@ export async function GET(request: NextRequest) {
   return new NextResponse(arrayBuffer, {
     headers: {
       "content-type": contentType,
-      "cache-control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300",
+      "cache-control": variant === "grid"
+        ? "public, max-age=300, s-maxage=900, stale-while-revalidate=86400"
+        : "public, max-age=120, s-maxage=300, stale-while-revalidate=3600",
     },
   });
 }

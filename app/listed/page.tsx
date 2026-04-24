@@ -676,7 +676,7 @@ export default function ListedPage() {
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" role="list" aria-label="Listed cards">
                   {sortedCards.map((c) => {
-                    const src = c.image_url ? driveToImageSrc(c.image_url) : "";
+                    const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "grid" }) : "";
                     const goHref = toUrl(c.sale_platform);
                     const marketMode = profile?.market_visibility_mode || "none";
                     const isOnMarket =
@@ -719,7 +719,7 @@ export default function ListedPage() {
                         <div
                           className={`aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 ${isOnMarket ? "border border-emerald-500/80" : "border border-red-500/80"}`}
                         >
-                          {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
+                          {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" loading="lazy" decoding="async" /> : <div className="h-full w-full" />}
                         </div>
 
                         <div className="mt-3 text-center">
@@ -764,7 +764,7 @@ export default function ListedPage() {
                   <div className="text-sm font-semibold text-slate-200">Display</div>
                   <div className="mt-4 grid grid-cols-6 gap-4">
                     {sortedCards.map((c) => {
-                      const src = c.image_url ? driveToImageSrc(c.image_url) : "";
+                      const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "grid" }) : "";
                       const goHref = toUrl(c.sale_platform);
                       const marketMode = profile?.market_visibility_mode || "none";
                       const isOnMarket =
@@ -795,7 +795,7 @@ export default function ListedPage() {
                           }}
                         >
                           <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950">
-                            {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
+                            {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" loading="lazy" decoding="async" /> : <div className="h-full w-full" />}
                           </div>
 
                           {goHref ? (

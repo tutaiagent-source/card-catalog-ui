@@ -311,7 +311,15 @@ export default function MarketPage() {
                     className="rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-left hover:bg-slate-950/60"
                   >
                     <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950">
-                      {card.image_url ? <img alt={card.player_name} src={driveToImageSrc(card.image_url)} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
+                      {card.image_url ? (
+                        <img
+                          alt={card.player_name}
+                          src={driveToImageSrc(card.image_url, { variant: "grid" })}
+                          className="h-full w-full object-contain"
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      ) : <div className="h-full w-full" />}
                     </div>
                     <div className="mt-3 text-sm font-semibold text-white line-clamp-2">{card.player_name}</div>
                     <div className="mt-1 text-xs text-slate-400 line-clamp-2">{[card.year, card.brand, card.set_name].filter(Boolean).join(" · ")}</div>

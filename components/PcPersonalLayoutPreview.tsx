@@ -122,7 +122,7 @@ export default function PcPersonalLayoutPreview() {
               >
                 <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
                   {c.image_url ? (
-                    <img alt={c.player_name} src={driveToImageSrc(c.image_url)} className="h-full w-full object-contain" />
+                    <img alt={c.player_name} src={driveToImageSrc(c.image_url, { variant: "grid" })} className="h-full w-full object-contain" loading="lazy" decoding="async" />
                   ) : (
                     <div className="h-full w-full" />
                   )}
@@ -153,7 +153,7 @@ export default function PcPersonalLayoutPreview() {
             >
               <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950/10">
                 {c.image_url ? (
-                  <img alt={c.player_name} src={driveToImageSrc(c.image_url)} className="h-full w-full object-contain" />
+                  <img alt={c.player_name} src={driveToImageSrc(c.image_url, { variant: "grid" })} className="h-full w-full object-contain" loading="lazy" decoding="async" />
                 ) : (
                   <div className="h-full w-full" />
                 )}
