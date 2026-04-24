@@ -187,12 +187,16 @@ export default function ListingsSharedView({
                       className="relative cursor-pointer rounded-xl border border-slate-800 bg-slate-950/40 p-0"
                       aria-label={`View ${c.player_name}`}
                     >
-                      <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
+                      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
                         {c.image_url ? (
                           <img alt={c.player_name} src={proxyImageSrc(c.image_url)} className="h-full w-full object-contain" loading="lazy" decoding="async" />
                         ) : (
                           <div className="h-full w-full" />
                         )}
+
+                        <div className="absolute left-2 bottom-2 right-2 z-10 rounded bg-slate-950/65 px-1.5 py-0.5 text-[11px] font-semibold text-slate-100 truncate pointer-events-none">
+                          {c.player_name}
+                        </div>
                       </div>
 
                       {showPricing && c.asking_price != null ? (

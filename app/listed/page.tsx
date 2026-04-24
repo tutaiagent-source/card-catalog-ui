@@ -717,9 +717,13 @@ export default function ListedPage() {
                         ) : null}
 
                         <div
-                          className={`aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 ${isOnMarket ? "border border-emerald-500/80" : "border border-red-500/80"}`}
+                          className={`relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 ${isOnMarket ? "border border-emerald-500/80" : "border border-red-500/80"}`}
                         >
                           {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
+
+                          <div className="absolute left-2 bottom-2 right-2 z-10 rounded bg-slate-950/65 px-1.5 py-0.5 text-[11px] font-semibold text-slate-100 truncate pointer-events-none">
+                            {c.player_name}
+                          </div>
                         </div>
 
                         {c.status === "Sold" && c.sold_price != null ? (
@@ -788,8 +792,12 @@ export default function ListedPage() {
                             setActiveCard(c);
                           }}
                         >
-                          <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950">
+                          <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950">
                             {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
+
+                            <div className="absolute left-2 bottom-2 right-2 z-10 rounded bg-slate-950/65 px-1.5 py-0.5 text-[11px] font-semibold text-slate-100 truncate pointer-events-none">
+                              {c.player_name}
+                            </div>
                           </div>
 
                           {goHref ? (
