@@ -330,23 +330,31 @@ security definer
 set search_path = public, auth
 as $$
 declare
-  v_sender uuid;
+  v_message_conversation_id uuid;
 begin
   if auth.uid() is null then
     raise exception 'Not authenticated';
   end if;
 
-  select m.sender_user_id into v_sender
+  select m.conversation_id
+    into v_message_conversation_id
   from public.messages m
   where m.id = p_message_id
   limit 1;
 
-  if v_sender is null then
+  if v_message_conversation_id is null then
     raise exception 'Message not found';
   end if;
 
-  if v_sender <> auth.uid() then
-    raise exception 'Only the sender can delete this message';
+  -- Allow any conversation participant to soft-delete messages for inbox cleanup.
+  if not exists (
+    select 1
+    from public.conversation_participants cp
+    where cp.conversation_id = v_message_conversation_id
+      and cp.user_id = auth.uid()
+      and coalesce(cp.is_blocked, false) = false
+  ) then
+    raise exception 'Not allowed to delete messages from this conversation';
   end if;
 
   update public.messages
@@ -357,6 +365,7 @@ $$;
 
 grant execute on function public.delete_message(uuid) to authenticated;
 
+
 create or replace function public.restore_message(
   p_message_id uuid
 )
@@ -366,23 +375,31 @@ security definer
 set search_path = public, auth
 as $$
 declare
-  v_sender uuid;
+  v_message_conversation_id uuid;
 begin
   if auth.uid() is null then
     raise exception 'Not authenticated';
   end if;
 
-  select m.sender_user_id into v_sender
+  select m.conversation_id
+    into v_message_conversation_id
   from public.messages m
   where m.id = p_message_id
   limit 1;
 
-  if v_sender is null then
+  if v_message_conversation_id is null then
     raise exception 'Message not found';
   end if;
 
-  if v_sender <> auth.uid() then
-    raise exception 'Only the sender can restore this message';
+  -- Allow any conversation participant to restore for inbox cleanup.
+  if not exists (
+    select 1
+    from public.conversation_participants cp
+    where cp.conversation_id = v_message_conversation_id
+      and cp.user_id = auth.uid()
+      and coalesce(cp.is_blocked, false) = false
+  ) then
+    raise exception 'Not allowed to restore messages from this conversation';
   end if;
 
   update public.messages
@@ -392,3 +409,29 @@ end;
 $$;
 
 grant execute on function public.restore_message(uuid) to authenticated;
+
+-- ==========================
+-- RPC: delete a conversation for the current user (used for empty/unclean inbox threads)
+-- ==========================
+
+create or replace function public.delete_conversation_for_user(
+  p_conversation_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Not authenticated';
+  end if;
+
+  delete from public.conversation_participants
+  where conversation_id = p_conversation_id
+    and user_id = auth.uid();
+end;
+$$;
+
+grant execute on function public.delete_conversation_for_user(uuid) to authenticated;
+

@@ -542,31 +542,41 @@ export default function MessagesPage() {
     setBulkDeleteError("");
 
     try {
-      const { data: rows, error } = await supabase
+      // Get all non-deleted messages in the selected conversations.
+      const { data: messageRows, error: messagesError } = await supabase
         .from("messages")
-        .select("id")
+        .select("id, conversation_id")
         .in("conversation_id", selectedConversationIds)
-        .eq("sender_user_id", user.id)
         .is("deleted_at", null);
 
-      if (error) throw error;
+      if (messagesError) throw messagesError;
 
-      const ids = (rows ?? [])
+      const messageIds = (messageRows ?? [])
         .map((r: any) => String(r.id || ""))
         .filter(Boolean);
 
-      if (ids.length === 0) {
-        throw new Error("No non-deleted messages from you were found in the selected conversations.");
-      }
+      const conversationsWithNonDeletedMessages = Array.from(
+        new Set((messageRows ?? []).map((r: any) => String(r.conversation_id || "")).filter(Boolean))
+      );
 
-      // Soft-delete each message via the secure RPC.
-      for (const id of ids) {
+      const emptyOrClearedConversationIds = selectedConversationIds.filter(
+        (id) => !conversationsWithNonDeletedMessages.includes(id)
+      );
+
+      // Soft-delete each message via the secure RPC (allows inbox cleanup).
+      for (const id of messageIds) {
         const { error: rpcError } = await supabase.rpc("delete_message", { p_message_id: id });
         if (rpcError) throw rpcError;
       }
 
+      // If a conversation has no messages, remove it from the current user's inbox.
+      for (const conversationId of emptyOrClearedConversationIds) {
+        const { error: rpcError } = await supabase.rpc("delete_conversation_for_user", { p_conversation_id: conversationId });
+        if (rpcError) throw rpcError;
+      }
+
       setSelectedConversationIds([]);
-      setMessageFolder("deleted");
+      setMessageFolder("inbox");
       await loadInbox();
     } catch (err: any) {
       setBulkDeleteError(err?.message || "Could not delete selected conversations.");
