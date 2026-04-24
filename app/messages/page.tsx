@@ -7,7 +7,7 @@ import EmailVerificationNotice from "@/components/EmailVerificationNotice";
 import UsernamePromptBanner from "@/components/UsernamePromptBanner";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
-import { ConversationParticipantRow, ConversationRow, markConversationRead, MessageRow, sendMessage } from "@/lib/messaging";
+import { ConversationParticipantRow, ConversationRow, markConversationRead, MessageRow, sendMessage, startDirectConversation } from "@/lib/messaging";
 import { UserProfileRecord } from "@/lib/useUserProfile";
 
 type CardContext = {
@@ -60,32 +60,98 @@ export default function MessagesPage() {
 
   const [activeConversationCard, setActiveConversationCard] = useState<CardContext | null>(null);
 
-  const [friendUsernamesLocal, setFriendUsernamesLocal] = useState<string[]>([]);
-  const [friendUsernameInput, setFriendUsernameInput] = useState("");
-  const [addingFriend, setAddingFriend] = useState(false);
+  const [messageFolder, setMessageFolder] = useState<"inbox" | "unread" | "read" | "deleted">("inbox");
+
+  type IncomingFriendRequest = {
+    id: string;
+    fromProfile: UserProfileRecord;
+  };
+
+  type OutgoingFriendRequest = {
+    id: string;
+    toProfile: UserProfileRecord;
+  };
+
+  const [friends, setFriends] = useState<UserProfileRecord[]>([]);
+  const [incomingFriendRequests, setIncomingFriendRequests] = useState<IncomingFriendRequest[]>([]);
+  const [outgoingFriendRequests, setOutgoingFriendRequests] = useState<OutgoingFriendRequest[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
   const [friendsError, setFriendsError] = useState("");
+  const [friendActionSaving, setFriendActionSaving] = useState(false);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem("cardcat_friend_usernames_v1");
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed))
-        setFriendUsernamesLocal(parsed.map((x) => String(x).toLowerCase().trim()).filter(Boolean));
-    } catch {
-      // ignore
-    }
-  }, []);
+  const loadFriendsAndRequests = useCallback(async () => {
+    if (!user?.id || !supabaseConfigured || !supabase) return;
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+    setFriendsLoading(true);
+    setFriendsError("");
+
     try {
-      window.localStorage.setItem("cardcat_friend_usernames_v1", JSON.stringify(friendUsernamesLocal));
-    } catch {
-      // ignore
+      const [{ data: friendRows, error: friendError }, { data: incomingRows, error: incomingError }, { data: outgoingRows, error: outgoingError }] = await Promise.all([
+        supabase
+          .from("friends")
+          .select("friend_user_id")
+          .eq("user_id", user.id),
+        supabase
+          .from("friend_requests")
+          .select("id, from_user_id")
+          .eq("to_user_id", user.id)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("friend_requests")
+          .select("id, to_user_id")
+          .eq("from_user_id", user.id)
+          .eq("status", "pending")
+          .order("created_at", { ascending: false }),
+      ]);
+
+      if (friendError) throw friendError;
+      if (incomingError) throw incomingError;
+      if (outgoingError) throw outgoingError;
+
+      const friendUserIds = Array.from(new Set((friendRows ?? []).map((r: any) => String(r.friend_user_id || "")).filter(Boolean)));
+      const incomingFromIds = Array.from(new Set((incomingRows ?? []).map((r: any) => String(r.from_user_id || "")).filter(Boolean)));
+      const outgoingToIds = Array.from(new Set((outgoingRows ?? []).map((r: any) => String(r.to_user_id || "")).filter(Boolean)));
+
+      const profileIds = Array.from(new Set([...friendUserIds, ...incomingFromIds, ...outgoingToIds])).filter(Boolean);
+
+      let profileRows: UserProfileRecord[] = [];
+      if (profileIds.length > 0) {
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, username, display_name, allow_messages")
+          .in("id", profileIds);
+        if (profileError) throw profileError;
+        profileRows = (profileData ?? []) as UserProfileRecord[];
+      }
+
+      const profileById = new Map<string, UserProfileRecord>(profileRows.map((p) => [String(p.id), p]));
+
+      setFriends(profileRows.filter((p) => friendUserIds.includes(String(p.id))));
+      setIncomingFriendRequests(
+        (incomingRows ?? [])
+          .map((r: any) => {
+            const from = profileById.get(String(r.from_user_id));
+            if (!from) return null;
+            return { id: String(r.id), fromProfile: from };
+          })
+          .filter(Boolean) as IncomingFriendRequest[]
+      );
+      setOutgoingFriendRequests(
+        (outgoingRows ?? [])
+          .map((r: any) => {
+            const to = profileById.get(String(r.to_user_id));
+            if (!to) return null;
+            return { id: String(r.id), toProfile: to };
+          })
+          .filter(Boolean) as OutgoingFriendRequest[]
+      );
+    } catch (err: any) {
+      setFriendsError(err?.message || "Could not load friends.");
+    } finally {
+      setFriendsLoading(false);
     }
-  }, [friendUsernamesLocal]);
+  }, [user?.id]);
 
   const loadInbox = useCallback(async () => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -195,6 +261,10 @@ export default function MessagesPage() {
   }, [loadInbox]);
 
   useEffect(() => {
+    void loadFriendsAndRequests();
+  }, [loadFriendsAndRequests]);
+
+  useEffect(() => {
     if (!activeConversationId || !user?.id) return;
 
     markConversationRead(activeConversationId)
@@ -223,24 +293,34 @@ export default function MessagesPage() {
     return conversations.map((conversation) => {
       const convoParticipants = participants.filter((row) => row.conversation_id === conversation.id);
       const myParticipant = convoParticipants.find((row) => row.user_id === user?.id);
+
       const convoMessages = messages.filter((m) => m.conversation_id === conversation.id);
-      const latestMessage = convoMessages.slice(-1)[0] ?? null;
+      const nonDeletedMessages = convoMessages.filter((m) => !m.deleted_at);
+      const deletedMessages = convoMessages.filter((m) => Boolean(m.deleted_at));
+
+      const latestNonDeletedMessage = nonDeletedMessages.length > 0 ? nonDeletedMessages[nonDeletedMessages.length - 1] : null;
+      const latestDeletedMessage = deletedMessages.length > 0 ? deletedMessages[deletedMessages.length - 1] : null;
 
       const otherUserId = (() => {
-        if (!latestMessage || !user?.id) return null;
-        if (latestMessage.sender_user_id !== user.id) return latestMessage.sender_user_id;
-        const anyOther = convoMessages.find((m) => m.sender_user_id !== user.id);
-        return anyOther?.sender_user_id ?? null;
+        if (!user?.id) return null;
+        const other = convoMessages.find((m) => m.sender_user_id !== user.id);
+        return other?.sender_user_id ?? null;
       })();
 
       const otherProfile = profiles.find((profile) => profile.id === otherUserId);
+
       const unread = Boolean(
-        myParticipant && conversation.last_message_at && (!myParticipant.last_read_at || new Date(conversation.last_message_at).getTime() > new Date(myParticipant.last_read_at).getTime())
+        myParticipant &&
+          latestNonDeletedMessage &&
+          (!myParticipant.last_read_at || new Date(latestNonDeletedMessage.created_at).getTime() > new Date(myParticipant.last_read_at).getTime())
       );
 
       return {
         conversation,
-        latestMessage,
+        latestNonDeletedMessage,
+        latestDeletedMessage,
+        hasDeletedMessages: deletedMessages.length > 0,
+        hasNonDeletedMessages: nonDeletedMessages.length > 0,
         myParticipant,
         otherProfile,
         otherUserId: otherUserId,
@@ -250,44 +330,67 @@ export default function MessagesPage() {
     });
   }, [conversations, participants, profiles, messages, user?.id]);
 
+  const displayConversationViews = useMemo(() => {
+    switch (messageFolder) {
+      case "deleted":
+        return conversationViews.filter((v) => v.hasDeletedMessages);
+      case "unread":
+        return conversationViews.filter((v) => v.hasNonDeletedMessages && v.unread);
+      case "read":
+        return conversationViews.filter((v) => v.hasNonDeletedMessages && !v.unread);
+      case "inbox":
+      default:
+        return conversationViews.filter((v) => v.hasNonDeletedMessages);
+    }
+  }, [conversationViews, messageFolder]);
+
+  useEffect(() => {
+    if (!activeConversationId) return;
+    if (displayConversationViews.some((v) => v.conversation.id === activeConversationId)) return;
+    setActiveConversationId(displayConversationViews[0]?.conversation.id ?? null);
+  }, [displayConversationViews, activeConversationId]);
+
   const activeConversation = conversationViews.find((row) => row.conversation.id === activeConversationId) ?? null;
 
   const activeConversationContextCardId = activeConversation?.conversation.context_card_id ?? null;
 
-  const friendThreadViews = useMemo(() => {
-    return conversationViews
-      .filter((v) => Boolean(v.conversation.context_card_id) && Boolean(v.otherProfile) && Boolean(v.otherUserId))
-      .sort((a, b) => new Date(b.conversation.last_message_at).getTime() - new Date(a.conversation.last_message_at).getTime());
-  }, [conversationViews]);
+  const friendsUserIdSet = useMemo(() => {
+    return new Set(friends.map((f) => String(f.id)));
+  }, [friends]);
 
-  const friendThreadsByUser = useMemo(() => {
-    const map = new Map<string, typeof friendThreadViews[number]>();
-    for (const v of friendThreadViews) {
+  const incomingFriendFromUserIdSet = useMemo(() => {
+    return new Set(incomingFriendRequests.map((r) => String(r.fromProfile.id)));
+  }, [incomingFriendRequests]);
+
+  const outgoingFriendToUserIdSet = useMemo(() => {
+    return new Set(outgoingFriendRequests.map((r) => String(r.toProfile.id)));
+  }, [outgoingFriendRequests]);
+
+  const listingContacts = useMemo(() => {
+    // Re-select the latest by last_message_at.
+    const latestMap = new Map<string, { otherUserId: string; profile: UserProfileRecord; conversationId: string; ts: number }>();
+    for (const v of conversationViews) {
+      if (!v.conversation.context_card_id) continue;
+      if (!v.otherUserId || !v.otherProfile) continue;
       const key = String(v.otherUserId);
-      const existing = map.get(key);
-      if (!existing) {
-        map.set(key, v);
-        continue;
-      }
-      if (new Date(v.conversation.last_message_at).getTime() > new Date(existing.conversation.last_message_at).getTime()) {
-        map.set(key, v);
+      const ts = new Date(v.conversation.last_message_at).getTime();
+      const existing = latestMap.get(key);
+      if (!existing || ts > existing.ts) {
+        latestMap.set(key, { otherUserId: key, profile: v.otherProfile, conversationId: v.conversation.id, ts });
       }
     }
-    return Array.from(map.values()).sort(
-      (a, b) => new Date(b.conversation.last_message_at).getTime() - new Date(a.conversation.last_message_at).getTime()
+
+    return Array.from(latestMap.values()).sort((a, b) => b.ts - a.ts);
+  }, [conversationViews]);
+
+  const eligibleListingContacts = useMemo(() => {
+    return listingContacts.filter(
+      (c) =>
+        !friendsUserIdSet.has(String(c.otherUserId)) &&
+        !incomingFriendFromUserIdSet.has(String(c.otherUserId)) &&
+        !outgoingFriendToUserIdSet.has(String(c.otherUserId))
     );
-  }, [friendThreadViews]);
-
-  const friendThreadUsernames = useMemo(() => {
-    return new Set(friendThreadsByUser.map((f) => String(f.otherProfile?.username || "").toLowerCase()).filter(Boolean));
-  }, [friendThreadsByUser]);
-
-  const localFriendsToShow = useMemo(() => {
-    return friendUsernamesLocal
-      .map((u) => String(u).toLowerCase().trim().replace(/^@/, ""))
-      .filter(Boolean)
-      .filter((u) => !friendThreadUsernames.has(u));
-  }, [friendUsernamesLocal, friendThreadUsernames]);
+  }, [listingContacts, friendsUserIdSet, incomingFriendFromUserIdSet, outgoingFriendToUserIdSet]);
 
   useEffect(() => {
     let cancelled = false;
@@ -317,10 +420,11 @@ export default function MessagesPage() {
       cancelled = true;
     };
   }, [activeConversationContextCardId, user?.id]);
-  const activeMessages = useMemo(
-    () => messages.filter((message) => message.conversation_id === activeConversationId),
-    [messages, activeConversationId]
-  );
+  const activeMessages = useMemo(() => {
+    const base = messages.filter((message) => message.conversation_id === activeConversationId);
+    if (messageFolder === "deleted") return base.filter((m) => Boolean(m.deleted_at));
+    return base.filter((m) => !m.deleted_at);
+  }, [messages, activeConversationId, messageFolder]);
 
   async function onSendMessage() {
     if (!activeConversationId || !user?.id) return;
@@ -341,40 +445,94 @@ export default function MessagesPage() {
     }
   }
 
-  async function onAddFriend() {
+  async function onMarkConversationUnread() {
+    if (!activeConversationId || !user?.id) return;
     if (!supabaseConfigured || !supabase) return;
-    const username = friendUsernameInput.trim().replace(/^@/, "").toLowerCase();
-    if (!username) return;
 
-    setAddingFriend(true);
-    setFriendsError("");
-
+    setError("");
     try {
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, username, allow_messages")
-        .eq("username", username)
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-      if (!profile) {
-        setFriendsError("User not found.");
-        return;
-      }
-      if (!profile.allow_messages) {
-        setFriendsError("This user is not accepting messages.");
-        return;
-      }
-
-      setFriendUsernamesLocal((prev) => {
-        const next = Array.from(new Set([...prev.map((u) => u.toLowerCase()), username]));
-        return next.slice(0, 50);
-      });
-      setFriendUsernameInput("");
+      const { error: updateError } = await supabase
+        .from("conversation_participants")
+        .update({ last_read_at: null })
+        .eq("conversation_id", activeConversationId)
+        .eq("user_id", user.id);
+      if (updateError) throw updateError;
+      await loadInbox();
     } catch (err: any) {
-      setFriendsError(err?.message || "Could not add friend.");
+      setError(err?.message || "Could not mark unread.");
+    }
+  }
+
+  async function onDeleteMessage(messageId: string) {
+    if (!supabaseConfigured || !supabase) return;
+    setError("");
+    try {
+      const { error: rpcError } = await supabase.rpc("delete_message", { p_message_id: messageId });
+      if (rpcError) throw rpcError;
+      await loadInbox();
+    } catch (err: any) {
+      setError(err?.message || "Could not delete message.");
+    }
+  }
+
+  async function onRestoreMessage(messageId: string) {
+    if (!supabaseConfigured || !supabase) return;
+    setError("");
+    try {
+      const { error: rpcError } = await supabase.rpc("restore_message", { p_message_id: messageId });
+      if (rpcError) throw rpcError;
+      await loadInbox();
+    } catch (err: any) {
+      setError(err?.message || "Could not restore message.");
+    }
+  }
+
+  async function onSendFriendRequest(targetUsername: string) {
+    if (!supabaseConfigured || !supabase) return;
+    setFriendsError("");
+    if (!targetUsername.trim()) return;
+
+    setFriendActionSaving(true);
+    try {
+      const { error: rpcError } = await supabase.rpc("send_friend_request", {
+        p_target_username: targetUsername,
+      });
+      if (rpcError) throw rpcError;
+      await loadFriendsAndRequests();
+      await loadInbox();
+    } catch (err: any) {
+      setFriendsError(err?.message || "Could not send friend request.");
     } finally {
-      setAddingFriend(false);
+      setFriendActionSaving(false);
+    }
+  }
+
+  async function onRespondFriendRequest(requestId: string, accept: boolean) {
+    if (!supabaseConfigured || !supabase) return;
+    setFriendsError("");
+    setFriendActionSaving(true);
+    try {
+      const { error: rpcError } = await supabase.rpc("respond_friend_request", {
+        p_request_id: requestId,
+        p_accept: accept,
+      });
+      if (rpcError) throw rpcError;
+      await loadFriendsAndRequests();
+      await loadInbox();
+    } catch (err: any) {
+      setFriendsError(err?.message || "Could not update friend request.");
+    } finally {
+      setFriendActionSaving(false);
+    }
+  }
+
+  async function onMessageFriend(targetUsername: string) {
+    if (!targetUsername.trim()) return;
+    try {
+      const conversationId = await startDirectConversation(targetUsername, undefined, null);
+      window.location.href = `/messages?conversation=${encodeURIComponent(conversationId)}`;
+    } catch (err: any) {
+      setError(err?.message || "Could not start conversation.");
     }
   }
 
@@ -426,7 +584,7 @@ export default function MessagesPage() {
         <div className="mt-6 grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
           <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
             <div className="flex items-center justify-between gap-3">
-              <div className="text-sm font-semibold text-white">Inbox</div>
+              <div className="text-sm font-semibold text-white">Messages</div>
               <button
                 type="button"
                 onClick={() => loadInbox()}
@@ -437,13 +595,44 @@ export default function MessagesPage() {
               </button>
             </div>
 
-            {conversationViews.length === 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {([
+                ["inbox", "Inbox"],
+                ["unread", "Unread"],
+                ["read", "Read"],
+                ["deleted", "Deleted"],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setMessageFolder(key)}
+                  className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    messageFolder === key
+                      ? "border-amber-500/40 bg-amber-500/[0.10] text-amber-100"
+                      : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.07]"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {displayConversationViews.length === 0 ? (
               <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
-                No conversations yet. Once members can message sellers from listings, threads will show up here.
+                {messageFolder === "deleted"
+                  ? "No deleted messages yet."
+                  : messageFolder === "unread"
+                    ? "No unread conversations."
+                    : messageFolder === "read"
+                      ? "No read conversations yet."
+                      : "No conversations yet. Once members can message sellers from listings, threads will show up here."}
               </div>
             ) : (
               <div className="mt-4 space-y-2">
-                {conversationViews.map((row) => (
+                {displayConversationViews.map((row) => {
+                  const previewMessage =
+                    messageFolder === "deleted" ? row.latestDeletedMessage : row.latestNonDeletedMessage;
+                  return (
                   <button
                     key={row.conversation.id}
                     type="button"
@@ -456,38 +645,22 @@ export default function MessagesPage() {
                           <span className="text-sm font-semibold text-white">{row.title}</span>
                           {row.unread ? <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">Unread</span> : null}
                         </div>
-                        <div className="mt-1 text-xs text-slate-400">{formatTimestamp(row.conversation.last_message_at)}</div>
+                        <div className="mt-1 text-xs text-slate-400">{formatTimestamp(previewMessage?.created_at ?? row.conversation.last_message_at)}</div>
                       </div>
                     </div>
                     <div className="mt-3 line-clamp-2 text-sm text-slate-300">
-                      {row.latestMessage?.body || "No messages yet."}
+                      {previewMessage?.body || "No messages yet."}
                     </div>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             )}
 
             <div className="mt-6 border-t border-white/10 pt-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-sm font-semibold text-white">Friends</div>
-                <div className="text-xs text-slate-500">{friendThreadsByUser.length} Ready</div>
-              </div>
-
-              <div className="mt-3 flex gap-2">
-                <input
-                  value={friendUsernameInput}
-                  onChange={(e) => setFriendUsernameInput(e.target.value)}
-                  placeholder="Add Friend (Username)"
-                  className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={onAddFriend}
-                  disabled={addingFriend || !friendUsernameInput.trim()}
-                  className="rounded-lg bg-emerald-500 px-3 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
-                >
-                  {addingFriend ? "Adding…" : "Add"}
-                </button>
+                <div className="text-xs text-slate-500">{friends.length} Friend{friends.length === 1 ? "" : "s"}</div>
               </div>
 
               {friendsError ? (
@@ -495,61 +668,141 @@ export default function MessagesPage() {
               ) : null}
 
               <div className="mt-3 space-y-2">
-                {friendThreadsByUser.length === 0 && localFriendsToShow.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
-                    Your friends list starts when you initiate a message from a card listing.
+                {incomingFriendRequests.length > 0 ? (
+                  <div>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Requests For You</div>
+                    <div className="space-y-2">
+                      {incomingFriendRequests.map((r) => (
+                        <div key={r.id} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-white">@{r.fromProfile.username}</div>
+                              <div className="mt-1 text-xs text-slate-400">Wants to be friends</div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void onRespondFriendRequest(r.id, true)}
+                                disabled={friendActionSaving}
+                                className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                              >
+                                Accept
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void onRespondFriendRequest(r.id, false)}
+                                disabled={friendActionSaving}
+                                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : null}
 
-                {friendThreadsByUser.map((f) => (
-                  <button
-                    key={f.conversation.id}
-                    type="button"
-                    onClick={() => setActiveConversationId(f.conversation.id)}
-                    className={`w-full rounded-2xl border border-white/10 bg-slate-950/30 p-3 text-left transition-colors hover:bg-slate-950/60 ${
-                      f.conversation.id === activeConversationId ? "border-amber-500/40" : ""
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-white">{f.title}</span>
-                          {f.unread ? <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">Unread</span> : null}
+                {outgoingFriendRequests.length > 0 ? (
+                  <div>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Requests Sent</div>
+                    <div className="space-y-2">
+                      {outgoingFriendRequests.map((r) => (
+                        <div key={r.id} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-white">@{r.toProfile.username}</div>
+                              <div className="mt-1 text-xs text-slate-400">Pending approval</div>
+                            </div>
+                            <div>
+                              <button
+                                type="button"
+                                disabled
+                                className="rounded-lg bg-white/[0.05] px-3 py-2 text-xs font-semibold text-slate-500 disabled:opacity-100"
+                              >
+                                Requested
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                        <div className="mt-1 line-clamp-1 text-xs text-slate-400">{f.latestMessage?.body || "No messages yet."}</div>
-                      </div>
-                      <div className="shrink-0 text-[11px] text-slate-500">{formatTimestamp(f.conversation.last_message_at)}</div>
-                    </div>
-                  </button>
-                ))}
-
-                {localFriendsToShow.map((username) => (
-                  <div key={username} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-sm font-semibold text-white">@{username}</div>
-                        <div className="mt-1 text-xs text-slate-400">No Thread Yet</div>
-                      </div>
-                      <div className="shrink-0">
-                        <button type="button" disabled className="rounded-lg bg-white/[0.05] px-3 py-2 text-sm font-semibold text-slate-500 disabled:opacity-100">
-                          Message
-                        </button>
-                      </div>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      <a
-                        href="/market"
-                        className="text-xs font-semibold text-emerald-200 hover:text-emerald-100"
-                      >
-                        Start From Listing
-                      </a>
-                      <div className="text-[11px] text-slate-500">Required: listing-initiated thread</div>
+                      ))}
                     </div>
                   </div>
-                ))}
+                ) : null}
+
+                {friends.length > 0 ? (
+                  <div>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Accepted</div>
+                    <div className="space-y-2">
+                      {friends.map((f) => (
+                        <div key={f.id} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-white">@{f.username}</div>
+                              <div className="mt-1 text-xs text-slate-400">Messaging unlocked</div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void onMessageFriend(f.username)}
+                              disabled={friendActionSaving}
+                              className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                            >
+                              Message
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {eligibleListingContacts.length > 0 ? (
+                  <div>
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Connected Via Listing</div>
+                    <div className="space-y-2">
+                      {eligibleListingContacts.map((c) => (
+                        <div key={c.otherUserId} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-white">@{c.profile.username}</div>
+                              <div className="mt-1 text-xs text-slate-400">Start a friend request to message without a card</div>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => void onSendFriendRequest(c.profile.username)}
+                                disabled={friendActionSaving}
+                                className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                              >
+                                Request
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMessageFolder("inbox");
+                                  setActiveConversationId(c.conversationId);
+                                }}
+                                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                              >
+                                Open Thread
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {friends.length === 0 && incomingFriendRequests.length === 0 && outgoingFriendRequests.length === 0 && eligibleListingContacts.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
+                    Start a conversation from a card listing to unlock friend requests.
+                  </div>
+                ) : null}
               </div>
 
-              <div className="mt-3 text-xs text-slate-500">To message someone, you must start the thread from a card listing first.</div>
+              <div className="mt-3 text-xs text-slate-500">To message without referencing a specific card, they must accept your friend request.</div>
             </div>
           </section>
 
@@ -566,12 +819,24 @@ export default function MessagesPage() {
                       </span>
                     ) : null}
                   </div>
+
+                  {messageFolder !== "deleted" ? (
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => void onMarkConversationUnread()}
+                        className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                      >
+                        Mark Unread
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="mt-4 space-y-3">
                   {activeMessages.length === 0 ? (
                     <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
-                      No messages yet. This thread is ready for the first message.
+                      {messageFolder === "deleted" ? "No deleted messages in this thread." : "No messages yet. This thread is ready for the first message."}
                     </div>
                   ) : (
                     activeMessages.map((message) => {
@@ -590,6 +855,30 @@ export default function MessagesPage() {
                             <div className={`mb-1 text-xs font-semibold ${mine ? "text-emerald-100" : "text-slate-300"}`}>{senderLabel}</div>
                             <div>{message.body}</div>
                             <div className="mt-2 text-[11px] text-slate-400">{formatTimestamp(message.created_at)}</div>
+
+                            {mine && messageFolder === "deleted" ? (
+                              <div className="mt-3 flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => void onRestoreMessage(message.id)}
+                                  className="text-[11px] font-semibold text-emerald-200 hover:text-emerald-100"
+                                >
+                                  Restore
+                                </button>
+                              </div>
+                            ) : null}
+
+                            {mine && messageFolder !== "deleted" ? (
+                              <div className="mt-3 flex justify-end">
+                                <button
+                                  type="button"
+                                  onClick={() => void onDeleteMessage(message.id)}
+                                  className="text-[11px] font-semibold text-slate-300 hover:text-white"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            ) : null}
                           </div>
                         </div>
                       );
@@ -597,27 +886,29 @@ export default function MessagesPage() {
                   )}
                 </div>
 
-                <div className="mt-4 border-t border-white/10 pt-4">
-                  <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                    <textarea
-                      value={draftMessage}
-                      onChange={(e) => setDraftMessage(e.target.value)}
-                      placeholder="Write a message..."
-                      className="min-h-[100px] w-full resize-none bg-transparent text-sm text-white outline-none"
-                    />
-                    <div className="mt-3 flex items-center justify-between gap-3">
-                      <div className="text-xs text-slate-500">Card-centered inbox v1</div>
-                      <button
-                        type="button"
-                        onClick={onSendMessage}
-                        disabled={sending || !draftMessage.trim()}
-                        className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
-                      >
-                        {sending ? "Sending…" : "Send"}
-                      </button>
+                {messageFolder !== "deleted" ? (
+                  <div className="mt-4 border-t border-white/10 pt-4">
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
+                      <textarea
+                        value={draftMessage}
+                        onChange={(e) => setDraftMessage(e.target.value)}
+                        placeholder="Write a message..."
+                        className="min-h-[100px] w-full resize-none bg-transparent text-sm text-white outline-none"
+                      />
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <div className="text-xs text-slate-500">Card-centered inbox v1</div>
+                        <button
+                          type="button"
+                          onClick={onSendMessage}
+                          disabled={sending || !draftMessage.trim()}
+                          className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                        >
+                          {sending ? "Sending…" : "Send"}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : null}
               </>
             ) : (
               <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-6 text-sm text-slate-400">
