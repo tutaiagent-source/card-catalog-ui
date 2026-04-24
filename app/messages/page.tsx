@@ -340,9 +340,8 @@ export default function MessagesPage() {
         return conversationViews.filter((v) => v.hasNonDeletedMessages && !v.unread);
       case "inbox":
       default:
-        // Inbox should show listing-initiated threads immediately, even before the first message is sent.
-        // If all messages are deleted, the thread lives under Deleted.
-        return conversationViews.filter((v) => !v.hasDeletedMessages);
+        // Inbox shows all threads (including ones with zero messages yet). Deleted threads are handled by the Deleted folder.
+        return conversationViews;
     }
   }, [conversationViews, messageFolder]);
 
