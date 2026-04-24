@@ -52,15 +52,15 @@ export async function markConversationRead(conversationId: string) {
 }
 
 export async function sendMessage(conversationId: string, senderUserId: string, body: string) {
+  // senderUserId is intentionally ignored; we set sender_user_id server-side from auth.uid().
   if (!supabaseConfigured || !supabase) throw new Error("Supabase is not configured.");
 
   const trimmed = String(body || "").trim();
   if (!trimmed) throw new Error("Message body is empty.");
 
-  const { error } = await supabase.from("messages").insert({
-    conversation_id: conversationId,
-    sender_user_id: senderUserId,
-    body: trimmed,
+  const { error } = await supabase.rpc("send_message", {
+    p_conversation_id: conversationId,
+    p_body: trimmed,
   });
 
   if (error) throw error;
