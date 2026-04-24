@@ -116,12 +116,17 @@ export default function ListingsSharedView({
       return;
     }
 
+    if (!card.id) {
+      setMessageError("Could not message this listing (missing card id). Try refreshing.");
+      return;
+    }
+
     setMessageStarting(true);
     setMessageError("");
 
     try {
       const prefill = `Hey, I'm interested in your ${[card.year, card.player_name, card.brand, card.set_name].filter(Boolean).join(" ")}. Is it still available?`;
-      const conversationId = await startDirectConversation(ownerUsername, undefined, card.id ?? undefined);
+      const conversationId = await startDirectConversation(ownerUsername, undefined, card.id);
       window.location.href = `/messages?conversation=${encodeURIComponent(conversationId)}&prefill=${encodeURIComponent(prefill)}`;
     } catch (err: any) {
       setMessageError(err?.message || "Could not start a conversation.");

@@ -187,12 +187,17 @@ export default function MarketPage() {
     const sellerUsername = String(sellerMap.get(card.user_id) || "").trim();
     if (!sellerUsername || !user?.id) return;
 
+    if (!card.id) {
+      setError("Could not message this listing (missing card id). Try refreshing.");
+      return;
+    }
+
     setMessageStarting(true);
     setError("");
 
     try {
       const prefill = `Hey, I'm interested in your ${[card.year, card.player_name, card.brand, card.set_name].filter(Boolean).join(" ")}. Is it still available?`;
-      const conversationId = await startDirectConversation(sellerUsername, undefined, card.id ?? undefined);
+      const conversationId = await startDirectConversation(sellerUsername, undefined, card.id);
       window.location.href = `/messages?conversation=${encodeURIComponent(conversationId)}&prefill=${encodeURIComponent(prefill)}`;
     } catch (err: any) {
       setError(err?.message || "Could not start a conversation.");
