@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
-import { computeSaleMetrics, parseSellerMeta } from "@/lib/cardSellerMeta";
+import { buildSellerNotes, computeSaleMetrics, parseSellerMeta } from "@/lib/cardSellerMeta";
 import { usePlanPreview } from "@/lib/planPreview";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
@@ -117,6 +117,9 @@ export default function SoldPage() {
   const [saleDraftSoldAt, setSaleDraftSoldAt] = useState<string>("");
   const [saleDraftSalePlatform, setSaleDraftSalePlatform] = useState<string>("");
   const [saleDraftQuantity, setSaleDraftQuantity] = useState<number>(1);
+  const [saleDraftCostBasis, setSaleDraftCostBasis] = useState<string>("");
+  const [saleDraftPlatformFee, setSaleDraftPlatformFee] = useState<string>("");
+  const [saleDraftShippingCost, setSaleDraftShippingCost] = useState<string>("");
   const [saleEditSaving, setSaleEditSaving] = useState(false);
   const [saleEditError, setSaleEditError] = useState<string>("");
 
@@ -259,6 +262,12 @@ export default function SoldPage() {
     setSaleDraftSoldAt(toDateInputValue(card.sold_at));
     setSaleDraftSalePlatform(card.sale_platform == null ? "" : String(card.sale_platform));
     setSaleDraftQuantity(Number(card.quantity || 1));
+
+    const seller = parseSellerMeta(card.notes);
+    setSaleDraftCostBasis(seller.meta.costBasis == null ? "" : String(seller.meta.costBasis));
+    setSaleDraftShippingCost(seller.meta.shippingCost == null ? "" : String(seller.meta.shippingCost));
+    setSaleDraftPlatformFee(seller.meta.platformFee == null ? "" : String(seller.meta.platformFee));
+
     setSaleEditError("");
     setSaleEditOpen(true);
   };
@@ -291,6 +300,36 @@ export default function SoldPage() {
 
     const quantity = Math.max(1, Number(saleDraftQuantity || 1));
 
+    const costBasisRaw = saleDraftCostBasis.trim();
+    const costBasis = costBasisRaw !== "" ? Number(costBasisRaw) : null;
+    const shippingCostRaw = saleDraftShippingCost.trim();
+    const shippingCost = shippingCostRaw !== "" ? Number(shippingCostRaw) : null;
+    const platformFeeRaw = saleDraftPlatformFee.trim();
+    const platformFee = platformFeeRaw !== "" ? Number(platformFeeRaw) : null;
+
+    if (costBasisRaw !== "" && !Number.isFinite(Number(costBasis))) {
+      setSaleEditError("Enter a valid card cost.");
+      setSaleEditSaving(false);
+      return;
+    }
+    if (shippingCostRaw !== "" && !Number.isFinite(Number(shippingCost))) {
+      setSaleEditError("Enter a valid shipping cost.");
+      setSaleEditSaving(false);
+      return;
+    }
+    if (platformFeeRaw !== "" && !Number.isFinite(Number(platformFee))) {
+      setSaleEditError("Enter a valid platform fee.");
+      setSaleEditSaving(false);
+      return;
+    }
+
+    // Rebuild the seller meta block stored in `cards.notes`
+    const nextNotes = buildSellerNotes(saleEditCard.notes, {
+      costBasis,
+      shippingCost,
+      platformFee,
+    });
+
     try {
       const { error } = await supabase
         .from("cards")
@@ -300,6 +339,7 @@ export default function SoldPage() {
           sale_platform: salePlatform,
           quantity,
           status: "Sold",
+          notes: nextNotes,
         })
         .eq("id", saleEditCard.id)
         .eq("user_id", user.id);
@@ -316,6 +356,7 @@ export default function SoldPage() {
                 sale_platform: salePlatform ?? undefined,
                 quantity,
                 status: "Sold",
+                notes: nextNotes,
               }
             : c
         )
@@ -329,6 +370,20 @@ export default function SoldPage() {
       setSaleEditSaving(false);
     }
   };
+
+  const saleEditPreviewMetrics = useMemo(() => {
+    const grossSale = Number(saleDraftSoldPrice || 0) * Number(saleDraftQuantity || 1);
+    const costBasis = saleDraftCostBasis.trim() === "" ? null : Number(saleDraftCostBasis);
+    const shippingCost = saleDraftShippingCost.trim() === "" ? null : Number(saleDraftShippingCost);
+    const platformFee = saleDraftPlatformFee.trim() === "" ? null : Number(saleDraftPlatformFee);
+
+    if (Number.isNaN(grossSale)) return computeSaleMetrics({ grossSale: 0, costBasis, shippingCost, platformFee });
+    if ((costBasis != null && Number.isNaN(costBasis)) || (shippingCost != null && Number.isNaN(shippingCost)) || (platformFee != null && Number.isNaN(platformFee))) {
+      return computeSaleMetrics({ grossSale, costBasis: null, shippingCost: null, platformFee: null });
+    }
+
+    return computeSaleMetrics({ grossSale, costBasis, shippingCost, platformFee });
+  }, [saleDraftSoldPrice, saleDraftQuantity, saleDraftCostBasis, saleDraftShippingCost, saleDraftPlatformFee]);
 
   const monthlyNetProfitTrend = useMemo(() => {
     const monthCount = 6;
@@ -1039,11 +1094,75 @@ export default function SoldPage() {
                   />
                 </label>
 
-                <div className="block sm:hidden" />
+                {!isCollectorPreview ? (
+                  <>
+                    <label className="block">
+                      <div className="mb-1 text-sm text-slate-300">Card cost</div>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        className="w-full rounded bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10"
+                        value={saleDraftCostBasis}
+                        onChange={(e) => setSaleDraftCostBasis(e.target.value)}
+                        placeholder="Total cost"
+                        inputMode="decimal"
+                      />
+                    </label>
 
-                <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-xs text-slate-400 sm:col-span-2">
-                  This edits only the sale fields (sold price, sold date, platform, quantity).
-                </div>
+                    <label className="block">
+                      <div className="mb-1 text-sm text-slate-300">Platform fees</div>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        className="w-full rounded bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10"
+                        value={saleDraftPlatformFee}
+                        onChange={(e) => setSaleDraftPlatformFee(e.target.value)}
+                        placeholder="Fees paid"
+                        inputMode="decimal"
+                      />
+                    </label>
+
+                    <label className="block sm:col-span-2">
+                      <div className="mb-1 text-sm text-slate-300">Shipping cost</div>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        className="w-full rounded bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10"
+                        value={saleDraftShippingCost}
+                        onChange={(e) => setSaleDraftShippingCost(e.target.value)}
+                        placeholder="Shipping paid"
+                        inputMode="decimal"
+                      />
+                    </label>
+
+                    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-xs text-slate-400 sm:col-span-2">
+                      Profit math uses your sold price and quantity (gross sale) and these fields (card cost, shipping, platform fees).
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-xs text-slate-400 sm:col-span-2">
+                    Collector preview edits only sold fields (price, date, platform, quantity). Fees and cost math are Pro-only.
+                  </div>
+                )}
+
+                {saleEditCard && !isCollectorPreview ? (
+                  <div className="rounded-xl border border-white/10 bg-emerald-500/[0.06] p-3 sm:col-span-2">
+                    <div className="text-xs text-emerald-200">Preview</div>
+                    <div className="mt-1 flex flex-wrap gap-3">
+                      <div>
+                        <div className="text-[11px] text-slate-300">Net Profit</div>
+                        <div className="text-sm font-semibold text-white">{money(saleEditPreviewMetrics.netProfit)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[11px] text-slate-300">ROI</div>
+                        <div className="text-sm font-semibold text-white">{saleEditPreviewMetrics.roi != null ? `${saleEditPreviewMetrics.roi.toFixed(1)}%` : "—"}</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="mt-5 flex items-center justify-between gap-3">
