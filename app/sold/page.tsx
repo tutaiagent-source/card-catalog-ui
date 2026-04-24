@@ -61,6 +61,15 @@ function shortDate(value?: string | null) {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function toDateInputValue(value?: string | null) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const d = new Date(raw);
+  if (!Number.isFinite(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
 function compactMonth(date: Date) {
   return date.toLocaleDateString("en-US", { month: "short" });
 }
@@ -101,6 +110,15 @@ export default function SoldPage() {
   const { isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<SoldCard[]>([]);
   const [graphsRaised, setGraphsRaised] = useState(false);
+
+  const [saleEditOpen, setSaleEditOpen] = useState(false);
+  const [saleEditCard, setSaleEditCard] = useState<SoldCard | null>(null);
+  const [saleDraftSoldPrice, setSaleDraftSoldPrice] = useState<string>("");
+  const [saleDraftSoldAt, setSaleDraftSoldAt] = useState<string>("");
+  const [saleDraftSalePlatform, setSaleDraftSalePlatform] = useState<string>("");
+  const [saleDraftQuantity, setSaleDraftQuantity] = useState<number>(1);
+  const [saleEditSaving, setSaleEditSaving] = useState(false);
+  const [saleEditError, setSaleEditError] = useState<string>("");
 
   useEffect(() => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -234,6 +252,83 @@ export default function SoldPage() {
   }, [cards]);
 
   const maxTrendRevenue = useMemo(() => Math.max(1, ...monthlyTrend.map((bucket) => bucket.revenue)), [monthlyTrend]);
+
+  const openSaleEdit = (card: SoldCard) => {
+    setSaleEditCard(card);
+    setSaleDraftSoldPrice(card.sold_price == null ? "" : String(card.sold_price));
+    setSaleDraftSoldAt(toDateInputValue(card.sold_at));
+    setSaleDraftSalePlatform(card.sale_platform == null ? "" : String(card.sale_platform));
+    setSaleDraftQuantity(Number(card.quantity || 1));
+    setSaleEditError("");
+    setSaleEditOpen(true);
+  };
+
+  const onSaveSaleEdit = async () => {
+    if (!saleEditCard?.id) return;
+    if (!user?.id) return;
+    if (!supabaseConfigured || !supabase) return;
+
+    setSaleEditSaving(true);
+    setSaleEditError("");
+
+    const soldPriceRaw = saleDraftSoldPrice.trim();
+    let soldPrice: number | null = null;
+    if (soldPriceRaw !== "") {
+      const parsed = Number(soldPriceRaw);
+      if (!Number.isFinite(parsed)) {
+        setSaleEditError("Enter a valid sold price.");
+        setSaleEditSaving(false);
+        return;
+      }
+      soldPrice = parsed;
+    }
+
+    const soldAtRaw = saleDraftSoldAt.trim();
+    const soldAt = soldAtRaw !== "" ? soldAtRaw : null;
+
+    const platformRaw = saleDraftSalePlatform.trim();
+    const salePlatform = platformRaw !== "" ? platformRaw : null;
+
+    const quantity = Math.max(1, Number(saleDraftQuantity || 1));
+
+    try {
+      const { error } = await supabase
+        .from("cards")
+        .update({
+          sold_price: soldPrice,
+          sold_at: soldAt,
+          sale_platform: salePlatform,
+          quantity,
+          status: "Sold",
+        })
+        .eq("id", saleEditCard.id)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      setCards((prev) =>
+        prev.map((c) =>
+          c.id === saleEditCard.id
+            ? {
+                ...c,
+                sold_price: soldPrice,
+                sold_at: soldAt ?? undefined,
+                sale_platform: salePlatform ?? undefined,
+                quantity,
+                status: "Sold",
+              }
+            : c
+        )
+      );
+
+      setSaleEditOpen(false);
+      setSaleEditCard(null);
+    } catch (err: any) {
+      setSaleEditError(err?.message || "Could not save.");
+    } finally {
+      setSaleEditSaving(false);
+    }
+  };
 
   const monthlyNetProfitTrend = useMemo(() => {
     const monthCount = 6;
@@ -791,12 +886,13 @@ export default function SoldPage() {
                         </div>
                       ) : null}
                     </div>
-                    <a
-                      href={card.id ? `/add-card?edit=${encodeURIComponent(card.id)}` : "/add-card"}
+                    <button
+                      type="button"
+                      onClick={() => openSaleEdit(card)}
                       className="mt-3 inline-flex rounded-lg bg-[#b80000] px-3 py-2 text-sm font-semibold hover:bg-[#d50000]"
                     >
                       Edit sale details
-                    </a>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -835,9 +931,13 @@ export default function SoldPage() {
                           {!isCollectorPreview ? <div className="mt-1 text-xs text-slate-500">Net {money(card.metrics.netProfit)}</div> : null}
                         </td>
                         <td className="px-4 py-3">
-                          <a href={card.id ? `/add-card?edit=${encodeURIComponent(card.id)}` : "/add-card"} className="rounded-lg bg-[#b80000] px-3 py-2 text-xs font-semibold hover:bg-[#d50000]">
+                          <button
+                            type="button"
+                            onClick={() => openSaleEdit(card)}
+                            className="rounded-lg bg-[#b80000] px-3 py-2 text-xs font-semibold hover:bg-[#d50000]"
+                          >
                             Edit
-                          </a>
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -848,6 +948,133 @@ export default function SoldPage() {
           )}
         </section>
       </div>
+
+      {saleEditOpen && saleEditCard ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4"
+          onClick={() => {
+            setSaleEditOpen(false);
+            setSaleEditCard(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit sale details"
+        >
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Edit Sold</div>
+                <div className="mt-2 text-lg font-bold text-white">{saleEditCard.player_name}</div>
+                <div className="mt-1 text-sm text-slate-300">
+                  {saleEditCard.year} · {saleEditCard.brand} · {saleEditCard.set_name}
+                  {saleEditCard.parallel ? ` · ${saleEditCard.parallel}` : ""}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSaleEditOpen(false);
+                  setSaleEditCard(null);
+                }}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5">
+              {saleEditError ? (
+                <div className="mb-4 rounded-xl border border-red-500/25 bg-red-500/[0.08] px-3 py-2 text-sm text-red-100">
+                  {saleEditError}
+                </div>
+              ) : null}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <div className="mb-1 text-sm text-slate-300">Sold for</div>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    className="w-full rounded bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10"
+                    value={saleDraftSoldPrice}
+                    onChange={(e) => setSaleDraftSoldPrice(e.target.value)}
+                    placeholder="e.g. 28.00"
+                    inputMode="decimal"
+                  />
+                </label>
+
+                <label className="block">
+                  <div className="mb-1 text-sm text-slate-300">Sold date</div>
+                  <input
+                    type="date"
+                    className="w-full rounded bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10"
+                    value={saleDraftSoldAt}
+                    onChange={(e) => setSaleDraftSoldAt(e.target.value)}
+                  />
+                </label>
+
+                <label className="block sm:col-span-2">
+                  <div className="mb-1 text-sm text-slate-300">Platform</div>
+                  <input
+                    className="w-full rounded bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10"
+                    value={saleDraftSalePlatform}
+                    onChange={(e) => setSaleDraftSalePlatform(e.target.value)}
+                    placeholder="eBay, local, show..."
+                  />
+                </label>
+
+                <label className="block">
+                  <div className="mb-1 text-sm text-slate-300">Quantity</div>
+                  <input
+                    type="number"
+                    min={1}
+                    className="w-full rounded bg-slate-950 px-3 py-2 outline-none ring-1 ring-white/10"
+                    value={saleDraftQuantity}
+                    onChange={(e) => setSaleDraftQuantity(Math.max(1, Number(e.target.value || 1)))}
+                  />
+                </label>
+
+                <div className="block sm:hidden" />
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3 text-xs text-slate-400 sm:col-span-2">
+                  This edits only the sale fields (sold price, sold date, platform, quantity).
+                </div>
+              </div>
+
+              <div className="mt-5 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSaleEditOpen(false);
+                    setSaleEditCard(null);
+                  }}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+                  disabled={saleEditSaving}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    void onSaveSaleEdit();
+                  }}
+                  disabled={saleEditSaving}
+                  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                >
+                  {saleEditSaving ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <CardCatMobileNav />
     </main>
   );
