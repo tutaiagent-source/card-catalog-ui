@@ -139,16 +139,29 @@ export default function MessagesPage() {
       return;
     }
 
-    const otherUserIds = Array.from(
+    const { data: messageRows, error: messageError } = await supabase
+      .from("messages")
+      .select("id, conversation_id, sender_user_id, body, created_at, edited_at, deleted_at")
+      .in("conversation_id", conversationIds)
+      .order("created_at", { ascending: true });
+
+    if (messageError) {
+      setLoadingInbox(false);
+      setError(messageError.message);
+      return;
+    }
+
+    const senderUserIds = Array.from(
       new Set(
-        ((participantRows ?? []) as any[])
-          .map((row) => String(row.user_id || ""))
-          .filter((id) => id && id !== user.id)
+        ((messageRows ?? []) as any[])
+          .map((row) => String(row.sender_user_id || ""))
+          .filter(Boolean)
       )
     );
 
+    const profileIds = Array.from(new Set([user.id, ...senderUserIds])).filter(Boolean);
+
     let profileRows: UserProfileRecord[] = [];
-    const profileIds = Array.from(new Set([...otherUserIds, user.id]));
     if (profileIds.length > 0) {
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
@@ -162,18 +175,6 @@ export default function MessagesPage() {
       }
 
       profileRows = (profileData ?? []) as UserProfileRecord[];
-    }
-
-    const { data: messageRows, error: messageError } = await supabase
-      .from("messages")
-      .select("id, conversation_id, sender_user_id, body, created_at, edited_at, deleted_at")
-      .in("conversation_id", conversationIds)
-      .order("created_at", { ascending: true });
-
-    if (messageError) {
-      setLoadingInbox(false);
-      setError(messageError.message);
-      return;
     }
 
     const nextConversations = (conversationRows ?? []) as ConversationRow[];
@@ -222,9 +223,17 @@ export default function MessagesPage() {
     return conversations.map((conversation) => {
       const convoParticipants = participants.filter((row) => row.conversation_id === conversation.id);
       const myParticipant = convoParticipants.find((row) => row.user_id === user?.id);
-      const otherParticipant = convoParticipants.find((row) => row.user_id !== user?.id);
-      const otherProfile = profiles.find((profile) => profile.id === otherParticipant?.user_id);
-      const latestMessage = messages.filter((message) => message.conversation_id === conversation.id).slice(-1)[0] ?? null;
+      const convoMessages = messages.filter((m) => m.conversation_id === conversation.id);
+      const latestMessage = convoMessages.slice(-1)[0] ?? null;
+
+      const otherUserId = (() => {
+        if (!latestMessage || !user?.id) return null;
+        if (latestMessage.sender_user_id !== user.id) return latestMessage.sender_user_id;
+        const anyOther = convoMessages.find((m) => m.sender_user_id !== user.id);
+        return anyOther?.sender_user_id ?? null;
+      })();
+
+      const otherProfile = profiles.find((profile) => profile.id === otherUserId);
       const unread = Boolean(
         myParticipant && conversation.last_message_at && (!myParticipant.last_read_at || new Date(conversation.last_message_at).getTime() > new Date(myParticipant.last_read_at).getTime())
       );
@@ -234,7 +243,7 @@ export default function MessagesPage() {
         latestMessage,
         myParticipant,
         otherProfile,
-        otherUserId: otherParticipant?.user_id ?? null,
+        otherUserId: otherUserId,
         unread,
         title: otherProfile?.username ? `@${otherProfile.username}` : "Conversation",
       };
