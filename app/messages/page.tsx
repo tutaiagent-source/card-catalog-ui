@@ -813,153 +813,158 @@ export default function MessagesPage() {
               </div>
             )}
 
-            <div className="mt-6 border-t border-white/10 pt-4">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-white">Friends</div>
-                <div className="text-xs text-slate-500">{friends.length} Friend{friends.length === 1 ? "" : "s"}</div>
-              </div>
+            <details className="mt-6 border-t border-white/10 pt-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="text-sm font-semibold text-white">Friends</div>
+                  <div className="text-xs text-slate-500">{friends.length} Friend{friends.length === 1 ? "" : "s"}</div>
+                </div>
+                <div className="text-xs text-slate-500">{friends.length + incomingFriendRequests.length + outgoingFriendRequests.length > 0 ? "Open" : ""}</div>
+              </summary>
 
-              {friendsError ? (
-                <div className="mt-3 rounded-xl border border-red-500/25 bg-red-500/[0.08] px-3 py-2 text-xs text-red-100">{friendsError}</div>
-              ) : null}
+              <div className="mt-3">
+                {friendsError ? (
+                  <div className="rounded-xl border border-red-500/25 bg-red-500/[0.08] px-3 py-2 text-xs text-red-100">{friendsError}</div>
+                ) : null}
 
-              <div className="mt-3 space-y-2">
-                {incomingFriendRequests.length > 0 ? (
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Requests For You</div>
-                    <div className="space-y-2">
-                      {incomingFriendRequests.map((r) => (
-                        <div key={r.id} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-white">@{r.fromProfile.username}</div>
-                              <div className="mt-1 text-xs text-slate-400">Wants to be friends</div>
+                <div className="mt-3 space-y-2">
+                  {incomingFriendRequests.length > 0 ? (
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Requests For You</div>
+                      <div className="space-y-2">
+                        {incomingFriendRequests.map((r) => (
+                          <div key={r.id} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-white">@{r.fromProfile.username}</div>
+                                <div className="mt-1 text-xs text-slate-400">Wants to be friends</div>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => void onRespondFriendRequest(r.id, true)}
+                                  disabled={friendActionSaving}
+                                  className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => void onRespondFriendRequest(r.id, false)}
+                                  disabled={friendActionSaving}
+                                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+                                >
+                                  Decline
+                                </button>
+                              </div>
                             </div>
-                            <div className="flex gap-2">
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {outgoingFriendRequests.length > 0 ? (
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Requests Sent</div>
+                      <div className="space-y-2">
+                        {outgoingFriendRequests.map((r) => (
+                          <div key={r.id} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-semibold text-white">@{r.toProfile.username}</div>
+                                <div className="mt-1 text-xs text-slate-400">Pending approval</div>
+                              </div>
+                              <div>
+                                <button
+                                  type="button"
+                                  disabled
+                                  className="rounded-lg bg-white/[0.05] px-3 py-2 text-xs font-semibold text-slate-500 disabled:opacity-100"
+                                >
+                                  Requested
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {friends.length > 0 ? (
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Accepted</div>
+                      <div className="space-y-2">
+                        {friends.map((f) => (
+                          <div key={f.id} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-white">@{f.username}</div>
+                                <div className="mt-1 text-xs text-slate-400">Messaging unlocked</div>
+                              </div>
                               <button
                                 type="button"
-                                onClick={() => void onRespondFriendRequest(r.id, true)}
+                                onClick={() => void onMessageFriend(f.username)}
                                 disabled={friendActionSaving}
                                 className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
                               >
-                                Accept
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => void onRespondFriendRequest(r.id, false)}
-                                disabled={friendActionSaving}
-                                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
-                              >
-                                Decline
+                                Message
                               </button>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                {outgoingFriendRequests.length > 0 ? (
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Requests Sent</div>
-                    <div className="space-y-2">
-                      {outgoingFriendRequests.map((r) => (
-                        <div key={r.id} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-sm font-semibold text-white">@{r.toProfile.username}</div>
-                              <div className="mt-1 text-xs text-slate-400">Pending approval</div>
-                            </div>
-                            <div>
-                              <button
-                                type="button"
-                                disabled
-                                className="rounded-lg bg-white/[0.05] px-3 py-2 text-xs font-semibold text-slate-500 disabled:opacity-100"
-                              >
-                                Requested
-                              </button>
+                  {eligibleListingContacts.length > 0 ? (
+                    <div>
+                      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Connected Via Listing</div>
+                      <div className="space-y-2">
+                        {eligibleListingContacts.map((c) => (
+                          <div key={c.otherUserId} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="text-sm font-semibold text-white">@{c.profile.username}</div>
+                                <div className="mt-1 text-xs text-slate-400">Start a friend request to message without a card</div>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => void onSendFriendRequest(c.profile.username)}
+                                  disabled={friendActionSaving}
+                                  className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                                >
+                                  Request
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMessageFolder("inbox");
+                                    setActiveConversationId(c.conversationId);
+                                  }}
+                                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                                >
+                                  Open Thread
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
 
-                {friends.length > 0 ? (
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Accepted</div>
-                    <div className="space-y-2">
-                      {friends.map((f) => (
-                        <div key={f.id} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-white">@{f.username}</div>
-                              <div className="mt-1 text-xs text-slate-400">Messaging unlocked</div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => void onMessageFriend(f.username)}
-                              disabled={friendActionSaving}
-                              className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
-                            >
-                              Message
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                  {friends.length === 0 && incomingFriendRequests.length === 0 && outgoingFriendRequests.length === 0 && eligibleListingContacts.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
+                      Start a conversation from a card listing to unlock friend requests.
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
+                </div>
 
-                {eligibleListingContacts.length > 0 ? (
-                  <div>
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Connected Via Listing</div>
-                    <div className="space-y-2">
-                      {eligibleListingContacts.map((c) => (
-                        <div key={c.otherUserId} className="rounded-2xl border border-white/10 bg-slate-950/20 p-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-white">@{c.profile.username}</div>
-                              <div className="mt-1 text-xs text-slate-400">Start a friend request to message without a card</div>
-                            </div>
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={() => void onSendFriendRequest(c.profile.username)}
-                                disabled={friendActionSaving}
-                                className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
-                              >
-                                Request
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setMessageFolder("inbox");
-                                  setActiveConversationId(c.conversationId);
-                                }}
-                                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
-                              >
-                                Open Thread
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
-                {friends.length === 0 && incomingFriendRequests.length === 0 && outgoingFriendRequests.length === 0 && eligibleListingContacts.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
-                    Start a conversation from a card listing to unlock friend requests.
-                  </div>
-                ) : null}
+                <div className="mt-3 text-xs text-slate-500">To message without referencing a specific card, they must accept your friend request.</div>
               </div>
-
-              <div className="mt-3 text-xs text-slate-500">To message without referencing a specific card, they must accept your friend request.</div>
-            </div>
+            </details>
           </section>
 
           <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4">
