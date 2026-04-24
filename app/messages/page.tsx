@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import CardCatLogo from "@/components/CardCatLogo";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
@@ -38,14 +38,11 @@ export default function MessagesPage() {
   const { user, loading } = useSupabaseUser();
   const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
   const [conversationParam, setConversationParam] = useState("");
-  const [prefillParam, setPrefillParam] = useState("");
-  const prefillAppliedRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     setConversationParam(String(params.get("conversation") || "").trim());
-    setPrefillParam(String(params.get("prefill") || "").trim());
   }, []);
 
   const [conversations, setConversations] = useState<ConversationRow[]>([]);
@@ -59,6 +56,7 @@ export default function MessagesPage() {
   const [error, setError] = useState("");
 
   const [activeConversationCard, setActiveConversationCard] = useState<CardContext | null>(null);
+  const [conversationContextCards, setConversationContextCards] = useState<CardContext[]>([]);
 
   const [messageFolder, setMessageFolder] = useState<"inbox" | "unread" | "read" | "deleted">("inbox");
 
@@ -186,6 +184,7 @@ export default function MessagesPage() {
       setParticipants((myParticipantRows ?? []) as ConversationParticipantRow[]);
       setProfiles([]);
       setMessages([]);
+      setConversationContextCards([]);
       setActiveConversationId(null);
       setLoadingInbox(false);
       return;
@@ -201,6 +200,32 @@ export default function MessagesPage() {
       setLoadingInbox(false);
       setError(conversationError.message);
       return;
+    }
+
+    // Fetch minimal card context for listing-initiated threads so the left inbox can show "About <card>".
+    let nextConversationContextCards: CardContext[] = [];
+    try {
+      const contextCardIds = Array.from(
+        new Set(
+          ((conversationRows ?? []) as any[])
+            .map((row: any) => String(row.context_card_id || ""))
+            .filter(Boolean)
+        )
+      );
+
+      if (contextCardIds.length > 0) {
+        const { data: contextCardRows, error: contextCardError } = await supabase
+          .from("cards")
+          .select("id, player_name, year, brand, set_name, parallel, card_number")
+          .in("id", contextCardIds);
+
+        if (!contextCardError) {
+          nextConversationContextCards = (contextCardRows ?? []) as CardContext[];
+        }
+      }
+    } catch (e) {
+      // If RLS blocks some cards, fall back to the non-card title.
+      nextConversationContextCards = [];
     }
 
     const { data: participantRows, error: participantError } = await supabase
@@ -257,6 +282,7 @@ export default function MessagesPage() {
     setParticipants((participantRows ?? []) as ConversationParticipantRow[]);
     setProfiles(profileRows);
     setMessages((messageRows ?? []) as MessageRow[]);
+    setConversationContextCards(nextConversationContextCards);
     setActiveConversationId((prev) => {
       if (conversationParam && conversationIds.includes(conversationParam)) return conversationParam;
       if (prev && conversationIds.includes(prev)) return prev;
@@ -292,11 +318,8 @@ export default function MessagesPage() {
   }, [activeConversationId, user?.id]);
 
   useEffect(() => {
-    if (!prefillParam || !activeConversationId || prefillAppliedRef.current) return;
-    if (conversationParam && conversationParam !== activeConversationId) return;
-    setDraftMessage(prefillParam);
-    prefillAppliedRef.current = true;
-  }, [prefillParam, activeConversationId, conversationParam]);
+    setDraftMessage("");
+  }, [activeConversationId]);
 
   const conversationViews = useMemo(() => {
     return conversations.map((conversation) => {
@@ -324,6 +347,16 @@ export default function MessagesPage() {
           (!myParticipant.last_read_at || new Date(latestNonDeletedMessage.created_at).getTime() > new Date(myParticipant.last_read_at).getTime())
       );
 
+      const ctxCard = conversation.context_card_id
+        ? conversationContextCards.find((c) => String(c.id) === String(conversation.context_card_id)) ?? null
+        : null;
+
+      const title = ctxCard?.year && ctxCard?.player_name
+        ? `About ${ctxCard.year} ${ctxCard.player_name}`
+        : otherProfile?.username
+          ? `@${otherProfile.username}`
+          : "Conversation";
+
       return {
         conversation,
         latestNonDeletedMessage,
@@ -334,10 +367,10 @@ export default function MessagesPage() {
         otherProfile,
         otherUserId: otherUserId,
         unread,
-        title: otherProfile?.username ? `@${otherProfile.username}` : "Conversation",
+        title,
       };
     });
-  }, [conversations, participants, profiles, messages, user?.id]);
+  }, [conversations, participants, profiles, messages, user?.id, conversationContextCards]);
 
   const displayConversationViews = useMemo(() => {
     switch (messageFolder) {
