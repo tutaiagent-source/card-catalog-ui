@@ -696,7 +696,7 @@ export default function ListedPage() {
                           }
                           setActiveCard(c);
                         }}
-                        className={`relative rounded-xl border p-0 ${isOnMarket ? "border-emerald-500/60 bg-emerald-500/25" : "border-red-500/60 bg-red-500/20"}`}
+                        className={`relative rounded-xl border p-2 ${isOnMarket ? "border-emerald-500/60 bg-emerald-500/25" : "border-red-500/60 bg-red-500/20"}`}
                         aria-label={`View ${c.player_name}`}
                         onKeyDown={(e) => {
                           if (!(e.key === "Enter" || e.key === " ")) return;
@@ -717,24 +717,26 @@ export default function ListedPage() {
                         ) : null}
 
                         <div
-                          className={`relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 ${isOnMarket ? "border border-emerald-500/80" : "border border-red-500/80"}`}
+                          className={`aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 ${isOnMarket ? "border border-emerald-500/80" : "border border-red-500/80"}`}
                         >
                           {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
-
-                          <div className="absolute left-2 bottom-2 right-2 z-10 rounded bg-slate-950/65 px-1.5 py-0.5 text-[11px] font-semibold text-slate-100 truncate pointer-events-none">
-                            {c.player_name}
-                          </div>
                         </div>
 
-                        {c.status === "Sold" && c.sold_price != null ? (
-                          <div className="absolute left-2 top-2 z-10 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-200 ring-1 ring-emerald-500/20">
-                            SOLD {formatMoney(Number(c.sold_price))}
+                        <div className="mt-2 text-center">
+                          <div className="line-clamp-2 text-[12px] font-semibold text-white">{c.player_name}</div>
+                          <div className="mt-1 text-[10px] text-slate-300">
+                            {c.year} · {c.brand}
                           </div>
-                        ) : c.asking_price != null ? (
-                          <div className="absolute left-2 top-2 z-10 rounded-full bg-slate-950/70 px-2.5 py-1 text-[10px] font-semibold text-slate-100 ring-1 ring-white/10">
-                            {formatMoney(Number(c.asking_price))}
+                          <div className="mt-1 text-[10px] text-slate-400">
+                            {c.set_name} · {c.parallel}
                           </div>
-                        ) : null}
+
+                          {c.status === "Sold" && c.sold_price != null ? (
+                            <div className="mt-2 text-[11px] font-semibold text-emerald-200">SOLD {formatMoney(Number(c.sold_price))}</div>
+                          ) : c.asking_price != null ? (
+                            <div className="mt-2 text-[11px] font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
+                          ) : null}
+                        </div>
 
                         {goHref ? (
                           <a
@@ -742,7 +744,7 @@ export default function ListedPage() {
                             target="_blank"
                             rel="noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="absolute right-2 bottom-2 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-950/90"
+                            className="absolute right-2 top-2 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-950/90"
                           >
                             Go ↗
                           </a>
@@ -794,10 +796,6 @@ export default function ListedPage() {
                         >
                           <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950">
                             {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" /> : <div className="h-full w-full" />}
-
-                            <div className="absolute left-2 bottom-2 right-2 z-10 rounded bg-slate-950/65 px-1.5 py-0.5 text-[11px] font-semibold text-slate-100 truncate pointer-events-none">
-                              {c.player_name}
-                            </div>
                           </div>
 
                           {goHref ? (
@@ -825,18 +823,27 @@ export default function ListedPage() {
                             </div>
                           ) : null}
 
+                          <div className="mt-3 text-center">
+                            <div className="line-clamp-2 text-sm font-semibold text-white">{c.player_name}</div>
+                            <div className="mt-1 text-xs text-slate-300">
+                              {c.year} · {c.brand}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-400">
+                              {c.set_name} · {c.parallel}
+                            </div>
 
-                          {c.status === "Sold" ? (
-                            c.sold_price != null ? (
-                              <div className="mt-3 text-center text-sm font-semibold text-emerald-200">SOLD {formatMoney(Number(c.sold_price))}</div>
+                            {c.status === "Sold" ? (
+                              c.sold_price != null ? (
+                                <div className="mt-2 text-sm font-semibold text-emerald-200">SOLD {formatMoney(Number(c.sold_price))}</div>
+                              ) : (
+                                <div className="mt-2 text-sm font-semibold text-slate-500">Sold</div>
+                              )
+                            ) : c.asking_price != null ? (
+                              <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
                             ) : (
-                              <div className="mt-3 text-center text-sm font-semibold text-slate-500">Sold</div>
-                            )
-                          ) : c.asking_price != null ? (
-                            <div className="mt-3 text-center text-sm font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
-                          ) : (
-                            <div className="mt-3 text-center text-sm font-semibold text-slate-500">No price</div>
-                          )}
+                              <div className="mt-2 text-sm font-semibold text-slate-500">No price</div>
+                            )}
+                          </div>
                         </div>
                       );
                     })}

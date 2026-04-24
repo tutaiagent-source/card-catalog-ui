@@ -175,17 +175,17 @@ export default function ListingsSharedView({
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-5" role="list" aria-label="Shared listed cards">
                 {filteredCards.map((c) => {
                   const goHref = toUrl(c.sale_platform);
-                  return (
-                    <div
-                      key={c.id}
-                      role="listitem"
-                      tabIndex={0}
+                    return (
+                      <div
+                        key={c.id}
+                        role="listitem"
+                        tabIndex={0}
                       onClick={() => setActiveCard(c)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") setActiveCard(c);
                       }}
-                      className="relative cursor-pointer rounded-xl border border-slate-800 bg-slate-950/40 p-0"
-                      aria-label={`View ${c.player_name}`}
+                      className="relative cursor-pointer rounded-xl border border-slate-800 bg-slate-950/40 p-2"
+                        aria-label={`View ${c.player_name}`}
                     >
                       <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
                         {c.image_url ? (
@@ -193,20 +193,24 @@ export default function ListingsSharedView({
                         ) : (
                           <div className="h-full w-full" />
                         )}
-
-                        <div className="absolute left-2 bottom-2 right-2 z-10 rounded bg-slate-950/65 px-1.5 py-0.5 text-[11px] font-semibold text-slate-100 truncate pointer-events-none">
-                          {c.player_name}
-                        </div>
                       </div>
 
-                      {showPricing && c.asking_price != null ? (
-                        <div className="absolute left-2 top-2 z-10 rounded-full bg-slate-950/70 px-2.5 py-1 text-[10px] font-semibold text-slate-100 ring-1 ring-white/10">
-                          {formatMoney(Number(c.asking_price))}
+                      <div className="mt-2 text-center">
+                        <div className="line-clamp-2 text-sm font-semibold text-white">{c.player_name}</div>
+                        <div className="mt-1 text-xs text-slate-300">
+                          {c.year} · {c.brand}
                         </div>
-                      ) : null}
+                        <div className="mt-1 text-xs text-slate-400">
+                          {c.set_name} · {c.parallel}
+                        </div>
+
+                        {showPricing && c.asking_price != null ? (
+                          <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
+                        ) : null}
+                      </div>
 
                       {goHref ? (
-                        <div className="absolute right-2 bottom-2 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
+                        <div className="absolute right-2 top-2 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
                           ↗
                         </div>
                       ) : null}
