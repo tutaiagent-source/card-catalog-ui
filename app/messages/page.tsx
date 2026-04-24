@@ -10,6 +10,18 @@ import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { ConversationParticipantRow, ConversationRow, markConversationRead, MessageRow, sendMessage } from "@/lib/messaging";
 import { UserProfileRecord } from "@/lib/useUserProfile";
 
+type CardContext = {
+  id?: string;
+  player_name: string;
+  year: string;
+  brand: string;
+  set_name: string;
+  parallel: string;
+  card_number: string;
+  asking_price?: number | null;
+  image_url?: string | null;
+};
+
 function formatTimestamp(value?: string | null) {
   if (!value) return "";
   const date = new Date(value);
@@ -45,6 +57,8 @@ export default function MessagesPage() {
   const [loadingInbox, setLoadingInbox] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+
+  const [activeConversationCard, setActiveConversationCard] = useState<CardContext | null>(null);
 
   const loadInbox = useCallback(async () => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -107,11 +121,12 @@ export default function MessagesPage() {
     );
 
     let profileRows: UserProfileRecord[] = [];
-    if (otherUserIds.length > 0) {
+    const profileIds = Array.from(new Set([...otherUserIds, user.id]));
+    if (profileIds.length > 0) {
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("id, username, display_name, allow_messages")
-        .in("id", otherUserIds);
+        .in("id", profileIds);
 
       if (profileError) {
         setLoadingInbox(false);
@@ -199,6 +214,37 @@ export default function MessagesPage() {
   }, [conversations, participants, profiles, messages, user?.id]);
 
   const activeConversation = conversationViews.find((row) => row.conversation.id === activeConversationId) ?? null;
+
+  const activeConversationContextCardId = activeConversation?.conversation.context_card_id ?? null;
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!activeConversationContextCardId || !supabaseConfigured || !supabase || !user?.id) {
+      setActiveConversationCard(null);
+      return;
+    }
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("cards")
+        .select("id, player_name, year, brand, set_name, parallel, card_number, asking_price, image_url")
+        .eq("id", activeConversationContextCardId)
+        .maybeSingle();
+
+      if (cancelled) return;
+      if (error) {
+        console.error("Failed to load conversation card context:", error);
+        setActiveConversationCard(null);
+        return;
+      }
+
+      setActiveConversationCard((data ?? null) as any);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConversationContextCardId, user?.id]);
   const activeMessages = useMemo(
     () => messages.filter((message) => message.conversation_id === activeConversationId),
     [messages, activeConversationId]
@@ -318,7 +364,14 @@ export default function MessagesPage() {
               <>
                 <div className="border-b border-white/10 pb-4">
                   <div className="text-lg font-semibold text-white">{activeConversation.title}</div>
-                  <div className="mt-1 text-sm text-slate-400">Direct conversation</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-400">
+                    <span>Direct conversation</span>
+                    {activeConversationContextCardId && activeConversationCard ? (
+                      <span className="inline-flex items-center rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-semibold text-slate-200">
+                        About {activeConversationCard.year} {activeConversationCard.player_name}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="mt-4 space-y-3">
@@ -329,9 +382,18 @@ export default function MessagesPage() {
                   ) : (
                     activeMessages.map((message) => {
                       const mine = message.sender_user_id === user.id;
+                      const senderProfile = profiles.find((p) => p.id === message.sender_user_id) ?? null;
+                      const senderLabel = mine
+                        ? "You"
+                        : senderProfile?.username
+                          ? `@${senderProfile.username}`
+                          : senderProfile?.display_name
+                            ? senderProfile.display_name
+                            : "User";
                       return (
                         <div key={message.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                           <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${mine ? "bg-emerald-500/15 text-emerald-50" : "bg-slate-900 text-slate-100"}`}>
+                            <div className={`mb-1 text-xs font-semibold ${mine ? "text-emerald-100" : "text-slate-300"}`}>{senderLabel}</div>
                             <div>{message.body}</div>
                             <div className="mt-2 text-[11px] text-slate-400">{formatTimestamp(message.created_at)}</div>
                           </div>
