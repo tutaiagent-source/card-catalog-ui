@@ -174,9 +174,9 @@ export default function Home() {
           <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Built To Help You Sell Faster</div>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Turn Any Card into a Card Post in Seconds</h2>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Turn Any Card Into A Card Post In Seconds</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
-                Use saved card data and images to create a clean post image with optional pricing. Built for Facebook groups, Discord sales posts, Reddit sales threads, and fast one-off listings.
+                Use your saved catalog card data and front/back images to generate a clean post image with optional pricing. Built for Facebook groups, Discord sales posts, Reddit sales threads, and quick one-off listings.
               </p>
               <ul className="mt-5 space-y-2 text-sm text-slate-100/85">
                 <li>• Optional price on the image</li>
@@ -200,10 +200,11 @@ export default function Home() {
         <section className="mt-12 rounded-[32px] border border-blue-500/20 bg-[linear-gradient(135deg,rgba(59,130,246,0.14),rgba(16,185,129,0.08))] p-6 shadow-[0_30px_90px_rgba(30,64,175,0.16)] sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">New listing sharing</div>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Share your active listings with one clean link</h2>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">New Listing Sharing</div>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Share Your Active Listings With One Clean Link</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
-                Create a view-only link for the cards you currently have listed. Great for card shows, Discord, Reddit, Facebook groups, local trade nights, or sending your available inventory to one interested buyer.
+                Generate a view-only link for the cards you currently have listed. Ideal for card shows and community posts, so people can browse your active inventory without touching your catalog.
+                You can choose whether to show pricing and disable the link whenever you want.
               </p>
 
               <ul className="mt-5 space-y-2 text-sm text-slate-100/85">
@@ -215,7 +216,7 @@ export default function Home() {
 
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href="/features/listings" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100">
-                  See listing sharing
+                  See Listing Sharing
                 </a>
                 <a href="/listed" className="rounded-xl border border-white/20 bg-black/15 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black/25">
                   Open Listings
@@ -225,10 +226,10 @@ export default function Home() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               {[
-                ["Before a card show", "Share the cards you plan to bring so collectors can look before you even arrive."],
-                ["In community posts", "Drop one shelf link into Discord, Reddit, or Facebook instead of posting a pile of screenshots."],
-                ["For local deals", "Give buyers or traders a view-only page so they can browse what is available without touching your catalog."],
-                ["For repeat buyers", "Send one clean link whenever your listed inventory changes."],
+                ["Before A Card Show", "Share the cards you plan to bring so collectors can look before you even arrive."],
+                ["In Community Posts", "Drop one shelf link into Discord, Reddit, or Facebook instead of posting a pile of screenshots."],
+                ["For Local Deals", "Give buyers or traders a view-only page so they can browse what is available without touching your catalog."],
+                ["For Repeat Buyers", "Send one clean link whenever your listed inventory changes."],
               ].map(([title, body]) => (
                 <div key={title} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
                   <div className="text-sm font-semibold text-white">{title}</div>
@@ -276,9 +277,9 @@ export default function Home() {
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
               <div className="max-w-2xl">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">On Your Phone</div>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A cleaner PC + Sold workflow on iPhone</h2>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A Cleaner PC + Sold Workflow On iPhone</h2>
                 <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
-                  Star cards, tap into details, and review comps from your phone without losing the “inventory story.”
+                  Star cards, tap into full card details, and check comps from your phone without losing the inventory story.
                 </p>
               </div>
 
@@ -375,14 +376,14 @@ export default function Home() {
                       href="/collector"
                       className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
                     >
-                      Collector details
+                      Collector Details
                     </a>
                   ) : (
                     <a
                       href="/pro"
                       className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/[0.08] px-4 py-2 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/[0.12]"
                     >
-                      Pro details
+                      Pro Details
                     </a>
                   )}
                 </div>
@@ -410,7 +411,7 @@ export default function Home() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Guides</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Learn the Workflow, Step by Step</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Learn The Workflow, Step By Step</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Prefer details over guesswork? Start with CSV import, then add images, then organize in PC.
             </p>

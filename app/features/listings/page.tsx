@@ -3,17 +3,17 @@ import ListingsFeaturePreview from "@/components/ListingsFeaturePreview";
 
 const steps = [
   {
-    title: "Mark a card as Listed",
+    title: "Mark A Card As Listed",
     body: "In your Catalog, set a card’s status to Listed and add its Asking price + Listed date + sale link (eBay/Whatnot/local/etc.).",
     icon: "📌",
   },
   {
-    title: "It moves into your Listings shelf",
+    title: "It Moves Into Your Listings Shelf",
     body: "Once saved, the card shows up in your Active Listings page automatically.",
     icon: "🗂️",
   },
   {
-    title: "View + edit quickly",
+    title: "View + Edit Quickly",
     body: "Open a card to update the asking price, listed date, and sale link, and share your post when you’re ready.",
     icon: "✍️",
   },
@@ -21,15 +21,15 @@ const steps = [
 
 const shareUseCases = [
   {
-    title: "Before a card show",
+    title: "Before A Card Show",
     body: "Share the cards you plan to bring so people can browse ahead of time and message you before the show starts.",
   },
   {
-    title: "Discord, Reddit, and Facebook",
+    title: "Discord, Reddit, And Facebook",
     body: "Post one clean link instead of a long message thread or a pile of screenshots whenever you want people to browse your active cards.",
   },
   {
-    title: "Local meetups and trade nights",
+    title: "Local Meetups And Trade Nights",
     body: "Let other collectors quickly scan what is available without giving them edit access to your catalog.",
   },
 ];
@@ -65,7 +65,7 @@ export default function ListingsFeaturePage() {
                 Active Listings
               </div>
               <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-                One place to view and update every item you’re selling
+                One Place To View And Update Every Item You’re Selling
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
                 Post your card once, then keep everything you need attached to the card record: asking price, listed date, and the exact sale link.
@@ -106,8 +106,8 @@ export default function ListingsFeaturePage() {
 
         <section className="mt-12 rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(6,95,70,0.18)] sm:p-8">
           <div className="max-w-2xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">How it works</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">3 quick steps</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">How It Works</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">3 Quick Steps</h2>
             <p className="mt-3 text-sm leading-7 text-slate-100/85">
               No extra spreadsheet for selling. Listings is just your Catalog, filtered into a clean shelf.
             </p>
@@ -139,16 +139,16 @@ export default function ListingsFeaturePage() {
         <section className="mt-10 rounded-[32px] border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.16),rgba(59,130,246,0.07))] p-6 sm:p-8">
           <div className="max-w-3xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Tip</div>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">Keep your listing link with the card</h2>
+            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">Keep Your Listing Link With The Card</h2>
             <p className="mt-3 text-sm leading-7 text-slate-200">
               In Listings, you’ll be able to quickly open and share the card, and update the sale link you’re currently using (eBay, Whatnot, local, etc.).
             </p>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
               {[
-                "Open listing ↗",
-                "Price stays attached 💰",
-                "Share when ready 🚀",
+                "Open Listing ↗",
+                "Price Stays Attached 💰",
+                "Share When Ready 🚀",
               ].map((chip) => (
                 <div key={chip} className="rounded-2xl border border-white/10 bg-black/15 px-4 py-3 text-sm font-semibold text-slate-100">
                   {chip}
@@ -160,8 +160,8 @@ export default function ListingsFeaturePage() {
 
         <section className="mt-10 rounded-[32px] border border-blue-500/20 bg-[linear-gradient(135deg,rgba(59,130,246,0.14),rgba(16,185,129,0.08))] p-6 shadow-[0_30px_90px_rgba(30,64,175,0.16)] sm:p-8">
           <div className="max-w-3xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Shared listing links</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Share your whole listings shelf without exposing your full catalog</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Shared Listing Links</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Share Your Whole Listings Shelf Without Exposing Your Full Catalog</h2>
             <p className="mt-3 text-sm leading-7 text-slate-100/90 sm:text-base">
               Generate a view-only link for the cards you currently have listed. Choose whether to show pricing, keep the link for a limited time or permanently, and disable it whenever you want.
             </p>
@@ -179,8 +179,8 @@ export default function ListingsFeaturePage() {
 
         <section className="mt-10 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">How member-to-member deals can work</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">CardCat can help people connect without becoming the checkout layer</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">How Member-To-Member Deals Can Work</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">CardCat Can Help People Connect Without Becoming The Checkout Layer</h2>
             <ol className="mt-6 space-y-3 text-sm leading-7 text-slate-300">
               {connectionFlow.map((step, idx) => (
                 <li key={step} className="flex gap-4">
@@ -192,8 +192,8 @@ export default function ListingsFeaturePage() {
           </div>
 
           <div className="rounded-[32px] border border-amber-500/20 bg-amber-500/[0.08] p-6 sm:p-8">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Safety note</div>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">CardCat is a connection platform, not the seller of record</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Safety Note</div>
+            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">CardCat Is A Connection Platform, Not The Seller Of Record</h2>
             <p className="mt-3 text-sm leading-7 text-slate-100/90">
               CardCat helps collectors show cards and connect with each other. Payments, shipping, condition disputes, refunds, and delivery arrangements stay between the buyer and seller.
             </p>

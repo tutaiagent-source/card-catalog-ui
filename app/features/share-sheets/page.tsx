@@ -105,8 +105,8 @@ export default function ShareSheetsPage() {
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Why it helps</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Good for Casual Sellers & Regular Sellers</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Why It Helps</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Good For Casual Sellers & Regular Sellers</h2>
             <div className="mt-6 space-y-4 text-sm text-slate-200">
               {benefits.map((item) => (
                 <div key={item} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">{item}</div>
@@ -117,7 +117,7 @@ export default function ShareSheetsPage() {
 
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-2xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Using it</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Using It</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Mobile & Desktop</h2>
           </div>
 

@@ -68,9 +68,9 @@ export default function GuidesHubPage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
               Step-by-step Guides
             </div>
-            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">Everything You Need to Import, Organize & Track</h1>
+            <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">Everything You Need To Import, Organize & Track</h1>
             <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
-              Quick answers first, deeper details when you want them. Start with CSV import, then add images, then organize in PC.
+              Quick answers first, deeper details when you want them. Start with CSV import, then add images, then organize in PC and keep sold history attached to the same card record. When you want to show what’s active, use Active Listings sharing.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
