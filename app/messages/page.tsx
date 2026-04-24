@@ -62,6 +62,15 @@ export default function MessagesPage() {
 
   const [messageFolder, setMessageFolder] = useState<"inbox" | "unread" | "read" | "deleted">("inbox");
 
+  const [selectedConversationIds, setSelectedConversationIds] = useState<string[]>([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkDeleteError, setBulkDeleteError] = useState("");
+
+  useEffect(() => {
+    setSelectedConversationIds([]);
+    setBulkDeleteError("");
+  }, [messageFolder]);
+
   type IncomingFriendRequest = {
     id: string;
     fromProfile: UserProfileRecord;
@@ -488,6 +497,51 @@ export default function MessagesPage() {
     }
   }
 
+  async function onBulkDeleteSelectedConversations() {
+    if (!supabaseConfigured || !supabase || !user?.id) return;
+    if (selectedConversationIds.length === 0) return;
+
+    if (!confirm(`Delete your messages from ${selectedConversationIds.length} conversation${selectedConversationIds.length === 1 ? "" : "s"}?`)) {
+      return;
+    }
+
+    setBulkDeleting(true);
+    setBulkDeleteError("");
+
+    try {
+      const { data: rows, error } = await supabase
+        .from("messages")
+        .select("id")
+        .in("conversation_id", selectedConversationIds)
+        .eq("sender_user_id", user.id)
+        .is("deleted_at", null);
+
+      if (error) throw error;
+
+      const ids = (rows ?? [])
+        .map((r: any) => String(r.id || ""))
+        .filter(Boolean);
+
+      if (ids.length === 0) {
+        throw new Error("No non-deleted messages from you were found in the selected conversations.");
+      }
+
+      // Soft-delete each message via the secure RPC.
+      for (const id of ids) {
+        const { error: rpcError } = await supabase.rpc("delete_message", { p_message_id: id });
+        if (rpcError) throw rpcError;
+      }
+
+      setSelectedConversationIds([]);
+      setMessageFolder("deleted");
+      await loadInbox();
+    } catch (err: any) {
+      setBulkDeleteError(err?.message || "Could not delete selected conversations.");
+    } finally {
+      setBulkDeleting(false);
+    }
+  }
+
   async function onSendFriendRequest(targetUsername: string) {
     if (!supabaseConfigured || !supabase) return;
     setFriendsError("");
@@ -618,6 +672,25 @@ export default function MessagesPage() {
               ))}
             </div>
 
+            <div className="mt-4 flex flex-col gap-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-xs text-slate-500">{selectedConversationIds.length} selected</div>
+                <button
+                  type="button"
+                  onClick={() => void onBulkDeleteSelectedConversations()}
+                  disabled={bulkDeleting || selectedConversationIds.length === 0}
+                  className="rounded-lg border border-red-500/30 bg-red-500/[0.08] px-3 py-1.5 text-xs font-semibold text-red-100 hover:bg-red-500/[0.14] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {bulkDeleting ? "Deleting…" : "Delete Selected"}
+                </button>
+              </div>
+              {bulkDeleteError ? (
+                <div className="rounded-xl border border-red-500/25 bg-red-500/[0.08] px-3 py-2 text-xs text-red-100">
+                  {bulkDeleteError}
+                </div>
+              ) : null}
+            </div>
+
             {displayConversationViews.length === 0 ? (
               <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
                 {messageFolder === "deleted"
@@ -641,8 +714,24 @@ export default function MessagesPage() {
                     className={`w-full rounded-2xl border p-4 text-left transition-colors ${row.conversation.id === activeConversationId ? "border-amber-500/30 bg-amber-500/[0.08]" : "border-white/10 bg-slate-950/40 hover:bg-slate-950/70"}`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedConversationIds.includes(row.conversation.id)}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setSelectedConversationIds((prev) =>
+                                checked
+                                  ? Array.from(new Set([...prev, row.conversation.id]))
+                                  : prev.filter((id) => id !== row.conversation.id)
+                              );
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            className="h-4 w-4 rounded border-white/20 bg-slate-950 text-emerald-500 accent-emerald-500"
+                            aria-label={`Select conversation with ${row.title}`}
+                          />
                           <span className="text-sm font-semibold text-white">{row.title}</span>
                           {row.unread ? <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-200">Unread</span> : null}
                         </div>
