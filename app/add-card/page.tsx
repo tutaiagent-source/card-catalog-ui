@@ -253,6 +253,10 @@ export default function AddCardPage() {
   const listedDatePickerRef = useRef<HTMLInputElement | null>(null);
   const soldDatePickerRef = useRef<HTMLInputElement | null>(null);
 
+  const [playerNameSuggestions, setPlayerNameSuggestions] = useState<string[]>([]);
+  const [playerNameOpen, setPlayerNameOpen] = useState(false);
+  const [playerNameActiveIndex, setPlayerNameActiveIndex] = useState(-1);
+
   useEffect(() => {
     if (step === 1) playerNameRef.current?.focus();
     else if (step === 2) cardNumberRef.current?.focus();
@@ -260,9 +264,85 @@ export default function AddCardPage() {
     else if (step === 4) frontFileRef.current?.focus();
   }, [step]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    if (playerNameSuggestions.length > 0) return;
+
+    // Prefer local suggestions (fast, works even if Supabase calls are slow).
+    try {
+      const localCards = loadCards();
+      const names = Array.from(
+        new Set(
+          localCards
+            .map((c) => String(c.player_name || "").trim())
+            .filter((n) => n && n.toLowerCase() !== "n/a" && n.length >= 2)
+        )
+      ).sort((a, b) => a.localeCompare(b));
+      const next = names.slice(0, 250);
+      if (next.length) {
+        setPlayerNameSuggestions(next);
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
+    // Fallback: pull player names from your saved catalog.
+    if (!supabaseConfigured || !supabase) return;
+
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from("cards")
+        .select("player_name")
+        .eq("user_id", user.id)
+        .not("player_name", "is", null)
+        .limit(2000);
+
+      if (error) {
+        console.error("Failed to load player name suggestions:", error);
+        return;
+      }
+
+      if (cancelled) return;
+
+      const names = Array.from(
+        new Set(
+          ((data ?? []) as any[])
+            .map((row) => String(row?.player_name || "").trim())
+            .filter((n) => n && n.toLowerCase() !== "n/a" && n.length >= 2)
+        )
+      ).sort((a, b) => a.localeCompare(b));
+      setPlayerNameSuggestions(names.slice(0, 250));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, playerNameSuggestions.length]);
+
   const missing = useMemo(() => validate(card), [card]);
 
+  const playerNameValue = String(card.player_name || "");
+
+  const filteredPlayerNameSuggestions = useMemo(() => {
+    const q = playerNameValue.trim().toLowerCase();
+    if (!q || q.length < 1) return [];
+
+    const starts = playerNameSuggestions.filter((n) => n.toLowerCase().startsWith(q));
+    if (starts.length) return starts.slice(0, 8);
+
+    const includes = playerNameSuggestions.filter((n) => n.toLowerCase().includes(q));
+    return includes.slice(0, 8);
+  }, [playerNameValue, playerNameSuggestions]);
+
   const set = (k: keyof Card, v: any) => setCard((prev) => ({ ...prev, [k]: v }));
+
+  const selectPlayerNameSuggestion = (name: string) => {
+    set("player_name", name);
+    setPlayerNameOpen(false);
+    setPlayerNameActiveIndex(-1);
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -878,12 +958,116 @@ export default function AddCardPage() {
 
                 <label className="block">
                   <div className="mb-1 text-slate-300">Player name *</div>
-                  <input
-                    ref={playerNameRef}
-                    className="w-full rounded bg-slate-950 px-3 py-2"
-                    value={String(card.player_name || "")}
-                    onChange={(e) => set("player_name", e.target.value)}
-                  />
+                  <div className="relative">
+                    <input
+                      ref={playerNameRef}
+                      className="w-full rounded bg-slate-950 px-3 py-2"
+                      value={playerNameValue}
+                      onChange={(e) => {
+                        set("player_name", e.target.value);
+                        setPlayerNameOpen(true);
+                        setPlayerNameActiveIndex(-1);
+                      }}
+                      onFocus={() => {
+                        if (filteredPlayerNameSuggestions.length) {
+                          setPlayerNameOpen(true);
+                          setPlayerNameActiveIndex(0);
+                        }
+                      }}
+                      onBlur={() => {
+                        window.setTimeout(() => setPlayerNameOpen(false), 120);
+                      }}
+                      onKeyDown={(e) => {
+                        if (!playerNameOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+                          if (filteredPlayerNameSuggestions.length) {
+                            setPlayerNameOpen(true);
+                            setPlayerNameActiveIndex(0);
+                          }
+                          return;
+                        }
+
+                        if (e.key === "Escape") {
+                          setPlayerNameOpen(false);
+                          setPlayerNameActiveIndex(-1);
+                          return;
+                        }
+
+                        if (e.key === "ArrowDown") {
+                          if (!filteredPlayerNameSuggestions.length) return;
+                          e.preventDefault();
+                          setPlayerNameOpen(true);
+                          setPlayerNameActiveIndex((prev) => Math.min(prev + 1, filteredPlayerNameSuggestions.length - 1));
+                          return;
+                        }
+
+                        if (e.key === "ArrowUp") {
+                          if (!filteredPlayerNameSuggestions.length) return;
+                          e.preventDefault();
+                          setPlayerNameOpen(true);
+                          setPlayerNameActiveIndex((prev) => Math.max(prev - 1, 0));
+                          return;
+                        }
+
+                        if (e.key === "Enter") {
+                          if (!playerNameOpen) return;
+                          const chosen =
+                            playerNameActiveIndex >= 0
+                              ? filteredPlayerNameSuggestions[playerNameActiveIndex]
+                              : filteredPlayerNameSuggestions.length === 1
+                                ? filteredPlayerNameSuggestions[0]
+                                : null;
+                          if (!chosen) return;
+                          e.preventDefault();
+                          selectPlayerNameSuggestion(chosen);
+                          return;
+                        }
+
+                        // Tab acceptance makes it feel like predictive text.
+                        if (e.key === "Tab") {
+                          if (!playerNameOpen) return;
+                          if (!filteredPlayerNameSuggestions.length) return;
+
+                          const chosen =
+                            playerNameActiveIndex >= 0 ? filteredPlayerNameSuggestions[playerNameActiveIndex] : filteredPlayerNameSuggestions[0];
+                          if (!chosen) return;
+                          e.preventDefault();
+                          selectPlayerNameSuggestion(chosen);
+                        }
+                      }}
+                      aria-autocomplete="list"
+                      aria-expanded={playerNameOpen}
+                      aria-controls="player-name-suggestions"
+                    />
+
+                    {playerNameOpen && filteredPlayerNameSuggestions.length > 0 ? (
+                      <div
+                        id="player-name-suggestions"
+                        className="absolute left-0 right-0 mt-2 z-30 max-h-56 overflow-auto rounded-2xl border border-white/10 bg-slate-950/95 p-1 shadow-[0_30px_120px_rgba(0,0,0,0.6)]"
+                        role="listbox"
+                        aria-label="Player name suggestions"
+                      >
+                        {filteredPlayerNameSuggestions.map((name, idx) => {
+                          const selected = idx === playerNameActiveIndex;
+                          return (
+                            <button
+                              key={name}
+                              type="button"
+                              className={`w-full rounded-xl px-3 py-2 text-left text-sm font-semibold ${selected ? "bg-amber-500/15 text-amber-200" : "text-slate-100 hover:bg-white/[0.06]"}`}
+                              role="option"
+                              aria-selected={selected}
+                              onMouseDown={(ev) => {
+                                ev.preventDefault();
+                                selectPlayerNameSuggestion(name);
+                              }}
+                              onMouseEnter={() => setPlayerNameActiveIndex(idx)}
+                            >
+                              {name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
                 </label>
 
                 <div className="grid grid-cols-2 gap-3">
