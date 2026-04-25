@@ -60,9 +60,13 @@ export default function MessagesPage() {
 
   const [messageFolder, setMessageFolder] = useState<"inbox" | "unread" | "deleted">("inbox");
 
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
   const [selectedConversationIds, setSelectedConversationIds] = useState<string[]>([]);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState("");
+
+  const [bulkMarking, setBulkMarking] = useState(false);
 
   const [isSelectingConversations, setIsSelectingConversations] = useState(false);
 
@@ -381,6 +385,12 @@ export default function MessagesPage() {
         ? conversationContextCards.find((c) => String(c.id) === String(conversation.context_card_id)) ?? null
         : null;
 
+      const fromLabel = otherProfile?.username
+        ? `@${otherProfile.username}`
+        : otherProfile?.display_name
+          ? otherProfile.display_name
+          : "User";
+
       const title = ctxCard?.year && ctxCard?.player_name
         ? `About ${ctxCard.year} ${ctxCard.player_name}`
         : otherProfile?.username
@@ -397,26 +407,41 @@ export default function MessagesPage() {
         otherProfile,
         otherUserId: otherUserId,
         unread,
+        fromLabel,
         title,
       };
     });
   }, [conversations, participants, profiles, messages, user?.id, conversationContextCards]);
 
   const displayConversationViews = useMemo(() => {
-    switch (messageFolder) {
-      case "deleted":
-        return conversationViews.filter((v) => v.hasDeletedMessages);
-      case "unread":
-        return conversationViews.filter((v) => v.hasNonDeletedMessages && v.unread);
-      case "inbox":
-      default:
-        // Inbox shows threads with non-deleted messages, plus truly empty (no-message-yet) threads.
-        // Threads with only deleted messages belong in the Deleted folder.
-        return conversationViews.filter(
-          (v) => v.hasNonDeletedMessages || (!v.hasDeletedMessages && !v.hasNonDeletedMessages)
-        );
-    }
-  }, [conversationViews, messageFolder]);
+    const q = searchQuery.trim().toLowerCase();
+
+    const base = (() => {
+      switch (messageFolder) {
+        case "deleted":
+          return conversationViews.filter((v) => v.hasDeletedMessages);
+        case "unread":
+          return conversationViews.filter((v) => v.hasNonDeletedMessages && v.unread);
+        case "inbox":
+        default:
+          // Inbox shows threads with non-deleted messages, plus truly empty (no-message-yet) threads.
+          // Threads with only deleted messages belong in the Deleted folder.
+          return conversationViews.filter(
+            (v) => v.hasNonDeletedMessages || (!v.hasDeletedMessages && !v.hasNonDeletedMessages)
+          );
+      }
+    })();
+
+    if (!q) return base;
+
+    return base.filter((v) => {
+      const preview = messageFolder === "deleted" ? v.latestDeletedMessage : v.latestNonDeletedMessage;
+      const subject = String(v.title || "").toLowerCase();
+      const sender = String(v.fromLabel || "").toLowerCase();
+      const body = String(preview?.body || "").toLowerCase();
+      return subject.includes(q) || sender.includes(q) || body.includes(q);
+    });
+  }, [conversationViews, messageFolder, searchQuery]);
 
   useEffect(() => {
     if (!activeConversationId) return;
@@ -636,6 +661,40 @@ export default function MessagesPage() {
     }
   }
 
+  async function onBulkSetSelectedConversationsRead(lastReadAt: string | null) {
+    if (!supabaseConfigured || !supabase || !user?.id) return;
+    if (selectedConversationIds.length === 0) return;
+
+    setError("");
+    setBulkMarking(true);
+
+    try {
+      const { error: updateError } = await supabase
+        .from("conversation_participants")
+        .update({ last_read_at: lastReadAt })
+        .eq("user_id", user.id)
+        .in("conversation_id", selectedConversationIds);
+
+      if (updateError) throw updateError;
+
+      setIsSelectingConversations(false);
+      setSelectedConversationIds([]);
+      await loadInbox();
+    } catch (err: any) {
+      setError(err?.message || "Could not update messages.");
+    } finally {
+      setBulkMarking(false);
+    }
+  }
+
+  async function onBulkMarkSelectedConversationsRead() {
+    await onBulkSetSelectedConversationsRead(new Date().toISOString());
+  }
+
+  async function onBulkMarkSelectedConversationsUnread() {
+    await onBulkSetSelectedConversationsRead(null);
+  }
+
   async function onSendFriendRequest(targetUsername: string) {
     if (!supabaseConfigured || !supabase) return;
     setFriendsError("");
@@ -742,40 +801,56 @@ export default function MessagesPage() {
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-white">Messages</div>
 
-              <div className="flex items-center gap-2">
-                {!isSelectingConversations ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsSelectingConversations(true)}
-                    disabled={bulkDeleting}
-                    className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
-                  >
-                    Select
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsSelectingConversations(false);
-                        setSelectedConversationIds([]);
-                      }}
-                      disabled={bulkDeleting}
-                      className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
-                    >
-                      Cancel
-                    </button>
-                    <div className="text-xs text-slate-500">{selectedConversationIds.length} selected</div>
-                    <button
-                      type="button"
-                      onClick={() => void onBulkDeleteSelectedConversations()}
-                      disabled={bulkDeleting || selectedConversationIds.length === 0}
-                      className="rounded-lg border border-red-500/30 bg-red-500/[0.08] px-3 py-1.5 text-xs font-semibold text-red-100 hover:bg-red-500/[0.14] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {bulkDeleting ? "Deleting…" : "Delete"}
-                    </button>
-                  </>
-                )}
+	              <div className="flex items-center gap-2">
+	                {!isSelectingConversations ? (
+	                  <button
+	                    type="button"
+	                    onClick={() => setIsSelectingConversations(true)}
+	                    disabled={bulkDeleting || bulkMarking}
+	                    className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+	                  >
+	                    Select
+	                  </button>
+	                ) : (
+	                  <>
+	                    <button
+	                      type="button"
+	                      onClick={() => {
+	                        setIsSelectingConversations(false);
+	                        setSelectedConversationIds([]);
+	                      }}
+	                      disabled={bulkDeleting || bulkMarking}
+	                      className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+	                    >
+	                      Cancel
+	                    </button>
+	                    <div className="text-xs text-slate-500">{selectedConversationIds.length} selected</div>
+	                    <button
+	                      type="button"
+	                      onClick={() => void onBulkMarkSelectedConversationsRead()}
+	                      disabled={bulkDeleting || bulkMarking || selectedConversationIds.length === 0}
+	                      className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+	                    >
+	                      Mark Read
+	                    </button>
+	                    <button
+	                      type="button"
+	                      onClick={() => void onBulkMarkSelectedConversationsUnread()}
+	                      disabled={bulkDeleting || bulkMarking || selectedConversationIds.length === 0}
+	                      className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+	                    >
+	                      Mark Unread
+	                    </button>
+	                    <button
+	                      type="button"
+	                      onClick={() => void onBulkDeleteSelectedConversations()}
+	                      disabled={bulkDeleting || bulkMarking || selectedConversationIds.length === 0}
+	                      className="rounded-lg border border-red-500/30 bg-red-500/[0.08] px-3 py-1.5 text-xs font-semibold text-red-100 hover:bg-red-500/[0.14] disabled:cursor-not-allowed disabled:opacity-60"
+	                    >
+	                      {bulkDeleting ? "Deleting…" : "Delete"}
+	                    </button>
+	                  </>
+	                )}
 
                 <button
                   type="button"
@@ -817,6 +892,23 @@ export default function MessagesPage() {
               })}
             </div>
 
+            <div className="mt-4 flex items-center gap-2">
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search"
+                className="w-full rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500 focus:border-emerald-500/30 focus:ring-1 focus:ring-emerald-500/20"
+              />
+              {searchQuery.trim() ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
 
 
             {displayConversationViews.length === 0 ? (
@@ -829,60 +921,83 @@ export default function MessagesPage() {
                       ? "No unread conversations."
                       : "No conversations yet. Once members can message sellers from listings, threads will show up here."}
               </div>
-            ) : (
-              <div className="mt-4 flex-1 space-y-2 overflow-y-auto pr-1 pb-2">
-                {displayConversationViews.map((row) => {
-                  const previewMessage =
-                    messageFolder === "deleted" ? row.latestDeletedMessage : row.latestNonDeletedMessage;
-                  return (
-                  <button
-                    key={row.conversation.id}
-                    type="button"
-                    onClick={() => setActiveConversationId(row.conversation.id)}
-                    className={`w-full rounded-xl border p-3 text-left transition-colors ${row.conversation.id === activeConversationId ? "border-white/20 bg-white/[0.07]" : "border-white/10 bg-slate-950/30 hover:bg-slate-950/60"}`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          {isSelectingConversations ? (
-                            <input
-                              type="checkbox"
-                              checked={selectedConversationIds.includes(row.conversation.id)}
-                              onChange={(e) => {
-                                const checked = e.target.checked;
-                                setSelectedConversationIds((prev) =>
-                                  checked
-                                    ? Array.from(new Set([...prev, row.conversation.id]))
-                                    : prev.filter((id) => id !== row.conversation.id)
-                                );
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              className="h-4 w-4 rounded border-white/20 bg-slate-950 text-emerald-500 accent-emerald-500"
-                              aria-label={`Select conversation with ${row.title}`}
-                            />
-                          ) : null}
+	            ) : (
+	              <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1 pb-2">
+	                <div className="sticky top-0 z-10 grid grid-cols-[auto_1fr_2fr_auto] items-center gap-3 border-b border-white/10 bg-white/[0.04] px-3 py-2 backdrop-blur">
+	                  <div className="flex justify-center" />
+	                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">From</div>
+	                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Subject</div>
+	                  <div className="text-right text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Time</div>
+	                </div>
 
-                          <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${row.unread ? "text-white" : "text-slate-200"}`}>
-                            {row.title}
-                          </span>
+	                <div>
+	                  {displayConversationViews.map((row) => {
+	                    const previewMessage =
+	                      messageFolder === "deleted" ? row.latestDeletedMessage : row.latestNonDeletedMessage;
+	                    const previewTimestamp = previewMessage?.created_at ?? row.conversation.last_message_at;
+	                    return (
+	                      <button
+	                        key={row.conversation.id}
+	                        type="button"
+	                        onClick={() => {
+	                          setActiveConversationId(row.conversation.id);
+	                          if (isSelectingConversations) {
+	                            setIsSelectingConversations(false);
+	                            setSelectedConversationIds([]);
+	                          }
+	                          if (typeof window !== "undefined") {
+	                            const url = new URL(window.location.href);
+	                            url.searchParams.set("conversation", row.conversation.id);
+	                            window.history.replaceState({}, "", url.toString());
+	                          }
+	                        }}
+	                        className={`w-full border-b border-white/10 px-3 py-2 text-left transition-colors ${
+	                          row.conversation.id === activeConversationId ? "bg-white/[0.07]" : "hover:bg-slate-950/60"
+	                        }`}
+	                      >
+	                        <div className="grid grid-cols-[auto_1fr_2fr_auto] items-center gap-3">
+	                          <div className="flex items-center justify-center">
+	                            {isSelectingConversations ? (
+	                              <input
+	                                type="checkbox"
+	                                checked={selectedConversationIds.includes(row.conversation.id)}
+	                                onChange={(e) => {
+	                                  const checked = e.target.checked;
+	                                  setSelectedConversationIds((prev) =>
+	                                    checked
+	                                      ? Array.from(new Set([...prev, row.conversation.id]))
+	                                      : prev.filter((id) => id !== row.conversation.id)
+	                                  );
+	                                }}
+	                                onClick={(e) => e.stopPropagation()}
+	                                onMouseDown={(e) => e.stopPropagation()}
+	                                className="h-4 w-4 rounded border-white/20 bg-slate-950 text-emerald-500 accent-emerald-500"
+	                                aria-label={`Select conversation with ${row.title}`}
+	                              />
+	                            ) : row.unread ? (
+	                              <span className="h-2 w-2 rounded-full bg-emerald-400" aria-label="Unread" />
+	                            ) : (
+	                              <span className="h-2 w-2 rounded-full opacity-0" aria-hidden="true" />
+	                            )}
+	                          </div>
 
-                          {row.unread ? <span className="h-2 w-2 rounded-full bg-emerald-400" aria-label="Unread" /> : null}
-                        </div>
+	                          <div className="min-w-0">
+	                            <div className={`truncate text-sm ${row.unread ? "font-semibold text-white" : "text-slate-300"}`}>{row.fromLabel}</div>
+	                          </div>
 
-                        <div className="mt-1 text-xs text-slate-400">
-                          {formatTimestamp(previewMessage?.created_at ?? row.conversation.last_message_at)}
-                        </div>
-                        <div className={`mt-2 line-clamp-1 text-sm ${row.unread ? "text-white" : "text-slate-300"}`}>
-                          {previewMessage?.body || "No messages yet."}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                  );
-                })}
-              </div>
-            )}
+	                          <div className="min-w-0">
+	                            <div className={`truncate text-sm ${row.unread || row.conversation.id === activeConversationId ? "text-white" : "text-slate-200"}`}>{row.title}</div>
+	                            <div className="line-clamp-1 text-xs text-slate-400">{previewMessage?.body || "No messages yet."}</div>
+	                          </div>
+
+	                          <div className="text-right text-xs text-slate-400">{formatTimestamp(previewTimestamp)}</div>
+	                        </div>
+	                      </button>
+	                    );
+	                  })}
+	                </div>
+	              </div>
+	            )}
 
             <details className="mt-6 border-t border-white/10 pt-4">
 	              <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
