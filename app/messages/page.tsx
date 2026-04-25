@@ -664,7 +664,6 @@ export default function MessagesPage() {
       }
 
       setSelectedConversationIds([]);
-      setMessageFolder("deleted");
       await loadInbox();
     } catch (err: any) {
       setBulkDeleteError(err?.message || "Could not delete selected conversations.");
@@ -823,6 +822,10 @@ export default function MessagesPage() {
 
         {error ? (
           <div className="mt-4 rounded-2xl border border-red-500/25 bg-red-500/[0.08] px-4 py-3 text-sm text-red-100">{error}</div>
+        ) : null}
+
+        {bulkDeleteError ? (
+          <div className="mt-3 rounded-2xl border border-red-500/25 bg-red-500/[0.08] px-4 py-3 text-sm text-red-100">{bulkDeleteError}</div>
         ) : null}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
