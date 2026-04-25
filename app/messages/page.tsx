@@ -1,4 +1,3 @@
-"use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import CardCatLogo from "@/components/CardCatLogo";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
