@@ -19,6 +19,27 @@ type CardContext = {
   image_url?: string | null;
 };
 
+const navigateToInbox = () => {
+  // Implement navigation logic here
+  console.log('Navigating to Inbox');
+};
+
+const navigateToSent = () => {
+  console.log('Navigating to Sent');
+};
+
+const navigateToDrafts = () => {
+  console.log('Navigating to Drafts');
+};
+
+const navigateToArchived = () => {
+  console.log('Navigating to Archived');
+};
+
+const navigateToTrash = () => {
+  console.log('Navigating to Trash');
+};
+
 const markAsRead = (conversationId: string) => {
   // Logic to mark the conversation as read
   console.log(`Marked conversation ${conversationId} as read.`);
