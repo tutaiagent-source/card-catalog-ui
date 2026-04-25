@@ -194,7 +194,7 @@ export default function ListingsSharedView({
                     >
 	                      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center">
 	                        {c.image_url ? (
-	                          <img alt={c.player_name} src={proxyImageSrc(c.image_url, "grid")} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
+	                          <img alt={c.player_name} src={proxyImageSrc(c.image_url, "detail")} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
 	                        ) : (
 	                          <div className="h-full w-full" />
 	                        )}

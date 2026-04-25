@@ -676,7 +676,7 @@ export default function ListedPage() {
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" role="list" aria-label="Listed cards">
                   {sortedCards.map((c) => {
-                    const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "grid" }) : "";
+	                      const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "detail" }) : "";
                     const goHref = toUrl(c.sale_platform);
                     const marketMode = profile?.market_visibility_mode || "none";
                     const isOnMarket =
@@ -764,7 +764,7 @@ export default function ListedPage() {
                   <div className="text-sm font-semibold text-slate-200">Display</div>
                   <div className="mt-4 grid grid-cols-6 gap-4">
                     {sortedCards.map((c) => {
-                      const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "grid" }) : "";
+	                      const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "detail" }) : "";
                       const goHref = toUrl(c.sale_platform);
                       const marketMode = profile?.market_visibility_mode || "none";
                       const isOnMarket =

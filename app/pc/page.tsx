@@ -357,7 +357,7 @@ export default function PcPage() {
 
                 <div className="grid grid-cols-4 gap-2" role="list" aria-label="PC grid">
                   {pcCards.map((c) => {
-                    const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "grid" }) : "";
+	                    const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "detail" }) : "";
 
                     return (
                       <div
@@ -497,7 +497,7 @@ export default function PcPage() {
                             >
 	                              <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950/10 flex items-center justify-center">
 	                                {c.image_url ? (
-	                                  <img alt="front" src={driveToImageSrc(c.image_url, { variant: "grid" })} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
+	                                    <img alt="front" src={driveToImageSrc(c.image_url, { variant: "detail" })} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
 	                                ) : (
 	                                  <div className="h-full w-full" />
 	                                )}
