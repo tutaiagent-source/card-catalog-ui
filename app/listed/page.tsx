@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { driveToImageSrc } from "@/lib/googleDrive";
+import { parseSellerMeta } from "@/lib/cardSellerMeta";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
@@ -32,6 +33,7 @@ type ListedCard = {
   listed_at?: string | null;
   sale_platform?: string | null;
   public_market_visible?: boolean;
+  notes?: string | null;
 
   sold_price?: number | null;
   sold_at?: string | null;
@@ -149,7 +151,7 @@ export default function ListedPage() {
     try {
       const { data, error } = await supabase
         .from("cards")
-        .select("id, player_name, year, brand, set_name, parallel, serial_number_text, image_url, back_image_url, status, asking_price, listed_at, sale_platform, sold_price, sold_at, public_market_visible")
+        .select("id, player_name, year, brand, set_name, parallel, serial_number_text, image_url, back_image_url, status, asking_price, listed_at, sale_platform, sold_price, sold_at, public_market_visible, notes")
         .eq("user_id", user.id)
         .eq("status", "Listed");
 
@@ -484,6 +486,7 @@ export default function ListedPage() {
   }
 
   const activeHref = toUrl(editLink);
+  const activeCardPublicNotes = useMemo(() => parseSellerMeta(activeCard?.notes).publicNotes, [activeCard?.notes]);
   const normalizedEditLink = editLink.trim();
   const normalizedEditListedAt = editListedAt.trim();
   const normalizedEditAskingPrice = (() => {
@@ -1038,6 +1041,14 @@ export default function ListedPage() {
                         </a>
                       </div>
                     </label>
+
+                    {activeCardPublicNotes ? (
+                      <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                        <div className="text-sm font-semibold text-slate-200">Seller notes</div>
+                        <div className="mt-2 whitespace-pre-wrap text-sm text-slate-300">{activeCardPublicNotes}</div>
+                        <div className="mt-2 text-xs text-slate-500">Shown to buyers in Market and shared listing views.</div>
+                      </div>
+                    ) : null}
 
                     <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
                       <div className="text-sm font-semibold text-slate-200">Market visibility</div>

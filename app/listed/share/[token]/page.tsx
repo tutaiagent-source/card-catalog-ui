@@ -159,9 +159,9 @@ export default async function ListedSharePage({
     }
 
     const richCardsSelect =
-      "id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, rookie, is_autograph, has_memorabilia, serial_number_text, graded, grade, grading_company, auto_grade, grading_cert_number_text, estimated_price, image_url, back_image_url, asking_price, sale_platform";
+      "id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, rookie, is_autograph, has_memorabilia, serial_number_text, graded, grade, grading_company, auto_grade, grading_cert_number_text, estimated_price, image_url, back_image_url, asking_price, sale_platform, notes";
     const fallbackCardsSelect =
-      "id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, rookie, is_autograph, has_memorabilia, serial_number_text, graded, grade, estimated_price, image_url, back_image_url, asking_price, sale_platform";
+      "id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, rookie, is_autograph, has_memorabilia, serial_number_text, graded, grade, estimated_price, image_url, back_image_url, asking_price, sale_platform, notes";
 
     let cards: any[] | null = null;
     let cardsErr: any = null;

@@ -7,6 +7,7 @@ import EmailVerificationNotice from "@/components/EmailVerificationNotice";
 import UsernamePromptBanner from "@/components/UsernamePromptBanner";
 import { driveToImageSrc } from "@/lib/googleDrive";
 import { startDirectConversation } from "@/lib/messaging";
+import { parseSellerMeta } from "@/lib/cardSellerMeta";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 
@@ -39,6 +40,7 @@ type MarketCard = {
   listed_at?: string | null;
   sale_platform?: string | null;
   public_market_visible?: boolean;
+  notes?: string | null;
 };
 
 type SellerProfile = {
@@ -112,7 +114,7 @@ export default function MarketPage() {
 
       const { data: cardRows, error: cardError } = await supabase
         .from("cards")
-        .select("id, user_id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, rookie, is_autograph, has_memorabilia, serial_number_text, graded, grade, grading_company, auto_grade, grading_cert_number_text, image_url, back_image_url, asking_price, listed_at, sale_platform, public_market_visible")
+        .select("id, user_id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, rookie, is_autograph, has_memorabilia, serial_number_text, graded, grade, grading_company, auto_grade, grading_cert_number_text, image_url, back_image_url, asking_price, listed_at, sale_platform, public_market_visible, notes")
         .eq("status", "Listed")
         .order("listed_at", { ascending: false });
 
@@ -149,6 +151,7 @@ export default function MarketPage() {
   }, [user?.id]);
 
   const sellerMap = useMemo(() => new Map(profiles.map((profile) => [profile.id, profile.username])), [profiles]);
+  const activeCardPublicNotes = useMemo(() => parseSellerMeta(activeCard?.notes).publicNotes, [activeCard?.notes]);
 
   const filteredCards = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -433,6 +436,12 @@ export default function MarketPage() {
                     <div><span className="text-slate-400">Card:</span> <span className="text-white">#{activeCard.card_number}</span></div>
                     {activeCard.serial_number_text ? <div><span className="text-slate-400">Serial:</span> <span className="text-white">{activeCard.serial_number_text}</span></div> : null}
                     {activeCard.asking_price != null ? <div><span className="text-slate-400">Asking:</span> <span className="font-semibold text-white">{formatMoney(Number(activeCard.asking_price))}</span></div> : null}
+                    {activeCardPublicNotes ? (
+                      <div className="pt-3">
+                        <div className="text-slate-400">Seller notes:</div>
+                        <div className="mt-1 whitespace-pre-wrap rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-3 text-sm text-slate-200">{activeCardPublicNotes}</div>
+                      </div>
+                    ) : null}
 
                     <div className="flex flex-wrap gap-2 pt-2 text-xs">
                       {yes(activeCard.is_autograph) ? <span className="rounded bg-[#d50000] px-2 py-1 text-white">Auto</span> : null}

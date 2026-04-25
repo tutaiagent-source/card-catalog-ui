@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { driveToImageSrc } from "@/lib/googleDrive";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { startDirectConversation } from "@/lib/messaging";
+import { parseSellerMeta } from "@/lib/cardSellerMeta";
 
 type YesNo = "yes" | "no";
 
@@ -36,6 +37,7 @@ type SharedCard = {
   asking_price?: number | null;
   estimated_price?: number | null;
   sale_platform?: string | null;
+  notes?: string | null;
 };
 
 export default function ListingsSharedView({
@@ -101,6 +103,8 @@ export default function ListingsSharedView({
     if (!q) return sortedCards;
     return sortedCards.filter((card) => String(card.player_name || "").toLowerCase().includes(q));
   }, [sortedCards, searchQuery]);
+
+  const activeCardPublicNotes = useMemo(() => parseSellerMeta(activeCard?.notes).publicNotes, [activeCard?.notes]);
 
   const proxyImageSrc = (imageUrl?: string | null, variant: "grid" | "detail" = "detail") => {
     const src = imageUrl ? driveToImageSrc(imageUrl, { variant }) : "";
@@ -365,6 +369,13 @@ export default function ListingsSharedView({
                         <div className="pt-1">
                           <span className="text-slate-400">Asking:</span>{" "}
                           <span className="text-white font-semibold">{formatMoney(Number(activeCard.asking_price))}</span>
+                        </div>
+                      ) : null}
+
+                      {activeCardPublicNotes ? (
+                        <div className="pt-3">
+                          <span className="text-slate-400">Seller notes:</span>
+                          <div className="mt-2 whitespace-pre-wrap rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-3 text-sm text-slate-200">{activeCardPublicNotes}</div>
                         </div>
                       ) : null}
 
