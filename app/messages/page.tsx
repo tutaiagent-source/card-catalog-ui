@@ -79,6 +79,8 @@ export default function MessagesPage() {
 
   const [bulkMarking, setBulkMarking] = useState(false);
 
+  const [conversationActionSaving, setConversationActionSaving] = useState(false);
+
   const [isSelectingConversations, setIsSelectingConversations] = useState(false);
 
   useEffect(() => {
@@ -470,6 +472,7 @@ export default function MessagesPage() {
   );
 
   const activeConversationContextCardId = activeConversation?.conversation.context_card_id ?? null;
+  const activeConversationIsBlocked = Boolean(activeConversation?.myParticipant?.is_blocked);
   const activeRecipientLabel = activeConversation?.otherProfile?.username
     ? `@${activeConversation.otherProfile.username}`
     : activeConversation?.otherProfile?.display_name || activeConversation?.title || "This Conversation";
@@ -554,6 +557,10 @@ export default function MessagesPage() {
 
   async function onSendMessage() {
     if (!activeConversationId || !user?.id) return;
+    if (activeConversationIsBlocked) {
+      setError("You blocked this user.");
+      return;
+    }
     const trimmed = draftMessage.trim();
     if (!trimmed) return;
 
@@ -628,6 +635,114 @@ export default function MessagesPage() {
       await loadInbox();
     } catch (err: any) {
       setError(err?.message || "Could not restore message.");
+    }
+  }
+
+  async function onDeleteActiveConversation() {
+    if (!supabaseConfigured || !supabase || !user?.id || !activeConversationId) return;
+    if (activeConversationIsBlocked) {
+      setError("Unblock this user to delete the conversation.");
+      return;
+    }
+    if (messageFolder === "deleted") {
+      setError("This conversation is already in Deleted.");
+      return;
+    }
+
+    if (
+      !confirm(
+        "Delete this conversation (moves it to Deleted for your account)?"
+      )
+    ) {
+      return;
+    }
+
+    setConversationActionSaving(true);
+    setError("");
+
+    try {
+      const { data: messageRows, error: messagesError } = await supabase
+        .from("messages")
+        .select("id")
+        .eq("conversation_id", activeConversationId)
+        .is("deleted_at", null);
+
+      if (messagesError) throw messagesError;
+
+      const messageIds = (messageRows ?? [])
+        .map((r: any) => String(r.id || ""))
+        .filter(Boolean);
+
+      for (const id of messageIds) {
+        const { error: rpcError } = await supabase.rpc("delete_message", {
+          p_message_id: id,
+        });
+        if (rpcError) throw rpcError;
+      }
+
+      setSelectedConversationIds([]);
+      await loadInbox();
+    } catch (err: any) {
+      setError(err?.message || "Could not delete conversation.");
+    } finally {
+      setConversationActionSaving(false);
+    }
+  }
+
+  async function onToggleBlockActiveConversation() {
+    if (!supabaseConfigured || !supabase || !user?.id || !activeConversationId) return;
+
+    setConversationActionSaving(true);
+    setError("");
+
+    try {
+      const next = !activeConversationIsBlocked;
+
+      const { error: updateError } = await supabase
+        .from("conversation_participants")
+        .update({ is_blocked: next })
+        .eq("conversation_id", activeConversationId)
+        .eq("user_id", user.id);
+
+      if (updateError) throw updateError;
+      await loadInbox();
+    } catch (err: any) {
+      setError(err?.message || "Could not update block status.");
+    } finally {
+      setConversationActionSaving(false);
+    }
+  }
+
+  async function onReportActiveConversation() {
+    if (!supabaseConfigured || !supabase || !user?.id || !activeConversationId || !activeConversation?.otherUserId) return;
+
+    const rawReason = window.prompt(
+      "Report reason (optional). Helps us review faster."
+    );
+    if (rawReason === null) return;
+
+    const reason = rawReason.trim() ? rawReason.trim().slice(0, 500) : "Unspecified";
+
+    setConversationActionSaving(true);
+    setError("");
+
+    try {
+      const { error: insertError } = await supabase
+        .from("user_reports")
+        .insert({
+          reporter_user_id: user.id,
+          reported_user_id: activeConversation.otherUserId,
+          conversation_id: activeConversationId,
+          reason,
+          metadata: {},
+        });
+
+      if (insertError) throw insertError;
+      alert("Thanks for the report. We'll review it.");
+    } catch (err: any) {
+      setError(err?.message || "Could not submit report.");
+    } finally {
+      setConversationActionSaving(false);
     }
   }
 
@@ -1199,17 +1314,49 @@ export default function MessagesPage() {
                     ) : null}
                   </div>
 
-                  {messageFolder !== "deleted" ? (
-                    <div className="mt-3 flex justify-end">
+                  <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                    {messageFolder !== "deleted" && !activeConversationIsBlocked ? (
+                      <button
+                        type="button"
+                        onClick={() => void onDeleteActiveConversation()}
+                        disabled={conversationActionSaving}
+                        className="rounded-xl border border-red-500/30 bg-red-500/[0.08] px-3 py-2 text-xs font-semibold text-red-200 hover:bg-red-500/[0.14] disabled:opacity-60"
+                      >
+                        {conversationActionSaving ? "Deleting…" : "Delete thread"}
+                      </button>
+                    ) : null}
+
+                    {messageFolder !== "deleted" ? (
                       <button
                         type="button"
                         onClick={() => void onMarkConversationUnread()}
-                        className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                        disabled={conversationActionSaving}
+                        className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
                       >
                         Mark Unread
                       </button>
-                    </div>
-                  ) : null}
+                    ) : null}
+
+                    <button
+                      type="button"
+                      onClick={() => void onToggleBlockActiveConversation()}
+                      disabled={conversationActionSaving}
+                      className="rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/[0.14] disabled:opacity-60"
+                    >
+                      {activeConversationIsBlocked ? (conversationActionSaving ? "Unblocking…" : "Unblock user") : (conversationActionSaving ? "Blocking…" : "Block user")}
+                    </button>
+
+                    {activeConversation?.otherUserId ? (
+                      <button
+                        type="button"
+                        onClick={() => void onReportActiveConversation()}
+                        disabled={conversationActionSaving}
+                        className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+                      >
+                        {conversationActionSaving ? "Reporting…" : "Report user"}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
 
 	                <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1">
@@ -1285,15 +1432,18 @@ export default function MessagesPage() {
 	                      <textarea
 	                        value={draftMessage}
 	                        onChange={(e) => setDraftMessage(e.target.value)}
-	                        placeholder={`Write a reply to ${activeRecipientLabel}...`}
-	                        className="mt-3 min-h-[110px] w-full resize-none rounded-xl bg-white/[0.03] px-3 py-2 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-emerald-500/20"
+	                        placeholder={activeConversationIsBlocked ? "You blocked this user." : `Write a reply to ${activeRecipientLabel}...`}
+	                        disabled={activeConversationIsBlocked}
+	                        className="mt-3 min-h-[110px] w-full resize-none rounded-xl bg-white/[0.03] px-3 py-2 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-emerald-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
 	                      />
 	                      <div className="mt-3 flex items-center justify-between gap-3">
-	                        <div className="text-xs text-slate-500">Replying to {activeRecipientLabel}</div>
+	                        <div className="text-xs text-slate-500">
+	                          {activeConversationIsBlocked ? `You blocked ${activeRecipientLabel}` : `Replying to ${activeRecipientLabel}`}
+	                        </div>
 	                        <button
 	                          type="button"
 	                          onClick={onSendMessage}
-	                          disabled={sending || !draftMessage.trim()}
+	                          disabled={sending || !draftMessage.trim() || activeConversationIsBlocked}
 	                          className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
 	                        >
 	                          {sending ? "Sending…" : "Send"}
