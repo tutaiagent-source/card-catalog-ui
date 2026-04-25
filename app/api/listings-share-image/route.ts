@@ -68,20 +68,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Requested image missing" }, { status: 404 });
   }
 
-  const objectPrefix = "/storage/v1/object/public/";
-  if (!rawImageUrl.includes(objectPrefix)) {
-    return NextResponse.json({ error: "Invalid image source" }, { status: 400 });
-  }
-
   let renderSrc: string;
   try {
     renderSrc = driveToImageSrc(rawImageUrl, { variant });
   } catch {
     return NextResponse.json({ error: "Could not build image URL" }, { status: 400 });
-  }
-
-  if (!renderSrc.includes("/storage/v1/render/image/public/")) {
-    return NextResponse.json({ error: "Invalid image render URL" }, { status: 400 });
   }
 
   let renderUrlParsed: URL;
@@ -92,7 +83,21 @@ export async function GET(request: NextRequest) {
   }
 
   const host = renderUrlParsed.hostname.replace(/^www\./, "").toLowerCase();
-  const isSafeHost = host.endsWith(".supabase.co") || host === "drive.google.com" || host === "docs.google.com";
+  const envSupabaseHost = (() => {
+    try {
+      const v = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (!v) return null;
+      return new URL(v).hostname.replace(/^www\./, "").toLowerCase();
+    } catch {
+      return null;
+    }
+  })();
+
+  const isSafeHost =
+    (envSupabaseHost && host === envSupabaseHost) ||
+    host.endsWith(".supabase.co") ||
+    host === "drive.google.com" ||
+    host === "docs.google.com";
   if (!isSafeHost) {
     return NextResponse.json({ error: "Disallowed image host" }, { status: 403 });
   }
