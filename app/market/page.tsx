@@ -304,23 +304,23 @@ export default function MarketPage() {
               {filteredCards.map((card) => {
                 const sellerUsername = String(sellerMap.get(card.user_id) || "").trim();
                 return (
-                  <button
-                    key={card.id}
-                    type="button"
-                    onClick={() => setActiveCard(card)}
-                    className="rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-left hover:bg-slate-950/60"
-                  >
-                    <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950">
-                      {card.image_url ? (
-                        <img
-                          alt={card.player_name}
-                          src={driveToImageSrc(card.image_url, { variant: "grid" })}
-                          className="h-full w-full object-contain"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                      ) : <div className="h-full w-full" />}
-                    </div>
+	                    <button
+	                      key={card.id}
+	                      type="button"
+	                      onClick={() => setActiveCard(card)}
+	                      className="rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-left hover:bg-slate-950/60"
+	                    >
+	                      <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950 flex items-center justify-center">
+	                        {card.image_url ? (
+	                          <img
+	                            alt={card.player_name}
+	                            src={driveToImageSrc(card.image_url, { variant: "grid" })}
+	                            className="max-h-full max-w-full object-contain"
+	                            loading="lazy"
+	                            decoding="async"
+	                          />
+	                        ) : <div className="h-full w-full" />}
+	                      </div>
                     <div className="mt-3 text-sm font-semibold text-white line-clamp-2">{card.player_name}</div>
                     <div className="mt-1 text-xs text-slate-400 line-clamp-2">{[card.year, card.brand, card.set_name].filter(Boolean).join(" · ")}</div>
                     {sellerUsername ? <div className="mt-1 text-xs text-emerald-200">@{sellerUsername}</div> : null}

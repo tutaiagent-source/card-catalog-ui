@@ -716,11 +716,11 @@ export default function ListedPage() {
                           </div>
                         ) : null}
 
-                        <div
-                          className={`aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 ${isOnMarket ? "border border-emerald-500/80" : "border border-red-500/80"}`}
-                        >
-                          {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" loading="lazy" decoding="async" /> : <div className="h-full w-full" />}
-                        </div>
+	                          <div
+	                            className={`aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center ${isOnMarket ? "border border-emerald-500/80" : "border border-red-500/80"}`}
+	                          >
+	                            {c.image_url ? <img alt="front" src={src} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" /> : <div className="h-full w-full" />}
+	                          </div>
 
                         <div className="mt-3 text-center">
                           <div className="line-clamp-2 text-sm font-semibold leading-tight text-white">{c.player_name}</div>
@@ -794,9 +794,9 @@ export default function ListedPage() {
                             setActiveCard(c);
                           }}
                         >
-                          <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950">
-                            {c.image_url ? <img alt="front" src={src} className="h-full w-full object-contain" loading="lazy" decoding="async" /> : <div className="h-full w-full" />}
-                          </div>
+	                          <div className="relative aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950 flex items-center justify-center">
+	                            {c.image_url ? <img alt="front" src={src} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" /> : <div className="h-full w-full" />}
+	                          </div>
 
                           {goHref ? (
                             <a
