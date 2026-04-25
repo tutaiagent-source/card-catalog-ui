@@ -19,6 +19,11 @@ type CardContext = {
   image_url?: string | null;
 };
 
+const markAsRead = (conversationId: string) => {
+  // Logic to mark the conversation as read
+  console.log(`Marked conversation ${conversationId} as read.`);
+};
+
 export default function MessagesPage() {
   const { user, loading } = useSupabaseUser();
   const [searchQuery, setSearchQuery] = useState<string>("");
