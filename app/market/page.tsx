@@ -86,6 +86,13 @@ export default function MarketPage() {
   const [profiles, setProfiles] = useState<SellerProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sellerFilter, setSellerFilter] = useState("");
+  const [listedRecency, setListedRecency] = useState<"any" | "24h" | "7d" | "30d" | "90d">("any");
+  const [priceMin, setPriceMin] = useState<string>("");
+  const [priceMax, setPriceMax] = useState<string>("");
+  const [onlyAutos, setOnlyAutos] = useState(false);
+  const [onlyGraded, setOnlyGraded] = useState(false);
+  const [onlyRookie, setOnlyRookie] = useState(false);
+  const [onlyMemorabilia, setOnlyMemorabilia] = useState(false);
   const [activeCard, setActiveCard] = useState<MarketCard | null>(null);
   const [showBack, setShowBack] = useState(false);
   const [loadingCards, setLoadingCards] = useState(false);
@@ -148,6 +155,25 @@ export default function MarketPage() {
     const q = searchQuery.trim().toLowerCase();
     const sellerQ = sellerFilter.trim().toLowerCase();
 
+    const parsedMin = priceMin.trim() ? Number(priceMin) : null;
+    const parsedMax = priceMax.trim() ? Number(priceMax) : null;
+    const now = Date.now();
+    const cutoffMs = (() => {
+      switch (listedRecency) {
+        case "24h":
+          return now - 24 * 60 * 60 * 1000;
+        case "7d":
+          return now - 7 * 24 * 60 * 60 * 1000;
+        case "30d":
+          return now - 30 * 24 * 60 * 60 * 1000;
+        case "90d":
+          return now - 90 * 24 * 60 * 60 * 1000;
+        case "any":
+        default:
+          return null;
+      }
+    })();
+
     return cards.filter((card) => {
       const seller = profiles.find((profile) => profile.id === card.user_id);
       const sellerUsername = String(seller?.username || "").toLowerCase();
@@ -157,6 +183,24 @@ export default function MarketPage() {
 
       const matchesSeller = !sellerQ || sellerUsername === sellerQ;
       if (!matchesSeller) return false;
+
+      if (cutoffMs != null) {
+        const listedAtMs = card.listed_at ? new Date(card.listed_at).getTime() : NaN;
+        if (!Number.isFinite(listedAtMs) || listedAtMs < cutoffMs) return false;
+      }
+
+      if (parsedMin != null || parsedMax != null) {
+        const price = card.asking_price != null ? Number(card.asking_price) : NaN;
+        if (!Number.isFinite(price)) return false;
+        if (parsedMin != null && price < parsedMin) return false;
+        if (parsedMax != null && price > parsedMax) return false;
+      }
+
+      if (onlyAutos && !yes(card.is_autograph)) return false;
+      if (onlyGraded && !yes(card.graded)) return false;
+      if (onlyRookie && !yes(card.rookie)) return false;
+      if (onlyMemorabilia && !yes(card.has_memorabilia)) return false;
+
       if (!q) return true;
 
       const haystack = [
@@ -175,7 +219,7 @@ export default function MarketPage() {
 
       return haystack.includes(q);
     });
-  }, [cards, searchQuery, sellerFilter, sellerMap, profiles]);
+  }, [cards, searchQuery, sellerFilter, sellerMap, profiles, listedRecency, priceMin, priceMax, onlyAutos, onlyGraded, onlyRookie, onlyMemorabilia]);
 
   async function handleMessageSeller(card: MarketCard) {
     const sellerUsername = String(sellerMap.get(card.user_id) || "").trim();
@@ -287,14 +331,118 @@ export default function MarketPage() {
             </div>
           </div>
 
-          <div className="mt-3 text-xs text-slate-500">{sellerFilter ? `Showing cards from @${sellerFilter}` : `${filteredCards.length} card${filteredCards.length === 1 ? "" : "s"}`}</div>
+          <details className="mt-4 rounded-2xl border border-white/10 bg-slate-950/30 px-3 py-3 sm:px-4" open={false}>
+            <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">
+              Advanced filters
+            </summary>
 
-          {loadingCards ? (
-            <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">Loading public listings…</div>
-          ) : filteredCards.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">No public listings match that search yet.</div>
-          ) : (
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Newly listed</div>
+                <select
+                  value={listedRecency}
+                  onChange={(e) => setListedRecency(e.target.value as any)}
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white"
+                >
+                  <option value="any">Any time</option>
+                  <option value="24h">Last 24 hours</option>
+                  <option value="7d">Last 7 days</option>
+                  <option value="30d">Last 30 days</option>
+                  <option value="90d">Last 90 days</option>
+                </select>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Pricing range</div>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                    placeholder="Min"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    min={0}
+                  />
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                    placeholder="Max"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    min={0}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Qualifiers</div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOnlyAutos((v) => !v)}
+                    className={`rounded-xl border px-3 py-2 text-sm font-semibold ${onlyAutos ? "border-emerald-400/30 bg-emerald-500/15 text-emerald-200" : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.06]"}`}
+                  >
+                    Autos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOnlyGraded((v) => !v)}
+                    className={`rounded-xl border px-3 py-2 text-sm font-semibold ${onlyGraded ? "border-blue-400/30 bg-blue-500/15 text-blue-200" : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.06]"}`}
+                  >
+                    Graded
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOnlyRookie((v) => !v)}
+                    className={`rounded-xl border px-3 py-2 text-sm font-semibold ${onlyRookie ? "border-amber-400/30 bg-amber-500/15 text-amber-200" : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.06]"}`}
+                  >
+                    Rookie
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOnlyMemorabilia((v) => !v)}
+                    className={`rounded-xl border px-3 py-2 text-sm font-semibold ${onlyMemorabilia ? "border-red-400/30 bg-red-500/15 text-red-200" : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.06]"}`}
+                  >
+                    Memorabilia
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-xs text-slate-400">
+                {listedRecency !== "any" ? "Newly listed filter on" : ""}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setListedRecency("any");
+                  setPriceMin("");
+                  setPriceMax("");
+                  setOnlyAutos(false);
+                  setOnlyGraded(false);
+                  setOnlyRookie(false);
+                  setOnlyMemorabilia(false);
+                }}
+                className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.06]"
+              >
+                Clear advanced filters
+              </button>
+            </div>
+          </details>
+
+          <div className="mt-3 text-xs text-slate-500">
+            {sellerFilter ? `Showing cards from @${sellerFilter}` : `${filteredCards.length} card${filteredCards.length === 1 ? "" : "s"}`}
+          </div>
+
+        {loadingCards ? (
+          <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">Loading public listings…</div>
+        ) : filteredCards.length === 0 ? (
+          <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">No public listings match that search yet.</div>
+        ) : (
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {filteredCards.map((card) => {
                 const sellerUsername = String(sellerMap.get(card.user_id) || "").trim();
                 return (
