@@ -316,7 +316,7 @@ export default function AccountPage() {
             <h1 className="mt-3 text-2xl font-bold">My Account</h1>
             <div className="mt-1 text-sm text-slate-400">Manage your login and collection settings.</div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <a href="/catalog" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
               Catalog
             </a>
