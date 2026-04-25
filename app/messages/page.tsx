@@ -33,6 +33,14 @@ const appNavItems = [
   { href: "/account", label: "Account" },
 ] as const;
 
+const REPORT_REASONS = [
+  { key: "harassment", label: "Harassment / bullying" },
+  { key: "hate", label: "Hate speech" },
+  { key: "scam", label: "Scam / fraud" },
+  { key: "inappropriate", label: "Inappropriate content" },
+  { key: "other", label: "Other" },
+] as const;
+
 function formatTimestamp(value?: string | null) {
   if (!value) return "";
   const date = new Date(value);
@@ -80,6 +88,15 @@ export default function MessagesPage() {
   const [bulkMarking, setBulkMarking] = useState(false);
 
   const [conversationActionSaving, setConversationActionSaving] = useState(false);
+
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportReasonKey, setReportReasonKey] = useState<(typeof REPORT_REASONS)[number]["key"]>("harassment");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportName, setReportName] = useState("");
+  const [reportEmail, setReportEmail] = useState("");
+  const [reportHoneypot, setReportHoneypot] = useState("");
+  const [reportSending, setReportSending] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
 
   const [isSelectingConversations, setIsSelectingConversations] = useState(false);
 
@@ -714,34 +731,101 @@ export default function MessagesPage() {
   }
 
   async function onReportActiveConversation() {
-    if (!supabaseConfigured || !supabase || !user?.id || !activeConversationId || !activeConversation?.otherUserId) return;
+    if (!user?.id || !activeConversationId || !activeConversation?.otherUserId) return;
 
-    const rawReason = window.prompt(
-      "Report reason (optional). Helps us review faster."
-    );
-    if (rawReason === null) return;
+    setReportModalOpen(true);
+    setReportError(null);
+    setReportSending(false);
+    setReportDetails("");
+    setReportName("");
+    setReportHoneypot("");
+    setReportReasonKey("harassment");
 
-    const reason = rawReason.trim() ? rawReason.trim().slice(0, 500) : "Unspecified";
+    const emailFromUser = String((user as any)?.email || "").trim();
+    setReportEmail(emailFromUser);
+  }
 
+  async function submitUserReport() {
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id || !activeConversationId || !activeConversation?.otherUserId) return;
+
+    const reasonLabel =
+      REPORT_REASONS.find((r) => r.key === reportReasonKey)?.label || "Other";
+
+    const email = reportEmail.trim();
+    const name = reportName.trim();
+    const details = reportDetails.trim();
+
+    if (!email || !email.includes("@") || !email.includes(".")) {
+      setReportError("Please enter a valid email.");
+      return;
+    }
+
+    if (reportHoneypot.trim()) {
+      setReportError("Spam detected.");
+      return;
+    }
+
+    const subjectLabel = `User report (${reasonLabel})`;
+    const messageParts: string[] = [
+      `User report submitted from CardCat Messages`,
+      ``,
+      `Reporter: ${name || "N/A"} (id: ${user.id})`,
+      `Reporter email: ${email}`,
+      `Reported user: ${activeConversation?.otherProfile?.username ? `@${activeConversation.otherProfile.username}` : activeRecipientLabel} (id: ${activeConversation.otherUserId})`,
+      `Conversation id: ${activeConversationId}`,
+      `Reason: ${reasonLabel}`,
+    ];
+
+    if (details) {
+      messageParts.push(``, `Details: ${details}`);
+    }
+
+    const message = messageParts.join("\n");
+
+    setReportSending(true);
     setConversationActionSaving(true);
+    setReportError(null);
     setError("");
 
     try {
+      // 1) Email it via the same Contact endpoint (subject clearly indicates it's a user report).
+      const resp = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subjectLabel,
+          name,
+          email,
+          message,
+          honeypot: reportHoneypot,
+        }),
+      });
+
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data?.error || "Failed to send report email.");
+      }
+
+      // 2) Also store it in Supabase for later admin tooling.
       const { error: insertError } = await supabase
         .from("user_reports")
         .insert({
           reporter_user_id: user.id,
           reported_user_id: activeConversation.otherUserId,
           conversation_id: activeConversationId,
-          reason,
-          metadata: {},
+          reason: reasonLabel,
+          metadata: { details },
         });
 
       if (insertError) throw insertError;
+
+      setReportModalOpen(false);
       alert("Thanks for the report. We'll review it.");
     } catch (err: any) {
-      setError(err?.message || "Could not submit report.");
+      setReportError(err?.message || "Could not submit report.");
     } finally {
+      setReportSending(false);
       setConversationActionSaving(false);
     }
   }
@@ -1461,6 +1545,138 @@ export default function MessagesPage() {
           </section>
         </div>
       </div>
+
+      {reportModalOpen ? (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-3"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="w-full max-w-lg overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
+              <div>
+                <div className="text-lg font-semibold text-white">Report user</div>
+                <div className="mt-1 text-sm text-slate-300">
+                  Help us review this conversation.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setReportModalOpen(false);
+                  setReportError(null);
+                }}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-4 px-5 py-5">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Reason
+                </label>
+                <select
+                  value={reportReasonKey}
+                  onChange={(e) => setReportReasonKey(e.target.value as any)}
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-100"
+                >
+                  {REPORT_REASONS.map((r) => (
+                    <option key={r.key} value={r.key}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Details (optional)
+                </label>
+                <textarea
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="What happened? Any context that helps reviewers understand."
+                  className="mt-2 min-h-[110px] w-full resize-y rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500"
+                />
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Your name (optional)
+                  </label>
+                  <input
+                    value={reportName}
+                    onChange={(e) => setReportName(e.target.value)}
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500"
+                    placeholder="Jane / Sam"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Your email (required)
+                  </label>
+                  <input
+                    type="email"
+                    value={reportEmail}
+                    onChange={(e) => setReportEmail(e.target.value)}
+                    required
+                    className="mt-2 w-full rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500"
+                    placeholder="you@example.com"
+                    inputMode="email"
+                  />
+                </div>
+              </div>
+
+              {/* Honeypot (hidden) */}
+              <input
+                type="text"
+                tabIndex={-1}
+                aria-hidden="true"
+                className="hidden"
+                value={reportHoneypot}
+                onChange={(e) => setReportHoneypot(e.target.value)}
+              />
+
+              {reportError ? (
+                <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.08] px-4 py-3 text-sm text-red-100">
+                  {reportError}
+                </div>
+              ) : null}
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReportModalOpen(false);
+                    setReportError(null);
+                  }}
+                  disabled={reportSending || conversationActionSaving}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submitUserReport()}
+                  disabled={reportSending || conversationActionSaving}
+                  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                >
+                  {reportSending || conversationActionSaving
+                    ? "Submitting…"
+                    : "Submit report"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <CardCatMobileNav />
     </main>
