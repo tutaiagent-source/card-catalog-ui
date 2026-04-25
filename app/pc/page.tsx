@@ -398,13 +398,13 @@ export default function PcPage() {
                           className="block w-full"
                           aria-label={`View ${c.player_name}`}
                         >
-                          <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950">
-                            {c.image_url ? (
-                              <img alt="front" src={src} className="h-full w-full object-contain" loading="lazy" decoding="async" />
-                            ) : (
-                              <div className="h-full w-full" />
-                            )}
-                          </div>
+	                          <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center">
+	                            {c.image_url ? (
+	                              <img alt="front" src={src} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
+	                            ) : (
+	                              <div className="h-full w-full" />
+	                            )}
+	                          </div>
                         </button>
 
                       </div>
@@ -495,13 +495,13 @@ export default function PcPage() {
                               }}
                               className="cursor-pointer"
                             >
-                              <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950/10">
-                                {c.image_url ? (
-                                  <img alt="front" src={driveToImageSrc(c.image_url, { variant: "grid" })} className="h-full w-full object-contain" loading="lazy" decoding="async" />
-                                ) : (
-                                  <div className="h-full w-full" />
-                                )}
-                              </div>
+	                              <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950/10 flex items-center justify-center">
+	                                {c.image_url ? (
+	                                  <img alt="front" src={driveToImageSrc(c.image_url, { variant: "grid" })} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
+	                                ) : (
+	                                  <div className="h-full w-full" />
+	                                )}
+	                              </div>
                             </div>
 
                           </div>
