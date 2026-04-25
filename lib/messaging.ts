@@ -51,7 +51,12 @@ export async function markConversationRead(conversationId: string) {
   if (error) throw error;
 }
 
-export async function sendMessage(conversationId: string, senderUserId: string, body: string) {
+export async function sendMessage(
+  conversationId: string,
+  senderUserId: string,
+  body: string,
+  clientRequestId?: string
+) {
   // senderUserId is intentionally ignored; we set sender_user_id server-side from auth.uid().
   if (!supabaseConfigured || !supabase) throw new Error("Supabase is not configured.");
 
@@ -61,6 +66,7 @@ export async function sendMessage(conversationId: string, senderUserId: string, 
   const { error } = await supabase.rpc("send_message", {
     p_conversation_id: conversationId,
     p_body: trimmed,
+    p_client_request_id: clientRequestId ?? null,
   });
 
   if (error) {
@@ -73,12 +79,29 @@ export async function sendMessage(conversationId: string, senderUserId: string, 
 
     if (!shouldFallback) throw error;
 
-    const { error: insertError } = await supabase.from("messages").insert({
+    // Try idempotent insert first, but remain compatible until the migration is applied.
+    let { error: insertError } = await supabase.from("messages").insert({
       conversation_id: conversationId,
       sender_user_id: senderUserId,
       body: trimmed,
+      client_request_id: clientRequestId ?? null,
     });
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      const m = String(insertError.message || insertError).toLowerCase();
+      const columnMissing = m.includes("client_request_id") && (m.includes("does not exist") || m.includes("unknown column") || m.includes("column"));
+
+      if (columnMissing) {
+        const { error: insertError2 } = await supabase.from("messages").insert({
+          conversation_id: conversationId,
+          sender_user_id: senderUserId,
+          body: trimmed,
+        });
+        if (insertError2) throw insertError2;
+        return;
+      }
+
+      throw insertError;
+    }
   }
 }

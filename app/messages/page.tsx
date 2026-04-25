@@ -581,11 +581,13 @@ export default function MessagesPage() {
     const trimmed = draftMessage.trim();
     if (!trimmed) return;
 
+    const clientRequestId = crypto.randomUUID();
+
     setSending(true);
     setError("");
 
     try {
-      await sendMessage(activeConversationId, user.id, trimmed);
+      await sendMessage(activeConversationId, user.id, trimmed, clientRequestId);
       setDraftMessage("");
       await loadInbox();
     } catch (err: any) {
@@ -596,7 +598,7 @@ export default function MessagesPage() {
 
         if (!restoreError) {
           try {
-            await sendMessage(activeConversationId, user.id, trimmed);
+            await sendMessage(activeConversationId, user.id, trimmed, clientRequestId);
             setDraftMessage("");
             await loadInbox();
             return;
