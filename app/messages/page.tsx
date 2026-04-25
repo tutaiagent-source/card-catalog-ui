@@ -69,7 +69,23 @@ export default function MessagesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 pb-24 flex flex-col lg:flex-row">
+    <main className="min-h-screen bg-slate-950 text-slate-100 pb-24 flex flex-col lg:flex-row"> 
+      {/* Left Sidebar */}
+      <div className="flex-none w-full lg:w-80 rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col"> 
+        <div className="flex items-center justify-between mb-4"> 
+          <CardCatLogo /> 
+          <button className="bg-teal-500 text-white px-4 py-2 rounded-lg">Compose</button> 
+        </div> 
+        <div className="flex flex-col space-y-2"> 
+          <div className="text-sm font-semibold text-white">Folders</div> 
+          <button className="rounded-md p-2 text-left hover:bg-gray-700" onClick={navigateToInbox}>Inbox</button> 
+          <button className="rounded-md p-2 text-left hover:bg-gray-700" onClick={navigateToSent}>Sent</button> 
+          <button className="rounded-md p-2 text-left hover:bg-gray-700" onClick={navigateToDrafts}>Drafts</button> 
+          <button className="rounded-md p-2 text-left hover:bg-gray-700" onClick={navigateToArchived}>Archived</button> 
+          <button className="rounded-md p-2 text-left hover:bg-gray-700" onClick={navigateToTrash}>Trash</button> 
+        </div> 
+      </div>
+      {/* Middle Thread List */}
       {/* Left Sidebar */}
       <div className="flex-none w-full lg:w-80 rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col">
         <div className="flex items-center justify-between mb-4">
