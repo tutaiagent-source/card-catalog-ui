@@ -402,11 +402,11 @@ export default function MessagesPage() {
           ? otherProfile.display_name
           : "User";
 
-      const title = ctxCard?.year && ctxCard?.player_name
+      const cardContextLabel = ctxCard?.year && ctxCard?.player_name
         ? `About ${ctxCard.year} ${ctxCard.player_name}`
-        : otherProfile?.username
-          ? `@${otherProfile.username}`
-          : "Conversation";
+        : null;
+
+      const title = cardContextLabel || "Direct conversation";
 
       return {
         conversation,
@@ -420,6 +420,7 @@ export default function MessagesPage() {
         unread,
         fromLabel,
         title,
+        cardContextLabel,
       };
     });
   }, [conversations, participants, profiles, messages, user?.id, conversationContextCards]);
@@ -1185,13 +1186,12 @@ export default function MessagesPage() {
 	            {activeConversation ? (
 	              <>
 	                <div className="border-b border-white/10 pb-4 flex-shrink-0">
-	                  <div className="text-lg font-semibold text-white">{activeConversation.title}</div>
-	                  <div className="mt-1 text-sm text-slate-300">From {activeRecipientLabel}</div>
+	                  <div className="text-lg font-semibold text-white">{activeRecipientLabel}</div>
+	                  <div className="mt-1 text-sm text-slate-300">Direct conversation</div>
 	                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
-	                    <span>Direct conversation</span>
-                    {activeConversationContextCardId && activeConversationCard ? (
+                    {activeConversation.cardContextLabel && activeMessages.length > 0 ? (
                       <span className="inline-flex items-center rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-semibold text-slate-200">
-                        About {activeConversationCard.year} {activeConversationCard.player_name}
+                        {activeConversation.cardContextLabel}
                       </span>
                     ) : null}
                   </div>
@@ -1275,8 +1275,8 @@ export default function MessagesPage() {
 	                      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-3 py-2">
 	                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">To</div>
 	                        <div className="mt-1 text-sm font-semibold text-white">{activeRecipientLabel}</div>
-	                        {activeConversationContextCardId && activeConversationCard ? (
-	                          <div className="mt-1 text-xs text-emerald-100/90">About {activeConversationCard.year} {activeConversationCard.player_name}</div>
+	                        {activeConversation.cardContextLabel && activeMessages.length > 0 ? (
+	                          <div className="mt-1 text-xs text-emerald-100/90">{activeConversation.cardContextLabel}</div>
 	                        ) : null}
 	                      </div>
 	                      <textarea
