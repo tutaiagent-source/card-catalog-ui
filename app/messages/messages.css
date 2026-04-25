@@ -1,0 +1,13 @@
+/* Mobile responsiveness styles */
+@media (max-width: 768px) {
+  main {
+    flex-direction: column; /* Stack components vertically */
+  }
+  .flex-none {
+    width: 100%; /* Full width for sidebar */
+  }
+  .flex-grow {
+    max-height: calc(100vh - 220px); /* Control height */
+    overflow-y: auto; /* Allow scrolling if necessary */
+  }
+}
