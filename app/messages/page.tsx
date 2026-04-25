@@ -408,6 +408,7 @@ export default function MessagesPage() {
       const unread = Boolean(
         myParticipant &&
           latestNonDeletedMessage &&
+          latestNonDeletedMessage.sender_user_id !== user?.id &&
           (!myParticipant.last_read_at || new Date(latestNonDeletedMessage.created_at).getTime() > new Date(myParticipant.last_read_at).getTime())
       );
 
