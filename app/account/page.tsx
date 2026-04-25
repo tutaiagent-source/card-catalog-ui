@@ -316,22 +316,22 @@ export default function AccountPage() {
             <h1 className="mt-3 text-2xl font-bold">My Account</h1>
             <div className="mt-1 text-sm text-slate-400">Manage your login and collection settings.</div>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <a href="/catalog" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <a href="/catalog" className="w-full sm:w-auto rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
               Catalog
             </a>
-            <a href="/messages" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
+            <a href="/messages" className="w-full sm:w-auto rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
               Messages
             </a>
-            <a href="/market" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
+            <a href="/market" className="w-full sm:w-auto rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
               Market
             </a>
-            <a href="/sold" className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
+            <a href="/sold" className="w-full sm:w-auto rounded bg-slate-800 px-4 py-2 text-sm font-semibold hover:bg-slate-700">
               Sold
             </a>
             <button
               type="button"
-              className="rounded bg-[#d50000] px-4 py-2 text-sm font-semibold hover:bg-[#b80000]"
+              className="w-full sm:w-auto rounded bg-[#d50000] px-4 py-2 text-sm font-semibold hover:bg-[#b80000]"
               onClick={async () => {
                 if (!supabaseConfigured || !supabase) return;
                 await supabase.auth.signOut();
