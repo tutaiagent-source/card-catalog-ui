@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { driveToImageSrc } from "@/lib/googleDrive";
-import { parseSellerMeta } from "@/lib/cardSellerMeta";
+import { buildSellerNotes, parseSellerMeta } from "@/lib/cardSellerMeta";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
@@ -98,6 +98,7 @@ export default function ListedPage() {
   const [editLink, setEditLink] = useState<string>("");
   const [editAskingPrice, setEditAskingPrice] = useState<string>("");
   const [editListedAt, setEditListedAt] = useState<string>("");
+  const [editSellerNotes, setEditSellerNotes] = useState<string>("");
   const [isSavingDetails, setIsSavingDetails] = useState(false);
 
   const [markSoldModal, setMarkSoldModal] = useState<{ price: string; date: string } | null>(null);
@@ -206,6 +207,7 @@ export default function ListedPage() {
     setEditLink(String(activeCard.sale_platform || ""));
     setEditAskingPrice(activeCard.asking_price != null ? String(activeCard.asking_price) : "");
     setEditListedAt(activeCard.listed_at ? String(activeCard.listed_at).slice(0, 10) : "");
+    setEditSellerNotes(parseSellerMeta(activeCard.notes).publicNotes);
   }, [activeCard]);
 
   async function createListingShare() {
@@ -404,10 +406,12 @@ export default function ListedPage() {
 
       const listed_at = editListedAt.trim() ? editListedAt.trim() : null;
       const sale_platform = editLink.trim() ? editLink.trim() : null;
+      const existingSellerMeta = parseSellerMeta(activeCard.notes).meta;
+      const notes = buildSellerNotes(editSellerNotes, existingSellerMeta);
 
       const { error } = await supabase
         .from("cards")
-        .update({ asking_price, listed_at, sale_platform })
+        .update({ asking_price, listed_at, sale_platform, notes })
         .eq("id", activeCard.id)
         .eq("user_id", user.id);
 
@@ -420,12 +424,12 @@ export default function ListedPage() {
       setCards((prev) =>
         prev.map((c) =>
           c.id === activeCard.id
-            ? { ...c, asking_price, listed_at, sale_platform }
+            ? { ...c, asking_price, listed_at, sale_platform, notes }
             : c
         )
       );
 
-      setActiveCard((prev) => (prev ? { ...prev, asking_price, listed_at, sale_platform } : prev));
+      setActiveCard((prev) => (prev ? { ...prev, asking_price, listed_at, sale_platform, notes } : prev));
     } finally {
       setIsSavingDetails(false);
     }
@@ -488,6 +492,7 @@ export default function ListedPage() {
   const activeHref = toUrl(editLink);
   const activeCardPublicNotes = useMemo(() => parseSellerMeta(activeCard?.notes).publicNotes, [activeCard?.notes]);
   const normalizedEditLink = editLink.trim();
+  const normalizedEditSellerNotes = editSellerNotes.trim();
   const normalizedEditListedAt = editListedAt.trim();
   const normalizedEditAskingPrice = (() => {
     const raw = editAskingPrice.trim();
@@ -498,10 +503,12 @@ export default function ListedPage() {
   const activeAskingPrice = activeCard?.asking_price != null ? String(Number(activeCard.asking_price)) : "";
   const activeListedAtValue = activeCard?.listed_at ? String(activeCard.listed_at).slice(0, 10) : "";
   const activeLinkValue = String(activeCard?.sale_platform || "").trim();
+  const activePublicNotesValue = activeCardPublicNotes.trim();
   const isListingDirty = Boolean(activeCard) && (
     normalizedEditLink !== activeLinkValue ||
     normalizedEditListedAt !== activeListedAtValue ||
-    normalizedEditAskingPrice !== activeAskingPrice
+    normalizedEditAskingPrice !== activeAskingPrice ||
+    normalizedEditSellerNotes !== activePublicNotesValue
   );
 
   const nowMs = Date.now();
@@ -1042,13 +1049,16 @@ export default function ListedPage() {
                       </div>
                     </label>
 
-                    {activeCardPublicNotes ? (
-                      <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                        <div className="text-sm font-semibold text-slate-200">Seller notes</div>
-                        <div className="mt-2 whitespace-pre-wrap text-sm text-slate-300">{activeCardPublicNotes}</div>
-                        <div className="mt-2 text-xs text-slate-500">Shown to buyers in Market and shared listing views.</div>
-                      </div>
-                    ) : null}
+                    <label className="block rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+                      <div className="text-sm font-semibold text-slate-200">Seller notes</div>
+                      <div className="mt-2 text-sm text-slate-400">Optional buyer-facing notes. These show in Market and shared listing detail views.</div>
+                      <textarea
+                        value={editSellerNotes}
+                        onChange={(e) => setEditSellerNotes(e.target.value)}
+                        placeholder="Example: Small surface scratch on the top loader, card itself looks clean."
+                        className="mt-3 min-h-[110px] w-full resize-y rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-white outline-none placeholder:text-slate-500"
+                      />
+                    </label>
 
                     <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
                       <div className="text-sm font-semibold text-slate-200">Market visibility</div>
