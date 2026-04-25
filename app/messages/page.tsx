@@ -823,7 +823,15 @@ export default function MessagesPage() {
       setReportModalOpen(false);
       alert("Thanks for the report. We'll review it.");
     } catch (err: any) {
-      setReportError(err?.message || "Could not submit report.");
+      const msg = String(err?.message || "Could not submit report.");
+      const lower = msg.toLowerCase();
+      if (lower.includes("schema cache") || lower.includes("user_reports") || lower.includes("does not exist")) {
+        setReportError(
+          "Reports aren’t enabled yet on the server. Ask the CardCat admin to run the SQL migration for user reports."
+        );
+      } else {
+        setReportError(msg);
+      }
     } finally {
       setReportSending(false);
       setConversationActionSaving(false);
