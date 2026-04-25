@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import CardCatLogo from "@/components/CardCatLogo";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
@@ -88,22 +88,13 @@ export default function MarketPage() {
   const [sellerFilter, setSellerFilter] = useState("");
   const [activeCard, setActiveCard] = useState<MarketCard | null>(null);
   const [showBack, setShowBack] = useState(false);
-  const [zoomEnabled, setZoomEnabled] = useState(false);
-  const [zoomOrigin, setZoomOrigin] = useState({ x: 50, y: 50 });
   const [loadingCards, setLoadingCards] = useState(false);
   const [messageStarting, setMessageStarting] = useState(false);
   const [error, setError] = useState("");
 
-  const zoomContainerRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     setShowBack(false);
-    setZoomEnabled(false);
   }, [activeCard?.id]);
-
-  useEffect(() => {
-    setZoomEnabled(false);
-  }, [showBack]);
 
   useEffect(() => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -362,63 +353,21 @@ export default function MarketPage() {
                           {showBack ? "Show front" : "Show back"}
                         </button>
                       ) : null}
-
-                      {activeCard.image_url || activeCard.back_image_url ? (
-                        <button
-                          type="button"
-                          onClick={() => setZoomEnabled((v) => !v)}
-                          className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
-                        >
-                          {zoomEnabled ? "Zoomed" : "🔎 Zoom"}
-                        </button>
-                      ) : null}
                     </div>
                   </div>
 
-                  <div
-                    ref={zoomContainerRef}
-                    className={`mt-4 relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-950 ${zoomEnabled ? "cursor-zoom-out" : "cursor-zoom-in"}`}
-                    onMouseMove={(e) => {
-                      if (!zoomEnabled) return;
-                      const el = zoomContainerRef.current;
-                      if (!el) return;
-                      const rect = el.getBoundingClientRect();
-                      const x = ((e.clientX - rect.left) / rect.width) * 100;
-                      const y = ((e.clientY - rect.top) / rect.height) * 100;
-                      setZoomOrigin({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
-                    }}
-                    onMouseLeave={() => {
-                      if (!zoomEnabled) return;
-                      setZoomOrigin({ x: 50, y: 50 });
-                    }}
-                  >
+                  <div className="mt-4 relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-950">
                     {showBack && activeCard.back_image_url ? (
                       <img
                         alt="back"
                         src={driveToImageSrc(activeCard.back_image_url)}
-                        className={`h-full w-full ${zoomEnabled ? "object-cover" : "object-contain"}`}
-                        style={
-                          zoomEnabled
-                            ? {
-                                transform: "scale(2.8)",
-                                transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
-                              }
-                            : undefined
-                        }
+                        className="h-full w-full object-contain"
                       />
                     ) : activeCard.image_url ? (
                       <img
                         alt="front"
                         src={driveToImageSrc(activeCard.image_url)}
-                        className={`h-full w-full ${zoomEnabled ? "object-cover" : "object-contain"}`}
-                        style={
-                          zoomEnabled
-                            ? {
-                                transform: "scale(2.8)",
-                                transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
-                              }
-                            : undefined
-                        }
+                        className="h-full w-full object-contain"
                       />
                     ) : (
                       <div className="h-full w-full" />
