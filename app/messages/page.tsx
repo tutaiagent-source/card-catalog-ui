@@ -699,6 +699,13 @@ export default function MessagesPage() {
         if (convDeleteErr) throw convDeleteErr;
 
         setSelectedConversationIds([]);
+        setConversationParam("");
+        setActiveConversationId(null);
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href);
+          url.searchParams.delete("conversation");
+          window.history.replaceState({}, "", url.toString());
+        }
         await loadInbox();
         return;
       }
@@ -711,6 +718,13 @@ export default function MessagesPage() {
       }
 
       setSelectedConversationIds([]);
+      setConversationParam("");
+      setActiveConversationId(null);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("conversation");
+        window.history.replaceState({}, "", url.toString());
+      }
       await loadInbox();
     } catch (err: any) {
       setError(err?.message || "Could not delete conversation.");
@@ -884,6 +898,8 @@ export default function MessagesPage() {
       }
 
       setSelectedConversationIds([]);
+      setConversationParam("");
+      setActiveConversationId(null);
       await loadInbox();
     } catch (err: any) {
       setBulkDeleteError(err?.message || "Could not delete selected conversations.");
