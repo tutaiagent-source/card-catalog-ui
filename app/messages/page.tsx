@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import CardCatLogo from "@/components/CardCatLogo";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { ConversationRow, ConversationParticipantRow, MessageRow } from "@/lib/messaging";
+import './messages.css'; // Import the new CSS styles
 
 // Local type definition for CardContext
 
@@ -94,18 +95,4 @@ export default function MessagesPage() {
       </section>
     </main>
   );
-}
-
-/* Mobile responsiveness styles */
-@media (max-width: 768px) {
-  main {
-    flex-direction: column; /* Stack components vertically */
-  }
-  .flex-none {
-    width: 100%; /* Full width for sidebar */
-  }
-  .flex-grow {
-    max-height: calc(100vh - 220px); /* Control height */
-    overflow-y: auto; /* Allow scrolling if necessary */
-  }
 }
