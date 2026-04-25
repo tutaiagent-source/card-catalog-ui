@@ -57,11 +57,11 @@ export default function MessagesPage() {
         </div>
         <div className="flex flex-col space-y-2">
           <div className="text-sm font-semibold text-white">Folders</div>
-          <button className="rounded-md p-2 text-left hover:bg-gray-700">Inbox</button>
-          <button className="rounded-md p-2 text-left hover:bg-gray-700">Sent</button>
-          <button className="rounded-md p-2 text-left hover:bg-gray-700">Drafts</button>
-          <button className="rounded-md p-2 text-left hover:bg-gray-700">Archived</button>
-          <button className="rounded-md p-2 text-left hover:bg-gray-700">Trash</button>
+          <button className="rounded-md p-2 text-left hover:bg-gray-700" onClick={() => navigateToInbox()}>Inbox</button>
+          <button className="rounded-md p-2 text-left hover:bg-gray-700" onClick={() => navigateToSent()}>Sent</button>
+          <button className="rounded-md p-2 text-left hover:bg-gray-700" onClick={() => navigateToDrafts()}>Drafts</button>
+          <button className="rounded-md p-2 text-left hover:bg-gray-700" onClick={() => navigateToArchived()}>Archived</button>
+          <button className="rounded-md p-2 text-left hover:bg-gray-700" onClick={() => navigateToTrash()}>Trash</button>
         </div>
       </div>
 
