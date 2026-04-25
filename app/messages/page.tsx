@@ -690,6 +690,19 @@ export default function MessagesPage() {
         .map((r: any) => String(r.id || ""))
         .filter(Boolean);
 
+      // If this thread has no messages yet, soft-deleting messages does nothing.
+      // Remove the caller's participant row so it disappears from Inbox.
+      if (messageIds.length === 0) {
+        const { error: convDeleteErr } = await supabase.rpc("delete_conversation_for_user", {
+          p_conversation_id: activeConversationId,
+        });
+        if (convDeleteErr) throw convDeleteErr;
+
+        setSelectedConversationIds([]);
+        await loadInbox();
+        return;
+      }
+
       for (const id of messageIds) {
         const { error: rpcError } = await supabase.rpc("delete_message", {
           p_message_id: id,
