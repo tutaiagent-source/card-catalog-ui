@@ -73,16 +73,14 @@ export default function MessagesPage() {
         
         <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1 pb-2">
           {conversations
-            .filter(conv => conv.body.includes(searchQuery))
-            .map(conv => {
-              return (
-                <div key={conv.id} className="p-2 border-b border-gray-700 hover:bg-gray-800 cursor-pointer">
-                  <div className="font-semibold">{conv.body}</div>
-                  <div className="text-sm text-gray-400">{new Date(conv.last_message_at).toLocaleString()}</div>
-                  <button className="mt-1 text-teal-500" onClick={() => markAsRead(conv.id)}>Mark as Read</button>
-                </div>
-              );
-            })}
+            .filter(conv => conv.id.includes(searchQuery))
+            .map(conv => (
+              <div key={conv.id} className="p-2 border-b border-gray-700 hover:bg-gray-800 cursor-pointer">
+                <div className="font-semibold">{conv.id}</div> {/* Adjust this part to display the appropriate value */}
+                <div className="text-sm text-gray-400">{new Date(conv.last_message_at).toLocaleString()}</div>
+                <button className="mt-1 text-teal-500" onClick={() => markAsRead(conv.id)}>Mark as Read</button>
+              </div>
+            ))}
         </div>
       </section>
 
