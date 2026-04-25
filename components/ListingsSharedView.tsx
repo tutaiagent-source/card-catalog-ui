@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { driveToImageSrc } from "@/lib/googleDrive";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { startDirectConversation } from "@/lib/messaging";
 import { parseSellerMeta } from "@/lib/cardSellerMeta";
@@ -106,10 +105,14 @@ export default function ListingsSharedView({
 
   const activeCardPublicNotes = useMemo(() => parseSellerMeta(activeCard?.notes).publicNotes, [activeCard?.notes]);
 
-  const proxyImageSrc = (imageUrl?: string | null, variant: "grid" | "detail" = "detail") => {
-    const src = imageUrl ? driveToImageSrc(imageUrl, { variant }) : "";
-    if (!src) return "";
-    return `/api/listings-share-image?token=${encodeURIComponent(token)}&src=${encodeURIComponent(src)}&variant=${encodeURIComponent(variant)}`;
+  const proxyImageSrc = (
+    cardId?: string | null,
+    side: "front" | "back" = "front",
+    variant: "grid" | "detail" = "detail"
+  ) => {
+    const id = String(cardId || "").trim();
+    if (!id) return "";
+    return `/api/listings-share-image?token=${encodeURIComponent(token)}&cardId=${encodeURIComponent(id)}&side=${encodeURIComponent(side)}&variant=${encodeURIComponent(variant)}`;
   };
 
   async function handleMessageSeller(card: SharedCard) {
@@ -197,8 +200,8 @@ export default function ListingsSharedView({
                         aria-label={`View ${c.player_name}`}
                     >
 	                      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center">
-	                        {c.image_url ? (
-	                          <img alt={c.player_name} src={proxyImageSrc(c.image_url, "detail")} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
+	                        {c.image_url && c.id ? (
+	                          <img alt={c.player_name} src={proxyImageSrc(c.id, "front", "detail")} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
 	                        ) : (
 	                          <div className="h-full w-full" />
 	                        )}
@@ -303,10 +306,10 @@ export default function ListingsSharedView({
                             transform: showBack ? "rotateY(180deg)" : "rotateY(0deg)",
                           }}
                         >
-                          {activeCard.image_url ? (
+                          {activeCard.image_url && activeCard.id ? (
                             <img
                               alt="front"
-                              src={proxyImageSrc(activeCard.image_url, "detail")}
+                              src={proxyImageSrc(activeCard.id, "front", "detail")}
                               className="absolute inset-0 h-full w-full object-contain"
                               style={{ backfaceVisibility: "hidden" }}
                               draggable={false}
@@ -315,10 +318,10 @@ export default function ListingsSharedView({
                             <div className="absolute inset-0 h-full w-full" style={{ backfaceVisibility: "hidden" }} />
                           )}
 
-                          {activeCard.back_image_url ? (
+                          {activeCard.back_image_url && activeCard.id ? (
                             <img
                               alt="back"
-                              src={proxyImageSrc(activeCard.back_image_url, "detail")}
+                              src={proxyImageSrc(activeCard.id, "back", "detail")}
                               className="absolute inset-0 h-full w-full object-contain"
                               style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                               draggable={false}
