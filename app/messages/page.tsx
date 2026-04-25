@@ -1,21 +1,40 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import CardCatLogo from "@/components/CardCatLogo";
-import CardCatMobileNav from "@/components/CardCatMobileNav";
-import EmailVerificationNotice from "@/components/EmailVerificationNotice";
-import UsernamePromptBanner from "@/components/UsernamePromptBanner";
-import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
-// Import other required components here...
+import { ConversationRow, ConversationParticipantRow, MessageRow } from "@/lib/messaging";
+
+// Local type definition for CardContext
+
+type CardContext = {
+  id?: string;
+  player_name: string;
+  year: string;
+  brand: string;
+  set_name: string;
+  parallel: string;
+  card_number: string;
+  asking_price?: number | null;
+  image_url?: string | null;
+};
 
 export default function MessagesPage() {
   const { user, loading } = useSupabaseUser();
   const [searchQuery, setSearchQuery] = useState<string>("");
-
-  // Other state variables...
+  
+  const [activeConversationCard, setActiveConversationCard] = useState<CardContext | null>(null);
+  const [conversations, setConversations] = useState<ConversationRow[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [conversationContextCards, setConversationContextCards] = useState<CardContext[]>([]);
 
   useEffect(() => {
-    // Load messages initially...
-  }, [user]); // Adjust dependencies...
+    const currentConversation = conversations.find(conv => conv.id === activeConversationId);
+    if (currentConversation && currentConversation.context_card_id) {
+      const cardContext = conversationContextCards.find(card => card.id === currentConversation.context_card_id);
+      setActiveConversationCard(cardContext || null); // Handles fallback properly
+    } else {
+      setActiveConversationCard(null);
+    }
+  }, [activeConversationId, conversations, conversationContextCards]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -60,8 +79,9 @@ export default function MessagesPage() {
 
       {/* Right Reading Pane */}
       <section className="flex-none border border-white/10 bg-white/[0.04] p-4 flex flex-col w-[320px] h-[calc(100vh-220px)] overflow-hidden">
-          {/* Details of selected conversation will be displayed here */}
-          <div className="text-lg font-semibold text-white">Conversation Details</div>
+          <div className="text-lg font-semibold text-white">
+            {activeConversationCard ? `${activeConversationCard.player_name} (${activeConversationCard.year})` : 'Conversation Details'}
+          </div>
           {/* Message history and functionality */}
       </section>
     </main>
