@@ -42,9 +42,9 @@ export default function MessagesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 pb-24 flex">
+    <main className="min-h-screen bg-slate-950 text-slate-100 pb-24 flex flex-col lg:flex-row">
       {/* Left Sidebar */}
-      <div className="flex-none w-80 rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col h-[calc(100vh-220px)] overflow-hidden">
+      <div className="flex-none w-full lg:w-80 rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <CardCatLogo />
           <button className="bg-teal-500 text-white px-4 py-2 rounded-lg">Compose</button>
@@ -60,7 +60,7 @@ export default function MessagesPage() {
       </div>
 
       {/* Middle Thread List */}
-      <section className="flex-grow rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col">
+      <section className="flex-grow rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col max-h-[calc(100vh-220px)] overflow-hidden">
         <div className="flex items-center gap-3 mb-4">
           <input
             value={searchQuery}
@@ -79,7 +79,7 @@ export default function MessagesPage() {
       </section>
 
       {/* Right Reading Pane */}
-      <section className="flex-none border border-white/10 bg-white/[0.04] p-4 flex flex-col w-[320px] h-[calc(100vh-220px)] overflow-hidden">
+      <section className="flex-none border border-white/10 bg-white/[0.04] p-4 flex flex-col w-full lg:w-[320px] h-[calc(100vh-220px)] overflow-hidden">
           <div className="text-lg font-semibold text-white">
             {activeConversationCard ? `${activeConversationCard.player_name} (${activeConversationCard.year})` : 'Conversation Details'}
           </div>
