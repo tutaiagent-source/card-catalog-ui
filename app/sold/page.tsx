@@ -465,39 +465,28 @@ export default function SoldPage() {
     if (salesWithMetrics.length === 0) return;
 
     const headers = [
-      // Machine-readable (kept for consistency)
-      "player_name",
-      "year",
-      "brand",
-      "set_name",
-      "parallel",
-      "card_number",
-      "team",
-      "sport",
-      "competition",
-      "quantity",
-      "sold_price_per_card",
-      "gross_sale",
-      "sold_at",
-      "sale_platform",
-      "card_cost",
-      "shipping_cost",
-      "platform_fee",
-      "net_profit",
-      "roi_percent",
-      "graded",
-      "grade",
-      "notes",
-
-      // Pretty / spreadsheet-friendly
-      "sold_at_date",
-      "sold_price_per_card_pretty",
-      "gross_sale_pretty",
-      "card_cost_pretty",
-      "shipping_cost_pretty",
-      "platform_fee_pretty",
-      "net_profit_pretty",
-      "roi_percent_pretty",
+      "Player Name",
+      "Year",
+      "Brand",
+      "Set Name",
+      "Parallel",
+      "Card Number",
+      "Team",
+      "Sport",
+      "Competition",
+      "Quantity",
+      "Sold Price Per Card",
+      "Gross Sale",
+      "Sold Date",
+      "Platform",
+      "Card Cost",
+      "Shipping Cost",
+      "Platform Fee",
+      "Net Profit",
+      "ROI %",
+      "Graded",
+      "Grade",
+      "Notes",
     ];
 
     const rows = salesWithMetrics.map((card) => {
@@ -508,7 +497,6 @@ export default function SoldPage() {
       const roi = card.metrics.roi != null ? Number(card.metrics.roi.toFixed(2)) : null;
 
       return [
-        // Machine-readable
         card.player_name,
         card.year,
         card.brand,
@@ -519,28 +507,18 @@ export default function SoldPage() {
         card.sport,
         card.competition || "",
         Number(card.quantity || 0),
-        soldPricePerCard ?? "",
-        card.metrics.grossSale,
-        card.sold_at || "",
-        normalizePlatformLabel(card.sale_platform),
-        costBasis ?? "",
-        shippingCost ?? "",
-        platformFee ?? "",
-        card.metrics.netProfit,
-        roi ?? "",
-        card.graded || "",
-        card.grade ?? "",
-        card.notes || "",
-
-        // Pretty
-        toDateInputValue(card.sold_at) || "",
         soldPricePerCard == null ? "" : money(soldPricePerCard),
         card.metrics.grossSale == null ? "" : money(Number(card.metrics.grossSale)),
+        toDateInputValue(card.sold_at) || "",
+        normalizePlatformLabel(card.sale_platform),
         costBasis == null ? "" : money(Number(costBasis)),
         shippingCost == null ? "" : money(Number(shippingCost)),
         platformFee == null ? "" : money(Number(platformFee)),
         card.metrics.netProfit == null ? "" : money(Number(card.metrics.netProfit)),
         roi == null ? "" : `${roi.toFixed(2)}%`,
+        card.graded || "",
+        card.grade ?? "",
+        card.publicNotes || "",
       ];
     });
 
