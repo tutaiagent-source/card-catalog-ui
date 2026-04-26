@@ -529,7 +529,6 @@ export default function MessagesPage() {
   useEffect(() => {
     if (!activeConversationId) return;
     if (displayConversationViews.some((v) => v.conversation.id === activeConversationId)) return;
-    if (conversationViews.some((v) => v.conversation.id === activeConversationId)) return;
     setActiveConversationId(displayConversationViews[0]?.conversation.id ?? null);
   }, [displayConversationViews, conversationViews, activeConversationId]);
 
@@ -1740,6 +1739,12 @@ export default function MessagesPage() {
 
   async function onDeleteActiveConversation() {
     if (!supabaseConfigured || !supabase || !user?.id || !activeConversationId) return;
+
+    console.debug("[DeleteThread] clicked", {
+      deleted_thread_id: activeConversationId,
+      current_active_thread_id: activeConversationId,
+      messageFolder,
+    });
     if (activeConversationIsBlocked) {
       setError("Unblock this user to delete the conversation.");
       return;
@@ -1789,9 +1794,14 @@ export default function MessagesPage() {
           url.searchParams.delete("conversation");
           window.history.replaceState({}, "", url.toString());
         }
-        await loadInbox();
-        return;
-      }
+      await loadInbox();
+
+      console.debug("[DeleteThread] after loadInbox", {
+        deleted_thread_id: activeConversationId,
+        // Note: activeConversationId will be updated by effects based on displayConversationViews
+      });
+      return;
+    }
 
       for (const id of messageIds) {
         const { error: rpcError } = await supabase.rpc("delete_message", {
@@ -1809,6 +1819,10 @@ export default function MessagesPage() {
         window.history.replaceState({}, "", url.toString());
       }
       await loadInbox();
+
+      console.debug("[DeleteThread] after loadInbox", {
+        deleted_thread_id: activeConversationId,
+      });
     } catch (err: any) {
       setError(err?.message || "Could not delete conversation.");
     } finally {
