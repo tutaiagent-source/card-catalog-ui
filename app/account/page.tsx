@@ -87,6 +87,12 @@ export default function AccountPage() {
   const collectorAddOnPricePerMonth = 2;
   const proPricePerMonth = 10;
   const currentPlanPreview = planPreview === "collector" ? "Collector" : planPreview === "seller" ? "Seller" : "Pro";
+  const stripePlanLabel = realTier ? (realTier === "pro" ? "Pro" : realTier === "seller" ? "Seller" : "Collector") : "Loading...";
+  const previewIsDifferentFromStripe = realTier
+    ? (planPreview === "collector" && realTier !== "collector") ||
+      (planPreview === "pro" && realTier !== "pro") ||
+      (planPreview === "seller" && realTier !== "seller")
+    : false;
   const usagePct = Math.min(100, Math.round((totalCards / collectorCardCap) * 100));
 
   const effectiveTier: "collector" | "pro" | "seller" = realTier ?? (planPreview === "collector" ? "collector" : planPreview === "seller" ? "seller" : "pro");
@@ -452,8 +458,13 @@ export default function AccountPage() {
               <h2 className="text-lg font-semibold">Plans & Usage</h2>
               <p className="mt-1 text-sm text-slate-400">3-tier preview for launch: Collector (capped), Pro (unlimited), and Seller.</p>
             </div>
-            <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-              Previewing: {currentPlanPreview}
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+                Stripe plan: {stripePlanLabel}
+              </div>
+              <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-200">
+                Preview: {currentPlanPreview}{previewIsDifferentFromStripe ? " (different)" : ""}
+              </div>
             </div>
           </div>
 
