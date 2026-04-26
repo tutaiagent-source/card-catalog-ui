@@ -508,9 +508,19 @@ export default function MessagesPage() {
 
   const activeConversationOtherUserId = useMemo(() => {
     if (!activeConversationId || !user?.id) return null;
-    const other = participants.find((p) => p.conversation_id === activeConversationId && p.user_id !== user.id);
-    return other?.user_id ?? null;
-  }, [activeConversationId, user?.id, participants]);
+    const otherFromParticipants = participants.find(
+      (p) => p.conversation_id === activeConversationId && p.user_id !== user.id
+    )?.user_id;
+    if (otherFromParticipants) return otherFromParticipants;
+
+    const otherFromConversationView = activeConversation?.otherUserId;
+    if (otherFromConversationView) return otherFromConversationView;
+
+    const otherFromMessages = messages
+      .find((m) => m.conversation_id === activeConversationId && m.sender_user_id !== user.id)
+      ?.sender_user_id;
+    return otherFromMessages ?? null;
+  }, [activeConversationId, user?.id, participants, activeConversation?.otherUserId, messages]);
 
   const unreadConversationCount = useMemo(
     () => conversationViews.filter((row) => row.hasNonDeletedMessages && row.unread).length,
