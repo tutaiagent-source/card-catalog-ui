@@ -95,6 +95,7 @@ export default function PcPage() {
     serial_number_text: "",
   });
   const [cardDetailsSaving, setCardDetailsSaving] = useState(false);
+  const [sendingToListing, setSendingToListing] = useState(false);
 
   useEffect(() => {
     if (!imageModal) return;
@@ -199,6 +200,36 @@ export default function PcPage() {
     setStatusToast(`${card.player_name} removed from PC.`);
     setImageModal((prev) => (prev?.card.id === card.id ? null : prev));
     setPcCards((prev) => prev.filter((c) => c.id !== card.id));
+  };
+
+  const sendToListing = async (card: Card) => {
+    if (!card.id) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const ok = confirm("Send this card to Listings?");
+    if (!ok) return;
+
+    setSendingToListing(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const { error } = await supabase
+        .from("cards")
+        .update({ status: "Listed", listed_at: today, pc_position: null })
+        .eq("id", card.id)
+        .eq("user_id", user.id);
+
+      if (error) {
+        alert(`Send to listing failed: ${error.message}`);
+        return;
+      }
+
+      setStatusToast(`${card.player_name} sent to Listings.`);
+      setImageModal(null);
+      setPcCards((prev) => prev.filter((c) => c.id !== card.id));
+    } finally {
+      setSendingToListing(false);
+    }
   };
 
   const updateEstimatedPrice = async () => {
@@ -743,6 +774,15 @@ export default function PcPage() {
                 </div>
                 <div className="mt-2 text-xs text-slate-400">Used in the PC total value at the top of the page.</div>
               </div>
+
+              <button
+                type="button"
+                disabled={sendingToListing}
+                className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-200 hover:bg-emerald-500/15 disabled:opacity-60"
+                onClick={() => sendToListing(imageModal.card)}
+              >
+                {sendingToListing ? "Sending…" : "Send to listings"}
+              </button>
 
               <button
                 type="button"

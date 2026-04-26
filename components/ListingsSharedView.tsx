@@ -216,8 +216,12 @@ export default function ListingsSharedView({
                           {c.set_name} · {c.parallel}
                         </div>
 
-                        {showPricing && c.asking_price != null ? (
-                          <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
+                        {c.asking_price != null ? (
+                          showPricing ? (
+                            <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
+                          ) : (
+                            <div className="mt-2 text-sm font-semibold text-emerald-200">✅ Accepting offers</div>
+                          )
                         ) : null}
                       </div>
 
@@ -368,11 +372,15 @@ export default function ListingsSharedView({
                         </div>
                       ) : null}
 
-                      {showPricing && activeCard.asking_price != null ? (
-                        <div className="pt-1">
-                          <span className="text-slate-400">Asking:</span>{" "}
-                          <span className="text-white font-semibold">{formatMoney(Number(activeCard.asking_price))}</span>
-                        </div>
+                      {activeCard.asking_price != null ? (
+                        showPricing ? (
+                          <div className="pt-1">
+                            <span className="text-slate-400">Asking:</span>{" "}
+                            <span className="text-white font-semibold">{formatMoney(Number(activeCard.asking_price))}</span>
+                          </div>
+                        ) : (
+                          <div className="pt-1 text-sm font-semibold text-emerald-200">✅ Accepting offers</div>
+                        )
                       ) : null}
 
                       {activeCardPublicNotes ? (

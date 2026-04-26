@@ -37,7 +37,7 @@ export default async function ListedSharePage({
         .select("created_at, expires_at, revoked_at, show_pricing")
         .eq("share_token", token)
         .maybeSingle();
-      share = fallback.data ? ({ ...fallback.data, show_comp_check: false } as any) : fallback.data;
+      share = fallback.data ? ({ ...fallback.data, show_comp_check: true } as any) : fallback.data;
       shareErr = fallback.error;
     }
 

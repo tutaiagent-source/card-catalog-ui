@@ -95,6 +95,7 @@ export default function MarketPage() {
   const [onlyMemorabilia, setOnlyMemorabilia] = useState(false);
   const [activeCard, setActiveCard] = useState<MarketCard | null>(null);
   const [showBack, setShowBack] = useState(false);
+  const [acceptingOffersByCardId, setAcceptingOffersByCardId] = useState<Record<string, boolean>>({});
   const [loadingCards, setLoadingCards] = useState(false);
   const [messageStarting, setMessageStarting] = useState(false);
   const [error, setError] = useState("");
@@ -466,7 +467,30 @@ export default function MarketPage() {
                     <div className="mt-3 text-sm font-semibold text-white line-clamp-2">{card.player_name}</div>
                     <div className="mt-1 text-xs text-slate-400 line-clamp-2">{[card.year, card.brand, card.set_name].filter(Boolean).join(" · ")}</div>
                     {sellerUsername ? <div className="mt-1 text-xs text-emerald-200">@{sellerUsername}</div> : null}
-                    {card.asking_price != null ? <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(card.asking_price))}</div> : null}
+                    {card.asking_price != null ? (
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <label className="flex cursor-pointer items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={card.id ? Boolean(acceptingOffersByCardId[card.id]) : false}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={() => {
+                              if (!card.id) return;
+                              setAcceptingOffersByCardId((prev) => ({
+                                ...prev,
+                                [card.id as string]: !prev[card.id as string],
+                              }));
+                            }}
+                            className="h-4 w-4 rounded border-white/20 bg-slate-950 text-emerald-400"
+                          />
+                          <span className="text-[12px] font-semibold text-emerald-200">Offers</span>
+                        </label>
+
+                        {!card.id || !acceptingOffersByCardId[card.id] ? (
+                          <div className="text-sm font-semibold text-slate-100">{formatMoney(Number(card.asking_price))}</div>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </button>
                 );
               })}
@@ -532,7 +556,32 @@ export default function MarketPage() {
                     {activeCard.parallel ? <div><span className="text-slate-400">Parallel:</span> <span className="text-white">{activeCard.parallel}</span></div> : null}
                     <div><span className="text-slate-400">Card:</span> <span className="text-white">#{activeCard.card_number}</span></div>
                     {activeCard.serial_number_text ? <div><span className="text-slate-400">Serial:</span> <span className="text-white">{activeCard.serial_number_text}</span></div> : null}
-                    {activeCard.asking_price != null ? <div><span className="text-slate-400">Asking:</span> <span className="font-semibold text-white">{formatMoney(Number(activeCard.asking_price))}</span></div> : null}
+                    {activeCard.asking_price != null ? (
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="flex cursor-pointer items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={activeCard.id ? Boolean(acceptingOffersByCardId[activeCard.id]) : false}
+                            onChange={() => {
+                              if (!activeCard.id) return;
+                              setAcceptingOffersByCardId((prev) => ({
+                                ...prev,
+                                [activeCard.id as string]: !prev[activeCard.id as string],
+                              }));
+                            }}
+                            className="h-4 w-4 rounded border-white/20 bg-slate-950 text-emerald-400"
+                          />
+                          <span className="text-sm text-slate-400">Accepting offers</span>
+                        </label>
+
+                        {!activeCard.id || !acceptingOffersByCardId[activeCard.id] ? (
+                          <div className="text-sm">
+                            <span className="text-slate-400">Asking:</span>{" "}
+                            <span className="font-semibold text-white">{formatMoney(Number(activeCard.asking_price))}</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                     {activeCardPublicNotes ? (
                       <div className="pt-3">
                         <div className="text-slate-400">Seller notes:</div>
