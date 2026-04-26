@@ -26,13 +26,9 @@ function priceIdToTier(priceId: string): "collector" | "pro" | "seller" | null {
 
 async function sendSubscriptionWelcomeEmail({
   tier,
-  userId,
-  stripeSubscriptionId,
   recipientEmail,
 }: {
   tier: "collector" | "pro" | "seller";
-  userId: string;
-  stripeSubscriptionId: string;
   recipientEmail: string;
 }) {
   if (!recipientEmail) return;
@@ -67,15 +63,7 @@ async function sendSubscriptionWelcomeEmail({
 
   const resendMessageId: string | undefined = (data as any)?.id;
 
-  await supabaseAdmin!.from("email_events").insert({
-    user_id: userId,
-    email_type: "subscription_welcome",
-    stripe_subscription_id: stripeSubscriptionId,
-    recipient_email: recipientEmail,
-    plan_name: tier === "pro" ? "Pro" : tier === "seller" ? "Seller" : "Collector",
-    status: "sent",
-    resend_message_id: resendMessageId ?? null,
-  });
+  return resendMessageId ?? null;
 }
 
 export async function POST(req: Request) {
@@ -140,26 +128,90 @@ export async function POST(req: Request) {
           { onConflict: "user_id" }
         );
 
-        // Send a welcome email once per successful initial subscription checkout.
+        // Send a welcome email once per user (initial signup only), race-safe under webhook retries.
         if (recipientEmail && (subscription.status === "active" || subscription.status === "trialing")) {
+          const emailType = "subscription_welcome";
+          const planName = tier === "pro" ? "Pro" : tier === "seller" ? "Seller" : "Collector";
+          const stripeSubscriptionId = subscription.id;
+
+          let claimedEmailEventId: string | null = null;
+
+          // Claim (insert) before sending so retries cannot double-send.
           try {
-            const { data: existingEmail } = await supabaseAdmin
+            const { data: claimed, error: claimErr } = await supabaseAdmin
               .from("email_events")
+              .insert({
+                user_id: userId,
+                email_type: emailType,
+                stripe_subscription_id: stripeSubscriptionId,
+                recipient_email: recipientEmail,
+                plan_name: planName,
+                status: "sending",
+                resend_message_id: null,
+              })
               .select("id")
-              .eq("email_type", "subscription_welcome")
-              .eq("stripe_subscription_id", subscription.id)
               .maybeSingle();
 
-            if (!existingEmail) {
-              await sendSubscriptionWelcomeEmail({
-                tier,
-                userId,
-                stripeSubscriptionId: subscription.id,
-                recipientEmail,
-              });
+            if (claimErr) throw claimErr;
+            claimedEmailEventId = claimed?.id ?? null;
+          } catch (e: any) {
+            // If already claimed/sent, just read status; if failed, we try to re-claim.
+            const existingCode = e?.code;
+            if (existingCode !== "23505") {
+              console.error("Welcome email claim failed (continuing to check existing state)", e);
             }
-          } catch (e) {
-            console.error("Subscription welcome email flow failed", e);
+
+            const { data: existing } = await supabaseAdmin
+              .from("email_events")
+              .select("id, status")
+              .eq("email_type", emailType)
+              .eq("user_id", userId)
+              .maybeSingle();
+
+            if (!existing) break;
+            if (existing.status === "sent" || existing.status === "sending") {
+              // Another webhook already sent (or is sending).
+              break;
+            }
+
+            if (existing.status === "failed") {
+              const { data: reClaimed, error: reClaimErr } = await supabaseAdmin
+                .from("email_events")
+                .update({
+                  stripe_subscription_id: stripeSubscriptionId,
+                  recipient_email: recipientEmail,
+                  plan_name: planName,
+                  status: "sending",
+                  resend_message_id: null,
+                })
+                .eq("id", existing.id)
+                .eq("status", "failed")
+                .select("id")
+                .maybeSingle();
+
+              if (reClaimErr) throw reClaimErr;
+              claimedEmailEventId = reClaimed?.id ?? null;
+            }
+          }
+
+          if (!claimedEmailEventId) {
+            // Either already sent, currently sending, or could not re-claim.
+            break;
+          }
+
+          try {
+            const resendMessageId = await sendSubscriptionWelcomeEmail({
+              tier,
+              recipientEmail,
+            });
+
+            await supabaseAdmin.from("email_events").update({
+              status: "sent",
+              resend_message_id: resendMessageId,
+            }).eq("id", claimedEmailEventId);
+          } catch (sendErr) {
+            console.error("Subscription welcome email send failed", sendErr);
+            await supabaseAdmin.from("email_events").update({ status: "failed" }).eq("id", claimedEmailEventId);
           }
         }
 
