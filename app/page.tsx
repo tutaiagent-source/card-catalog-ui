@@ -4,20 +4,16 @@ import ShareSheetFeaturePreview from "@/components/ShareSheetFeaturePreview";
 
 const featureCards = [
   {
-    title: "Cleaner Catalog Control",
-    body: "Search, filter, and move cards between Collection, Active Listings, and Sold without spreadsheet clutter.",
+    title: "No selling fees",
+    body: "Sell cards without fees. CardCat focuses on collectors, not transaction take-rates.",
   },
   {
-    title: "Built For Real Collections",
-    body: "Keep Personal Collection (PC ★), Active Listings, and Sold history connected to the same card record.",
+    title: "Built-in deal system",
+    body: "Offers, counters, and messaging inside the deal flow, so every step stays organized.",
   },
   {
-    title: "Guided Import Workflow",
-    body: "Import from CSV, review duplicates, and fix messy rows before you save.",
-  },
-  {
-    title: "Seller Tools When You Need Them",
-    body: "Create Card Posts with optional pricing, and share Active Listings with view-only links.",
+    title: "Automatic deal records",
+    body: "Document each transaction with downloadable receipts you can print and keep.",
   },
 ];
 
@@ -39,23 +35,33 @@ const audienceCards = [
 const workflow = [
   {
     step: "01",
-    title: "Add Cards Your Way",
-    body: "Start one by one or import a bigger collection from a spreadsheet.",
+    title: "Message",
+    body: "Start a conversation about the card and open the deal record.",
   },
   {
     step: "02",
-    title: "Organize What Matters",
-    body: "Keep your Catalog clean while starring cards into your PC (PC ★).",
+    title: "Offer",
+    body: "Make an offer (or counter) with clear amounts and notes.",
   },
   {
     step: "03",
-    title: "Track What Moves",
-    body: "Mark cards as Active Listings or Sold, and keep the story tied to the same card record.",
+    title: "Accept",
+    body: "Both sides agree, then the deal moves forward.",
   },
   {
     step: "04",
-    title: "Stay In Control",
-    body: "Export backups, review sold history, and share your Active Listings shelf whenever you want.",
+    title: "Record",
+    body: "Add payment details and confirm seller payment.",
+  },
+  {
+    step: "05",
+    title: "Ship",
+    body: "Store tracking and shipping details for your records.",
+  },
+  {
+    step: "06",
+    title: "Download receipt",
+    body: "Export a printable receipt so the whole transaction stays tied together.",
   },
 ];
 
@@ -103,15 +109,19 @@ export default function Home() {
           <div className="relative grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-                Catalog For Collectors
+                No-fee deal marketplace
               </div>
 
               <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-                A Premium Home For Your Collection, Your PC, And The Cards You Move.
+                Buy, sell, and trade cards — without the fees
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                CardCat helps collectors keep their Catalog tidy, star their PC, and manage the cards they list and sell. Keep everything connected: PC, Active Listings, Sold history, and Card Posts.
+                Make deals, track your collection, and document every transaction — all in one place.
+              </p>
+
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-200">
+                No selling fees. No middleman. Just collectors.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -119,35 +129,29 @@ export default function Home() {
                   href="/login"
                   className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
                 >
-                  Create Account
+                  Start your collection
                 </a>
                 <a
-                  href="/features"
+                  href="/add-card"
                   className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
                 >
-                  Explore Features
-                </a>
-                <a
-                  href="/catalog"
-                  className="rounded-xl border border-white/10 bg-slate-900 px-5 py-3 text-sm font-semibold text-slate-200 transition-colors hover:bg-slate-800"
-                >
-                  Open App
+                  List your first card
                 </a>
               </div>
 
               <div className="mt-5 max-w-xl rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Quick Comp Check</div>
-                <div className="mt-2 text-sm font-semibold text-white">Jump to eBay Recent Sold Comps in one click.</div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Membership-based marketplace</div>
+                <div className="mt-2 text-sm font-semibold text-white">Reduce spam and scams with structured deal records.</div>
                 <div className="mt-1 text-sm leading-6 text-slate-200">
-                  From any card record, open the exact recent sold results you want to compare.
+                  Structured deals keep every step clear: offers, acceptance, payment confirmation, and a downloadable receipt.
                 </div>
               </div>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
                 {[
-                  ["Personal Collection (PC ★)", "Star your favorites in PC without losing the full inventory story"],
-                  ["Sold Tracking", "Track what moved, when it sold, and what stays in the collection"],
-                  ["Export & Backups", "Import and export cleanly so your collection stays yours"],
+                  ["Collection tracker", "PC ★, Active Listings, and Sold history stay connected."],
+                  ["Receipts & exports", "Downloadable receipts and backups keep your records portable."],
+                  ["Guided import", "Import from CSV, review duplicates, and clean rows before you save."],
                 ].map(([label, body]) => (
                   <div key={label} className="rounded-2xl border border-white/10 bg-slate-950/55 p-4 backdrop-blur-sm">
                     <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</div>
@@ -161,13 +165,23 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-8 grid gap-4 lg:grid-cols-4">
-          {featureCards.map((feature) => (
-            <div key={feature.title} className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-              <div className="text-lg font-semibold text-white">{feature.title}</div>
-              <p className="mt-2 text-sm leading-6 text-slate-300">{feature.body}</p>
-            </div>
-          ))}
+        <section className="mt-8">
+          <div className="max-w-3xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Why collectors use CardCat</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">No selling fees + structured deals + receipts</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300">
+              CardCat is a membership-based marketplace built to reduce spam and scams, with deal records for every transaction.
+            </p>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {featureCards.map((feature) => (
+              <div key={feature.title} className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+                <div className="text-lg font-semibold text-white">{feature.title}</div>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{feature.body}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="mt-12 rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(6,95,70,0.18)] sm:p-8">
@@ -176,7 +190,7 @@ export default function Home() {
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Built To Help You Sell Faster</div>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Turn Any Card Into A Card Post In Seconds</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
-                Use your saved Catalog details and front/back images to generate a clean Card Post with optional pricing. Built for the places you already sell: Facebook groups, Discord, Reddit, and quick one-off listings.
+                Use your saved Catalog details and front/back images to generate a clean Card Post with optional pricing. Built for the places you already sell: Facebook groups, Discord, Reddit, and quick one-off listings. You can also list OR skip the passive post and start a structured deal in Messages.
               </p>
               <ul className="mt-5 space-y-2 text-sm text-slate-100/85">
                 <li>• Optional price on the image</li>
@@ -300,14 +314,14 @@ export default function Home() {
 
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_30px_80px_rgba(2,6,23,0.35)] sm:p-8">
           <div className="max-w-2xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">How CardCat Works</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A Cleaner Workflow From First Card To Sold History</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Deal Flow</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Message → Offer → Accept → Record → Ship → Receipt</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
-              CardCat is built around the real flow collectors use. Add, organize, track, and back up your collection without turning it into a mess.
+              Start a deal in Messages. Once you confirm, CardCat records every step with structured deal receipts.
             </p>
           </div>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-4">
+          <div className="mt-8 grid gap-4 lg:grid-cols-3">
             {workflow.map((item) => (
               <div key={item.step} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Step {item.step}</div>
