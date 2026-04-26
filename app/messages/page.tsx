@@ -9,6 +9,16 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { ConversationParticipantRow, ConversationRow, markConversationRead, MessageRow, sendMessage, startDirectConversation } from "@/lib/messaging";
 import { UserProfileRecord } from "@/lib/useUserProfile";
+import {
+  DealOfferRow,
+  DealRecordRow,
+  addDealTimelineEvent,
+  createDealOffer,
+  createDealRecord,
+  loadDealOffersForDealRecord,
+  loadDealRecordsForConversation,
+  respondToDealOffer,
+} from "@/lib/deals";
 
 type CardContext = {
   id?: string;
@@ -18,6 +28,7 @@ type CardContext = {
   set_name: string;
   parallel: string;
   card_number: string;
+  user_id?: string | null;
   asking_price?: number | null;
   image_url?: string | null;
 };
@@ -76,6 +87,17 @@ export default function MessagesPage() {
 
   const [activeConversationCard, setActiveConversationCard] = useState<CardContext | null>(null);
   const [conversationContextCards, setConversationContextCards] = useState<CardContext[]>([]);
+
+  const [dealRecords, setDealRecords] = useState<DealRecordRow[]>([]);
+  const [activeDealRecord, setActiveDealRecord] = useState<DealRecordRow | null>(null);
+  const [dealOffers, setDealOffers] = useState<DealOfferRow[]>([]);
+  const [dealLoading, setDealLoading] = useState(false);
+  const [dealActionSaving, setDealActionSaving] = useState(false);
+  const [dealError, setDealError] = useState<string>("");
+
+  const [offerAmountDraft, setOfferAmountDraft] = useState<string>("");
+  const [offerMessageDraft, setOfferMessageDraft] = useState<string>("");
+  const [counterAmountDraft, setCounterAmountDraft] = useState<string>("");
 
   const [messageFolder, setMessageFolder] = useState<"inbox" | "unread" | "deleted">("inbox");
 
@@ -495,6 +517,10 @@ export default function MessagesPage() {
     ? `@${activeConversation.otherProfile.username}`
     : activeConversation?.otherProfile?.display_name || activeConversation?.title || "This Conversation";
 
+  const pendingDealOffer = useMemo(() => {
+    return dealOffers.find((o) => String(o.status || "").toLowerCase() === "pending") ?? null;
+  }, [dealOffers]);
+
   const friendsUserIdSet = useMemo(() => {
     return new Set(friends.map((f) => String(f.id)));
   }, [friends]);
@@ -549,7 +575,7 @@ export default function MessagesPage() {
     (async () => {
       const { data, error } = await supabase
         .from("cards")
-        .select("id, player_name, year, brand, set_name, parallel, card_number, asking_price, image_url")
+        .select("id, user_id, player_name, year, brand, set_name, parallel, card_number, asking_price, image_url")
         .eq("id", activeConversationContextCardId)
         .maybeSingle();
 
@@ -567,6 +593,47 @@ export default function MessagesPage() {
       cancelled = true;
     };
   }, [activeConversationContextCardId, user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function run() {
+      if (!activeConversationId || !user?.id || !supabaseConfigured || !supabase) {
+        setDealRecords([]);
+        setActiveDealRecord(null);
+        setDealOffers([]);
+        return;
+      }
+
+      setDealLoading(true);
+      setDealError("");
+      try {
+        const records = await loadDealRecordsForConversation(activeConversationId);
+        if (cancelled) return;
+        setDealRecords(records);
+        const top = records[0] ?? null;
+        setActiveDealRecord(top);
+
+        if (top) {
+          const offers = await loadDealOffersForDealRecord(top.id);
+          if (cancelled) return;
+          setDealOffers(offers);
+        } else {
+          setDealOffers([]);
+        }
+      } catch (err: any) {
+        if (cancelled) return;
+        setDealError(err?.message || "Could not load deal records.");
+      } finally {
+        if (cancelled) return;
+        setDealLoading(false);
+      }
+    }
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConversationId, user?.id]);
   const activeMessages = useMemo(() => {
     const base = messages.filter((message) => message.conversation_id === activeConversationId);
     if (messageFolder === "deleted") return base.filter((m) => Boolean(m.deleted_at));
@@ -613,6 +680,250 @@ export default function MessagesPage() {
       setError(err?.message || "Could not send message.");
     } finally {
       setSending(false);
+    }
+  }
+
+  function formatDealMoney(amount?: number | null) {
+    if (amount == null || !Number.isFinite(Number(amount))) return "";
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(Number(amount));
+  }
+
+  function computeBuyerSeller(fromUserId: string, toUserId: string) {
+    const sellerId = activeConversationCard?.user_id ? String(activeConversationCard.user_id) : null;
+    if (!sellerId) return { buyerUserId: null as string | null, sellerUserId: null as string | null };
+    if (fromUserId === sellerId && toUserId !== sellerId) return { buyerUserId: toUserId, sellerUserId: sellerId };
+    if (toUserId === sellerId && fromUserId !== sellerId) return { buyerUserId: fromUserId, sellerUserId: sellerId };
+    return { buyerUserId: null as string | null, sellerUserId: null as string | null };
+  }
+
+  async function refreshDeals() {
+    if (!activeConversationId || !user?.id) return;
+    const records = await loadDealRecordsForConversation(activeConversationId);
+    const top = records[0] ?? null;
+    setDealRecords(records);
+    setActiveDealRecord(top);
+
+    if (top) {
+      const offers = await loadDealOffersForDealRecord(top.id);
+      setDealOffers(offers);
+    } else {
+      setDealOffers([]);
+    }
+  }
+
+  async function onCreateDealRecord() {
+    if (!activeConversationId || !user?.id) return;
+    if (dealActionSaving || activeDealRecord) return;
+
+    setDealActionSaving(true);
+    setDealError("");
+    try {
+      const created = await createDealRecord({
+        conversationId: activeConversationId,
+        cardId: activeConversationContextCardId,
+        dealType: "sale",
+        createdByUserId: user.id,
+      });
+
+      setActiveDealRecord(created);
+      setDealRecords([created]);
+
+      await addDealTimelineEvent({
+        dealRecordId: created.id,
+        userId: user.id,
+        eventType: "deal_record_created",
+        title: "Deal record created",
+        description: "Documentation-only transaction record for this message thread.",
+        metadata: { deal_type: created.deal_type },
+      });
+
+      await refreshDeals();
+    } catch (err: any) {
+      setDealError(err?.message || "Could not create deal record.");
+    } finally {
+      setDealActionSaving(false);
+    }
+  }
+
+  async function onMakeOffer() {
+    if (!activeDealRecord || !activeConversation?.otherUserId || !user?.id) return;
+
+    const otherUserId = String(activeConversation.otherUserId);
+    const amount = Number(offerAmountDraft.trim());
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setDealError("Enter a valid offer amount.");
+      return;
+    }
+
+    setDealActionSaving(true);
+    setDealError("");
+    try {
+      await createDealOffer({
+        dealRecordId: activeDealRecord.id,
+        fromUserId: user.id,
+        toUserId: otherUserId,
+        offerAmount: amount,
+        message: offerMessageDraft.trim() || null,
+      });
+
+      const { buyerUserId, sellerUserId } = computeBuyerSeller(user.id, otherUserId);
+      await supabase
+        ?.from("deal_records")
+        .update({
+          status: "offer_pending",
+          agreed_price: null,
+          buyer_user_id: buyerUserId,
+          seller_user_id: sellerUserId,
+        })
+        .eq("id", activeDealRecord.id);
+
+      await addDealTimelineEvent({
+        dealRecordId: activeDealRecord.id,
+        userId: user.id,
+        eventType: "offer_sent",
+        title: "Offer sent",
+        description: `Offered ${formatDealMoney(amount)}.`,
+        metadata: { offer_amount: amount },
+      });
+
+      setOfferAmountDraft("");
+      setOfferMessageDraft("");
+      await refreshDeals();
+    } catch (err: any) {
+      setDealError(err?.message || "Could not send offer.");
+    } finally {
+      setDealActionSaving(false);
+    }
+  }
+
+  async function onAcceptOffer(offer: DealOfferRow) {
+    if (!activeDealRecord || !user?.id) return;
+    setDealActionSaving(true);
+    setDealError("");
+    try {
+      await respondToDealOffer({
+        offerId: offer.id,
+        actorUserId: user.id,
+        responseStatus: "accepted",
+      });
+
+      const offered = offer.offer_amount != null ? Number(offer.offer_amount) : null;
+      const { buyerUserId, sellerUserId } = computeBuyerSeller(offer.from_user_id, offer.to_user_id);
+
+      await supabase
+        ?.from("deal_records")
+        .update({
+          status: "offer_accepted",
+          agreed_price: offered,
+          accepted_at: new Date().toISOString(),
+          buyer_user_id: buyerUserId,
+          seller_user_id: sellerUserId,
+        })
+        .eq("id", activeDealRecord.id);
+
+      await addDealTimelineEvent({
+        dealRecordId: activeDealRecord.id,
+        userId: user.id,
+        eventType: "offer_accepted",
+        title: "Offer accepted",
+        description: offered != null ? `Accepted ${formatDealMoney(offered)}.` : "Offer accepted.",
+        metadata: { offer_amount: offered },
+      });
+
+      await refreshDeals();
+    } catch (err: any) {
+      setDealError(err?.message || "Could not accept offer.");
+    } finally {
+      setDealActionSaving(false);
+    }
+  }
+
+  async function onDeclineOffer(offer: DealOfferRow) {
+    if (!activeDealRecord || !user?.id) return;
+    setDealActionSaving(true);
+    setDealError("");
+    try {
+      await respondToDealOffer({
+        offerId: offer.id,
+        actorUserId: user.id,
+        responseStatus: "declined",
+      });
+
+      await supabase
+        ?.from("deal_records")
+        .update({
+          status: "offer_declined",
+        })
+        .eq("id", activeDealRecord.id);
+
+      await addDealTimelineEvent({
+        dealRecordId: activeDealRecord.id,
+        userId: user.id,
+        eventType: "offer_declined",
+        title: "Offer declined",
+        description: "Offer declined.",
+      });
+
+      await refreshDeals();
+    } catch (err: any) {
+      setDealError(err?.message || "Could not decline offer.");
+    } finally {
+      setDealActionSaving(false);
+    }
+  }
+
+  async function onCounterOffer(offer: DealOfferRow) {
+    if (!activeDealRecord || !user?.id) return;
+    const otherUserId = offer.from_user_id;
+    const amount = Number(counterAmountDraft.trim());
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setDealError("Enter a valid counter amount.");
+      return;
+    }
+
+    setDealActionSaving(true);
+    setDealError("");
+    try {
+      await respondToDealOffer({
+        offerId: offer.id,
+        actorUserId: user.id,
+        responseStatus: "countered",
+      });
+
+      await createDealOffer({
+        dealRecordId: activeDealRecord.id,
+        fromUserId: user.id,
+        toUserId: otherUserId,
+        offerAmount: amount,
+        message: offerMessageDraft.trim() || null,
+      });
+
+      const { buyerUserId, sellerUserId } = computeBuyerSeller(user.id, otherUserId);
+      await supabase
+        ?.from("deal_records")
+        .update({
+          status: "offer_pending",
+          buyer_user_id: buyerUserId,
+          seller_user_id: sellerUserId,
+          agreed_price: null,
+        })
+        .eq("id", activeDealRecord.id);
+
+      await addDealTimelineEvent({
+        dealRecordId: activeDealRecord.id,
+        userId: user.id,
+        eventType: "counter_sent",
+        title: "Counter sent",
+        description: `Countered at ${formatDealMoney(amount)}.`,
+        metadata: { offer_amount: amount },
+      });
+
+      setCounterAmountDraft("");
+      await refreshDeals();
+    } catch (err: any) {
+      setDealError(err?.message || "Could not send counter offer.");
+    } finally {
+      setDealActionSaving(false);
     }
   }
 
@@ -1481,9 +1792,145 @@ export default function MessagesPage() {
                       </button>
                     ) : null}
                   </div>
+
+	                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-3">
+	                    <div className="flex items-start justify-between gap-3">
+	                      <div>
+	                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Deal Records</div>
+	                        {activeDealRecord ? (
+	                          <>
+	                            <div className="mt-1 text-sm font-semibold text-white">{activeDealRecord.status}</div>
+	                            {activeDealRecord.agreed_price != null ? (
+	                              <div className="mt-1 text-xs text-emerald-200">
+	                                Agreed: {formatDealMoney(Number(activeDealRecord.agreed_price))}
+	                              </div>
+	                            ) : null}
+	                          </>
+	                        ) : (
+	                          <div className="mt-1 text-sm font-semibold text-slate-200">No deal record yet</div>
+	                        )}
+	                      </div>
+
+	                      {!activeDealRecord ? (
+	                        <button
+	                          type="button"
+	                          disabled={dealActionSaving || activeConversationIsBlocked}
+	                          onClick={() => void onCreateDealRecord()}
+	                          className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                        >
+	                          {dealActionSaving ? "Creating…" : "Create Deal Record"}
+	                        </button>
+	                      ) : null}
+	                    </div>
+
+	                    {dealError ? (
+	                      <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/[0.08] px-3 py-2 text-xs text-red-100">{dealError}</div>
+	                    ) : null}
+
+	                    <div className="mt-3 text-[12px] leading-relaxed text-slate-400">
+	                      CardCat Deal Records are documentation tools only. CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.
+	                    </div>
+
+	                    {activeDealRecord ? (
+	                      <div className="mt-3 space-y-3">
+	                        {dealLoading ? <div className="text-xs text-slate-400">Loading deal…</div> : null}
+
+	                        {pendingDealOffer ? (
+	                          pendingDealOffer.to_user_id === user.id ? (
+	                            <div className="space-y-2">
+	                              <div className="text-xs text-slate-300">
+	                                Offer: <span className="font-semibold text-white">{formatDealMoney(Number(pendingDealOffer.offer_amount || 0))}</span> 
+	                                <span className="text-slate-400">({pendingDealOffer.status})</span>
+	                              </div>
+	                              {pendingDealOffer.message ? (
+	                                <div className="text-xs text-slate-400 whitespace-pre-wrap">{pendingDealOffer.message}</div>
+	                              ) : null}
+
+	                              <div className="flex flex-wrap gap-2">
+	                                <button
+	                                  type="button"
+	                                  disabled={dealActionSaving || activeConversationIsBlocked}
+	                                  onClick={() => void onAcceptOffer(pendingDealOffer)}
+	                                  className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                                >
+	                                  Accept
+	                                </button>
+	                                <button
+	                                  type="button"
+	                                  disabled={dealActionSaving || activeConversationIsBlocked}
+	                                  onClick={() => void onDeclineOffer(pendingDealOffer)}
+	                                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+	                                >
+	                                  Decline
+	                                </button>
+	                              </div>
+
+	                              <div className="mt-2">
+	                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Counter</div>
+	                                <div className="mt-2 flex flex-wrap items-center gap-2">
+	                                  <input
+	                                    type="number"
+	                                    inputMode="decimal"
+	                                    step="0.01"
+	                                    value={counterAmountDraft}
+	                                    onChange={(e) => setCounterAmountDraft(e.target.value)}
+	                                    placeholder="Counter amount"
+	                                    className="w-36 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                  />
+	                                  <button
+	                                    type="button"
+	                                    disabled={dealActionSaving || activeConversationIsBlocked}
+	                                    onClick={() => void onCounterOffer(pendingDealOffer)}
+	                                    className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-semibold text-amber-950 hover:bg-amber-400 disabled:opacity-60"
+	                                  >
+	                                    Counter
+	                                  </button>
+	                                </div>
+	                              </div>
+	                            </div>
+	                          ) : pendingDealOffer.from_user_id === user.id ? (
+	                            <div className="text-xs text-slate-300">
+	                              Offer pending. Waiting for the other user to respond.
+	                            </div>
+	                          ) : (
+	                            <div className="text-xs text-slate-300">Another offer is pending. Waiting…</div>
+	                          )
+	                        ) : (
+	                          <div className="space-y-2">
+	                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Make an offer</div>
+	                            <div className="flex flex-wrap items-center gap-2">
+	                              <input
+	                                type="number"
+	                                inputMode="decimal"
+	                                step="0.01"
+	                                value={offerAmountDraft}
+	                                onChange={(e) => setOfferAmountDraft(e.target.value)}
+	                                placeholder="Amount"
+	                                className="w-36 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                              />
+	                              <button
+	                                type="button"
+	                                disabled={dealActionSaving || activeConversationIsBlocked || !activeConversation?.otherUserId}
+	                                onClick={() => void onMakeOffer()}
+	                                className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                              >
+	                                {dealActionSaving ? "Sending…" : "Send offer"}
+	                              </button>
+	                            </div>
+	                            <textarea
+	                              value={offerMessageDraft}
+	                              onChange={(e) => setOfferMessageDraft(e.target.value)}
+	                              placeholder="Optional note to include with the offer"
+	                              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                            />
+	                          </div>
+	                        )}
+	                      </div>
+	                    ) : null}
+	                  </div>
                 </div>
 
-	                <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1">
+	                	<div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1">
 	                  {activeMessages.length === 0 ? (
 	                    <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-sm text-slate-400">
 	                      {messageFolder === "deleted" ? "No deleted messages in this thread." : "No messages yet. This thread is ready for the first message."}
