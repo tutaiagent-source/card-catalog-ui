@@ -35,8 +35,11 @@ type CardContext = {
   set_name: string;
   parallel: string;
   card_number: string;
+  status?: string | null;
   user_id?: string | null;
   asking_price?: number | null;
+  sold_price?: number | null;
+  sold_at?: string | null;
   image_url?: string | null;
 };
 
@@ -101,6 +104,8 @@ export default function MessagesPage() {
   const [dealLoading, setDealLoading] = useState(false);
   const [dealActionSaving, setDealActionSaving] = useState(false);
   const [dealError, setDealError] = useState<string>("");
+
+  const [dealSoldNotice, setDealSoldNotice] = useState<string>("");
 
   const [dealDetails, setDealDetails] = useState<DealDetailsRow | null>(null);
   const [dealTimelineEvents, setDealTimelineEvents] = useState<DealTimelineEventRow[]>([]);
@@ -635,10 +640,12 @@ export default function MessagesPage() {
       if (!dealRecordForDisplay) {
         setDealDetails(null);
         setDealTimelineEvents([]);
+        setDealSoldNotice("");
         return;
       }
 
       setDealDetailsLoading(true);
+      setDealSoldNotice("");
       try {
         const [details, events] = await Promise.all([
           loadDealDetailsForDealRecord(dealRecordForDisplay.id),
@@ -732,7 +739,7 @@ export default function MessagesPage() {
     (async () => {
       const { data, error } = await supabase
         .from("cards")
-        .select("id, user_id, player_name, year, brand, set_name, parallel, card_number, asking_price, image_url")
+        .select("id, user_id, player_name, year, brand, set_name, parallel, card_number, asking_price, image_url, status, sold_price, sold_at, sale_platform")
         .eq("id", activeConversationContextCardId)
         .maybeSingle();
 
@@ -1018,6 +1025,11 @@ export default function MessagesPage() {
   async function onMakeOffer() {
     if (!dealRecordForDisplay || !user?.id) return;
 
+    if (activeConversationCard?.status && String(activeConversationCard.status).toLowerCase() !== "listed") {
+      setDealError("This card has already sold.");
+      return;
+    }
+    
     let otherUserId: string | null = activeConversationOtherUserId ? String(activeConversationOtherUserId) : null;
     if (!otherUserId) {
       if (!supabaseConfigured || !supabase || !activeConversationId) {
@@ -1515,17 +1527,17 @@ export default function MessagesPage() {
       }
       const paidDate = dealDetails.paid_date;
 
+      const confirmedAtIso = new Date().toISOString();
+
       setDealActionSaving(true);
       setDealError("");
       try {
-        const { error: updateError } = await supabase
-          .from("deal_records")
-          .update({
-            status: "payment_confirmed",
-          })
-          .eq("id", dealRecordForDisplay.id);
+        const { error: rpcError } = await supabase.rpc(
+          "confirm_deal_payment_and_mark_sold",
+          { p_deal_record_id: dealRecordForDisplay.id }
+        );
 
-        if (updateError) throw updateError;
+        if (rpcError) throw rpcError;
 
         await addDealTimelineEvent({
           dealRecordId: dealRecordForDisplay.id,
@@ -1537,6 +1549,20 @@ export default function MessagesPage() {
 
         setShowPaymentForm(false);
         setDealError("");
+
+        setActiveConversationCard((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "Sold",
+                sold_price: dealRecordForDisplay.agreed_price ?? prev.sold_price ?? null,
+                sold_at: confirmedAtIso,
+              }
+            : prev
+        );
+
+        setDealSoldNotice("This listing has been marked sold and removed from the marketplace.");
+
         await refreshDeals();
       } catch (e: any) {
         setDealError(e?.message || "Could not confirm payment received.");
@@ -2651,6 +2677,12 @@ export default function MessagesPage() {
 	                      CardCat Deal Records are documentation tools only. CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.
 	                    </div>
 
+	                    {dealSoldNotice ? (
+	                      <div className="mt-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.07] px-3 py-2 text-xs text-emerald-100">
+	                        {dealSoldNotice}
+	                      </div>
+	                    ) : null}
+
 	                    {dealRecordForDisplay ? (
 	                      <div className="mt-3 space-y-3">
 	                        {dealLoading ? <div className="text-xs text-slate-400">Loading deal…</div> : null}
@@ -2950,37 +2982,43 @@ export default function MessagesPage() {
 	                            </div>
 	                          ) : (
 	                          <div className="space-y-2">
-	                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Make an offer on this card</div>
-	                            {latestDealOffer?.offer_amount != null ? (
-	                              <div className="text-xs text-slate-500">
-	                                Last offer: {formatDealMoney(Number(latestDealOffer.offer_amount))} ({dealOfferStatusLabel(latestDealOffer.status)})
-	                              </div>
-	                            ) : null}
-	                            <div className="flex flex-wrap items-center gap-2">
-	                              <input
-	                                type="number"
-	                                inputMode="decimal"
-	                                step="0.01"
-	                                value={offerAmountDraft}
-	                                onChange={(e) => setOfferAmountDraft(e.target.value)}
-	                                placeholder="Amount"
-	                                className="w-36 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
-	                              />
-	                              <button
-	                                type="button"
-	                                disabled={dealActionSaving}
-	                                onClick={() => void onMakeOffer()}
-	                                className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
-	                              >
-	                                {dealActionSaving ? "Sending…" : "Send offer"}
-	                              </button>
-	                            </div>
-	                            <textarea
-	                              value={offerMessageDraft}
-	                              onChange={(e) => setOfferMessageDraft(e.target.value)}
-	                              placeholder="Optional note to include with the offer"
-	                              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
-	                            />
+	                            {activeConversationCard?.status && String(activeConversationCard.status).toLowerCase() !== "listed" ? (
+	                              <div className="text-xs text-slate-300">This card has already sold.</div>
+	                            ) : (
+	                              <>
+	                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Make an offer on this card</div>
+	                                {latestDealOffer?.offer_amount != null ? (
+	                                  <div className="text-xs text-slate-500">
+	                                    Last offer: {formatDealMoney(Number(latestDealOffer.offer_amount))} ({dealOfferStatusLabel(latestDealOffer.status)})
+	                                  </div>
+	                                ) : null}
+	                                <div className="flex flex-wrap items-center gap-2">
+	                                  <input
+	                                    type="number"
+	                                    inputMode="decimal"
+	                                    step="0.01"
+	                                    value={offerAmountDraft}
+	                                    onChange={(e) => setOfferAmountDraft(e.target.value)}
+	                                    placeholder="Amount"
+	                                    className="w-36 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                  />
+	                                  <button
+	                                    type="button"
+	                                    disabled={dealActionSaving}
+	                                    onClick={() => void onMakeOffer()}
+	                                    className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                                  >
+	                                    {dealActionSaving ? "Sending…" : "Send offer"}
+	                                  </button>
+	                                </div>
+	                                <textarea
+	                                  value={offerMessageDraft}
+	                                  onChange={(e) => setOfferMessageDraft(e.target.value)}
+	                                  placeholder="Optional note to include with the offer"
+	                                  className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                />
+	                              </>
+	                            )}
 	                          </div>
 	                        )}
 
