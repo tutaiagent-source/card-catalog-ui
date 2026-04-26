@@ -30,7 +30,12 @@ function buildSupabaseRenderUrl(raw: string, parsed: URL, variant: ImageVariant)
   if (!publicPath) return raw;
 
   const params = new URLSearchParams(parsed.search);
-  params.set("width", String(SUPABASE_WIDTH_BY_VARIANT[variant]));
+  const width = SUPABASE_WIDTH_BY_VARIANT[variant];
+  // Card photos tend to be ~2:3 (w:h => 2/3). Providing height + `resize=contain`
+  // avoids server-side cropping that can make thumbnails look like “partial images”.
+  params.set("width", String(width));
+  params.set("height", String(Math.round((width * 3) / 2)));
+  params.set("resize", "contain");
   params.set("quality", variant === "grid" ? "75" : "85");
 
   return `${parsed.origin}/storage/v1/render/image/public/${publicPath}?${params.toString()}`;
