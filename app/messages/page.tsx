@@ -919,12 +919,31 @@ export default function MessagesPage() {
 
   async function onMakeOffer() {
     if (!dealRecordForDisplay || !user?.id) return;
-    if (!activeConversationOtherUserId) {
-      setDealError("Could not determine the other user for this thread yet. Try refreshing.");
-      return;
+
+    let otherUserId: string | null = activeConversationOtherUserId ? String(activeConversationOtherUserId) : null;
+    if (!otherUserId) {
+      // Fallback: conversation participants can be temporarily unavailable in state on fast navigation.
+      if (!supabaseConfigured || !supabase || !activeConversationId) {
+        setDealError("Could not determine the other user for this thread yet.");
+        return;
+      }
+
+      const { data: otherRows, error: otherErr } = await supabase
+        .from("conversation_participants")
+        .select("user_id")
+        .eq("conversation_id", activeConversationId)
+        .neq("user_id", user.id)
+        .limit(1);
+
+      if (otherErr) throw otherErr;
+      otherUserId = otherRows?.[0]?.user_id ? String(otherRows[0].user_id) : null;
+
+      if (!otherUserId) {
+        setDealError("Could not determine the other user for this thread.");
+        return;
+      }
     }
 
-    const otherUserId = String(activeConversationOtherUserId);
     const amount = Number(offerAmountDraft.trim());
     if (!Number.isFinite(amount) || amount <= 0) {
       setDealError("Enter a valid offer amount.");
