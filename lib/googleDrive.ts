@@ -53,7 +53,22 @@ export function driveToImageSrc(url?: string | null, options?: ImageSrcOptions) 
     const parsed = new URL(raw);
     const host = parsed.hostname.replace(/^www\./, "");
     const isGoogleDrive = host === "drive.google.com" || host === "docs.google.com";
-    if (!isGoogleDrive) return buildSupabaseRenderUrl(raw, parsed, variant);
+    if (!isGoogleDrive) {
+      const objectPrefix = "/storage/v1/object/public/";
+      const parsedPath = parsed.pathname;
+      if (parsedPath.includes(objectPrefix)) {
+        const publicPath = parsedPath.split(objectPrefix)[1];
+        if (publicPath && /\/thumb\.[^/]+$/.test(publicPath)) {
+          if (variant === "grid") return raw;
+          const mainPublicPath = publicPath.replace(/\/thumb\./, "/main.");
+          const mainRaw = `${parsed.origin}${objectPrefix}${mainPublicPath}`;
+          const mainParsed = new URL(mainRaw);
+          return buildSupabaseRenderUrl(mainRaw, mainParsed, variant);
+        }
+      }
+
+      return buildSupabaseRenderUrl(raw, parsed, variant);
+    }
 
     const resourceKey = parsed.searchParams.get("resourcekey") || fallbackResourceKey;
     const explicitId = parsed.searchParams.get("id") || fallbackId;

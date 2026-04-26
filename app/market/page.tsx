@@ -459,7 +459,7 @@ export default function MarketPage() {
 	                        {card.image_url ? (
 	                          <img
 	                            alt={card.player_name}
-	                            src={driveToImageSrc(card.image_url, { variant: "detail" })}
+	                            src={driveToImageSrc(card.image_url, { variant: "grid" })}
 	                            className="max-h-full max-w-full object-contain"
 	                            loading="lazy"
 	                            decoding="async"

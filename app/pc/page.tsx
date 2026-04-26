@@ -387,8 +387,9 @@ export default function PcPage() {
                 <div className="mb-3 text-sm font-semibold text-slate-200">PC Shelf</div>
 
                 <div className="grid grid-cols-4 gap-2" role="list" aria-label="PC grid">
-                  {pcCards.map((c) => {
-	                    const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "detail" }) : "";
+							{pcCards.map((c) => {
+	                    const gridSrc = c.image_url ? driveToImageSrc(c.image_url, { variant: "grid" }) : "";
+	                    const modalSrc = c.image_url ? driveToImageSrc(c.image_url, { variant: "detail" }) : "";
 
                     return (
                       <div
@@ -425,13 +426,13 @@ export default function PcPage() {
                       >
                         <button
                           type="button"
-                          onClick={() => setImageModal({ card: c, src, backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url) : undefined })}
+							onClick={() => setImageModal({ card: c, src: modalSrc, backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url, { variant: "detail" }) : undefined })}
                           className="block w-full"
                           aria-label={`View ${c.player_name}`}
                         >
 	                          <div className="aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center">
-	                            {c.image_url ? (
-	                              <img alt="front" src={src} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
+	                              {c.image_url ? (
+	                              <img alt="front" src={gridSrc} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
 	                            ) : (
 	                              <div className="h-full w-full" />
 	                            )}
@@ -528,7 +529,7 @@ export default function PcPage() {
                             >
 	                              <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950/10 flex items-center justify-center">
 	                                {c.image_url ? (
-	                                    <img alt="front" src={driveToImageSrc(c.image_url, { variant: "detail" })} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
+	                                    <img alt="front" src={driveToImageSrc(c.image_url, { variant: "grid" })} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
 	                                ) : (
 	                                  <div className="h-full w-full" />
 	                                )}

@@ -655,13 +655,28 @@ export default function AddCardPage() {
     }
 
     try {
-      const allowedMimes = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
-      const MAX_BYTES = 6 * 1024 * 1024; // 6MB
-      const MAX_DIM = 2500;
+      const allowedMimes = new Set(["image/png", "image/jpeg", "image/webp"]);
+      const MAX_BYTES = 6 * 1024 * 1024; // 6MB (hard limit)
+      const MAX_INPUT_DIM = 6000; // reject extreme dimensions for browser processing stability
+
+      const MAIN_MAX_DIM = 1800; // 1600-1800; tuned to be clear on PC and mobile
+      const MAIN_TARGET_MIN_BYTES = 250 * 1024;
+      const MAIN_TARGET_MAX_BYTES = 700 * 1024;
+      const MAIN_QUALITIES = [0.85, 0.8, 0.75, 0.7, 0.65];
+
+      const THUMB_MAX_DIM = 550; // within 400-600
+      const THUMB_TARGET_MIN_BYTES = 30 * 1024;
+      const THUMB_TARGET_MAX_BYTES = 100 * 1024;
+      const THUMB_QUALITIES = [0.75, 0.7, 0.65, 0.6, 0.55, 0.5, 0.45];
 
       const mime = file.type || "";
+      const looksLikeGif = mime === "image/gif" || (file.name || "").toLowerCase().endsWith(".gif");
+      if (looksLikeGif) throw new Error("GIF uploads aren’t supported. Please upload a PNG, JPG, or WebP.");
       if (!allowedMimes.has(mime)) {
-        throw new Error("Only PNG, JPG, WebP, or GIF images are allowed.");
+        throw new Error("Only PNG, JPG, and WebP images are allowed.");
+      }
+      if (file.size > MAX_BYTES) {
+        throw new Error("Image is too large (max 6MB). Please use a smaller file.");
       }
 
       const bucket = "card-images";
@@ -684,144 +699,177 @@ export default function AddCardPage() {
           img.src = url;
         });
 
-      const fileBaseName = (() => {
-        const n = file.name || "image";
-        const dot = n.lastIndexOf(".");
-        if (dot > 0) return n.slice(0, dot);
-        return n;
-      })();
+      const encodeWebp = async ({
+        sourceImg,
+        srcW,
+        srcH,
+        maxDim,
+        qualities,
+        targetMinBytes,
+        targetMaxBytes,
+        reducedMaxDim,
+      }: {
+        sourceImg: HTMLImageElement;
+        srcW: number;
+        srcH: number;
+        maxDim: number;
+        qualities: number[];
+        targetMinBytes: number;
+        targetMaxBytes: number;
+        reducedMaxDim?: number;
+      }) => {
+        const renderPass = (passMaxDim: number) => {
+          const scale = Math.min(1, passMaxDim / Math.max(srcW, srcH || 1));
+          const targetW = Math.max(1, Math.round(srcW * scale));
+          const targetH = Math.max(1, Math.round(srcH * scale));
 
-      const resizeToWebp = async (f: File, maxDim: number, maxBytes: number) => {
-        // Convert to a resized/compressed WebP before uploading.
-        // This prevents iPhone-sized originals from failing the upload gate while keeping storage predictable.
-        const { img: sourceImg, w: srcW, h: srcH } = await loadImage(f);
+          const canvas = document.createElement("canvas");
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) throw new Error("Could not process that image file.");
 
-        const scale = Math.min(1, maxDim / Math.max(srcW, srcH || 1));
-        const targetW = Math.max(1, Math.round(srcW * scale));
-        const targetH = Math.max(1, Math.round(srcH * scale));
+          ctx.drawImage(sourceImg, 0, 0, targetW, targetH);
 
-        const canvas = document.createElement("canvas");
-        canvas.width = targetW;
-        canvas.height = targetH;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) throw new Error("Could not process that image file.");
+          const toBlob = (quality: number) =>
+            new Promise<Blob>((resolve, reject) => {
+              canvas.toBlob(
+                (b) => {
+                  if (!b) reject(new Error("Could not process that image file."));
+                  else resolve(b);
+                },
+                "image/webp",
+                quality,
+              );
+            });
 
-        ctx.drawImage(sourceImg, 0, 0, targetW, targetH);
-
-        const toWebpBlob = (quality: number) =>
-          new Promise<Blob>((resolve, reject) => {
-            canvas.toBlob(
-              (b) => {
-                if (!b) reject(new Error("Could not process that image file."));
-                else resolve(b);
-              },
-              "image/webp",
-              quality,
-            );
-          });
-
-        // Try quality steps first.
-        const qualities = [0.9, 0.8, 0.7, 0.6];
-        let lastBlob: Blob | null = null;
-        for (const q of qualities) {
-          // eslint-disable-next-line no-await-in-loop
-          const blob = await toWebpBlob(q);
-          lastBlob = blob;
-          if (blob.size <= maxBytes) {
-            return {
-              file: new File([blob], `${fileBaseName}.webp`, { type: "image/webp" }),
-              w: targetW,
-              h: targetH,
-            };
-          }
-        }
-
-        // If it’s still too big, scale down a bit and retry once more (bounded).
-        if (!lastBlob) throw new Error("Could not process that image file.");
-        const smallerMaxDim = Math.max(900, Math.floor(maxDim * 0.85));
-        const { img: img2, w: w2, h: h2 } = await loadImage(f);
-        const scale2 = Math.min(1, smallerMaxDim / Math.max(w2, h2 || 1));
-        const targetW2 = Math.max(1, Math.round(w2 * scale2));
-        const targetH2 = Math.max(1, Math.round(h2 * scale2));
-        const canvas2 = document.createElement("canvas");
-        canvas2.width = targetW2;
-        canvas2.height = targetH2;
-        const ctx2 = canvas2.getContext("2d");
-        if (!ctx2) throw new Error("Could not process that image file.");
-        ctx2.drawImage(img2, 0, 0, targetW2, targetH2);
-
-        const toWebpBlob2 = (quality: number) =>
-          new Promise<Blob>((resolve, reject) => {
-            canvas2.toBlob(
-              (b) => {
-                if (!b) reject(new Error("Could not process that image file."));
-                else resolve(b);
-              },
-              "image/webp",
-              quality,
-            );
-          });
-
-        for (const q of qualities) {
-          // eslint-disable-next-line no-await-in-loop
-          const blob = await toWebpBlob2(q);
-          if (blob.size <= maxBytes) {
-            return {
-              file: new File([blob], `${fileBaseName}.webp`, { type: "image/webp" }),
-              w: targetW2,
-              h: targetH2,
-            };
-          }
-        }
-
-        // Final fallback: return the smallest we produced and let the normal size check throw a friendly error.
-        return {
-          file: new File([lastBlob], `${fileBaseName}.webp`, { type: "image/webp" }),
-          w: targetW,
-          h: targetH,
+          return { canvas, toBlob };
         };
+
+        const tryPass = async (passMaxDim: number) => {
+          const { toBlob } = renderPass(passMaxDim);
+          let bestUnderMax: Blob | null = null;
+          let bestOverall: Blob | null = null;
+
+          for (const q of qualities) {
+            // eslint-disable-next-line no-await-in-loop
+            const blob = await toBlob(q);
+            if (!bestOverall || blob.size < bestOverall.size) bestOverall = blob;
+            if (blob.size >= targetMinBytes && blob.size <= targetMaxBytes) return blob;
+            if (blob.size <= targetMaxBytes) {
+              if (!bestUnderMax || blob.size < bestUnderMax.size) bestUnderMax = blob;
+            }
+          }
+
+          return bestUnderMax ?? bestOverall;
+        };
+
+        const pass1 = await tryPass(maxDim);
+        if (pass1 && pass1.size <= targetMaxBytes) return pass1;
+
+        // If we couldn’t hit the target size, do one bounded reduction pass.
+        if (reducedMaxDim && pass1 && pass1.size > targetMaxBytes) {
+          const pass2 = await tryPass(reducedMaxDim);
+          return pass2;
+        }
+
+        return pass1;
       };
 
-      // iPhone-sized originals can fail the current gate (2500px / 6MB). If that happens,
-      // we resize+recompress to WebP before uploading.
-      let fileToUpload: File = file;
-      if (mime !== "image/gif") {
-        const { w, h } = await loadImage(file);
-        const needsResize = file.size > MAX_BYTES || w > MAX_DIM || h > MAX_DIM;
-        if (needsResize) {
-          const resized = await resizeToWebp(file, MAX_DIM, MAX_BYTES);
-          fileToUpload = resized.file;
-        }
-      } else {
-        // GIF: we can’t reliably resize/flatten animations here, so we keep the original strict gate.
-        if (file.size > MAX_BYTES) {
-          throw new Error("Image is too large (max 6MB). Please use a smaller file.");
-        }
-        const { w, h } = await loadImage(file);
-        if (w > MAX_DIM || h > MAX_DIM) {
-          throw new Error(`Image dimensions are too large (max ${MAX_DIM}×${MAX_DIM}).`);
-        }
+      const { img: sourceImg, w: srcW, h: srcH } = await loadImage(file);
+      if (srcW > MAX_INPUT_DIM || srcH > MAX_INPUT_DIM) {
+        throw new Error("Image dimensions are too large to process. Please upload a smaller file.");
       }
 
-      if (fileToUpload.size > MAX_BYTES) {
-        throw new Error("Image is too large (max 6MB). Please use a smaller file.");
+      const imageUuid = crypto.randomUUID();
+      const ext = mime === "image/png" ? "png" : mime === "image/jpeg" ? "jpg" : "webp";
+      const fallbackAllowed = file.size <= 700 * 1024 && srcW <= MAIN_MAX_DIM && srcH <= MAIN_MAX_DIM;
+
+      let mainBlob: Blob | null = null;
+      let thumbBlob: Blob | null = null;
+
+      try {
+        mainBlob = await encodeWebp({
+          sourceImg,
+          srcW,
+          srcH,
+          maxDim: MAIN_MAX_DIM,
+          reducedMaxDim: 1400,
+          qualities: MAIN_QUALITIES,
+          targetMinBytes: MAIN_TARGET_MIN_BYTES,
+          targetMaxBytes: MAIN_TARGET_MAX_BYTES,
+        });
+
+        thumbBlob = await encodeWebp({
+          sourceImg,
+          srcW,
+          srcH,
+          maxDim: THUMB_MAX_DIM,
+          reducedMaxDim: 450,
+          qualities: THUMB_QUALITIES,
+          targetMinBytes: THUMB_TARGET_MIN_BYTES,
+          targetMaxBytes: THUMB_TARGET_MAX_BYTES,
+        });
+      } catch {
+        // If processing fails, only allow original upload when it’s already small enough.
+        if (!fallbackAllowed) throw new Error("We couldn’t process that image. Please try a smaller file.");
       }
+
+      if (!mainBlob || !thumbBlob) {
+        setUploading(kind);
+
+        const mainPath = `${imageUuid}/${folder}/main.${ext}`;
+        const thumbPath = `${imageUuid}/${folder}/thumb.${ext}`;
+
+        const { error: uploadMainErr } = await supabase!.storage.from(bucket).upload(mainPath, file, {
+          upsert: false,
+          contentType: file.type || undefined,
+        });
+        if (uploadMainErr) throw uploadMainErr;
+
+        const { error: uploadThumbErr } = await supabase!.storage.from(bucket).upload(thumbPath, file, {
+          upsert: false,
+          contentType: file.type || undefined,
+        });
+        if (uploadThumbErr) throw uploadThumbErr;
+
+        const { data: thumbData } = supabase!.storage.from(bucket).getPublicUrl(thumbPath);
+        const publicThumbUrl = thumbData.publicUrl;
+        if (kind === "front") set("image_url", publicThumbUrl);
+        else set("back_image_url", publicThumbUrl);
+        return;
+      }
+
+      // Convert blobs to Files so Supabase sets content-type correctly.
+      if (mainBlob.size > MAX_BYTES || thumbBlob.size > MAX_BYTES) {
+        throw new Error("Image is too large after processing (max 6MB). Please use a smaller file.");
+      }
+
+      const mainFile = new File([mainBlob], "main.webp", { type: "image/webp" });
+      const thumbFile = new File([thumbBlob], "thumb.webp", { type: "image/webp" });
 
       setUploading(kind);
 
-      const path = `${crypto.randomUUID()}/${folder}/${fileToUpload.name}`;
-      const { error: uploadErr } = await supabase!.storage.from(bucket).upload(path, fileToUpload, {
+      const mainPath = `${imageUuid}/${folder}/main.webp`;
+      const thumbPath = `${imageUuid}/${folder}/thumb.webp`;
+
+      const { error: uploadMainErr } = await supabase!.storage.from(bucket).upload(mainPath, mainFile, {
         upsert: false,
-        contentType: fileToUpload.type || undefined,
+        contentType: mainFile.type || undefined,
       });
+      if (uploadMainErr) throw uploadMainErr;
 
-      if (uploadErr) throw uploadErr;
+      const { error: uploadThumbErr } = await supabase!.storage.from(bucket).upload(thumbPath, thumbFile, {
+        upsert: false,
+        contentType: thumbFile.type || undefined,
+      });
+      if (uploadThumbErr) throw uploadThumbErr;
 
-      const { data } = supabase!.storage.from(bucket).getPublicUrl(path);
-      const publicUrl = data.publicUrl;
+      const { data: thumbData } = supabase!.storage.from(bucket).getPublicUrl(thumbPath);
+      const publicThumbUrl = thumbData.publicUrl;
 
-      if (kind === "front") set("image_url", publicUrl);
-      else set("back_image_url", publicUrl);
+      if (kind === "front") set("image_url", publicThumbUrl);
+      else set("back_image_url", publicThumbUrl);
     } catch (e: any) {
       setUploadError(e?.message || "Upload failed");
     } finally {
