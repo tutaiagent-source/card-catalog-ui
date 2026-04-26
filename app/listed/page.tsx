@@ -1156,19 +1156,8 @@ export default function ListedPage() {
 
             <div className="mt-4 space-y-4">
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                <div className="text-sm font-semibold text-slate-200">Accepting offers</div>
-                <div className="mt-3 flex items-center justify-between gap-3">
-                  <div className="text-sm text-slate-300">{!shareShowPricing ? "Accepting offers (prices hidden)" : "Showing prices"}</div>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={!shareShowPricing}
-                      onChange={(e) => setShareShowPricing(!e.target.checked)}
-                      className="h-4 w-4 rounded border-white/20 bg-slate-950 text-emerald-400"
-                    />
-                    <span className="text-sm text-slate-200">Accepting offers</span>
-                  </label>
-                </div>
+                <div className="text-sm font-semibold text-slate-200">Offers & pricing</div>
+                <div className="mt-3 text-sm text-slate-300">Prices will be visible in this share link.</div>
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
