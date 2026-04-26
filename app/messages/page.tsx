@@ -685,6 +685,23 @@ export default function MessagesPage() {
     };
   }, [dealRecordForDisplay]);
 
+  useEffect(() => {
+    if (!showShippingForm) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowShippingForm(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [showShippingForm]);
+
   const friendsUserIdSet = useMemo(() => {
     return new Set(friends.map((f) => String(f.id)));
   }, [friends]);
@@ -2948,7 +2965,7 @@ export default function MessagesPage() {
 	                                </div>
 	                              ) : null}
 
-	                              {showShippingForm && paymentConfirmed && !dealCompleted ? (
+	                              {false && paymentConfirmed && !dealCompleted ? (
 	                                <div className="space-y-3 min-h-0 rounded-xl border border-white/10 bg-white/[0.03] p-3">
 	                                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Shipping Record</div>
 
@@ -3431,6 +3448,171 @@ export default function MessagesPage() {
                   {reportSending || conversationActionSaving
                     ? "Submitting…"
                     : "Submit report"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showShippingForm && paymentConfirmed && !dealCompleted ? (
+        <div
+          className="fixed inset-0 z-[85] flex items-center justify-center bg-black/70 p-3"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowShippingForm(false)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
+              <div>
+                <div className="text-lg font-semibold text-white">Shipping Details</div>
+                <div className="mt-1 text-sm text-slate-300">Document seller-provided shipping info.</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowShippingForm(false)}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-5">
+              <div className="space-y-4">
+                {/* Shipping Info */}
+                <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Shipping Info</div>
+
+                  <div>
+                    <div className="text-[12px] font-semibold text-slate-200 mb-1">Carrier</div>
+                    <input
+                      value={shippingCarrierDraft}
+                      onChange={(e) => setShippingCarrierDraft(e.target.value)}
+                      placeholder="e.g., USPS"
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="text-[12px] font-semibold text-slate-200 mb-1">Tracking Number</div>
+                    <input
+                      value={trackingNumberDraft}
+                      onChange={(e) => setTrackingNumberDraft(e.target.value)}
+                      placeholder="e.g., Z1112102012"
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+                    />
+                    <div className="mt-1 text-[11px] text-slate-400">Tracking provided by seller. CardCat does not verify delivery.</div>
+                  </div>
+                </div>
+
+                {/* Shipping Dates */}
+                <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Shipping Dates</div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-[12px] font-semibold text-slate-200 mb-1">Date Shipped (required)</div>
+                      <input
+                        type="date"
+                        value={shippedDateDraft}
+                        onChange={(e) => setShippedDateDraft(e.target.value)}
+                        className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="text-[12px] font-semibold text-slate-200 mb-1">Estimated Delivery Date (optional)</div>
+                      <input
+                        type="date"
+                        value={deliveredDateDraft}
+                        onChange={(e) => setDeliveredDateDraft(e.target.value)}
+                        className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Shipping Cost */}
+                <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Shipping Cost</div>
+
+                  <div>
+                    <div className="text-[12px] font-semibold text-slate-200 mb-1">Shipping Cost (optional)</div>
+                    <input
+                      value={shippingCostDraft}
+                      onChange={(e) => setShippingCostDraft(e.target.value)}
+                      placeholder="e.g., 3.00"
+                      inputMode="decimal"
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+                    />
+                    <div className="mt-1 text-[11px] text-slate-400">What you paid to ship this item (optional)</div>
+                  </div>
+                </div>
+
+                {/* Shipping Options */}
+                <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-300">Shipping Options</div>
+
+                  <label className="flex items-center gap-2 text-sm text-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={insurancePurchasedDraft}
+                      onChange={(e) => setInsurancePurchasedDraft(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    Insurance Purchased
+                  </label>
+
+                  {insurancePurchasedDraft ? (
+                    <div>
+                      <div className="text-[12px] font-semibold text-slate-200 mb-1">Insurance Amount (optional)</div>
+                      <input
+                        value={insuranceAmountDraft}
+                        onChange={(e) => setInsuranceAmountDraft(e.target.value)}
+                        placeholder="e.g., 77.00"
+                        inputMode="decimal"
+                        className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+                      />
+                      <div className="mt-1 text-[11px] text-slate-400">Insurance is purchased through the carrier. CardCat does not provide coverage.</div>
+                    </div>
+                  ) : (
+                    <div className="text-[11px] text-slate-400">Insurance is purchased through the carrier. CardCat does not provide coverage.</div>
+                  )}
+
+                  <label className="flex items-center gap-2 text-sm text-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={signatureRequiredDraft}
+                      onChange={(e) => setSignatureRequiredDraft(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    Signature Required
+                  </label>
+                  <div className="text-[11px] text-slate-400">Optional record: used to document whether a signature was requested.</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-shrink-0 border-t border-white/10 bg-slate-950 px-5 py-4">
+              <div className="flex flex-wrap gap-2 justify-end">
+                <button
+                  type="button"
+                  disabled={dealActionSaving}
+                  onClick={() => void onSaveShippingDetails()}
+                  className="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                >
+                  {dealActionSaving ? "Saving…" : "Save Shipping Details"}
+                </button>
+                <button
+                  type="button"
+                  disabled={dealActionSaving}
+                  onClick={() => setShowShippingForm(false)}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+                >
+                  Cancel
                 </button>
               </div>
             </div>
