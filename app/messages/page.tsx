@@ -1565,7 +1565,39 @@ export default function MessagesPage() {
 
         await refreshDeals();
       } catch (e: any) {
-        setDealError(e?.message || "Could not confirm payment received.");
+        const msg = String(e?.message || "");
+        const lower = msg.toLowerCase();
+        const missingRpc =
+          lower.includes("could not find the function") ||
+          lower.includes("schema cache") ||
+          lower.includes("confirm_deal_payment_and_mark_sold");
+
+        if (missingRpc) {
+          // Fallback: still mark the deal as payment_confirmed so the UI can proceed.
+          const { error: updateError } = await supabase
+            .from("deal_records")
+            .update({ status: "payment_confirmed" })
+            .eq("id", dealRecordForDisplay.id);
+
+          if (updateError) throw updateError;
+
+          await addDealTimelineEvent({
+            dealRecordId: dealRecordForDisplay.id,
+            userId: user.id,
+            eventType: "payment_confirmed_by_seller",
+            title: "Payment confirmed by seller",
+            description: `Seller marked payment as received (paid date: ${formatPaidDate(paidDate)}). Marketplace sold update RPC is missing on the server.`,
+          });
+
+          setShowPaymentForm(false);
+          setDealError("");
+          setDealSoldNotice(
+            "Payment confirmed. The marketplace “mark sold” step isn’t enabled on the server yet, so sold-page updates may lag."
+          );
+          await refreshDeals();
+        } else {
+          setDealError(msg || "Could not confirm payment received.");
+        }
       } finally {
         setDealActionSaving(false);
       }
@@ -2626,7 +2658,7 @@ export default function MessagesPage() {
                     ) : null}
                   </div>
 
-	                  <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(16,185,129,0.18)]">
+	                  <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(16,185,129,0.18)] max-h-[62vh] overflow-y-auto lg:max-h-none lg:overflow-y-visible">
 	                    <div className="flex items-start justify-between gap-3">
 	                    <div>
 	                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Deal Summary</div>
@@ -2670,7 +2702,9 @@ export default function MessagesPage() {
 	                    </div>
 
 	                    {dealError ? (
-	                      <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/[0.08] px-3 py-2 text-xs text-red-100">{dealError}</div>
+	                      <div className="mt-3 rounded-xl border border-red-500/30 bg-red-500/[0.08] px-3 py-2 text-[11px] text-red-100 break-words whitespace-pre-wrap max-h-28 overflow-y-auto">
+	                        {dealError}
+	                      </div>
 	                    ) : null}
 
 	                    <div className="mt-3 text-[12px] leading-relaxed text-slate-400">
