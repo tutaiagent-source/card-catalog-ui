@@ -136,61 +136,94 @@ export async function POST(req: Request) {
 
           let claimedEmailEventId: string | null = null;
 
-          // Claim (insert) before sending so retries cannot double-send.
-          try {
-            const { data: claimed, error: claimErr } = await supabaseAdmin
+          // User-level gate (so this stays correct even if uniqueness is mid-migration).
+          const { data: existingBeforeClaim } = await supabaseAdmin
+            .from("email_events")
+            .select("id, status")
+            .eq("email_type", emailType)
+            .eq("user_id", userId)
+            .maybeSingle();
+
+          if (existingBeforeClaim?.status === "sent" || existingBeforeClaim?.status === "sending") {
+            break;
+          }
+
+          if (existingBeforeClaim?.status === "failed") {
+            const { data: reClaimed, error: reClaimErr } = await supabaseAdmin
               .from("email_events")
-              .insert({
-                user_id: userId,
-                email_type: emailType,
+              .update({
                 stripe_subscription_id: stripeSubscriptionId,
                 recipient_email: recipientEmail,
                 plan_name: planName,
                 status: "sending",
                 resend_message_id: null,
               })
+              .eq("id", existingBeforeClaim.id)
+              .eq("status", "failed")
               .select("id")
               .maybeSingle();
 
-            if (claimErr) throw claimErr;
-            claimedEmailEventId = claimed?.id ?? null;
-          } catch (e: any) {
-            // If already claimed/sent, just read status; if failed, we try to re-claim.
-            const existingCode = e?.code;
-            if (existingCode !== "23505") {
-              console.error("Welcome email claim failed (continuing to check existing state)", e);
-            }
+            if (reClaimErr) throw reClaimErr;
+            claimedEmailEventId = reClaimed?.id ?? null;
+          }
 
-            const { data: existing } = await supabaseAdmin
-              .from("email_events")
-              .select("id, status")
-              .eq("email_type", emailType)
-              .eq("user_id", userId)
-              .maybeSingle();
-
-            if (!existing) break;
-            if (existing.status === "sent" || existing.status === "sending") {
-              // Another webhook already sent (or is sending).
-              break;
-            }
-
-            if (existing.status === "failed") {
-              const { data: reClaimed, error: reClaimErr } = await supabaseAdmin
+          // Claim (insert) before sending so retries cannot double-send.
+          if (!claimedEmailEventId) {
+            try {
+              const { data: claimed, error: claimErr } = await supabaseAdmin
                 .from("email_events")
-                .update({
+                .insert({
+                  user_id: userId,
+                  email_type: emailType,
                   stripe_subscription_id: stripeSubscriptionId,
                   recipient_email: recipientEmail,
                   plan_name: planName,
                   status: "sending",
                   resend_message_id: null,
                 })
-                .eq("id", existing.id)
-                .eq("status", "failed")
                 .select("id")
                 .maybeSingle();
 
-              if (reClaimErr) throw reClaimErr;
-              claimedEmailEventId = reClaimed?.id ?? null;
+              if (claimErr) throw claimErr;
+              claimedEmailEventId = claimed?.id ?? null;
+            } catch (e: any) {
+              // If already claimed/sent, just read status; if failed, we try to re-claim.
+              const existingCode = e?.code;
+              if (existingCode !== "23505") {
+                console.error("Welcome email claim failed (continuing to check existing state)", e);
+              }
+
+              const { data: existing } = await supabaseAdmin
+                .from("email_events")
+                .select("id, status")
+                .eq("email_type", emailType)
+                .eq("user_id", userId)
+                .maybeSingle();
+
+              if (!existing) break;
+              if (existing.status === "sent" || existing.status === "sending") {
+                // Another webhook already sent (or is sending).
+                break;
+              }
+
+              if (existing.status === "failed") {
+                const { data: reClaimed, error: reClaimErr } = await supabaseAdmin
+                  .from("email_events")
+                  .update({
+                    stripe_subscription_id: stripeSubscriptionId,
+                    recipient_email: recipientEmail,
+                    plan_name: planName,
+                    status: "sending",
+                    resend_message_id: null,
+                  })
+                  .eq("id", existing.id)
+                  .eq("status", "failed")
+                  .select("id")
+                  .maybeSingle();
+
+                if (reClaimErr) throw reClaimErr;
+                claimedEmailEventId = reClaimed?.id ?? null;
+              }
             }
           }
 
