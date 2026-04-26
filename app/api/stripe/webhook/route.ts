@@ -10,15 +10,18 @@ function getRequiredEnv(name: string) {
   return v;
 }
 
-function priceIdToTier(priceId: string) {
+function priceIdToTier(priceId: string): "collector" | "pro" | "seller" | null {
+  const collectorMonthly = getRequiredEnv("STRIPE_COLLECTOR_PRICE_MONTHLY_ID");
+  const collectorAnnual = getRequiredEnv("STRIPE_COLLECTOR_PRICE_ANNUAL_ID");
   const proMonthly = getRequiredEnv("STRIPE_PRO_PRICE_MONTHLY_ID");
   const proAnnual = getRequiredEnv("STRIPE_PRO_PRICE_ANNUAL_ID");
   const sellerMonthly = getRequiredEnv("STRIPE_SELLER_PRICE_MONTHLY_ID");
   const sellerAnnual = getRequiredEnv("STRIPE_SELLER_PRICE_ANNUAL_ID");
 
+  if (priceId === collectorMonthly || priceId === collectorAnnual) return "collector";
   if (priceId === proMonthly || priceId === proAnnual) return "pro";
   if (priceId === sellerMonthly || priceId === sellerAnnual) return "seller";
-  return "collector";
+  return null;
 }
 
 async function sendSubscriptionWelcomeEmail({
@@ -119,6 +122,11 @@ export async function POST(req: Request) {
 
         const currentPeriodEnd = subscription.current_period_end ? Number(subscription.current_period_end) : null;
 
+        if (!tier) {
+          console.warn(`Unknown Stripe priceId for checkout.session.completed: ${priceId}. Skipping entitlement update.`);
+          break;
+        }
+
         await supabaseAdmin.from("user_entitlements").upsert(
           {
             user_id: userId,
@@ -171,7 +179,7 @@ export async function POST(req: Request) {
               expand: ["items.data.price"],
             });
             const priceId = fullSubscription?.items?.data?.[0]?.price?.id;
-            if (priceId) tier = priceIdToTier(priceId);
+            if (priceId) tier = priceIdToTier(priceId) ?? "collector";
           } catch (e) {
             console.warn("Could not map tier from deleted subscription items; defaulting to collector", e);
           }
@@ -208,6 +216,11 @@ export async function POST(req: Request) {
 
         const currentPeriodEnd = subscription.current_period_end ? Number(subscription.current_period_end) : null;
         const tier = priceIdToTier(priceId);
+
+        if (!tier) {
+          console.warn(`Unknown Stripe priceId for invoice.paid: ${priceId}. Skipping entitlement update.`);
+          break;
+        }
 
         await supabaseAdmin.from("user_entitlements").upsert(
           {

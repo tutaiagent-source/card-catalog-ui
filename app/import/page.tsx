@@ -588,6 +588,7 @@ export default function ImportPage() {
   const { user, loading } = useSupabaseUser();
   const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
   const { isCollectorPreview } = usePlanPreview();
+  const [effectiveTierForLimits, setEffectiveTierForLimits] = useState<"collector" | "pro" | "seller">("collector");
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const previewSectionRef = useRef<HTMLElement | null>(null);
   const [existingCards, setExistingCards] = useState<Card[]>([]);
@@ -622,6 +623,40 @@ export default function ImportPage() {
   useEffect(() => {
     loadExistingCards();
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: ent, error: entErr } = await supabase
+          .from("user_entitlements")
+          .select("tier, status")
+          .eq("user_id", user.id)
+          .single();
+
+        if (cancelled) return;
+        const status = String(ent?.status || "");
+        const active = ["active", "trialing", "grandfathered"].includes(status);
+        const tier = active ? String(ent?.tier || "collector") : "collector";
+        if (tier === "pro" || tier === "seller" || tier === "collector") setEffectiveTierForLimits(tier);
+        else setEffectiveTierForLimits("collector");
+      } catch {
+        if (!cancelled) setEffectiveTierForLimits("collector");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const catalogLimit =
+    effectiveTierForLimits === "collector"
+      ? 250
+      : effectiveTierForLimits === "pro"
+        ? 1000
+        : 10000;
 
   const existingByKey = useMemo(() => {
     const map = new Map<string, Card>();
@@ -828,6 +863,54 @@ export default function ImportPage() {
     if (!readyRows.length) {
       setImportSummary("No ready rows to import yet. Fix flagged rows or upload a different file.");
       return;
+    }
+
+    // Pre-check: block imports that would exceed server-side catalog limits.
+    // This avoids partial imports.
+    try {
+      const currentCatalogCount = existingCards
+        .filter((c) => String(c.status || "").toLowerCase() !== "sold")
+        .reduce((sum, c) => sum + Number(c.quantity || 0), 0);
+
+      let delta = 0;
+      for (const row of readyRows) {
+        const effectivePayload = editedPreviewPayloadByRowNumber[row.rowNumber] ?? row.payload;
+
+        const payloadStatus = String(effectivePayload.status || "Collection").toLowerCase();
+        const isPayloadSold = payloadStatus === "sold";
+        const importQty = Number(effectivePayload.quantity || 1);
+
+        if (row.action === "create" || (row.action === "needs_attention" && !row.matchId)) {
+          const newContribution = isPayloadSold ? 0 : importQty;
+          delta += newContribution;
+          continue;
+        }
+
+        if ((row.action === "update" || row.action === "needs_attention") && row.matchId && row.matchedCard) {
+          const existingQty = Number(row.matchedCard.quantity || 0);
+          const existingStatus = String(row.matchedCard.status || "Collection").toLowerCase();
+          const oldContribution = existingStatus === "sold" ? 0 : existingQty;
+
+          let resultingQty = importQty;
+          if (row.action === "update") {
+            const choice = duplicateChoices[row.rowNumber] || "add_quantity";
+            if (choice === "add_quantity") resultingQty = existingQty + importQty;
+          }
+
+          const newContribution = isPayloadSold ? 0 : resultingQty;
+          delta += newContribution - oldContribution;
+        }
+      }
+
+      const estimatedNewCatalogCount = currentCatalogCount + delta;
+      if (estimatedNewCatalogCount > catalogLimit) {
+        setImportSummary(
+          `This import would exceed your plan limit of ${catalogLimit} catalog cards (estimated: ${estimatedNewCatalogCount}).`
+        );
+        return;
+      }
+    } catch {
+      // If pre-check fails, let server-side enforcement be the source of truth.
     }
 
     setImporting(true);

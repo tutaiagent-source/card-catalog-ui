@@ -16,6 +16,7 @@ type CardSummary = {
   quantity: number | null;
   estimated_price?: number | null;
   status?: string | null;
+  public_market_visible?: boolean | null;
 };
 
 export default function AccountPage() {
@@ -24,6 +25,7 @@ export default function AccountPage() {
   const { planPreview, setPlanPreview, isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<CardSummary[]>([]);
   const [realTier, setRealTier] = useState<"collector" | "pro" | "seller" | null>(null);
+  const [hasActiveEntitlement, setHasActiveEntitlement] = useState<boolean>(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -50,7 +52,7 @@ export default function AccountPage() {
     (async () => {
       const { data, error: loadError } = await supabase
         .from("cards")
-        .select("id, quantity, estimated_price, status")
+        .select("id, quantity, estimated_price, status, public_market_visible")
         .eq("user_id", user.id);
 
       if (loadError) {
@@ -64,13 +66,18 @@ export default function AccountPage() {
       try {
         const { data: ent, error: entErr } = await supabase
           .from("user_entitlements")
-          .select("tier")
+          .select("tier, status")
           .eq("user_id", user.id)
           .single();
 
-        if (!entErr && ent?.tier) {
-          if (ent.tier === "pro") setRealTier("pro");
-          else if (ent.tier === "seller") setRealTier("seller");
+        if (!entErr) {
+          const status = String(ent?.status || "");
+          const active = ["active", "trialing", "grandfathered"].includes(status);
+          setHasActiveEntitlement(active);
+
+          const tier = active ? String(ent?.tier || "collector") : "collector";
+          if (tier === "pro") setRealTier("pro");
+          else if (tier === "seller") setRealTier("seller");
           else setRealTier("collector");
         }
       } catch (e) {
@@ -79,8 +86,20 @@ export default function AccountPage() {
     })();
   }, [user?.id]);
 
-  const totalCards = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0), 0), [cards]);
-  const estimatedTotal = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.estimated_price || 0), 0), [cards]);
+  const catalogCardsCount = useMemo(
+    () =>
+      cards
+        .filter((c) => String(c.status || "").toLowerCase() !== "sold")
+        .reduce((sum, c) => sum + Number(c.quantity || 0), 0),
+    [cards]
+  );
+  const estimatedTotal = useMemo(
+    () =>
+      cards
+        .filter((c) => String(c.status || "").toLowerCase() !== "sold")
+        .reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.estimated_price || 0), 0),
+    [cards]
+  );
   const soldRows = useMemo(() => cards.filter((card) => String(card.status || "") === "Sold"), [cards]);
   const collectorCardCap = 250;
   const collectorAddOnCards = 100;
@@ -93,7 +112,42 @@ export default function AccountPage() {
       (planPreview === "pro" && realTier !== "pro") ||
       (planPreview === "seller" && realTier !== "seller")
     : false;
-  const usagePct = Math.min(100, Math.round((totalCards / collectorCardCap) * 100));
+  const catalogLimit = realTier
+    ? realTier === "collector"
+      ? 250
+      : realTier === "pro"
+        ? 1000
+        : 10000
+    : planPreview === "collector"
+      ? 250
+      : planPreview === "seller"
+        ? 10000
+        : 1000;
+
+  const marketLimit = realTier
+    ? realTier === "collector"
+      ? 10
+      : realTier === "pro"
+        ? 50
+        : 250
+    : planPreview === "collector"
+      ? 10
+      : planPreview === "seller"
+        ? 250
+        : 50;
+
+  const activeMarketListingsCount = useMemo(() => {
+    const mode = String(profile?.market_visibility_mode || "none");
+    return cards.filter((c) => {
+      if (String(c.status || "") !== "Listed") return false;
+      if (mode === "whole_collection" || mode === "all_listed") return true;
+      if (mode === "selected_cards") return Boolean(c.public_market_visible);
+      return false;
+    }).length;
+  }, [cards, profile?.market_visibility_mode]);
+
+  const catalogUsagePct = Math.min(100, Math.round((catalogCardsCount / catalogLimit) * 100));
+  const marketUsagePct = Math.min(100, Math.round((activeMarketListingsCount / marketLimit) * 100));
 
   const effectiveTier: "collector" | "pro" | "seller" = realTier ?? (planPreview === "collector" ? "collector" : planPreview === "seller" ? "seller" : "pro");
   const usernameLocked = Boolean(String(profile?.username || "").trim());
@@ -427,7 +481,7 @@ export default function AccountPage() {
           <section className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-5 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
             <h2 className="text-lg font-semibold">Collection Summary</h2>
             <div className="mt-4 text-sm text-slate-300">Cards in collection</div>
-            <div className="mt-1 text-2xl font-bold">{totalCards}</div>
+            <div className="mt-1 text-2xl font-bold">{catalogCardsCount}</div>
 
             <div className="mt-4 text-sm text-slate-300">Estimated collection value</div>
             <div className="mt-1 text-2xl font-bold">${estimatedTotal.toFixed(2)}</div>
@@ -499,12 +553,27 @@ export default function AccountPage() {
           <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
             <div className="flex items-center justify-between gap-3 text-sm">
               <div className="font-semibold text-slate-200">Collector plan usage</div>
-              <div className="text-slate-400">{totalCards} / {collectorCardCap} cards</div>
+              <div className="text-slate-400">
+                Catalog: {catalogCardsCount} / {catalogLimit}
+              </div>
             </div>
             <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-900">
-              <div className="h-full rounded-full bg-[linear-gradient(90deg,rgba(245,158,11,0.95),rgba(239,68,68,0.9))]" style={{ width: `${usagePct}%` }} />
+              <div className="h-full rounded-full bg-[linear-gradient(90deg,rgba(245,158,11,0.95),rgba(239,68,68,0.9))]" style={{ width: `${catalogUsagePct}%` }} />
             </div>
-            {isCollectorPreview && totalCards >= collectorCardCap ? (
+            <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+              <div className="font-semibold text-slate-200">Market listings</div>
+              <div className="text-slate-400">
+                {activeMarketListingsCount} / {marketLimit}
+              </div>
+            </div>
+            <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-slate-900">
+              <div
+                className="h-full rounded-full bg-[linear-gradient(90deg,rgba(59,130,246,0.95),rgba(99,102,241,0.9))]"
+                style={{ width: `${marketUsagePct}%` }}
+              />
+            </div>
+
+            {effectiveTier === "collector" && catalogCardsCount >= 250 ? (
               <div className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4">
                 <div className="text-sm font-semibold text-amber-200">Collector limit reached</div>
                 <p className="mt-2 text-sm leading-6 text-slate-200">
@@ -532,7 +601,15 @@ export default function AccountPage() {
             ) : null}
 
             <div className="mt-2 text-xs text-slate-500">
-              Stripe subscriptions wired. Your Stripe-synced plan is: {realTier ? (realTier === "pro" ? "Pro" : realTier === "seller" ? "Seller" : "Collector") : "Loading..."}
+              Stripe subscriptions wired. Your Stripe-synced plan is:{" "}
+              {realTier
+                ? realTier === "pro"
+                  ? "Pro"
+                  : realTier === "seller"
+                    ? "Seller"
+                    : "Collector"
+                : "Loading..."}
+              {(!hasActiveEntitlement && realTier) ? " (subscription inactive, using Collector limits)" : ""}
             </div>
           </div>
 
