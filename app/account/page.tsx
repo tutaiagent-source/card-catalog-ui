@@ -541,12 +541,13 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Collector</div>
                   <div className="text-sm font-semibold text-white">$5 / month ($50 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Starter tier, limited for personal collections and light selling.</div>
+                <div className="mt-1 text-sm text-slate-400">Catalog up to 100 cards, with a fair-use allowance of ~5–50 active listings per month.</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                <li>• Up to 100 cards</li>
+                  <li>• Up to 100 catalog cards</li>
+                  <li>• Fair-use: ~5–50 active listings/month</li>
                   <li>• Manual add/edit</li>
-                  <li>• Basic sold tracking</li>
-                  <li>• Basic dashboard</li>
+                  <li>• Personal Collection (PC) view</li>
+                  <li>• Basic sold tracking + basic dashboard</li>
                 </ul>
 
                 <div className="mt-4 flex flex-wrap gap-3">
@@ -574,8 +575,10 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Seller</div>
                   <div className="text-sm font-semibold text-white">$25 / month ($250 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">For active sellers who want deeper sold tracking and advanced seller analytics.</div>
+                <div className="mt-1 text-sm text-slate-400">Unlimited catalog cards for serious selling, with a fair-use allowance of ~25–250 active listings per month.</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                  <li>• Unlimited catalog cards (fair-use storage)</li>
+                  <li>• Fair-use: ~25–250 active listings/month</li>
                   <li>• CSV import/export</li>
                   <li>• Deeper sold tracking</li>
                   <li>• Advanced seller analytics</li>
@@ -606,12 +609,13 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Pro</div>
                   <div className="text-sm font-semibold text-white">$10 / month ($100 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Higher card limits, CSV workflows, and deeper seller analytics.</div>
+                <div className="mt-1 text-sm text-slate-400">Unlimited catalog cards, with a fair-use allowance of ~10–100 active listings per month.</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                  <li>• Higher card limits, fair-use image storage</li>
+                  <li>• Unlimited catalog cards (fair-use storage)</li>
+                  <li>• Fair-use: ~10–100 active listings/month</li>
                   <li>• CSV import/export</li>
-                  <li>• Revenue, net profit, ROI, platform analytics</li>
                   <li>• Bulk inventory tools</li>
+                  <li>• Revenue, net profit, ROI, platform analytics</li>
                 </ul>
 
                 <div className="mt-4 flex flex-wrap gap-3">
