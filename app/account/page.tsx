@@ -537,13 +537,13 @@ export default function AccountPage() {
           </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
-                <div className="flex items-center justify-between gap-3">
+              <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-center">
+                <div className="flex items-center justify-center gap-3">
                   <div className="text-sm font-semibold text-slate-100">Collector</div>
                   <div className="text-sm font-semibold text-white">$5 / month ($50 / yr)</div>
                 </div>
                 <div className="mt-1 text-sm text-slate-400">Catalog up to 250 cards, with 10 active CardCat Market listings per month.</div>
-                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                <ul className="mt-3 list-none pl-0 space-y-2 text-sm text-slate-300 text-center">
                   <li>• Up to 250 catalog cards</li>
                   <li>• 10 active CardCat Market listings/month</li>
                   <li>• Manual add/edit</li>
@@ -551,7 +551,7 @@ export default function AccountPage() {
                   <li>• Basic sold tracking + basic dashboard</li>
                 </ul>
 
-                <div className="mt-4 flex flex-wrap gap-3">
+                <div className="mt-4 flex flex-wrap justify-center gap-3">
                   <button
                     type="button"
                     className="rounded-xl border border-white/10 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
@@ -571,13 +571,13 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
-                <div className="flex items-center justify-between gap-3">
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4 text-center">
+                <div className="flex items-center justify-center gap-3">
                   <div className="text-sm font-semibold text-slate-100">Seller</div>
                   <div className="text-sm font-semibold text-white">$25 / month ($250 / yr)</div>
                 </div>
                 <div className="mt-1 text-sm text-slate-400">Catalog up to 10,000 cards, with 250 active CardCat Market listings per month.</div>
-                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                <ul className="mt-3 list-none pl-0 space-y-2 text-sm text-slate-300 text-center">
                   <li>• Up to 10,000 catalog cards</li>
                   <li>• 250 active CardCat Market listings/month</li>
                   <li>• CSV import/export</li>
@@ -586,7 +586,7 @@ export default function AccountPage() {
                   <li>• Bulk inventory tools</li>
                 </ul>
 
-                <div className="mt-4 flex flex-wrap gap-3">
+                <div className="mt-4 flex flex-wrap justify-center gap-3">
                   <button
                     type="button"
                     className="rounded-xl border border-white/10 bg-[#f59e0b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d97706] disabled:cursor-not-allowed disabled:opacity-60"
@@ -605,13 +605,13 @@ export default function AccountPage() {
                   </button>
                 </div>
               </div>
-              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
-                <div className="flex items-center justify-between gap-3">
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4 text-center">
+                <div className="flex items-center justify-center gap-3">
                   <div className="text-sm font-semibold text-slate-100">Pro</div>
                   <div className="text-sm font-semibold text-white">$10 / month ($100 / yr)</div>
                 </div>
                 <div className="mt-1 text-sm text-slate-400">Catalog up to 1,000 cards, with 50 active CardCat Market listings per month.</div>
-                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                <ul className="mt-3 list-none pl-0 space-y-2 text-sm text-slate-300 text-center">
                   <li>• Up to 1,000 catalog cards</li>
                   <li>• 50 active CardCat Market listings/month</li>
                   <li>• CSV import/export</li>
@@ -619,7 +619,7 @@ export default function AccountPage() {
                   <li>• Revenue, net profit, ROI, platform analytics</li>
                 </ul>
 
-                <div className="mt-4 flex flex-wrap gap-3">
+                <div className="mt-4 flex flex-wrap justify-center gap-3">
                   <button
                     type="button"
                     className="rounded-xl border border-white/10 bg-[#d50000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b80000] disabled:cursor-not-allowed disabled:opacity-60"
