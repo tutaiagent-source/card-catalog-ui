@@ -304,7 +304,7 @@ export default function SoldPage() {
   const topPlatform = useMemo(() => {
     const counts = new Map<string, number>();
     cards.forEach((card) => {
-      const key = normalizePlatformLabel(card.sale_platform);
+      const key = platformForCard(card);
       counts.set(key, (counts.get(key) || 0) + Number(card.quantity || 0));
     });
     return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
@@ -814,7 +814,7 @@ export default function SoldPage() {
     const byPlatform = new Map<string, { revenue: number; quantity: number }>();
 
     cards.forEach((card) => {
-      const key = normalizePlatformLabel(card.sale_platform);
+      const key = platformForCard(card);
       const current = byPlatform.get(key) || { revenue: 0, quantity: 0 };
       current.revenue += Number(card.sold_price || 0) * Number(card.quantity || 0);
       current.quantity += Number(card.quantity || 0);
@@ -832,7 +832,7 @@ export default function SoldPage() {
     const byPlatform = new Map<string, { netProfit: number; quantity: number }>();
 
     salesWithMetrics.forEach((card) => {
-      const key = normalizePlatformLabel(card.sale_platform);
+      const key = platformForCard(card);
       const current = byPlatform.get(key) || { netProfit: 0, quantity: 0 };
       current.netProfit += card.metrics.netProfit;
       current.quantity += Number(card.quantity || 0);
@@ -900,7 +900,7 @@ export default function SoldPage() {
         soldPricePerCard == null ? "" : money(soldPricePerCard),
         card.metrics.grossSale == null ? "" : money(Number(card.metrics.grossSale)),
         toDateInputValue(card.sold_at) || "",
-        normalizePlatformLabel(card.sale_platform),
+        platformForCard(card),
         costBasis == null ? "" : money(Number(costBasis)),
         shippingCost == null ? "" : money(Number(shippingCost)),
         platformFee == null ? "" : money(Number(platformFee)),
