@@ -539,6 +539,15 @@ export default function MessagesPage() {
     return dealOffers.find((o) => String(o.status || "").toLowerCase() === "pending") ?? null;
   }, [dealOffers]);
 
+  const dealRecordForDisplay = useMemo(() => {
+    if (!activeDealRecord) return null;
+    if (!activeConversationId || !activeConversationContextCardId) return null;
+    if (String(activeDealRecord.conversation_id) !== String(activeConversationId)) return null;
+    if (!activeDealRecord.card_id) return null;
+    if (String(activeDealRecord.card_id) !== String(activeConversationContextCardId)) return null;
+    return activeDealRecord;
+  }, [activeDealRecord, activeConversationId, activeConversationContextCardId]);
+
   const latestDealOffer = useMemo(() => {
     return dealOffers[0] ?? null;
   }, [dealOffers]);
@@ -561,23 +570,23 @@ export default function MessagesPage() {
       });
     }
 
-    if (activeDealRecord?.status && String(activeDealRecord.status).toLowerCase() === "offer_accepted") {
+    if (dealRecordForDisplay?.status && String(dealRecordForDisplay.status).toLowerCase() === "offer_accepted") {
       items.push({
         label: "Accepted",
-        time: activeDealRecord.accepted_at ? formatTimestamp(activeDealRecord.accepted_at) : undefined,
-        detail: activeDealRecord.agreed_price != null ? formatDealMoney(Number(activeDealRecord.agreed_price)) : undefined,
+        time: dealRecordForDisplay.accepted_at ? formatTimestamp(dealRecordForDisplay.accepted_at) : undefined,
+        detail: dealRecordForDisplay.agreed_price != null ? formatDealMoney(Number(dealRecordForDisplay.agreed_price)) : undefined,
       });
     }
 
-    if (activeDealRecord?.status && String(activeDealRecord.status).toLowerCase() === "offer_declined") {
+    if (dealRecordForDisplay?.status && String(dealRecordForDisplay.status).toLowerCase() === "offer_declined") {
       items.push({
         label: "Declined",
-        time: activeDealRecord.updated_at ? formatTimestamp(activeDealRecord.updated_at) : undefined,
+        time: dealRecordForDisplay.updated_at ? formatTimestamp(dealRecordForDisplay.updated_at) : undefined,
       });
     }
 
     return items.slice(0, 3);
-  }, [latestDealOffer, activeDealRecord]);
+  }, [latestDealOffer, dealRecordForDisplay]);
 
   const friendsUserIdSet = useMemo(() => {
     return new Set(friends.map((f) => String(f.id)));
@@ -665,8 +674,40 @@ export default function MessagesPage() {
       setDealLoading(true);
       setDealError("");
       try {
-        const records = await loadDealRecordsForConversation(activeConversationId);
+        console.debug("[DealsLoad] thread scope", {
+          current_conversation_id: activeConversationId,
+          current_card_id: activeConversationContextCardId,
+        });
+        const records = await loadDealRecordsForConversation(activeConversationId, activeConversationContextCardId);
         if (cancelled) return;
+        console.debug("[DealsLoad] fetched deal_records", {
+          current_conversation_id: activeConversationId,
+          current_card_id: activeConversationContextCardId,
+          fetched: (records ?? []).map((r) => ({
+            deal_record_id: r.id,
+            conversation_id: r.conversation_id,
+            card_id: r.card_id,
+            status: r.status,
+          })),
+        });
+
+        const mismatched = (records ?? []).filter((r) => {
+          const convOk = String(r.conversation_id) === String(activeConversationId);
+          const cardOk = activeConversationContextCardId ? String(r.card_id) === String(activeConversationContextCardId) : true;
+          return !convOk || !cardOk;
+        });
+        if (mismatched.length > 0) {
+          console.warn("[DealsLoad] deal_records scope mismatch detected", {
+            current_conversation_id: activeConversationId,
+            current_card_id: activeConversationContextCardId,
+            mismatched: mismatched.map((r) => ({
+              deal_record_id: r.id,
+              conversation_id: r.conversation_id,
+              card_id: r.card_id,
+              status: r.status,
+            })),
+          });
+        }
         setDealRecords(records);
         const top = records[0] ?? null;
         setActiveDealRecord(top);
@@ -796,8 +837,40 @@ export default function MessagesPage() {
 
   async function refreshDeals() {
     if (!activeConversationId || !user?.id) return;
-    const records = await loadDealRecordsForConversation(activeConversationId);
+    console.debug("[DealsRefresh] thread scope", {
+      current_conversation_id: activeConversationId,
+      current_card_id: activeConversationContextCardId,
+    });
+    const records = await loadDealRecordsForConversation(activeConversationId, activeConversationContextCardId);
     const top = records[0] ?? null;
+    console.debug("[DealsRefresh] fetched deal_records", {
+      current_conversation_id: activeConversationId,
+      current_card_id: activeConversationContextCardId,
+      fetched: (records ?? []).map((r) => ({
+        deal_record_id: r.id,
+        conversation_id: r.conversation_id,
+        card_id: r.card_id,
+        status: r.status,
+      })),
+    });
+
+    const mismatched = (records ?? []).filter((r) => {
+      const convOk = String(r.conversation_id) === String(activeConversationId);
+      const cardOk = activeConversationContextCardId ? String(r.card_id) === String(activeConversationContextCardId) : true;
+      return !convOk || !cardOk;
+    });
+    if (mismatched.length > 0) {
+      console.warn("[DealsRefresh] deal_records scope mismatch detected", {
+        current_conversation_id: activeConversationId,
+        current_card_id: activeConversationContextCardId,
+        mismatched: mismatched.map((r) => ({
+          deal_record_id: r.id,
+          conversation_id: r.conversation_id,
+          card_id: r.card_id,
+          status: r.status,
+        })),
+      });
+    }
     setDealRecords(records);
     setActiveDealRecord(top);
 
@@ -811,7 +884,8 @@ export default function MessagesPage() {
 
   async function onCreateDealRecord() {
     if (!activeConversationId || !user?.id) return;
-    if (dealActionSaving || activeDealRecord) return;
+    if (dealActionSaving || dealRecordForDisplay) return;
+    if (!activeConversationContextCardId) return;
 
     setDealActionSaving(true);
     setDealError("");
@@ -844,7 +918,7 @@ export default function MessagesPage() {
   }
 
   async function onMakeOffer() {
-    if (!activeDealRecord || !user?.id) return;
+    if (!dealRecordForDisplay || !user?.id) return;
     if (!activeConversationOtherUserId) {
       setDealError("Could not determine the other user for this thread yet. Try refreshing.");
       return;
@@ -861,7 +935,7 @@ export default function MessagesPage() {
     setDealError("");
     try {
       await createDealOffer({
-        dealRecordId: activeDealRecord.id,
+        dealRecordId: dealRecordForDisplay.id,
         fromUserId: user.id,
         toUserId: otherUserId,
         offerAmount: amount,
@@ -877,10 +951,10 @@ export default function MessagesPage() {
           buyer_user_id: buyerUserId,
           seller_user_id: sellerUserId,
         })
-        .eq("id", activeDealRecord.id);
+        .eq("id", dealRecordForDisplay.id);
 
       await addDealTimelineEvent({
-        dealRecordId: activeDealRecord.id,
+        dealRecordId: dealRecordForDisplay.id,
         userId: user.id,
         eventType: "offer_sent",
         title: "Offer sent",
@@ -899,7 +973,7 @@ export default function MessagesPage() {
   }
 
   async function onAcceptOffer(offer: DealOfferRow) {
-    if (!activeDealRecord || !user?.id) return;
+    if (!dealRecordForDisplay || !user?.id) return;
     setDealActionSaving(true);
     setDealError("");
     try {
@@ -921,10 +995,10 @@ export default function MessagesPage() {
           buyer_user_id: buyerUserId,
           seller_user_id: sellerUserId,
         })
-        .eq("id", activeDealRecord.id);
+        .eq("id", dealRecordForDisplay.id);
 
       await addDealTimelineEvent({
-        dealRecordId: activeDealRecord.id,
+        dealRecordId: dealRecordForDisplay.id,
         userId: user.id,
         eventType: "offer_accepted",
         title: "Offer accepted",
@@ -941,7 +1015,7 @@ export default function MessagesPage() {
   }
 
   async function onDeclineOffer(offer: DealOfferRow) {
-    if (!activeDealRecord || !user?.id) return;
+    if (!dealRecordForDisplay || !user?.id) return;
     setDealActionSaving(true);
     setDealError("");
     try {
@@ -956,10 +1030,10 @@ export default function MessagesPage() {
         .update({
           status: "offer_declined",
         })
-        .eq("id", activeDealRecord.id);
+        .eq("id", dealRecordForDisplay.id);
 
       await addDealTimelineEvent({
-        dealRecordId: activeDealRecord.id,
+        dealRecordId: dealRecordForDisplay.id,
         userId: user.id,
         eventType: "offer_declined",
         title: "Offer declined",
@@ -975,7 +1049,7 @@ export default function MessagesPage() {
   }
 
   async function onCounterOffer(offer: DealOfferRow) {
-    if (!activeDealRecord || !user?.id) return;
+    if (!dealRecordForDisplay || !user?.id) return;
     const otherUserId = offer.from_user_id;
     const amount = Number(counterAmountDraft.trim());
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -993,7 +1067,7 @@ export default function MessagesPage() {
       });
 
       await createDealOffer({
-        dealRecordId: activeDealRecord.id,
+        dealRecordId: dealRecordForDisplay.id,
         fromUserId: user.id,
         toUserId: otherUserId,
         offerAmount: amount,
@@ -1009,10 +1083,10 @@ export default function MessagesPage() {
           seller_user_id: sellerUserId,
           agreed_price: null,
         })
-        .eq("id", activeDealRecord.id);
+        .eq("id", dealRecordForDisplay.id);
 
       await addDealTimelineEvent({
-        dealRecordId: activeDealRecord.id,
+        dealRecordId: dealRecordForDisplay.id,
         userId: user.id,
         eventType: "counter_sent",
         title: "Counter sent",
@@ -1030,9 +1104,9 @@ export default function MessagesPage() {
   }
 
   function onDownloadDealRecord() {
-    if (!activeDealRecord) return;
+    if (!dealRecordForDisplay) return;
     const payload = {
-      deal_record: activeDealRecord,
+      deal_record: dealRecordForDisplay,
       offers: dealOffers,
       card_context: activeConversationCard,
       conversation_id: activeConversationId,
@@ -1043,7 +1117,7 @@ export default function MessagesPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `deal_record_${activeDealRecord.id}.json`;
+    a.download = `deal_record_${dealRecordForDisplay.id}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -1938,37 +2012,37 @@ export default function MessagesPage() {
 	                    <div className="flex items-start justify-between gap-3">
 	                    <div>
 	                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Deal Summary</div>
-	                      {activeDealRecord ? (
+	                      {dealRecordForDisplay ? (
 	                        <>
-	                          <div className="mt-1 text-lg font-extrabold text-white">{dealRecordStatusLabel(activeDealRecord.status)}</div>
+	                          <div className="mt-1 text-lg font-extrabold text-white">{dealRecordStatusLabel(dealRecordForDisplay.status)}</div>
 	                          <div className="mt-2 flex items-baseline gap-3">
 	                            <div className="text-2xl font-extrabold text-emerald-200">
-	                              {activeDealRecord.agreed_price != null
-	                                ? formatDealMoney(Number(activeDealRecord.agreed_price))
+	                              {dealRecordForDisplay.agreed_price != null
+	                                ? formatDealMoney(Number(dealRecordForDisplay.agreed_price))
 	                                : pendingDealOffer?.offer_amount != null
 	                                  ? formatDealMoney(Number(pendingDealOffer.offer_amount))
 	                                  : latestDealOffer?.offer_amount != null
 	                                    ? formatDealMoney(Number(latestDealOffer.offer_amount))
 	                                    : "—"}
 	                            </div>
-	                            {activeDealRecord.agreed_price != null ? (
+	                            {dealRecordForDisplay.agreed_price != null ? (
 	                              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100/90">Accepted</div>
 	                            ) : null}
 	                          </div>
 	                          <div className="mt-2 text-xs text-slate-300">
-	                            Buyer: {profileHandleById(activeDealRecord.buyer_user_id ?? (pendingDealOffer ? computeBuyerSeller(pendingDealOffer.from_user_id, pendingDealOffer.to_user_id).buyerUserId : null))}
-	                            &nbsp;•&nbsp; Seller: {profileHandleById(activeDealRecord.seller_user_id ?? (pendingDealOffer ? computeBuyerSeller(pendingDealOffer.from_user_id, pendingDealOffer.to_user_id).sellerUserId : null))}
+	                            Buyer: {profileHandleById(dealRecordForDisplay.buyer_user_id ?? (pendingDealOffer ? computeBuyerSeller(pendingDealOffer.from_user_id, pendingDealOffer.to_user_id).buyerUserId : null))}
+	                            &nbsp;•&nbsp; Seller: {profileHandleById(dealRecordForDisplay.seller_user_id ?? (pendingDealOffer ? computeBuyerSeller(pendingDealOffer.from_user_id, pendingDealOffer.to_user_id).sellerUserId : null))}
 	                          </div>
 	                        </>
 	                      ) : (
-	                        <div className="mt-1 text-sm font-semibold text-slate-200">No deal record yet</div>
+	                        <div className="mt-1 text-sm font-semibold text-slate-200">Start a deal or make an offer for this card</div>
 	                      )}
 	                    </div>
 
-	                      {!activeDealRecord ? (
+	                      {!dealRecordForDisplay ? (
 	                        <button
 	                          type="button"
-	                          disabled={dealActionSaving}
+	                          disabled={dealActionSaving || !activeConversationContextCardId}
 	                          onClick={() => void onCreateDealRecord()}
 	                          className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
 	                        >
@@ -1985,7 +2059,7 @@ export default function MessagesPage() {
 	                      CardCat Deal Records are documentation tools only. CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.
 	                    </div>
 
-	                    {activeDealRecord ? (
+	                    {dealRecordForDisplay ? (
 	                      <div className="mt-3 space-y-3">
 	                        {dealLoading ? <div className="text-xs text-slate-400">Loading deal…</div> : null}
 
@@ -2080,9 +2154,9 @@ export default function MessagesPage() {
 	                          ) : (
 	                            <div className="text-xs text-slate-300">Another offer is pending. Waiting…</div>
 	                          )
-	                        ) : activeDealRecord && String(activeDealRecord.status).toLowerCase() === "offer_accepted" ? (
+	                          ) : dealRecordForDisplay && String(dealRecordForDisplay.status).toLowerCase() === "offer_accepted" ? (
 	                          <div className="space-y-2">
-	                            <div className="text-xs text-slate-300">Offer accepted. This thread is now documented at {activeDealRecord.agreed_price != null ? formatDealMoney(Number(activeDealRecord.agreed_price)) : "—"}.</div>
+	                            <div className="text-xs text-slate-300">Offer accepted. This thread is now documented at {dealRecordForDisplay.agreed_price != null ? formatDealMoney(Number(dealRecordForDisplay.agreed_price)) : "—"}.</div>
 	                            <div className="flex flex-wrap gap-2">
 	                              <button
 	                                type="button"

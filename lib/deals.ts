@@ -66,15 +66,21 @@ export type DealDetailsUpsert = Partial<{
   final_status: string | null;
 }>;
 
-export async function loadDealRecordsForConversation(conversationId: string) {
+export async function loadDealRecordsForConversation(conversationId: string, cardId?: string | null) {
   if (!supabaseConfigured || !supabase) return [] as DealRecordRow[];
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("deal_records")
     .select("*")
     .eq("conversation_id", conversationId)
     .order("created_at", { ascending: false })
     .limit(5);
+
+  if (cardId) {
+    query = query.eq("card_id", cardId);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data ?? []) as DealRecordRow[];
