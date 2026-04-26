@@ -61,7 +61,7 @@ export default function CollectorPlanPage() {
             <ul className="mt-5 space-y-3 text-sm text-slate-200">
               {[
                 "Up To 250 Cards",
-                "10 Active CardCat Market listings per month",
+                "10 Active CardCat Market listings",
                 "Manual Card Entry",
                 "Personal Collection (PC) View",
                 "Cleaner Catalog Browsing",
@@ -160,7 +160,7 @@ export default function CollectorPlanPage() {
             </p>
 
             <p className="mt-3 text-sm leading-6 text-slate-200">
-              Capacity & listings: Collector up to 250 cards and 10 active Market listings/month; Pro up to 1,000 cards and 50 active Market listings/month.
+              Capacity & listings: Collector up to 250 cards and 10 active Market listings; Pro up to 1,000 cards and 50 active Market listings.
             </p>
 
             <div className="mt-6 grid gap-2">

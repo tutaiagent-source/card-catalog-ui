@@ -4,7 +4,7 @@ type PlanDetails = {
   planName: string;
   monthlyPrice: string;
   catalogUpTo: string;
-  activeListingsPerMonth: string;
+  activeListings: string;
   showRoiNetProfit: boolean;
 };
 
@@ -15,7 +15,7 @@ function tierToPlanDetails(tier: SubscriptionTier): PlanDetails {
         planName: "Collector",
         monthlyPrice: "$5/month",
         catalogUpTo: "Up to 250 cards",
-        activeListingsPerMonth: "10 active CardCat Market listings per month",
+        activeListings: "10 active CardCat Market listings",
         showRoiNetProfit: false,
       };
     case "pro":
@@ -23,7 +23,7 @@ function tierToPlanDetails(tier: SubscriptionTier): PlanDetails {
         planName: "Pro",
         monthlyPrice: "$10/month",
         catalogUpTo: "Up to 1,000 cards",
-        activeListingsPerMonth: "50 active CardCat Market listings per month",
+        activeListings: "50 active CardCat Market listings",
         showRoiNetProfit: true,
       };
     case "seller":
@@ -31,7 +31,7 @@ function tierToPlanDetails(tier: SubscriptionTier): PlanDetails {
         planName: "Seller",
         monthlyPrice: "$25/month",
         catalogUpTo: "Up to 10,000 cards",
-        activeListingsPerMonth: "250 active CardCat Market listings per month",
+        activeListings: "250 active CardCat Market listings",
         showRoiNetProfit: true,
       };
   }
@@ -40,13 +40,17 @@ function tierToPlanDetails(tier: SubscriptionTier): PlanDetails {
 export function buildSubscriptionWelcomeEmail(tier: SubscriptionTier) {
   const d = tierToPlanDetails(tier);
 
+  const baseUrl = String(
+    (process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_ORIGIN || "https://cardcat.io").replace(/\/$/, "")
+  );
+
   const subject = `Welcome to CardCat — You’re on the ${d.planName} plan`;
   const text = [
     `Congrats, you’ve signed up for the ${d.planName} plan.`,
     "",
     "Your plan includes:",
     `- ${d.catalogUpTo}`,
-    `- ${d.activeListingsPerMonth}`,
+    `- ${d.activeListings}`,
     "- PC area",
     "- Listings manager",
     "- Messages and offers",
@@ -80,7 +84,7 @@ export function buildSubscriptionWelcomeEmail(tier: SubscriptionTier) {
         <div style="font-weight: 600; margin-bottom: 8px;">Your plan includes</div>
         <ul style="margin: 0; padding-left: 18px;">
           <li>${d.catalogUpTo}</li>
-          <li>${d.activeListingsPerMonth}</li>
+          <li>${d.activeListings}</li>
           <li>PC area</li>
           <li>Listings manager</li>
           <li>Messages and offers</li>
@@ -104,22 +108,22 @@ export function buildSubscriptionWelcomeEmail(tier: SubscriptionTier) {
       </div>
 
       <div style="margin-top: 18px; display: flex; gap: 12px; flex-wrap: wrap;">
-        <a href="https://cardcat.io/catalog" style="display: inline-block; background: #d50000; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 700;">Go to Dashboard</a>
-        <a href="https://cardcat.io/add-card" style="display: inline-block; background: #111827; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 700;">Add Your First Card</a>
+        <a href="${baseUrl}/catalog" style="display: inline-block; background: #d50000; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 700;">Go to Dashboard</a>
+        <a href="${baseUrl}/add-card" style="display: inline-block; background: #111827; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 10px; font-weight: 700;">Add Your First Card</a>
       </div>
 
       <div style="margin-top: 16px; font-size: 14px; color: #334155;">
         Useful links:
         <ul style="margin: 8px 0 0; padding-left: 18px;">
-          <li><a href="https://cardcat.io/catalog">Dashboard</a></li>
-          <li><a href="https://cardcat.io/add-card">Add Card</a></li>
-          <li><a href="https://cardcat.io/pc">PC</a></li>
-          <li><a href="https://cardcat.io/listed">Listings</a></li>
-          <li><a href="https://cardcat.io/market">Market</a></li>
-          <li><a href="https://cardcat.io/sold">Sold</a></li>
-          <li><a href="https://cardcat.io/import">Import CSV</a></li>
-          <li><a href="https://cardcat.io/account">Account / Billing</a></li>
-          <li><a href="https://cardcat.io/contact">Help / Support</a></li>
+          <li><a href="${baseUrl}/catalog">Dashboard</a></li>
+          <li><a href="${baseUrl}/add-card">Add Card</a></li>
+          <li><a href="${baseUrl}/pc">PC</a></li>
+          <li><a href="${baseUrl}/listed">Listings</a></li>
+          <li><a href="${baseUrl}/market">Market</a></li>
+          <li><a href="${baseUrl}/sold">Sold</a></li>
+          <li><a href="${baseUrl}/import">Import CSV</a></li>
+          <li><a href="${baseUrl}/account">Account / Billing</a></li>
+          <li><a href="${baseUrl}/contact">Help / Support</a></li>
         </ul>
       </div>
 
@@ -134,4 +138,3 @@ export function buildSubscriptionWelcomeEmail(tier: SubscriptionTier) {
 
   return { subject, text, html };
 }
-

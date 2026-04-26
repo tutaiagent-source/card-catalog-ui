@@ -578,7 +578,7 @@ export default function AccountPage() {
                 <div className="text-sm font-semibold text-amber-200">Collector limit reached</div>
                 <p className="mt-2 text-sm leading-6 text-slate-200">
                   You’re at the Collector cap ({collectorCardCap} catalog cards). Upgrade to Pro (${proPricePerMonth} / month) or Seller ($25 / month)
-                  for higher catalog capacity and more active CardCat Market listings per month.
+                  for higher catalog capacity and more active CardCat Market listings.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-3">
                   <button
@@ -619,10 +619,10 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Collector</div>
                   <div className="text-sm font-semibold text-white">$5 / month ($50 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Catalog up to 250 cards, with 10 active CardCat Market listings per month.</div>
+                <div className="mt-1 text-sm text-slate-400">Catalog up to 250 cards, with 10 active CardCat Market listings.</div>
                 <ul className="mt-3 list-none pl-0 space-y-2 text-sm text-slate-300 text-center">
                   <li>• Up to 250 catalog cards</li>
-                  <li>• 10 active CardCat Market listings/month</li>
+                  <li>• 10 active CardCat Market listings</li>
                   <li>• Manual add/edit</li>
                   <li>• Personal Collection (PC) view</li>
                   <li>• Basic sold tracking + basic dashboard</li>
@@ -653,10 +653,10 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Seller</div>
                   <div className="text-sm font-semibold text-white">$25 / month ($250 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Catalog up to 10,000 cards, with 250 active CardCat Market listings per month.</div>
+                <div className="mt-1 text-sm text-slate-400">Catalog up to 10,000 cards, with 250 active CardCat Market listings.</div>
                 <ul className="mt-3 list-none pl-0 space-y-2 text-sm text-slate-300 text-center">
                   <li>• Up to 10,000 catalog cards</li>
-                  <li>• 250 active CardCat Market listings/month</li>
+                  <li>• 250 active CardCat Market listings</li>
                   <li>• CSV import/export</li>
                   <li>• Deeper sold tracking</li>
                   <li>• Advanced seller analytics</li>
@@ -687,10 +687,10 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Pro</div>
                   <div className="text-sm font-semibold text-white">$10 / month ($100 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Catalog up to 1,000 cards, with 50 active CardCat Market listings per month.</div>
+                <div className="mt-1 text-sm text-slate-400">Catalog up to 1,000 cards, with 50 active CardCat Market listings.</div>
                 <ul className="mt-3 list-none pl-0 space-y-2 text-sm text-slate-300 text-center">
                   <li>• Up to 1,000 catalog cards</li>
-                  <li>• 50 active CardCat Market listings/month</li>
+                  <li>• 50 active CardCat Market listings</li>
                   <li>• CSV import/export</li>
                   <li>• Bulk inventory tools</li>
                   <li>• Revenue, net profit, ROI, platform analytics</li>

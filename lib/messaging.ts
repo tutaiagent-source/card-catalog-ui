@@ -72,10 +72,14 @@ export async function sendMessage(
   if (error) {
     // If migrations haven't applied yet, fall back to the old direct insert.
     const msg = String(error.message || "").toLowerCase();
-    const shouldFallback =
+    const shouldFallbackBase =
       msg.includes("could not find function") ||
-      msg.includes("function") && msg.includes("does not exist") ||
-      msg.includes("send_message") && (msg.includes("missing") || msg.includes("not exist"));
+      (msg.includes("function") && msg.includes("does not exist")) ||
+      (msg.includes("send_message") && (msg.includes("missing") || msg.includes("not exist")));
+
+    // Only allow this fallback in non-production environments.
+    const isNonProd = process.env.NODE_ENV !== "production";
+    const shouldFallback = isNonProd && shouldFallbackBase;
 
     if (!shouldFallback) throw error;
 
