@@ -31,6 +31,10 @@ type SoldCard = {
   sale_platform?: string | null;
   notes?: string | null;
   status?: CardStatus | string;
+
+  buyer_username?: string | null;
+  deal_conversation_id?: string | null;
+  deal_record_id?: string | null;
 };
 
 function normalizeStatusValue(status?: string | null): CardStatus {
@@ -138,7 +142,69 @@ export default function SoldPage() {
         return;
       }
 
-      setCards(((data ?? []) as SoldCard[]).map((card) => ({ ...card, status: normalizeStatusValue(card.status) })));
+      const nextCards = ((data ?? []) as SoldCard[]).map((card) => ({ ...card, status: normalizeStatusValue(card.status) }));
+
+      // Pull deal context (buyer + conversation link) for cards sold via deal records.
+      try {
+        const cardIds = nextCards.map((c) => c.id).filter(Boolean) as string[];
+        if (cardIds.length > 0) {
+          const { data: dealRows, error: dealErr } = await supabase
+            .from("deal_records")
+            .select("id, card_id, buyer_user_id, conversation_id, agreed_price, status, updated_at")
+            .in("card_id", cardIds)
+            .in("status", ["payment_confirmed", "completed"])
+            .order("updated_at", { ascending: false });
+
+          if (!dealErr) {
+            const dealsByCard = new Map<string, any>();
+            for (const d of (dealRows ?? []) as any[]) {
+              const cid = d.card_id ? String(d.card_id) : null;
+              if (!cid) continue;
+              if (!dealsByCard.has(cid)) dealsByCard.set(cid, d);
+            }
+
+            const buyerIds = Array.from(
+              new Set(
+                Array.from(dealsByCard.values())
+                  .map((d: any) => d.buyer_user_id)
+                  .filter(Boolean)
+                  .map((x: any) => String(x))
+              )
+            );
+
+            let profilesById = new Map<string, any>();
+            if (buyerIds.length > 0) {
+              const { data: profileRows } = await supabase
+                .from("profiles")
+                .select("id, username")
+                .in("id", buyerIds);
+              for (const p of (profileRows ?? []) as any[]) {
+                profilesById.set(String(p.id), p);
+              }
+            }
+
+            const nextCardsWithDeal = nextCards.map((c) => {
+              const d = c.id ? dealsByCard.get(String(c.id)) : null;
+              if (!d) return c;
+              const buyerId = d.buyer_user_id ? String(d.buyer_user_id) : null;
+              const buyerProfile = buyerId ? profilesById.get(buyerId) : null;
+              return {
+                ...c,
+                buyer_username: buyerProfile?.username ?? null,
+                deal_conversation_id: d.conversation_id ? String(d.conversation_id) : null,
+                deal_record_id: d.id ? String(d.id) : null,
+              };
+            });
+
+            setCards(nextCardsWithDeal);
+            return;
+          }
+        }
+      } catch {
+        // Keep sold page usable even if deal context lookup fails.
+      }
+
+      setCards(nextCards);
     })();
   }, [user?.id]);
 
@@ -883,8 +949,19 @@ export default function SoldPage() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-semibold text-emerald-300">{money(card.metrics.grossSale)}</div>
-                            <div className="mt-1 text-xs text-slate-500">{shortDate(card.sold_at)}</div>
+                          <div className="font-semibold text-emerald-300">{money(card.metrics.grossSale)}</div>
+                          <div className="mt-1 text-xs text-slate-500">{shortDate(card.sold_at)}</div>
+	                        {card.buyer_username ? (
+	                          <div className="mt-1 text-xs text-slate-500">Buyer: @{card.buyer_username}</div>
+	                        ) : null}
+	                        {card.deal_conversation_id ? (
+	                          <a
+	                            href={`/messages?conversation=${encodeURIComponent(card.deal_conversation_id)}`}
+	                            className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08]"
+	                          >
+	                            View deal{card.deal_record_id ? ` (#${String(card.deal_record_id).slice(0, 8)})` : ""}
+	                          </a>
+	                        ) : null}
                           </div>
                         </div>
                   </div>
@@ -942,18 +1019,29 @@ export default function SoldPage() {
                         <div className="text-slate-400">Grade</div>
                         <div className="font-semibold text-white">{card.graded === "yes" && card.grade != null ? card.grade : "-"}</div>
                       </div>
-                      {!isCollectorPreview ? (
-                        <div className="rounded-2xl bg-slate-950/70 px-3 py-2 col-span-2">
-                          <div className="text-slate-400">Net profit / ROI</div>
-                          <div className="font-semibold text-white">{money(card.metrics.netProfit)}{card.metrics.roi != null ? ` · ${card.metrics.roi.toFixed(1)}%` : ""}</div>
-                        </div>
-                      ) : null}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => openSaleEdit(card)}
-                      className="mt-3 inline-flex rounded-lg bg-[#b80000] px-3 py-2 text-sm font-semibold hover:bg-[#d50000]"
-                    >
+	                      {!isCollectorPreview ? (
+	                        <div className="rounded-2xl bg-slate-950/70 px-3 py-2 col-span-2">
+	                          <div className="text-slate-400">Net profit / ROI</div>
+	                          <div className="font-semibold text-white">{money(card.metrics.netProfit)}{card.metrics.roi != null ? ` · ${card.metrics.roi.toFixed(1)}%` : ""}</div>
+	                        </div>
+	                      ) : null}
+	                    </div>
+	                    {card.buyer_username ? (
+	                      <div className="mt-2 text-xs text-slate-500">Buyer: @{card.buyer_username}</div>
+	                    ) : null}
+	                    {card.deal_conversation_id ? (
+	                      <a
+	                        href={`/messages?conversation=${encodeURIComponent(card.deal_conversation_id)}`}
+	                        className="mt-1 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08]"
+	                      >
+	                        View deal{card.deal_record_id ? ` (#${String(card.deal_record_id).slice(0, 8)})` : ""}
+	                      </a>
+	                    ) : null}
+	                    <button
+	                      type="button"
+	                      onClick={() => openSaleEdit(card)}
+	                      className="mt-3 inline-flex rounded-lg bg-[#b80000] px-3 py-2 text-sm font-semibold hover:bg-[#d50000]"
+	                    >
                       Edit sale details
                     </button>
                   </div>
@@ -993,12 +1081,23 @@ export default function SoldPage() {
                           <div>{card.graded === "yes" && card.grade != null ? card.grade : "-"}</div>
                           {!isCollectorPreview ? <div className="mt-1 text-xs text-slate-500">Net {money(card.metrics.netProfit)}</div> : null}
                         </td>
-                        <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() => openSaleEdit(card)}
-                            className="rounded-lg bg-[#b80000] px-3 py-2 text-xs font-semibold hover:bg-[#d50000]"
-                          >
+	                        <td className="px-4 py-3">
+	                          {card.buyer_username ? (
+	                            <div className="text-xs text-slate-500">Buyer: @{card.buyer_username}</div>
+	                          ) : null}
+	                          {card.deal_conversation_id ? (
+	                            <a
+	                              href={`/messages?conversation=${encodeURIComponent(card.deal_conversation_id)}`}
+	                              className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08]"
+	                            >
+	                              Deal{card.deal_record_id ? ` (#${String(card.deal_record_id).slice(0, 8)})` : ""}
+	                            </a>
+	                          ) : null}
+	                          <button
+	                            type="button"
+	                            onClick={() => openSaleEdit(card)}
+	                            className="rounded-lg bg-[#b80000] px-3 py-2 text-xs font-semibold hover:bg-[#d50000]"
+	                          >
                             Edit
                           </button>
                         </td>
