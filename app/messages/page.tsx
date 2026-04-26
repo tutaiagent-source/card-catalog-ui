@@ -534,6 +534,14 @@ export default function MessagesPage() {
 
   const activeConversation = conversationViews.find((row) => row.conversation.id === activeConversationId) ?? null;
 
+  // UI safety: only render the right panel if the active conversation is actually visible
+  // in the current list (current tab: inbox/unread/deleted + search filter).
+  const activeConversationForRender = useMemo(() => {
+    if (!activeConversationId) return null;
+    if (!displayConversationViews.some((v) => v.conversation.id === activeConversationId)) return null;
+    return activeConversation;
+  }, [activeConversationId, activeConversation, displayConversationViews]);
+
   const activeConversationOtherUserId = useMemo(() => {
     if (!activeConversationId || !user?.id) return null;
     const otherFromParticipants = participants.find(
@@ -2519,7 +2527,7 @@ export default function MessagesPage() {
           </section>
 
 	          <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col min-h-0 lg:h-[calc(100vh-220px)] lg:overflow-hidden">
-	            {activeConversation ? (
+	            {activeConversationForRender ? (
 	              <>
 	                <div className="border-b border-white/10 pb-4 flex-shrink-0">
 	                  <div className="flex items-start justify-between gap-4">
@@ -3064,8 +3072,8 @@ export default function MessagesPage() {
 	                      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.08] px-3 py-2">
 	                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">To</div>
 	                        <div className="mt-1 text-sm font-semibold text-white">{activeRecipientLabel}</div>
-	                        {activeConversation.cardContextLabel && activeMessages.length > 0 ? (
-	                          <div className="mt-1 text-xs text-emerald-100/90">{activeConversation.cardContextLabel}</div>
+	                        {activeConversationForRender?.cardContextLabel && activeMessages.length > 0 ? (
+	                          <div className="mt-1 text-xs text-emerald-100/90">{activeConversationForRender.cardContextLabel}</div>
 	                        ) : null}
 	                      </div>
 	                      <textarea
@@ -3096,8 +3104,8 @@ export default function MessagesPage() {
               <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-6 text-sm text-slate-400">
                 Pick a conversation on the left when one exists. This page is now ready to become the live inbox.
               </div>
-            )}
-          </section>
+	            )}
+	          </section>
         </div>
       </div>
 
