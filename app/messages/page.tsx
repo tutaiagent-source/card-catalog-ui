@@ -1749,12 +1749,15 @@ export default function MessagesPage() {
         .eq("id", dealRecordForDisplay.id);
       if (updateError) throw updateError;
 
+      const carrierLabel = shippingCarrierDraft.trim();
+      const trackingLabel = trackingNumberDraft.trim();
+
       await addDealTimelineEvent({
         dealRecordId: dealRecordForDisplay.id,
         userId: user.id,
         eventType: "shipping_entered",
-        title: "Shipping details added",
-        description: `Tracking entered by seller: ${trackingNumberDraft.trim()}.`,
+        title: "Item shipped",
+        description: `Item shipped via ${carrierLabel} (tracking ${trackingLabel}).`,
       });
 
       setShowShippingForm(false);
@@ -2945,59 +2948,118 @@ export default function MessagesPage() {
 	                              ) : null}
 
 	                              {showShippingForm && paymentConfirmed && !dealCompleted ? (
-	                                <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-	                                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Shipping Details</div>
-	                                  <div className="flex flex-wrap gap-2">
-	                                    <input
-	                                      value={shippingCarrierDraft}
-	                                      onChange={(e) => setShippingCarrierDraft(e.target.value)}
-	                                      placeholder="Carrier"
-	                                      className="flex-1 min-w-[220px] rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
-	                                    />
-	                                    <input
-	                                      value={trackingNumberDraft}
-	                                      onChange={(e) => setTrackingNumberDraft(e.target.value)}
-	                                      placeholder="Tracking number"
-	                                      className="flex-1 min-w-[220px] rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
-	                                    />
+	                                <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+	                                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Shipping Record</div>
+
+	                                  {/* Shipping Info */}
+	                                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+	                                    <div className="text-xs font-semibold text-slate-200">Shipping Info</div>
+	                                    <div className="mt-2 space-y-2">
+	                                      <div>
+	                                        <div className="text-[12px] font-semibold text-slate-300 mb-1">Carrier</div>
+	                                        <input
+	                                          value={shippingCarrierDraft}
+	                                          onChange={(e) => setShippingCarrierDraft(e.target.value)}
+	                                          placeholder="e.g., USPS"
+	                                          className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                        />
+	                                      </div>
+	                                      <div>
+	                                        <div className="text-[12px] font-semibold text-slate-300 mb-1">Tracking Number</div>
+	                                        <input
+	                                          value={trackingNumberDraft}
+	                                          onChange={(e) => setTrackingNumberDraft(e.target.value)}
+	                                          placeholder="e.g., Z1112102012"
+	                                          className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                        />
+	                                        <div className="mt-1 text-[11px] text-slate-400">Tracking provided by seller. CardCat does not verify delivery.</div>
+	                                      </div>
+	                                    </div>
 	                                  </div>
-	                                  <div className="flex flex-wrap gap-2">
-	                                    <input
-	                                      type="date"
-	                                      value={shippedDateDraft}
-	                                      onChange={(e) => setShippedDateDraft(e.target.value)}
-	                                      className="w-44 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
-	                                    />
-	                                    <input
-	                                      type="date"
-	                                      value={deliveredDateDraft}
-	                                      onChange={(e) => setDeliveredDateDraft(e.target.value)}
-	                                      className="w-44 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
-	                                    />
-	                                    <input
-	                                      value={shippingCostDraft}
-	                                      onChange={(e) => setShippingCostDraft(e.target.value)}
-	                                      placeholder="Shipping cost"
-	                                      className="w-44 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
-	                                    />
+
+	                                  {/* Shipping Dates */}
+	                                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+	                                    <div className="text-xs font-semibold text-slate-200">Shipping Dates</div>
+	                                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+	                                      <div>
+	                                        <div className="text-[12px] font-semibold text-slate-300 mb-1">Date Shipped (required)</div>
+	                                        <input
+	                                          type="date"
+	                                          value={shippedDateDraft}
+	                                          onChange={(e) => setShippedDateDraft(e.target.value)}
+	                                          className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
+	                                        />
+	                                      </div>
+	                                      <div>
+	                                        <div className="text-[12px] font-semibold text-slate-300 mb-1">Estimated Delivery Date (optional)</div>
+	                                        <input
+	                                          type="date"
+	                                          value={deliveredDateDraft}
+	                                          onChange={(e) => setDeliveredDateDraft(e.target.value)}
+	                                          className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
+	                                        />
+	                                      </div>
+	                                    </div>
 	                                  </div>
-	                                  <div className="flex flex-wrap gap-3 items-center text-sm">
-	                                    <label className="inline-flex items-center gap-2 text-slate-300">
-	                                      <input type="checkbox" checked={insurancePurchasedDraft} onChange={(e) => setInsurancePurchasedDraft(e.target.checked)} />
-	                                      Insurance purchased
-	                                    </label>
-	                                    <input
-	                                      value={insuranceAmountDraft}
-	                                      onChange={(e) => setInsuranceAmountDraft(e.target.value)}
-	                                      placeholder="Insurance amount"
-	                                      disabled={!insurancePurchasedDraft}
-	                                      className="w-44 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none disabled:opacity-50 placeholder:text-slate-500"
-	                                    />
-	                                    <label className="inline-flex items-center gap-2 text-slate-300">
-	                                      <input type="checkbox" checked={signatureRequiredDraft} onChange={(e) => setSignatureRequiredDraft(e.target.checked)} />
-	                                      Signature required
-	                                    </label>
+
+	                                  {/* Shipping Cost */}
+	                                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+	                                    <div className="text-xs font-semibold text-slate-200">Shipping Cost</div>
+	                                    <div className="mt-2 space-y-2">
+	                                      <div>
+	                                        <div className="text-[12px] font-semibold text-slate-300 mb-1">Shipping Cost (optional)</div>
+	                                        <input
+	                                          value={shippingCostDraft}
+	                                          onChange={(e) => setShippingCostDraft(e.target.value)}
+	                                          placeholder="e.g., 3.00"
+	                                          inputMode="decimal"
+	                                          className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                        />
+	                                        <div className="mt-1 text-[11px] text-slate-400">What you paid to ship this item (optional)</div>
+	                                      </div>
+	                                    </div>
 	                                  </div>
+
+	                                  {/* Shipping Options */}
+	                                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+	                                    <div className="text-xs font-semibold text-slate-200">Shipping Options</div>
+	                                    <div className="mt-2 space-y-2">
+	                                      <label className="flex items-center gap-2 text-sm text-slate-300">
+	                                        <input
+	                                          type="checkbox"
+	                                          checked={insurancePurchasedDraft}
+	                                          onChange={(e) => setInsurancePurchasedDraft(e.target.checked)}
+	                                        />
+	                                        Insurance Purchased
+	                                      </label>
+	                                      {insurancePurchasedDraft ? (
+	                                        <div>
+	                                          <div className="text-[12px] font-semibold text-slate-300 mb-1">Insurance Amount (optional)</div>
+	                                          <input
+	                                            value={insuranceAmountDraft}
+	                                            onChange={(e) => setInsuranceAmountDraft(e.target.value)}
+	                                            placeholder="e.g., 77.00"
+	                                            inputMode="decimal"
+	                                            className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                          />
+	                                          <div className="mt-1 text-[11px] text-slate-400">Insurance is purchased through the carrier. CardCat does not provide coverage.</div>
+	                                        </div>
+	                                      ) : (
+	                                        <div className="text-[11px] text-slate-400">Insurance is purchased through the carrier. CardCat does not provide coverage.</div>
+	                                      )}
+
+	                                      <label className="flex items-center gap-2 text-sm text-slate-300">
+	                                        <input
+	                                          type="checkbox"
+	                                          checked={signatureRequiredDraft}
+	                                          onChange={(e) => setSignatureRequiredDraft(e.target.checked)}
+	                                        />
+	                                        Signature Required
+	                                      </label>
+	                                      <div className="text-[11px] text-slate-400">Optional record: used to document whether a signature was requested.</div>
+	                                    </div>
+	                                  </div>
+
 	                                  <div className="flex flex-wrap gap-2">
 	                                    <button
 	                                      type="button"
@@ -3020,7 +3082,51 @@ export default function MessagesPage() {
 	                              ) : null}
 
 	                              {!dealCompleted && paymentConfirmed && shippingRecorded ? (
-	                                <div className="pt-1">
+	                                <div className="pt-1 space-y-2">
+	                                  {!showShippingForm ? (
+	                                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+	                                      <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Shipping Details</div>
+	                                      <div className="mt-2 space-y-1 text-sm text-slate-300">
+	                                        <div><span className="text-slate-500">Carrier:</span> <span className="text-white font-semibold">{dealDetails?.shipping_carrier ?? "—"}</span></div>
+	                                        <div>
+	                                          <span className="text-slate-500">Tracking:</span>{" "}
+	                                          <span className="text-white font-semibold">{dealDetails?.tracking_number ?? "—"}</span>
+	                                        </div>
+	                                        <div><span className="text-slate-500">Date Shipped:</span> <span className="text-white font-semibold">{formatPaidDate(dealDetails?.shipped_date ?? null) || "—"}</span></div>
+	                                        <div><span className="text-slate-500">Estimated Delivery Date:</span> <span className="text-white font-semibold">{formatPaidDate(dealDetails?.delivered_date ?? null) || "—"}</span></div>
+	                                        <div>
+	                                          <span className="text-slate-500">Shipping Cost:</span>{" "}
+	                                          <span className="text-white font-semibold">{dealDetails?.shipping_cost != null ? formatDealMoney(Number(dealDetails.shipping_cost)) : "—"}</span>
+	                                        </div>
+	                                        <div>
+	                                          <span className="text-slate-500">Insurance:</span>{" "}
+	                                          <span className="text-white font-semibold">
+	                                            {dealDetails?.insurance_purchased
+	                                              ? `Yes${dealDetails?.insurance_amount != null ? ` (${formatDealMoney(Number(dealDetails.insurance_amount))})` : ""}`
+	                                              : "No"}
+	                                          </span>
+	                                        </div>
+	                                        <div>
+	                                          <span className="text-slate-500">Signature Required:</span>{" "}
+	                                          <span className="text-white font-semibold">{dealDetails?.signature_required ? "Yes" : "No"}</span>
+	                                        </div>
+	                                      </div>
+	                                      <div className="mt-3 flex flex-wrap gap-2">
+	                                        <button
+	                                          type="button"
+	                                          disabled={dealActionSaving}
+	                                          onClick={() => {
+	                                            if (!dealDetails) return;
+	                                            setShowShippingForm(true);
+	                                            setDealError("");
+	                                          }}
+	                                          className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+	                                        >
+	                                          Edit Shipping Details
+	                                        </button>
+	                                      </div>
+	                                    </div>
+	                                  ) : null}
 	                                  <button
 	                                    type="button"
 	                                    disabled={completedDealLoading || dealActionSaving}
