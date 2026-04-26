@@ -20,6 +20,8 @@ import {
   respondToDealOffer,
 } from "@/lib/deals";
 
+import { driveToImageSrc } from "@/lib/googleDrive";
+
 type CardContext = {
   id?: string;
   player_name: string;
@@ -537,6 +539,46 @@ export default function MessagesPage() {
     return dealOffers.find((o) => String(o.status || "").toLowerCase() === "pending") ?? null;
   }, [dealOffers]);
 
+  const latestDealOffer = useMemo(() => {
+    return dealOffers[0] ?? null;
+  }, [dealOffers]);
+
+  const dealMiniTimeline = useMemo(() => {
+    const items: Array<{ label: string; time?: string; detail?: string }> = [];
+
+    const offer = latestDealOffer;
+    if (offer?.created_at) {
+      items.push({
+        label: "Offer sent",
+        time: formatTimestamp(offer.created_at),
+      });
+    }
+
+    if (offer?.status && String(offer.status).toLowerCase() === "countered") {
+      items.push({
+        label: "Countered",
+        time: offer.created_at ? formatTimestamp(offer.created_at) : undefined,
+      });
+    }
+
+    if (activeDealRecord?.status && String(activeDealRecord.status).toLowerCase() === "offer_accepted") {
+      items.push({
+        label: "Accepted",
+        time: activeDealRecord.accepted_at ? formatTimestamp(activeDealRecord.accepted_at) : undefined,
+        detail: activeDealRecord.agreed_price != null ? formatDealMoney(Number(activeDealRecord.agreed_price)) : undefined,
+      });
+    }
+
+    if (activeDealRecord?.status && String(activeDealRecord.status).toLowerCase() === "offer_declined") {
+      items.push({
+        label: "Declined",
+        time: activeDealRecord.updated_at ? formatTimestamp(activeDealRecord.updated_at) : undefined,
+      });
+    }
+
+    return items.slice(0, 3);
+  }, [latestDealOffer, activeDealRecord]);
+
   const friendsUserIdSet = useMemo(() => {
     return new Set(friends.map((f) => String(f.id)));
   }, [friends]);
@@ -702,6 +744,46 @@ export default function MessagesPage() {
   function formatDealMoney(amount?: number | null) {
     if (amount == null || !Number.isFinite(Number(amount))) return "";
     return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(Number(amount));
+  }
+
+  function dealRecordStatusLabel(status?: string | null) {
+    switch ((status ?? "").toLowerCase()) {
+      case "draft":
+        return "Draft";
+      case "offer_pending":
+        return "Offer Pending";
+      case "offer_accepted":
+        return "Offer Accepted";
+      case "offer_declined":
+        return "Offer Declined";
+      default:
+        return status ? status : "Draft";
+    }
+  }
+
+  function dealOfferStatusLabel(status?: string | null) {
+    switch ((status ?? "").toLowerCase()) {
+      case "pending":
+        return "Pending";
+      case "accepted":
+        return "Accepted";
+      case "declined":
+        return "Declined";
+      case "countered":
+        return "Countered";
+      default:
+        return status ? status : "Pending";
+    }
+  }
+
+  function profileHandleById(userId?: string | null) {
+    if (!userId) return "—";
+    const uid = String(userId);
+    const p = profiles.find((pp) => String(pp.id) === uid) ?? null;
+    if (!p) return "—";
+    if (p.username) return `@${p.username}`;
+    if (p.display_name) return p.display_name;
+    return "User";
   }
 
   function computeBuyerSeller(fromUserId: string, toUserId: string) {
@@ -945,6 +1027,29 @@ export default function MessagesPage() {
     } finally {
       setDealActionSaving(false);
     }
+  }
+
+  function onDownloadDealRecord() {
+    if (!activeDealRecord) return;
+    const payload = {
+      deal_record: activeDealRecord,
+      offers: dealOffers,
+      card_context: activeConversationCard,
+      conversation_id: activeConversationId,
+      exported_at: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `deal_record_${activeDealRecord.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function onAddDealDetails() {
+    setDealError("Deal details UI comes in the next phase. For now, you can download the record.");
   }
 
   async function onMarkConversationUnread() {
@@ -1759,15 +1864,31 @@ export default function MessagesPage() {
 	            {activeConversation ? (
 	              <>
 	                <div className="border-b border-white/10 pb-4 flex-shrink-0">
-	                  <div className="text-lg font-semibold text-white">{activeRecipientLabel}</div>
-	                  <div className="mt-1 text-sm text-slate-300">Direct conversation</div>
-	                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
-                    {activeConversation.cardContextLabel && activeMessages.length > 0 ? (
-                      <span className="inline-flex items-center rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-semibold text-slate-200">
-                        {activeConversation.cardContextLabel}
-                      </span>
-                    ) : null}
-                  </div>
+	                  <div className="flex items-start justify-between gap-4">
+	                    <div className="flex items-start gap-3 min-w-0">
+	                      {activeConversationCard?.image_url ? (
+	                        <img
+	                          src={driveToImageSrc(activeConversationCard.image_url, { variant: "grid" })}
+	                          alt={activeConversationCard.player_name}
+	                          className="h-14 w-14 rounded-xl border border-white/10 bg-slate-950/40 object-cover"
+	                        />
+	                      ) : (
+	                        <div className="h-14 w-14 rounded-xl border border-white/10 bg-slate-950/40" />
+	                      )}
+	                      <div className="min-w-0">
+	                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Card</div>
+	                        <div className="text-lg font-bold text-white truncate">
+	                          {activeConversationCard?.player_name ?? activeConversation?.title ?? activeRecipientLabel}
+	                        </div>
+	                        <div className="mt-1 text-sm text-slate-300 truncate">
+	                          {[activeConversationCard?.year, activeConversationCard?.brand, activeConversationCard?.set_name, activeConversationCard?.parallel]
+	                            .filter(Boolean)
+	                            .join(" ")}
+	                        </div>
+	                        <div className="mt-1 text-xs text-slate-400 truncate">Direct conversation with {activeRecipientLabel}</div>
+	                      </div>
+	                    </div>
+	                  </div>
 
                   <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
                     {messageFolder !== "deleted" && !activeConversationIsBlocked ? (
@@ -1813,23 +1934,36 @@ export default function MessagesPage() {
                     ) : null}
                   </div>
 
-	                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-3">
+	                  <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(16,185,129,0.18)]">
 	                    <div className="flex items-start justify-between gap-3">
-	                      <div>
-	                        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Deal Records</div>
-	                        {activeDealRecord ? (
-	                          <>
-	                            <div className="mt-1 text-sm font-semibold text-white">{activeDealRecord.status}</div>
+	                    <div>
+	                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Deal Summary</div>
+	                      {activeDealRecord ? (
+	                        <>
+	                          <div className="mt-1 text-lg font-extrabold text-white">{dealRecordStatusLabel(activeDealRecord.status)}</div>
+	                          <div className="mt-2 flex items-baseline gap-3">
+	                            <div className="text-2xl font-extrabold text-emerald-200">
+	                              {activeDealRecord.agreed_price != null
+	                                ? formatDealMoney(Number(activeDealRecord.agreed_price))
+	                                : pendingDealOffer?.offer_amount != null
+	                                  ? formatDealMoney(Number(pendingDealOffer.offer_amount))
+	                                  : latestDealOffer?.offer_amount != null
+	                                    ? formatDealMoney(Number(latestDealOffer.offer_amount))
+	                                    : "—"}
+	                            </div>
 	                            {activeDealRecord.agreed_price != null ? (
-	                              <div className="mt-1 text-xs text-emerald-200">
-	                                Agreed: {formatDealMoney(Number(activeDealRecord.agreed_price))}
-	                              </div>
+	                              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-100/90">Accepted</div>
 	                            ) : null}
-	                          </>
-	                        ) : (
-	                          <div className="mt-1 text-sm font-semibold text-slate-200">No deal record yet</div>
-	                        )}
-	                      </div>
+	                          </div>
+	                          <div className="mt-2 text-xs text-slate-300">
+	                            Buyer: {profileHandleById(activeDealRecord.buyer_user_id ?? (pendingDealOffer ? computeBuyerSeller(pendingDealOffer.from_user_id, pendingDealOffer.to_user_id).buyerUserId : null))}
+	                            &nbsp;•&nbsp; Seller: {profileHandleById(activeDealRecord.seller_user_id ?? (pendingDealOffer ? computeBuyerSeller(pendingDealOffer.from_user_id, pendingDealOffer.to_user_id).sellerUserId : null))}
+	                          </div>
+	                        </>
+	                      ) : (
+	                        <div className="mt-1 text-sm font-semibold text-slate-200">No deal record yet</div>
+	                      )}
+	                    </div>
 
 	                      {!activeDealRecord ? (
 	                        <button
@@ -1859,8 +1993,8 @@ export default function MessagesPage() {
 	                          pendingDealOffer.to_user_id === user.id ? (
 	                            <div className="space-y-2">
 	                              <div className="text-xs text-slate-300">
-	                                Offer: <span className="font-semibold text-white">{formatDealMoney(Number(pendingDealOffer.offer_amount || 0))}</span> 
-	                                <span className="text-slate-400">({pendingDealOffer.status})</span>
+	                                Offer: <span className="font-semibold text-white">{formatDealMoney(Number(pendingDealOffer.offer_amount || 0))}</span>
+	                                <span className="text-slate-400"> ({dealOfferStatusLabel(pendingDealOffer.status)})</span>
 	                              </div>
 	                              {pendingDealOffer.message ? (
 	                                <div className="text-xs text-slate-400 whitespace-pre-wrap">{pendingDealOffer.message}</div>
@@ -1907,17 +2041,75 @@ export default function MessagesPage() {
 	                                  </button>
 	                                </div>
 	                              </div>
+
+	                              <div className="pt-1 flex flex-wrap gap-2 items-center">
+	                                <button
+	                                  type="button"
+	                                  disabled
+	                                  onClick={() => onAddDealDetails()}
+	                                  className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] px-3 py-2 text-xs font-semibold text-emerald-100/70 disabled:opacity-60"
+	                                >
+	                                  Add Details
+	                                </button>
+	                                <button
+	                                  type="button"
+	                                  disabled={dealActionSaving}
+	                                  onClick={onDownloadDealRecord}
+	                                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+	                                >
+	                                  Download Record
+	                                </button>
+	                              </div>
 	                            </div>
 	                          ) : pendingDealOffer.from_user_id === user.id ? (
-	                            <div className="text-xs text-slate-300">
-	                              Offer pending. Waiting for the other user to respond.
+	                            <div className="space-y-2">
+	                              <div className="text-xs text-slate-300">
+	                                Offer pending. Waiting for the other user to respond.
+	                              </div>
+	                              <div className="flex flex-wrap gap-2">
+	                                <button
+	                                  type="button"
+	                                  disabled={dealActionSaving}
+	                                  onClick={onDownloadDealRecord}
+	                                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+	                                >
+	                                  Download Record
+	                                </button>
+	                              </div>
 	                            </div>
 	                          ) : (
 	                            <div className="text-xs text-slate-300">Another offer is pending. Waiting…</div>
 	                          )
+	                        ) : activeDealRecord && String(activeDealRecord.status).toLowerCase() === "offer_accepted" ? (
+	                          <div className="space-y-2">
+	                            <div className="text-xs text-slate-300">Offer accepted. This thread is now documented at {activeDealRecord.agreed_price != null ? formatDealMoney(Number(activeDealRecord.agreed_price)) : "—"}.</div>
+	                            <div className="flex flex-wrap gap-2">
+	                              <button
+	                                type="button"
+	                                disabled={dealActionSaving}
+	                                onClick={onAddDealDetails}
+	                                className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-3 py-2 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/[0.12] disabled:opacity-60"
+	                              >
+	                                Add Details
+	                              </button>
+	                              <button
+	                                type="button"
+	                                disabled={dealActionSaving}
+	                                onClick={onDownloadDealRecord}
+	                                className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                              >
+	                                Download Record
+	                              </button>
+	                            </div>
+	                          </div>
 	                        ) : (
 	                          <div className="space-y-2">
-	                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Make an offer</div>
+	                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Make an offer on this card</div>
+	                            {latestDealOffer?.offer_amount != null ? (
+	                              <div className="text-xs text-slate-500">
+	                                Last offer: {formatDealMoney(Number(latestDealOffer.offer_amount))} ({dealOfferStatusLabel(latestDealOffer.status)})
+	                              </div>
+	                            ) : null}
 	                            <div className="flex flex-wrap items-center gap-2">
 	                              <input
 	                                type="number"
@@ -1934,8 +2126,8 @@ export default function MessagesPage() {
 	                                onClick={() => void onMakeOffer()}
 	                                className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
 	                              >
-                                  {dealActionSaving ? "Sending…" : "Send offer"}
-                                </button>
+	                                {dealActionSaving ? "Sending…" : "Send offer"}
+	                              </button>
 	                            </div>
 	                            <textarea
 	                              value={offerMessageDraft}
@@ -1945,10 +2137,28 @@ export default function MessagesPage() {
 	                            />
 	                          </div>
 	                        )}
+
+	                        <div className="pt-2 border-t border-white/10">
+	                          <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Timeline</div>
+	                          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-300">
+	                            {dealMiniTimeline.length === 0 ? (
+	                              <span>No deal activity yet.</span>
+	                            ) : null}
+	                            {dealMiniTimeline.map((item, idx) => (
+	                              <div key={`${item.label}-${idx}`} className="flex items-baseline gap-2">
+	                                <span className="font-semibold text-white">{item.label}</span>
+	                                {item.detail ? <span className="text-emerald-200">{item.detail}</span> : null}
+	                                {item.time ? <span className="text-slate-500">{item.time}</span> : null}
+	                              </div>
+	                            ))}
+	                          </div>
+	                        </div>
 	                      </div>
 	                    ) : null}
 	                  </div>
-                </div>
+	                </div>
+
+	                <div className="my-4 border-t border-white/10" />
 
 	                	<div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1">
 	                  {activeMessages.length === 0 ? (
@@ -1971,12 +2181,12 @@ export default function MessagesPage() {
 	                        return (
 	                          <div
 	                            key={message.id}
-	                            className={`rounded-2xl border border-white/10 p-4 ${mine ? "border-emerald-500/20 bg-emerald-500/[0.05]" : "bg-slate-950/20"}`}
+	                            className={`rounded-2xl border border-white/10 p-4 ${mine ? "border-emerald-500/20 bg-emerald-500/[0.05] ml-auto max-w-[80%]" : "bg-slate-950/20 mr-auto max-w-[80%]"}`}
 	                          >
 	                            <div className="flex items-start justify-between gap-3">
 	                              <div className="min-w-0">
 	                                <div className={`text-xs font-semibold ${mine ? "text-emerald-100" : "text-slate-300"}`}>
-	                                  {mine ? "From: You" : `From: ${senderLabel}`}
+	                                  {mine ? "You" : senderLabel}
 	                                </div>
 	                                <div className="mt-1 text-[11px] text-slate-400">{formatTimestamp(message.created_at)}</div>
 	                              </div>
