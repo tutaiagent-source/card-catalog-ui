@@ -2949,7 +2949,7 @@ export default function MessagesPage() {
 	                              ) : null}
 
 	                              {showShippingForm && paymentConfirmed && !dealCompleted ? (
-	                                <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+	                                <div className="space-y-3 min-h-0 rounded-xl border border-white/10 bg-white/[0.03] p-3 max-h-[52vh] overflow-y-auto [-webkit-overflow-scrolling:touch] lg:max-h-[70vh]">
 	                                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Shipping Record</div>
 
 	                                  {/* Shipping Info */}
