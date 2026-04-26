@@ -1583,7 +1583,15 @@ export default function MessagesPage() {
 
           // Best-effort: also mark the listing sold in case the server-side
           // marketplace RPC isn't deployed yet.
-          const fallbackCardId = dealRecordForDisplay.card_id ? String(dealRecordForDisplay.card_id) : null;
+          // Prefer the deal's card_id, but fall back to the thread's context card id.
+          const fallbackCardId =
+            dealRecordForDisplay.card_id
+              ? String(dealRecordForDisplay.card_id)
+              : activeConversationContextCardId
+                ? String(activeConversationContextCardId)
+                : activeConversationCard?.id
+                  ? String(activeConversationCard.id)
+                  : null;
           let fallbackMarkedSold = false;
           if (fallbackCardId) {
             const { data: updatedCards, error: cardUpdateError } = await supabase
@@ -1599,8 +1607,17 @@ export default function MessagesPage() {
               .select("id")
               .maybeSingle();
 
-            if (!cardUpdateError) {
+            if (cardUpdateError) {
+              console.warn("[ConfirmPaymentFallback] card update failed", {
+                fallbackCardId,
+                cardUpdateError,
+              });
+            } else {
               fallbackMarkedSold = !!updatedCards?.id;
+              console.debug("[ConfirmPaymentFallback] card marked sold?", {
+                fallbackCardId,
+                fallbackMarkedSold,
+              });
             }
           }
 
