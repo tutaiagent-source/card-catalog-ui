@@ -2709,7 +2709,7 @@ export default function MessagesPage() {
                     ) : null}
                   </div>
 
-	                  <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(16,185,129,0.18)] max-h-[62vh] overflow-y-auto lg:max-h-none lg:overflow-y-visible">
+	          <div className="mt-4 min-h-0 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(16,185,129,0.18)] max-h-[62vh] overflow-y-auto [-webkit-overflow-scrolling:touch] lg:max-h-none lg:overflow-y-visible">
 	                    <div className="flex items-start justify-between gap-3">
 	                    <div>
 	                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Deal Summary</div>
