@@ -43,6 +43,40 @@ export type DealTimelineEventRow = {
   created_at: string;
 };
 
+export type DealDetailsRow = {
+  id: string;
+  deal_record_id: string;
+
+  payment_method_note?: string | null;
+  paid_date?: string | null;
+  payment_reference_note?: string | null;
+
+  shipping_carrier?: string | null;
+  tracking_number?: string | null;
+  shipped_date?: string | null;
+  delivered_date?: string | null;
+
+  shipping_cost?: number | null;
+  insurance_purchased?: boolean;
+  insurance_amount?: number | null;
+  signature_required?: boolean;
+
+  condition_notes?: string | null;
+  card_serial_number?: string | null;
+  card_grade?: string | null;
+  included_extras?: string | null;
+
+  buyer_notes?: string | null;
+  seller_notes?: string | null;
+
+  issue_reported?: boolean;
+  issue_notes?: string | null;
+  final_status?: string | null;
+
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
 export type DealDetailsUpsert = Partial<{
   payment_method_note: string | null;
   paid_date: string | null;
@@ -203,4 +237,51 @@ export async function addDealTimelineEvent(params: {
 
   if (error) throw error;
   return data as DealTimelineEventRow;
+}
+
+export async function loadDealDetailsForDealRecord(dealRecordId: string) {
+  if (!supabaseConfigured || !supabase) return null as DealDetailsRow | null;
+
+  const { data, error } = await supabase
+    .from("deal_details")
+    .select("*")
+    .eq("deal_record_id", dealRecordId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data ?? null) as DealDetailsRow | null;
+}
+
+export async function upsertDealDetailsForDealRecord(
+  params: { dealRecordId: string; details: DealDetailsUpsert }
+) {
+  if (!supabaseConfigured || !supabase) throw new Error("Supabase is not configured.");
+
+  const { data, error } = await supabase
+    .from("deal_details")
+    .upsert(
+      {
+        deal_record_id: params.dealRecordId,
+        ...params.details,
+      },
+      { onConflict: "deal_record_id" }
+    )
+    .select("*")
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data ?? null) as DealDetailsRow | null;
+}
+
+export async function loadDealTimelineEventsForDealRecord(dealRecordId: string) {
+  if (!supabaseConfigured || !supabase) return [] as DealTimelineEventRow[];
+
+  const { data, error } = await supabase
+    .from("deal_timeline_events")
+    .select("*")
+    .eq("deal_record_id", dealRecordId)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+  return (data ?? []) as DealTimelineEventRow[];
 }

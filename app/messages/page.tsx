@@ -12,12 +12,17 @@ import { UserProfileRecord } from "@/lib/useUserProfile";
 import {
   DealOfferRow,
   DealRecordRow,
+  DealDetailsRow,
+  DealTimelineEventRow,
   addDealTimelineEvent,
   createDealOffer,
   createDealRecord,
   loadDealOffersForDealRecord,
   loadDealRecordsForConversation,
+  loadDealDetailsForDealRecord,
+  loadDealTimelineEventsForDealRecord,
   respondToDealOffer,
+  upsertDealDetailsForDealRecord,
 } from "@/lib/deals";
 
 import { driveToImageSrc } from "@/lib/googleDrive";
@@ -96,6 +101,28 @@ export default function MessagesPage() {
   const [dealLoading, setDealLoading] = useState(false);
   const [dealActionSaving, setDealActionSaving] = useState(false);
   const [dealError, setDealError] = useState<string>("");
+
+  const [dealDetails, setDealDetails] = useState<DealDetailsRow | null>(null);
+  const [dealTimelineEvents, setDealTimelineEvents] = useState<DealTimelineEventRow[]>([]);
+  const [dealDetailsLoading, setDealDetailsLoading] = useState(false);
+
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showShippingForm, setShowShippingForm] = useState(false);
+
+  const [paymentMethodNoteDraft, setPaymentMethodNoteDraft] = useState("");
+  const [paymentReferenceNoteDraft, setPaymentReferenceNoteDraft] = useState("");
+  const [paidDateDraft, setPaidDateDraft] = useState("");
+
+  const [shippingCarrierDraft, setShippingCarrierDraft] = useState("");
+  const [trackingNumberDraft, setTrackingNumberDraft] = useState("");
+  const [shippedDateDraft, setShippedDateDraft] = useState("");
+  const [deliveredDateDraft, setDeliveredDateDraft] = useState("");
+  const [shippingCostDraft, setShippingCostDraft] = useState("");
+  const [insurancePurchasedDraft, setInsurancePurchasedDraft] = useState(false);
+  const [insuranceAmountDraft, setInsuranceAmountDraft] = useState("");
+  const [signatureRequiredDraft, setSignatureRequiredDraft] = useState(false);
+
+  const [completedDealLoading, setCompletedDealLoading] = useState(false);
 
   const [offerAmountDraft, setOfferAmountDraft] = useState<string>("");
   const [offerMessageDraft, setOfferMessageDraft] = useState<string>("");
@@ -548,6 +575,12 @@ export default function MessagesPage() {
     return activeDealRecord;
   }, [activeDealRecord, activeConversationId, activeConversationContextCardId]);
 
+  const dealStatusLower = String(dealRecordForDisplay?.status ?? "").toLowerCase();
+  const paymentRecorded = Boolean(dealDetails?.paid_date);
+  const paymentConfirmed = ["payment_confirmed", "shipping_entered", "completed"].includes(dealStatusLower);
+  const shippingRecorded = Boolean(dealDetails?.shipping_carrier || dealDetails?.tracking_number || dealDetails?.shipped_date);
+  const dealCompleted = dealStatusLower === "completed";
+
   const latestDealOffer = useMemo(() => {
     return dealOffers[0] ?? null;
   }, [dealOffers]);
@@ -587,6 +620,56 @@ export default function MessagesPage() {
 
     return items.slice(0, 3);
   }, [latestDealOffer, dealRecordForDisplay]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      if (!dealRecordForDisplay) {
+        setDealDetails(null);
+        setDealTimelineEvents([]);
+        return;
+      }
+
+      setDealDetailsLoading(true);
+      try {
+        const [details, events] = await Promise.all([
+          loadDealDetailsForDealRecord(dealRecordForDisplay.id),
+          loadDealTimelineEventsForDealRecord(dealRecordForDisplay.id),
+        ]);
+
+        if (cancelled) return;
+        setDealDetails(details);
+        setDealTimelineEvents(events);
+
+        // Prime form drafts
+        setPaymentMethodNoteDraft(details?.payment_method_note ?? "");
+        setPaymentReferenceNoteDraft(details?.payment_reference_note ?? "");
+        setPaidDateDraft(details?.paid_date ?? "");
+
+        setShippingCarrierDraft(details?.shipping_carrier ?? "");
+        setTrackingNumberDraft(details?.tracking_number ?? "");
+        setShippedDateDraft(details?.shipped_date ?? "");
+        setDeliveredDateDraft(details?.delivered_date ?? "");
+        setShippingCostDraft(details?.shipping_cost != null ? String(details.shipping_cost) : "");
+        setInsurancePurchasedDraft(Boolean(details?.insurance_purchased));
+        setInsuranceAmountDraft(details?.insurance_amount != null ? String(details.insurance_amount) : "");
+        setSignatureRequiredDraft(Boolean(details?.signature_required));
+      } catch (e: any) {
+        if (!cancelled) {
+          // Keep UI resilient.
+          console.warn("Failed to load deal details/timeline", e);
+        }
+      } finally {
+        if (!cancelled) setDealDetailsLoading(false);
+      }
+    }
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [dealRecordForDisplay]);
 
   const friendsUserIdSet = useMemo(() => {
     return new Set(friends.map((f) => String(f.id)));
@@ -797,6 +880,14 @@ export default function MessagesPage() {
         return "Offer Accepted";
       case "offer_declined":
         return "Offer Declined";
+      case "payment_recorded":
+        return "Payment Recorded";
+      case "payment_confirmed":
+        return "Payment Confirmed";
+      case "shipping_entered":
+        return "Shipping Added";
+      case "completed":
+        return "Completed";
       default:
         return status ? status : "Draft";
     }
@@ -1121,11 +1212,13 @@ export default function MessagesPage() {
     }
   }
 
-  function onDownloadDealRecord() {
+  function onDownloadDealRecordRawData() {
     if (!dealRecordForDisplay) return;
     const payload = {
       deal_record: dealRecordForDisplay,
+      deal_details: dealDetails,
       offers: dealOffers,
+      timeline_events: dealTimelineEvents,
       card_context: activeConversationCard,
       conversation_id: activeConversationId,
       exported_at: new Date().toISOString(),
@@ -1135,13 +1228,472 @@ export default function MessagesPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `deal_record_${dealRecordForDisplay.id}.json`;
+    a.download = `deal_record_${dealRecordForDisplay.id}_raw.json`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
+  function escapeHtml(value: any) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function formatPaidDate(value?: string | null) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (!Number.isFinite(d.getTime())) return String(value);
+    return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(d);
+  }
+
+  function formatOptionalNumber(value?: number | null) {
+    if (value == null || !Number.isFinite(Number(value))) return "";
+    return formatDealMoney(Number(value));
+  }
+
+  function buildDealRecordHtml(params: { draft: boolean; title: string }) {
+    if (!dealRecordForDisplay) return "";
+
+    const card = activeConversationCard;
+    const buyerHandle = profileHandleById(dealRecordForDisplay.buyer_user_id);
+    const sellerHandle = profileHandleById(dealRecordForDisplay.seller_user_id);
+
+    const agreedPriceText =
+      dealRecordForDisplay.agreed_price != null
+        ? formatDealMoney(Number(dealRecordForDisplay.agreed_price))
+        : dealRecordForDisplay.status === "offer_accepted" && pendingDealOffer?.offer_amount != null
+          ? formatDealMoney(Number(pendingDealOffer.offer_amount))
+          : "—";
+
+    const acceptedAtText = dealRecordForDisplay.accepted_at ? formatTimestamp(dealRecordForDisplay.accepted_at) : "—";
+    const dealIdShort = String(dealRecordForDisplay.id).slice(0, 8);
+
+    const offersAsc = [...dealOffers].sort((a, b) => {
+      const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return ta - tb;
+    });
+
+    const buyerId = dealRecordForDisplay.buyer_user_id;
+    const sellerId = dealRecordForDisplay.seller_user_id;
+
+    const offerLines = offersAsc
+      .map((o) => {
+        const when = o.created_at ? formatTimestamp(o.created_at) : "";
+        const amount = o.offer_amount != null ? formatDealMoney(Number(o.offer_amount)) : "—";
+        const fromRole = o.from_user_id === buyerId ? "Buyer" : o.from_user_id === sellerId ? "Seller" : "Participant";
+        const action = o.status
+          ? o.status === "accepted"
+            ? "offered (accepted)"
+            : o.status === "declined"
+              ? "offered (declined)"
+              : o.status === "countered"
+                ? "countered"
+                : "offered"
+          : "offered";
+        return `${fromRole} ${action} ${amount}${when ? ` on ${escapeHtml(when)}` : ""}`;
+      })
+      .join("\n");
+
+    const timelineLines = (dealTimelineEvents ?? [])
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .map((e) => {
+        const when = e.created_at ? formatTimestamp(e.created_at) : "";
+        return `${e.title}${when ? ` — ${when}` : ""}`;
+      })
+      .join("\n");
+
+    const paymentConfirmed = ["payment_confirmed", "shipping_entered", "completed"].includes(
+      String(dealRecordForDisplay.status).toLowerCase()
+    );
+    const paymentRecorded = Boolean(dealDetails?.paid_date);
+
+    const paymentSectionHtml = paymentRecorded
+      ? `
+        <div class="section">
+          <h2>Payment Details</h2>
+          <div class="kv"><div class="k">Payment status</div><div class="v">${paymentConfirmed ? "Seller confirmed payment received" : "Payment details recorded (awaiting seller confirmation)"}</div></div>
+          <div class="kv"><div class="k">Payment method note</div><div class="v">${escapeHtml(dealDetails?.payment_method_note ?? "") || "—"}</div></div>
+          <div class="kv"><div class="k">Paid date</div><div class="v">${escapeHtml(formatPaidDate(dealDetails?.paid_date ?? null) || "—")}</div></div>
+          <div class="kv"><div class="k">Amount paid</div><div class="v">${escapeHtml(agreedPriceText)}</div></div>
+          <div class="kv"><div class="k">Payment reference/note</div><div class="v">${escapeHtml(dealDetails?.payment_reference_note ?? "") || "—"}</div></div>
+        </div>
+      `
+      : "";
+
+    const shippingRecorded = Boolean(dealDetails?.shipped_date || dealDetails?.tracking_number || dealDetails?.shipping_carrier);
+
+    const shippingSectionHtml = shippingRecorded
+      ? `
+        <div class="section">
+          <h2>Shipping Details</h2>
+          <div class="kv"><div class="k">Shipping carrier</div><div class="v">${escapeHtml(dealDetails?.shipping_carrier ?? "") || "—"}</div></div>
+          <div class="kv"><div class="k">Tracking number</div><div class="v">${escapeHtml(dealDetails?.tracking_number ?? "") || "—"}</div></div>
+          <div class="kv"><div class="k">Shipped date</div><div class="v">${escapeHtml(formatPaidDate(dealDetails?.shipped_date ?? null) || "—")}</div></div>
+          <div class="kv"><div class="k">Delivered date</div><div class="v">${escapeHtml(formatPaidDate(dealDetails?.delivered_date ?? null) || "—")}</div></div>
+          <div class="kv"><div class="k">Shipping cost</div><div class="v">${escapeHtml(dealDetails?.shipping_cost != null ? formatDealMoney(Number(dealDetails.shipping_cost)) : "") || "—"}</div></div>
+          <div class="kv"><div class="k">Insurance purchased</div><div class="v">${dealDetails?.insurance_purchased ? "Yes" : "No"}</div></div>
+          <div class="kv"><div class="k">Insurance amount</div><div class="v">${escapeHtml(dealDetails?.insurance_amount != null ? formatDealMoney(Number(dealDetails.insurance_amount)) : "") || "—"}</div></div>
+          <div class="kv"><div class="k">Signature required</div><div class="v">${dealDetails?.signature_required ? "Yes" : "No"}</div></div>
+        </div>
+      `
+      : "";
+
+    const notesSectionHtml = `
+      <div class="section">
+        <h2>Notes</h2>
+        <div class="kv"><div class="k">Buyer notes</div><div class="v">${escapeHtml(dealDetails?.buyer_notes ?? "") || "—"}</div></div>
+        <div class="kv"><div class="k">Seller notes</div><div class="v">${escapeHtml(dealDetails?.seller_notes ?? "") || "—"}</div></div>
+        <div class="kv"><div class="k">Condition notes</div><div class="v">${escapeHtml(dealDetails?.condition_notes ?? "") || "—"}</div></div>
+        <div class="kv"><div class="k">Included extras</div><div class="v">${escapeHtml(dealDetails?.included_extras ?? "") || "—"}</div></div>
+        <div class="kv"><div class="k">Issue reported</div><div class="v">${dealDetails?.issue_reported ? "Yes" : "No"}</div></div>
+        <div class="kv"><div class="k">Issue notes</div><div class="v">${escapeHtml(dealDetails?.issue_notes ?? "") || "—"}</div></div>
+      </div>
+    `;
+
+    const watermarkHtml = params.draft
+      ? `<div class="watermark">Draft Record - Payment Not Confirmed</div>`
+      : "";
+
+    const disclaimer =
+      "CardCat Deal Records are documentation tools only. CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.";
+
+    const statusText = dealRecordForDisplay.status ? dealRecordStatusLabel(dealRecordForDisplay.status) : "";
+
+    const cardImageHtml = card?.image_url
+      ? `<img class="card-img" src="${escapeHtml(driveToImageSrc(card.image_url, { variant: "detail" }))}" alt="Card image" />`
+      : `<div class="card-img placeholder"></div>`;
+
+    // Printing-friendly HTML
+    return `
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${escapeHtml(params.title)}</title>
+          <style>
+            :root { --text: #0f172a; --muted: #475569; --border: #e2e8f0; --bg: #ffffff; --accent: #0f766e; }
+            body { margin: 24px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background: var(--bg); color: var(--text); }
+            .wrap { position: relative; max-width: 920px; }
+            .watermark { position: absolute; top: 90px; right: 20px; transform: rotate(10deg); font-size: 22px; font-weight: 800; color: rgba(15, 118, 110, 0.20); border: 2px dashed rgba(15, 118, 110, 0.25); padding: 14px 16px; width: 360px; text-align: center; }
+            .header { display:flex; align-items:flex-start; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+            .brand { display:flex; flex-direction: column; }
+            .brand .name { font-size: 22px; font-weight: 900; color: var(--accent); line-height: 1.1; }
+            .brand .sub { margin-top: 6px; font-size: 14px; color: var(--muted); }
+            .meta { text-align: right; font-size: 13px; color: var(--muted); }
+            .meta b { color: var(--text); }
+            h2 { margin: 18px 0 10px; font-size: 16px; font-weight: 900; }
+            .section { border: 1px solid var(--border); border-radius: 12px; padding: 14px 14px; margin-top: 12px; }
+            .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .card-block { display:flex; gap: 14px; align-items:flex-start; }
+            .card-img { width: 86px; height: 112px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); background: #f8fafc; }
+            .kv { display:flex; gap: 12px; margin: 8px 0; }
+            .k { width: 190px; color: var(--muted); font-weight: 650; font-size: 13px; }
+            .v { flex: 1; font-weight: 600; font-size: 13.5px; }
+            .hr { height: 1px; background: var(--border); margin: 16px 0; }
+            .list { white-space: pre-line; font-size: 13.5px; color: var(--text); line-height: 1.45; }
+            .footer { margin-top: 16px; font-size: 12px; color: var(--muted); }
+            .pill { display:inline-block; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: #f8fafc; font-weight: 800; }
+          </style>
+        </head>
+        <body>
+          <div class="wrap">
+            ${watermarkHtml}
+            <div class="header">
+              <div class="brand">
+                <div class="name">CardCat</div>
+                <div class="sub">Deal Record</div>
+              </div>
+              <div class="meta">
+                <div><b>Deal ID</b>: ${escapeHtml(dealIdShort)}</div>
+                <div><b>Generated</b>: ${escapeHtml(new Date().toLocaleString())}</div>
+                <div style="margin-top: 10px;"><span class="pill">${escapeHtml(statusText)}</span></div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h2>Deal Status</h2>
+              <div class="kv"><div class="k">Current status</div><div class="v">${escapeHtml(statusText)}</div></div>
+            </div>
+
+            <div class="section">
+              <h2>Card Information</h2>
+              <div class="card-block">
+                ${cardImageHtml}
+                <div style="flex:1;">
+                  <div style="font-size: 18px; font-weight: 900;">${escapeHtml(card?.player_name ?? "Card")}</div>
+                  <div style="color: var(--muted); margin-top: 4px;">${escapeHtml([card?.year, card?.brand, card?.set_name].filter(Boolean).join(" ") || "—")}</div>
+                  <div style="color: var(--muted); margin-top: 4px;">Parallel: ${escapeHtml(card?.parallel ?? "—")}</div>
+                  <div style="color: var(--muted); margin-top: 4px;">Card #: ${escapeHtml(card?.card_number ?? "—")}</div>
+                  <div style="margin-top: 10px; font-weight: 900; color: var(--accent);">Asking price: ${escapeHtml(card?.asking_price != null ? formatDealMoney(Number(card.asking_price)) : "—")}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h2>Agreement Details</h2>
+              <div class="grid">
+                <div class="kv"><div class="k">Deal type</div><div class="v">${escapeHtml(dealRecordForDisplay.deal_type ? String(dealRecordForDisplay.deal_type).replace(/_/g, " ") : "Sale")}</div></div>
+                <div class="kv"><div class="k">Currency</div><div class="v">${escapeHtml(dealRecordForDisplay.currency ?? "USD")}</div></div>
+              </div>
+              <div class="kv"><div class="k">Agreed price</div><div class="v">${escapeHtml(agreedPriceText)}</div></div>
+              <div class="kv"><div class="k">Date offer accepted</div><div class="v">${escapeHtml(acceptedAtText)}</div></div>
+              <div class="kv"><div class="k">Buyer</div><div class="v">${escapeHtml(buyerHandle)}</div></div>
+              <div class="kv"><div class="k">Seller</div><div class="v">${escapeHtml(sellerHandle)}</div></div>
+            </div>
+
+            <div class="section">
+              <h2>Offer History</h2>
+              <div class="list">${escapeHtml(offerLines || "No offers recorded yet.")}</div>
+            </div>
+
+            ${paymentSectionHtml}
+            ${shippingSectionHtml}
+            ${notesSectionHtml}
+
+            <div class="section">
+              <h2>Timeline</h2>
+              <div class="list">${escapeHtml(timelineLines || "No timeline events recorded yet.")}</div>
+            </div>
+
+            <div class="footer">
+              <div><b>Generated by CardCat</b> — Exported: ${escapeHtml(new Date().toLocaleString())}</div>
+              <div style="margin-top: 10px;">${escapeHtml(disclaimer)}</div>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+  }
+
+  function downloadHtmlFile(params: { html: string; filename: string }) {
+    const blob = new Blob([params.html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = params.filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function onPreviewDealRecordDraft() {
+    if (!dealRecordForDisplay) return;
+    const html = buildDealRecordHtml({ draft: true, title: "CardCat Deal Record (Preview Draft)" });
+    downloadHtmlFile({ html, filename: `deal_record_${dealRecordForDisplay.id}_draft.html` });
+  }
+
+  function onDownloadDealRecord() {
+    if (!dealRecordForDisplay) return;
+    const html = buildDealRecordHtml({ draft: false, title: "CardCat Deal Record" });
+    downloadHtmlFile({ html, filename: `deal_record_${dealRecordForDisplay.id}.html` });
+  }
+
+  function onConfirmPaymentReceived() {
+    void (async () => {
+      if (!dealRecordForDisplay || !user?.id) return;
+      if (!supabaseConfigured || !supabase) {
+        setDealError("Supabase is not configured.");
+        return;
+      }
+      if (!dealDetails?.paid_date) {
+        setDealError("Add payment details first.");
+        return;
+      }
+      if (String(dealRecordForDisplay.seller_user_id) !== String(user.id)) {
+        setDealError("Only the seller can confirm payment received.");
+        return;
+      }
+      const paidDate = dealDetails.paid_date;
+
+      setDealActionSaving(true);
+      setDealError("");
+      try {
+        const { error: updateError } = await supabase
+          .from("deal_records")
+          .update({
+            status: "payment_confirmed",
+          })
+          .eq("id", dealRecordForDisplay.id);
+
+        if (updateError) throw updateError;
+
+        await addDealTimelineEvent({
+          dealRecordId: dealRecordForDisplay.id,
+          userId: user.id,
+          eventType: "payment_confirmed_by_seller",
+          title: "Payment confirmed by seller",
+          description: `Seller marked payment as received (paid date: ${formatPaidDate(paidDate)}).`,
+        });
+
+        setShowPaymentForm(false);
+        setDealError("");
+        await refreshDeals();
+      } catch (e: any) {
+        setDealError(e?.message || "Could not confirm payment received.");
+      } finally {
+        setDealActionSaving(false);
+      }
+    })();
+  }
+
+  async function onSavePaymentDetails() {
+    if (!dealRecordForDisplay || !user?.id) return;
+    if (!paidDateDraft) {
+      setDealError("Paid date is required.");
+      return;
+    }
+
+    if (!supabaseConfigured || !supabase) {
+      setDealError("Supabase is not configured.");
+      return;
+    }
+
+    setDealActionSaving(true);
+    setDealError("");
+    try {
+      await upsertDealDetailsForDealRecord({
+        dealRecordId: dealRecordForDisplay.id,
+        details: {
+          paid_date: paidDateDraft,
+          payment_method_note: paymentMethodNoteDraft.trim() || null,
+          payment_reference_note: paymentReferenceNoteDraft.trim() || null,
+        },
+      });
+
+      const alreadyConfirmed = String(dealRecordForDisplay.status).toLowerCase() === "payment_confirmed";
+      if (!alreadyConfirmed) {
+        const { error: updateError } = await supabase
+          .from("deal_records")
+          .update({
+            status: "payment_recorded",
+          })
+          .eq("id", dealRecordForDisplay.id);
+        if (updateError) throw updateError;
+
+        await addDealTimelineEvent({
+          dealRecordId: dealRecordForDisplay.id,
+          userId: user.id,
+          eventType: "payment_recorded",
+          title: "Payment recorded",
+          description: "Payment details were added to this deal record.",
+          metadata: { paid_date: paidDateDraft },
+        });
+      }
+
+      setShowPaymentForm(false);
+      setDealError("");
+      await refreshDeals();
+    } catch (e: any) {
+      setDealError(e?.message || "Could not save payment details.");
+    } finally {
+      setDealActionSaving(false);
+    }
+  }
+
+  async function onSaveShippingDetails() {
+    if (!dealRecordForDisplay || !user?.id) return;
+    if (!supabaseConfigured || !supabase) {
+      setDealError("Supabase is not configured.");
+      return;
+    }
+    if (!shippingCarrierDraft.trim()) {
+      setDealError("Shipping carrier is required.");
+      return;
+    }
+    if (!trackingNumberDraft.trim()) {
+      setDealError("Tracking number is required.");
+      return;
+    }
+    if (!shippedDateDraft) {
+      setDealError("Shipped date is required.");
+      return;
+    }
+
+    setDealActionSaving(true);
+    setDealError("");
+    try {
+      await upsertDealDetailsForDealRecord({
+        dealRecordId: dealRecordForDisplay.id,
+        details: {
+          shipping_carrier: shippingCarrierDraft.trim() || null,
+          tracking_number: trackingNumberDraft.trim() || null,
+          shipped_date: shippedDateDraft || null,
+          delivered_date: deliveredDateDraft || null,
+          shipping_cost: shippingCostDraft ? Number(shippingCostDraft) : null,
+          insurance_purchased: insurancePurchasedDraft,
+          insurance_amount: insuranceAmountDraft ? Number(insuranceAmountDraft) : null,
+          signature_required: signatureRequiredDraft,
+        },
+      });
+
+      const { error: updateError } = await supabase
+        .from("deal_records")
+        .update({
+          status: "shipping_entered",
+        })
+        .eq("id", dealRecordForDisplay.id);
+      if (updateError) throw updateError;
+
+      await addDealTimelineEvent({
+        dealRecordId: dealRecordForDisplay.id,
+        userId: user.id,
+        eventType: "shipping_entered",
+        title: "Shipping details added",
+        description: `Tracking entered by seller: ${trackingNumberDraft.trim()}.`,
+      });
+
+      setShowShippingForm(false);
+      setDealError("");
+      await refreshDeals();
+    } catch (e: any) {
+      setDealError(e?.message || "Could not save shipping details.");
+    } finally {
+      setDealActionSaving(false);
+    }
+  }
+
+  async function onMarkCompleted() {
+    if (!dealRecordForDisplay || !user?.id) return;
+    if (!supabaseConfigured || !supabase) {
+      setDealError("Supabase is not configured.");
+      return;
+    }
+    setCompletedDealLoading(true);
+    setDealError("");
+    try {
+      const { error: updateError } = await supabase
+        .from("deal_records")
+        .update({ status: "completed" })
+        .eq("id", dealRecordForDisplay.id);
+      if (updateError) throw updateError;
+
+      await addDealTimelineEvent({
+        dealRecordId: dealRecordForDisplay.id,
+        userId: user.id,
+        eventType: "deal_completed",
+        title: "Deal completed",
+        description: "Deal was marked as completed.",
+      });
+
+      await refreshDeals();
+    } catch (e: any) {
+      setDealError(e?.message || "Could not mark deal completed.");
+    } finally {
+      setCompletedDealLoading(false);
+    }
+  }
+
   function onAddDealDetails() {
-    setDealError("Deal details UI comes in the next phase. For now, you can download the record.");
+    // Stage routing for the next phase.
+    if (!dealRecordForDisplay) return;
+    if (paymentConfirmed) {
+      setShowShippingForm(true);
+      return;
+    }
+    setShowPaymentForm(true);
   }
 
   async function onMarkConversationUnread() {
@@ -2137,19 +2689,11 @@ export default function MessagesPage() {
 	                              <div className="pt-1 flex flex-wrap gap-2 items-center">
 	                                <button
 	                                  type="button"
-	                                  disabled
-	                                  onClick={() => onAddDealDetails()}
-	                                  className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] px-3 py-2 text-xs font-semibold text-emerald-100/70 disabled:opacity-60"
-	                                >
-	                                  Add Details
-	                                </button>
-	                                <button
-	                                  type="button"
 	                                  disabled={dealActionSaving}
-	                                  onClick={onDownloadDealRecord}
+	                                  onClick={onDownloadDealRecordRawData}
 	                                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
 	                                >
-	                                  Download Record
+	                                  Download Raw Data
 	                                </button>
 	                              </div>
 	                            </div>
@@ -2162,39 +2706,227 @@ export default function MessagesPage() {
 	                                <button
 	                                  type="button"
 	                                  disabled={dealActionSaving}
-	                                  onClick={onDownloadDealRecord}
+	                                  onClick={onDownloadDealRecordRawData}
 	                                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
 	                                >
-	                                  Download Record
+	                                  Download Raw Data
 	                                </button>
 	                              </div>
 	                            </div>
 	                          ) : (
 	                            <div className="text-xs text-slate-300">Another offer is pending. Waiting…</div>
 	                          )
-	                          ) : dealRecordForDisplay && String(dealRecordForDisplay.status).toLowerCase() === "offer_accepted" ? (
-	                          <div className="space-y-2">
-	                            <div className="text-xs text-slate-300">Offer accepted. This thread is now documented at {dealRecordForDisplay.agreed_price != null ? formatDealMoney(Number(dealRecordForDisplay.agreed_price)) : "—"}.</div>
-	                            <div className="flex flex-wrap gap-2">
-	                              <button
-	                                type="button"
-	                                disabled={dealActionSaving}
-	                                onClick={onAddDealDetails}
-	                                className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-3 py-2 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/[0.12] disabled:opacity-60"
-	                              >
-	                                Add Details
-	                              </button>
-	                              <button
-	                                type="button"
-	                                disabled={dealActionSaving}
-	                                onClick={onDownloadDealRecord}
-	                                className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
-	                              >
-	                                Download Record
-	                              </button>
+	                          ) : ["offer_accepted","payment_recorded","payment_confirmed","shipping_entered","completed"].includes(
+	                            String(dealRecordForDisplay.status ?? "").toLowerCase()
+	                          ) ? (
+	                            <div className="space-y-3">
+	                              <div className="text-xs text-slate-300">
+	                                {dealCompleted
+	                                  ? "Deal completed."
+	                                  : paymentConfirmed
+	                                    ? "Payment confirmed by seller."
+	                                    : paymentRecorded
+	                                      ? "Payment details recorded. Waiting for seller confirmation."
+	                                      : "Offer accepted. Add payment details to document this deal."}
+	                              </div>
+
+	                              {!paymentConfirmed ? (
+	                                <div className="flex flex-wrap gap-2">
+	                                  <button
+	                                    type="button"
+	                                    disabled={dealActionSaving}
+	                                    onClick={() => setShowPaymentForm(true)}
+	                                    className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-3 py-2 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/[0.12] disabled:opacity-60"
+	                                  >
+	                                    {paymentRecorded ? "Edit Payment Details" : "Add Payment Details"}
+	                                  </button>
+	                                  <button
+	                                    type="button"
+	                                    disabled={dealActionSaving}
+	                                    onClick={onPreviewDealRecordDraft}
+	                                    className="rounded-xl bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+	                                  >
+	                                    Preview Deal Record
+	                                  </button>
+
+	                                  {paymentRecorded ? (
+	                                    <button
+	                                      type="button"
+	                                      disabled={dealActionSaving || String(dealRecordForDisplay.seller_user_id) !== String(user.id)}
+	                                      onClick={() => void onConfirmPaymentReceived()}
+	                                      className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                                    >
+	                                      Confirm Payment Received
+	                                    </button>
+	                                  ) : null}
+	                                </div>
+	                              ) : (
+	                                <div className="flex flex-wrap gap-2">
+	                                  {!dealCompleted ? (
+	                                    <button
+	                                      type="button"
+	                                      disabled={dealActionSaving}
+	                                      onClick={() => setShowShippingForm(true)}
+	                                      className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-3 py-2 text-xs font-semibold text-emerald-100 hover:bg-emerald-500/[0.12] disabled:opacity-60"
+	                                    >
+	                                      Add Shipping Details
+	                                    </button>
+	                                  ) : null}
+	                                  <button
+	                                    type="button"
+	                                    disabled={dealActionSaving}
+	                                    onClick={onDownloadDealRecord}
+	                                    className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                                  >
+	                                    {dealCompleted ? "Download Final Deal Record" : "Download Deal Record"}
+	                                  </button>
+	                                </div>
+	                              )}
+
+	                              <div>
+	                                <button
+	                                  type="button"
+	                                  disabled={dealActionSaving}
+	                                  onClick={onDownloadDealRecordRawData}
+	                                  className="text-[11px] font-semibold text-slate-400 hover:text-slate-200"
+	                                >
+	                                  Download Raw Data (debug)
+	                                </button>
+	                              </div>
+
+	                              {showPaymentForm && !paymentConfirmed ? (
+	                                <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+	                                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Payment Details</div>
+	                                  <div className="flex flex-wrap gap-2">
+	                                    <input
+	                                      type="date"
+	                                      value={paidDateDraft}
+	                                      onChange={(e) => setPaidDateDraft(e.target.value)}
+	                                      className="w-44 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
+	                                    />
+	                                    <input
+	                                      value={paymentReferenceNoteDraft}
+	                                      onChange={(e) => setPaymentReferenceNoteDraft(e.target.value)}
+	                                      placeholder="Payment reference / note"
+	                                      className="flex-1 min-w-[220px] rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                    />
+	                                  </div>
+	                                  <textarea
+	                                    value={paymentMethodNoteDraft}
+	                                    onChange={(e) => setPaymentMethodNoteDraft(e.target.value)}
+	                                    placeholder="Payment method note"
+	                                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                  />
+	                                  <div className="flex flex-wrap gap-2">
+	                                    <button
+	                                      type="button"
+	                                      disabled={dealActionSaving}
+	                                      onClick={() => void onSavePaymentDetails()}
+	                                      className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                                    >
+	                                      Save Payment Details
+	                                    </button>
+	                                    <button
+	                                      type="button"
+	                                      disabled={dealActionSaving}
+	                                      onClick={() => setShowPaymentForm(false)}
+	                                      className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+	                                    >
+	                                      Cancel
+	                                    </button>
+	                                  </div>
+	                                </div>
+	                              ) : null}
+
+	                              {showShippingForm && paymentConfirmed && !dealCompleted ? (
+	                                <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+	                                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Shipping Details</div>
+	                                  <div className="flex flex-wrap gap-2">
+	                                    <input
+	                                      value={shippingCarrierDraft}
+	                                      onChange={(e) => setShippingCarrierDraft(e.target.value)}
+	                                      placeholder="Carrier"
+	                                      className="flex-1 min-w-[220px] rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                    />
+	                                    <input
+	                                      value={trackingNumberDraft}
+	                                      onChange={(e) => setTrackingNumberDraft(e.target.value)}
+	                                      placeholder="Tracking number"
+	                                      className="flex-1 min-w-[220px] rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                    />
+	                                  </div>
+	                                  <div className="flex flex-wrap gap-2">
+	                                    <input
+	                                      type="date"
+	                                      value={shippedDateDraft}
+	                                      onChange={(e) => setShippedDateDraft(e.target.value)}
+	                                      className="w-44 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
+	                                    />
+	                                    <input
+	                                      type="date"
+	                                      value={deliveredDateDraft}
+	                                      onChange={(e) => setDeliveredDateDraft(e.target.value)}
+	                                      className="w-44 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
+	                                    />
+	                                    <input
+	                                      value={shippingCostDraft}
+	                                      onChange={(e) => setShippingCostDraft(e.target.value)}
+	                                      placeholder="Shipping cost"
+	                                      className="w-44 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+	                                    />
+	                                  </div>
+	                                  <div className="flex flex-wrap gap-3 items-center text-sm">
+	                                    <label className="inline-flex items-center gap-2 text-slate-300">
+	                                      <input type="checkbox" checked={insurancePurchasedDraft} onChange={(e) => setInsurancePurchasedDraft(e.target.checked)} />
+	                                      Insurance purchased
+	                                    </label>
+	                                    <input
+	                                      value={insuranceAmountDraft}
+	                                      onChange={(e) => setInsuranceAmountDraft(e.target.value)}
+	                                      placeholder="Insurance amount"
+	                                      disabled={!insurancePurchasedDraft}
+	                                      className="w-44 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none disabled:opacity-50 placeholder:text-slate-500"
+	                                    />
+	                                    <label className="inline-flex items-center gap-2 text-slate-300">
+	                                      <input type="checkbox" checked={signatureRequiredDraft} onChange={(e) => setSignatureRequiredDraft(e.target.checked)} />
+	                                      Signature required
+	                                    </label>
+	                                  </div>
+	                                  <div className="flex flex-wrap gap-2">
+	                                    <button
+	                                      type="button"
+	                                      disabled={dealActionSaving}
+	                                      onClick={() => void onSaveShippingDetails()}
+	                                      className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                                    >
+	                                      Save Shipping Details
+	                                    </button>
+	                                    <button
+	                                      type="button"
+	                                      disabled={dealActionSaving}
+	                                      onClick={() => setShowShippingForm(false)}
+	                                      className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+	                                    >
+	                                      Cancel
+	                                    </button>
+	                                  </div>
+	                                </div>
+	                              ) : null}
+
+	                              {!dealCompleted && paymentConfirmed && shippingRecorded ? (
+	                                <div className="pt-1">
+	                                  <button
+	                                    type="button"
+	                                    disabled={completedDealLoading || dealActionSaving}
+	                                    onClick={() => void onMarkCompleted()}
+	                                    className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+	                                  >
+	                                    {completedDealLoading ? "Marking…" : "Mark Completed"}
+	                                  </button>
+	                                </div>
+	                              ) : null}
 	                            </div>
-	                          </div>
-	                        ) : (
+	                          ) : (
 	                          <div className="space-y-2">
 	                            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Make an offer on this card</div>
 	                            {latestDealOffer?.offer_amount != null ? (
