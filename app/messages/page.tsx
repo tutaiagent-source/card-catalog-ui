@@ -506,6 +506,12 @@ export default function MessagesPage() {
 
   const activeConversation = conversationViews.find((row) => row.conversation.id === activeConversationId) ?? null;
 
+  const activeConversationOtherUserId = useMemo(() => {
+    if (!activeConversationId || !user?.id) return null;
+    const other = participants.find((p) => p.conversation_id === activeConversationId && p.user_id !== user.id);
+    return other?.user_id ?? null;
+  }, [activeConversationId, user?.id, participants]);
+
   const unreadConversationCount = useMemo(
     () => conversationViews.filter((row) => row.hasNonDeletedMessages && row.unread).length,
     [conversationViews]
@@ -746,9 +752,9 @@ export default function MessagesPage() {
   }
 
   async function onMakeOffer() {
-    if (!activeDealRecord || !activeConversation?.otherUserId || !user?.id) return;
+    if (!activeDealRecord || !activeConversationOtherUserId || !user?.id) return;
 
-    const otherUserId = String(activeConversation.otherUserId);
+    const otherUserId = String(activeConversationOtherUserId);
     const amount = Number(offerAmountDraft.trim());
     if (!Number.isFinite(amount) || amount <= 0) {
       setDealError("Enter a valid offer amount.");
@@ -1908,14 +1914,14 @@ export default function MessagesPage() {
 	                                placeholder="Amount"
 	                                className="w-36 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
 	                              />
-	                              <button
-	                                type="button"
-	                                disabled={dealActionSaving || activeConversationIsBlocked || !activeConversation?.otherUserId}
-	                                onClick={() => void onMakeOffer()}
-	                                className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
-	                              >
-	                                {dealActionSaving ? "Sending…" : "Send offer"}
-	                              </button>
+                                <button
+                                  type="button"
+                                  disabled={dealActionSaving || activeConversationIsBlocked || !activeConversationOtherUserId}
+                                  onClick={() => void onMakeOffer()}
+                                  className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                                >
+                                  {dealActionSaving ? "Sending…" : "Send offer"}
+                                </button>
 	                            </div>
 	                            <textarea
 	                              value={offerMessageDraft}
