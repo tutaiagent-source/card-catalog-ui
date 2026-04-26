@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { stripe, stripeConfigured } from "@/lib/stripeServer";
 import { supabaseAdmin, supabaseAdminConfigured } from "@/lib/supabaseAdminClient";
+import { buildSubscriptionWelcomeEmail } from "@/lib/subscriptionWelcomeEmail";
 
 function getRequiredEnv(name: string) {
   const v = process.env[name];
@@ -18,6 +19,60 @@ function priceIdToTier(priceId: string) {
   if (priceId === proMonthly || priceId === proAnnual) return "pro";
   if (priceId === sellerMonthly || priceId === sellerAnnual) return "seller";
   return "collector";
+}
+
+async function sendSubscriptionWelcomeEmail({
+  tier,
+  userId,
+  stripeSubscriptionId,
+  recipientEmail,
+}: {
+  tier: "collector" | "pro" | "seller";
+  userId: string;
+  stripeSubscriptionId: string;
+  recipientEmail: string;
+}) {
+  if (!recipientEmail) return;
+
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) throw new Error("Server misconfigured: missing RESEND_API_KEY");
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL || "support@cardcat.io";
+
+  const email = buildSubscriptionWelcomeEmail(tier);
+
+  const resp = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: fromEmail,
+      to: recipientEmail,
+      subject: email.subject,
+      text: email.text,
+      html: email.html,
+    }),
+  });
+
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) {
+    const message = (data as any)?.error?.message ?? (data as any)?.message ?? "Resend error";
+    throw new Error(message);
+  }
+
+  const resendMessageId: string | undefined = (data as any)?.id;
+
+  await supabaseAdmin!.from("email_events").insert({
+    user_id: userId,
+    email_type: "subscription_welcome",
+    stripe_subscription_id: stripeSubscriptionId,
+    recipient_email: recipientEmail,
+    plan_name: tier === "pro" ? "Pro" : tier === "seller" ? "Seller" : "Collector",
+    status: "sent",
+    resend_message_id: resendMessageId ?? null,
+  });
 }
 
 export async function POST(req: Request) {
@@ -54,6 +109,9 @@ export async function POST(req: Request) {
         const tier = priceIdToTier(priceId);
         const userId = subscription.metadata?.user_id as string | undefined;
 
+        const recipientEmail: string | undefined =
+          session?.customer_details?.email || session?.customer_email || undefined;
+
         if (!userId) {
           console.warn("Missing subscription user_id metadata; cannot map entitlement");
           break;
@@ -73,6 +131,29 @@ export async function POST(req: Request) {
           },
           { onConflict: "user_id" }
         );
+
+        // Send a welcome email once per successful initial subscription checkout.
+        if (recipientEmail && (subscription.status === "active" || subscription.status === "trialing")) {
+          try {
+            const { data: existingEmail } = await supabaseAdmin
+              .from("email_events")
+              .select("id")
+              .eq("email_type", "subscription_welcome")
+              .eq("stripe_subscription_id", subscription.id)
+              .maybeSingle();
+
+            if (!existingEmail) {
+              await sendSubscriptionWelcomeEmail({
+                tier,
+                userId,
+                stripeSubscriptionId: subscription.id,
+                recipientEmail,
+              });
+            }
+          } catch (e) {
+            console.error("Subscription welcome email flow failed", e);
+          }
+        }
 
         break;
       }
