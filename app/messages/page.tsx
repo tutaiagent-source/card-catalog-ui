@@ -1581,6 +1581,29 @@ export default function MessagesPage() {
 
           if (updateError) throw updateError;
 
+          // Best-effort: also mark the listing sold in case the server-side
+          // marketplace RPC isn't deployed yet.
+          const fallbackCardId = dealRecordForDisplay.card_id ? String(dealRecordForDisplay.card_id) : null;
+          let fallbackMarkedSold = false;
+          if (fallbackCardId) {
+            const { data: updatedCards, error: cardUpdateError } = await supabase
+              .from("cards")
+              .update({
+                status: "Sold",
+                sold_price: dealRecordForDisplay.agreed_price ?? null,
+                sold_at: confirmedAtIso,
+              })
+              .eq("id", fallbackCardId)
+              .eq("user_id", user.id)
+              .eq("status", "Listed")
+              .select("id")
+              .maybeSingle();
+
+            if (!cardUpdateError) {
+              fallbackMarkedSold = !!updatedCards?.id;
+            }
+          }
+
           await addDealTimelineEvent({
             dealRecordId: dealRecordForDisplay.id,
             userId: user.id,
@@ -1592,7 +1615,9 @@ export default function MessagesPage() {
           setShowPaymentForm(false);
           setDealError("");
           setDealSoldNotice(
-            "Payment confirmed. The marketplace “mark sold” step isn’t enabled on the server yet, so sold-page updates may lag."
+            fallbackMarkedSold
+              ? "Payment confirmed, and the listing was marked sold (server RPC missing; best-effort update applied)."
+              : "Payment confirmed, but the listing could not be marked sold because the server RPC isn’t deployed yet."
           );
           await refreshDeals();
         } else {
