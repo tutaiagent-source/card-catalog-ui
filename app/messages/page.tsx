@@ -752,7 +752,11 @@ export default function MessagesPage() {
   }
 
   async function onMakeOffer() {
-    if (!activeDealRecord || !activeConversationOtherUserId || !user?.id) return;
+    if (!activeDealRecord || !user?.id) return;
+    if (!activeConversationOtherUserId) {
+      setDealError("Could not determine the other user for this thread yet. Try refreshing.");
+      return;
+    }
 
     const otherUserId = String(activeConversationOtherUserId);
     const amount = Number(offerAmountDraft.trim());
@@ -1916,7 +1920,7 @@ export default function MessagesPage() {
 	                              />
                                 <button
                                   type="button"
-                                  disabled={dealActionSaving || activeConversationIsBlocked || !activeConversationOtherUserId}
+                                  disabled={dealActionSaving || activeConversationIsBlocked}
                                   onClick={() => void onMakeOffer()}
                                   className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
                                 >
