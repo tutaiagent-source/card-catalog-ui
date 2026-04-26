@@ -75,11 +75,18 @@ const pricingTiers = [
   },
   {
     name: "Pro",
-    price: "$12 / Month",
+    price: "$10 / Month",
     caption: "For bigger inventories and deeper tracking tools, with no CardCat buyer fees and no CardCat seller fees.",
     features: ["CSV Import And Export", "Bulk Inventory Tools", "Advanced Sold Insights", "More Room To Grow"],
     accent: "border-amber-500/25 bg-amber-500/[0.08]",
     highlight: true,
+  },
+  {
+    name: "Seller",
+    price: "$25 / Month",
+    caption: "For active sellers who want deeper sold tracking and advanced seller analytics.",
+    features: ["CSV Import And Export", "Deeper Sold Tracking", "Advanced Seller Analytics", "Bulk Inventory Tools"],
+    accent: "border-amber-500/25 bg-amber-500/[0.10]",
   },
 ];
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export type PlanPreview = "collector" | "pro";
+export type PlanPreview = "collector" | "pro" | "seller";
 
 const STORAGE_KEY = "cardcat-plan-preview";
 
@@ -13,7 +13,7 @@ export function usePlanPreview(defaultPlan: PlanPreview = "pro") {
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored === "collector" || stored === "pro") {
+      if (stored === "collector" || stored === "pro" || stored === "seller") {
         setPlanPreviewState(stored);
       }
     } finally {

@@ -12,8 +12,11 @@ function getRequiredEnv(name: string) {
 function priceIdToTier(priceId: string) {
   const proMonthly = getRequiredEnv("STRIPE_PRO_PRICE_MONTHLY_ID");
   const proAnnual = getRequiredEnv("STRIPE_PRO_PRICE_ANNUAL_ID");
+  const sellerMonthly = getRequiredEnv("STRIPE_SELLER_PRICE_MONTHLY_ID");
+  const sellerAnnual = getRequiredEnv("STRIPE_SELLER_PRICE_ANNUAL_ID");
 
   if (priceId === proMonthly || priceId === proAnnual) return "pro";
+  if (priceId === sellerMonthly || priceId === sellerAnnual) return "seller";
   return "collector";
 }
 
@@ -80,10 +83,23 @@ export async function POST(req: Request) {
         const userId: string | undefined = subscription?.metadata?.user_id;
         if (!userId) break;
 
+        let tier: "collector" | "pro" | "seller" = "collector";
+        if (subscriptionId) {
+          try {
+            const fullSubscription = await stripe.subscriptions.retrieve(subscriptionId, {
+              expand: ["items.data.price"],
+            });
+            const priceId = fullSubscription?.items?.data?.[0]?.price?.id;
+            if (priceId) tier = priceIdToTier(priceId);
+          } catch (e) {
+            console.warn("Could not map tier from deleted subscription items; defaulting to collector", e);
+          }
+        }
+
         await supabaseAdmin.from("user_entitlements").upsert(
           {
             user_id: userId,
-            tier: "collector",
+            tier,
             status: "inactive",
             stripe_subscription_id: subscriptionId,
             current_period_end: null,

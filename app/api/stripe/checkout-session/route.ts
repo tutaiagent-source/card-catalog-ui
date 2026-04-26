@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User email not found" }, { status: 400 });
     }
 
-    if (tier !== "collector" && tier !== "pro") {
+    if (tier !== "collector" && tier !== "pro" && tier !== "seller") {
       return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
     }
     if (interval !== "month" && interval !== "annual") {
@@ -47,11 +47,15 @@ export async function POST(req: Request) {
     const priceId = (() => {
       const proMonthly = getRequiredEnv("STRIPE_PRO_PRICE_MONTHLY_ID");
       const proAnnual = getRequiredEnv("STRIPE_PRO_PRICE_ANNUAL_ID");
+      const sellerMonthly = getRequiredEnv("STRIPE_SELLER_PRICE_MONTHLY_ID");
+      const sellerAnnual = getRequiredEnv("STRIPE_SELLER_PRICE_ANNUAL_ID");
       const collectorMonthly = getRequiredEnv("STRIPE_COLLECTOR_PRICE_MONTHLY_ID");
       const collectorAnnual = getRequiredEnv("STRIPE_COLLECTOR_PRICE_ANNUAL_ID");
 
       if (tier === "pro" && interval === "month") return proMonthly;
       if (tier === "pro" && interval === "annual") return proAnnual;
+      if (tier === "seller" && interval === "month") return sellerMonthly;
+      if (tier === "seller" && interval === "annual") return sellerAnnual;
       if (tier === "collector" && interval === "month") return collectorMonthly;
       if (tier === "collector" && interval === "annual") return collectorAnnual;
       throw new Error("Unexpected tier/interval");

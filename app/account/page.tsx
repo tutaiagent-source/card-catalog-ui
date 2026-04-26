@@ -23,7 +23,7 @@ export default function AccountPage() {
   const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
   const { planPreview, setPlanPreview, isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<CardSummary[]>([]);
-  const [realTier, setRealTier] = useState<"collector" | "pro" | null>(null);
+  const [realTier, setRealTier] = useState<"collector" | "pro" | "seller" | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -69,7 +69,9 @@ export default function AccountPage() {
           .single();
 
         if (!entErr && ent?.tier) {
-          setRealTier(ent.tier === "pro" ? "pro" : "collector");
+          if (ent.tier === "pro") setRealTier("pro");
+          else if (ent.tier === "seller") setRealTier("seller");
+          else setRealTier("collector");
         }
       } catch (e) {
         // Ignore until migration is applied / table exists.
@@ -83,14 +85,14 @@ export default function AccountPage() {
   const collectorCardCap = 100;
   const collectorAddOnCards = 100;
   const collectorAddOnPricePerMonth = 2;
-  const proPricePerMonth = 12;
-  const currentPlanPreview = isCollectorPreview ? "Collector" : "Pro";
+  const proPricePerMonth = 10;
+  const currentPlanPreview = planPreview === "collector" ? "Collector" : planPreview === "seller" ? "Seller" : "Pro";
   const usagePct = Math.min(100, Math.round((totalCards / collectorCardCap) * 100));
 
-  const effectiveTier: "collector" | "pro" = realTier ?? (isCollectorPreview ? "collector" : "pro");
+  const effectiveTier: "collector" | "pro" | "seller" = realTier ?? (planPreview === "collector" ? "collector" : planPreview === "seller" ? "seller" : "pro");
   const usernameLocked = Boolean(String(profile?.username || "").trim());
 
-  const startStripeCheckout = async (tier: "collector" | "pro", interval: "month" | "annual") => {
+  const startStripeCheckout = async (tier: "collector" | "pro" | "seller", interval: "month" | "annual") => {
     if (!supabaseConfigured || !supabase || !user?.id) return;
 
     setMessage("");
@@ -448,7 +450,7 @@ export default function AccountPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold">Plans & Usage</h2>
-              <p className="mt-1 text-sm text-slate-400">2-tier preview for launch: a limited Collector plan and an expanded Pro plan with fair-use storage.</p>
+              <p className="mt-1 text-sm text-slate-400">3-tier preview for launch: Collector (capped), Pro (unlimited), and Seller.</p>
             </div>
             <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
               Previewing: {currentPlanPreview}
@@ -457,7 +459,7 @@ export default function AccountPage() {
 
           <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
             <div className="text-sm font-semibold text-slate-200">Preview the paid-wall experience</div>
-            <div className="mt-1 text-sm text-slate-400">Flip between Collector and Pro to see which tools stay visible, which tools get gated, and where upgrade prompts show up.</div>
+            <div className="mt-1 text-sm text-slate-400">Flip between Collector, Pro, and Seller to see which tools stay visible, which tools get gated, and where upgrade prompts show up.</div>
             <div className="mt-3 inline-flex items-center rounded-full border border-white/10 bg-slate-900/90 p-1">
               <button
                 type="button"
@@ -472,6 +474,13 @@ export default function AccountPage() {
                 onClick={() => setPlanPreview("pro")}
               >
                 Pro preview
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${planPreview === "seller" ? "bg-[#f59e0b] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+                onClick={() => setPlanPreview("seller")}
+              >
+                Seller preview
               </button>
             </div>
           </div>
@@ -511,11 +520,11 @@ export default function AccountPage() {
             ) : null}
 
             <div className="mt-2 text-xs text-slate-500">
-              Stripe subscriptions wired. Your Stripe-synced plan is: {realTier ? (realTier === "pro" ? "Pro" : "Collector") : "Loading..."}
+              Stripe subscriptions wired. Your Stripe-synced plan is: {realTier ? (realTier === "pro" ? "Pro" : realTier === "seller" ? "Seller" : "Collector") : "Loading..."}
             </div>
           </div>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold text-slate-100">Collector</div>
@@ -548,10 +557,43 @@ export default function AccountPage() {
                   </button>
                 </div>
               </div>
+
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-slate-100">Seller</div>
+                  <div className="text-sm font-semibold text-white">$25 / month ($250 / yr)</div>
+                </div>
+                <div className="mt-1 text-sm text-slate-400">For active sellers who want deeper sold tracking and advanced seller analytics.</div>
+                <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                  <li>• CSV import/export</li>
+                  <li>• Deeper sold tracking</li>
+                  <li>• Advanced seller analytics</li>
+                  <li>• Bulk inventory tools</li>
+                </ul>
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    className="rounded-xl border border-white/10 bg-[#f59e0b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d97706] disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => startStripeCheckout("seller", "month")}
+                    disabled={effectiveTier === "seller"}
+                  >
+                    Seller Monthly
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-xl border border-white/10 bg-[#f59e0b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d97706] disabled:cursor-not-allowed disabled:opacity-60"
+                    onClick={() => startStripeCheckout("seller", "annual")}
+                    disabled={effectiveTier === "seller"}
+                  >
+                    Seller Annual ($250/yr)
+                  </button>
+                </div>
+              </div>
               <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.06] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold text-slate-100">Pro</div>
-                  <div className="text-sm font-semibold text-white">$12 / month ($120 / yr)</div>
+                  <div className="text-sm font-semibold text-white">$10 / month ($100 / yr)</div>
                 </div>
                 <div className="mt-1 text-sm text-slate-400">Higher card limits, CSV workflows, and deeper seller analytics.</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-300">
@@ -576,7 +618,7 @@ export default function AccountPage() {
                     onClick={() => startStripeCheckout("pro", "annual")}
                     disabled={effectiveTier === "pro"}
                   >
-                    Pro Annual ($120/yr)
+                    Pro Annual ($100/yr)
                   </button>
                 </div>
               </div>
