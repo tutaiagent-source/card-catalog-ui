@@ -1824,7 +1824,7 @@ export default function MessagesPage() {
 	                      {!activeDealRecord ? (
 	                        <button
 	                          type="button"
-	                          disabled={dealActionSaving || activeConversationIsBlocked}
+	                          disabled={dealActionSaving}
 	                          onClick={() => void onCreateDealRecord()}
 	                          className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
 	                        >
@@ -1859,7 +1859,7 @@ export default function MessagesPage() {
 	                              <div className="flex flex-wrap gap-2">
 	                                <button
 	                                  type="button"
-	                                  disabled={dealActionSaving || activeConversationIsBlocked}
+	                                  disabled={dealActionSaving}
 	                                  onClick={() => void onAcceptOffer(pendingDealOffer)}
 	                                  className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
 	                                >
@@ -1867,7 +1867,7 @@ export default function MessagesPage() {
 	                                </button>
 	                                <button
 	                                  type="button"
-	                                  disabled={dealActionSaving || activeConversationIsBlocked}
+	                                  disabled={dealActionSaving}
 	                                  onClick={() => void onDeclineOffer(pendingDealOffer)}
 	                                  className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
 	                                >
@@ -1889,7 +1889,7 @@ export default function MessagesPage() {
 	                                  />
 	                                  <button
 	                                    type="button"
-	                                    disabled={dealActionSaving || activeConversationIsBlocked}
+	                                    disabled={dealActionSaving}
 	                                    onClick={() => void onCounterOffer(pendingDealOffer)}
 	                                    className="rounded-xl bg-amber-500 px-3 py-2 text-xs font-semibold text-amber-950 hover:bg-amber-400 disabled:opacity-60"
 	                                  >
@@ -1918,12 +1918,12 @@ export default function MessagesPage() {
 	                                placeholder="Amount"
 	                                className="w-36 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500"
 	                              />
-                                <button
-                                  type="button"
-                                  disabled={dealActionSaving || activeConversationIsBlocked}
-                                  onClick={() => void onMakeOffer()}
-                                  className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
-                                >
+	                              <button
+	                                type="button"
+	                                disabled={dealActionSaving}
+	                                onClick={() => void onMakeOffer()}
+	                                className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+	                              >
                                   {dealActionSaving ? "Sending…" : "Send offer"}
                                 </button>
 	                            </div>
