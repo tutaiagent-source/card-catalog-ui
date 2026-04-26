@@ -4,11 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { buildSellerNotes, computeSaleMetrics, parseSellerMeta } from "@/lib/cardSellerMeta";
+import { driveToImageSrc } from "@/lib/googleDrive";
 import { usePlanPreview } from "@/lib/planPreview";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
 import UsernamePromptBanner from "@/components/UsernamePromptBanner";
+
+import type { DealOfferRow, DealTimelineEventRow } from "@/lib/deals";
 
 type CardStatus = "Collection" | "Listed" | "Sold";
 
@@ -101,11 +104,37 @@ function normalizePlatformLabel(value?: string | null) {
   return collapsed.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+function platformForCard(card: SoldCard) {
+  return card.deal_record_id ? "CardCat" : normalizePlatformLabel(card.sale_platform);
+}
+
 function csvCell(value: unknown) {
   let text = String(value ?? "");
   if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
   if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
   return text;
+}
+
+function escapeHtml(value: any) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function formatTimestamp(value?: string | null) {
+  if (!value) return "";
+  const d = new Date(value);
+  if (!Number.isFinite(d.getTime())) return "";
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(d);
 }
 
 export default function SoldPage() {
@@ -114,6 +143,8 @@ export default function SoldPage() {
   const { isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<SoldCard[]>([]);
   const [graphsRaised, setGraphsRaised] = useState(false);
+
+  const [receiptDownloadingDealId, setReceiptDownloadingDealId] = useState<string | null>(null);
 
   const [saleEditOpen, setSaleEditOpen] = useState(false);
   const [saleEditCard, setSaleEditCard] = useState<SoldCard | null>(null);
@@ -326,7 +357,7 @@ export default function SoldPage() {
     setSaleEditCard(card);
     setSaleDraftSoldPrice(card.sold_price == null ? "" : String(card.sold_price));
     setSaleDraftSoldAt(toDateInputValue(card.sold_at));
-    setSaleDraftSalePlatform(card.sale_platform == null ? "" : String(card.sale_platform));
+    setSaleDraftSalePlatform(card.deal_record_id ? "CardCat" : card.sale_platform == null ? "" : String(card.sale_platform));
     setSaleDraftQuantity(Number(card.quantity || 1));
 
     const seller = parseSellerMeta(card.notes);
@@ -337,6 +368,299 @@ export default function SoldPage() {
     setSaleEditError("");
     setSaleEditOpen(true);
   };
+
+  async function onDownloadReceipt(card: SoldCard) {
+    if (!card.deal_record_id) {
+      // Should not happen when the button is correctly disabled.
+      alert("No receipt available for this sale.");
+      return;
+    }
+    const dealRecordId = String(card.deal_record_id);
+
+    if (!supabaseConfigured || !supabase) {
+      alert("Supabase is not configured.");
+      return;
+    }
+    if (receiptDownloadingDealId === dealRecordId) return;
+
+    setReceiptDownloadingDealId(dealRecordId);
+
+    const downloadHtmlFile = (params: { html: string; filename: string }) => {
+      const blob = new Blob([params.html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = params.filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    try {
+      const { data: deal, error: dealErr } = await supabase
+        .from("deal_records")
+        .select("*")
+        .eq("id", dealRecordId)
+        .maybeSingle();
+
+      if (dealErr) throw dealErr;
+      if (!deal) throw new Error("Deal record not found.");
+
+      const { data: details, error: detailsErr } = await supabase
+        .from("deal_details")
+        .select("*")
+        .eq("deal_record_id", dealRecordId)
+        .maybeSingle();
+      if (detailsErr) throw detailsErr;
+
+      const { data: offers, error: offersErr } = await supabase
+        .from("deal_offers")
+        .select("*")
+        .eq("deal_record_id", dealRecordId)
+        .order("created_at", { ascending: true })
+        .limit(25);
+      if (offersErr) throw offersErr;
+
+      const { data: timelineEvents, error: timelineErr } = await supabase
+        .from("deal_timeline_events")
+        .select("*")
+        .eq("deal_record_id", dealRecordId)
+        .order("created_at", { ascending: true })
+        .limit(50);
+      if (timelineErr) throw timelineErr;
+
+      const buyerId = deal.buyer_user_id ? String(deal.buyer_user_id) : null;
+      const sellerId = deal.seller_user_id ? String(deal.seller_user_id) : null;
+
+      const profileIds = [buyerId, sellerId].filter(Boolean) as string[];
+      let profilesById = new Map<string, any>();
+      if (profileIds.length > 0) {
+        const { data: profileRows, error: profileErr } = await supabase
+          .from("profiles")
+          .select("id, username, display_name")
+          .in("id", profileIds);
+        if (profileErr) throw profileErr;
+        for (const p of (profileRows ?? []) as any[]) {
+          profilesById.set(String(p.id), p);
+        }
+      }
+
+      const labelFromProfile = (p: any | null) => {
+        if (!p) return "—";
+        const username = p.username ? String(p.username).trim() : "";
+        const displayName = p.display_name ? String(p.display_name).trim() : "";
+        if (displayName && username) return `${displayName} (@${username})`;
+        if (displayName) return displayName;
+        if (username) return `@${username}`;
+        return "User";
+      };
+
+      const buyerLabel = labelFromProfile(buyerId ? profilesById.get(buyerId) ?? null : null);
+      const sellerLabel = labelFromProfile(sellerId ? profilesById.get(sellerId) ?? null : null);
+
+      const dealStatusText = (() => {
+        switch (String(deal.status ?? "").toLowerCase()) {
+          case "draft":
+            return "Draft";
+          case "offer_pending":
+            return "Offer Pending";
+          case "offer_accepted":
+            return "Offer Accepted";
+          case "offer_declined":
+            return "Offer Declined";
+          case "payment_recorded":
+            return "Payment Recorded";
+          case "payment_confirmed":
+            return "Payment Confirmed";
+          case "shipping_entered":
+            return "Shipping Added";
+          case "completed":
+            return "Completed";
+          default:
+            return deal.status ? String(deal.status) : "Draft";
+        }
+      })();
+
+      const dealIdShort = String(deal.id).slice(0, 8);
+      const agreedPrice = deal.agreed_price != null ? Number(deal.agreed_price) : null;
+      const agreedPriceText = agreedPrice != null && Number.isFinite(agreedPrice) ? money(agreedPrice) : "—";
+      const acceptedAtText = deal.accepted_at ? formatTimestamp(deal.accepted_at) : "—";
+
+      const paymentConfirmed = ["payment_confirmed", "shipping_entered", "completed"].includes(
+        String(deal.status ?? "").toLowerCase()
+      );
+
+      const paymentConfirmedEvent = (timelineEvents ?? []).find(
+        (e: DealTimelineEventRow) => String(e.event_type ?? "").toLowerCase() === "payment_confirmed_by_seller"
+      ) as DealTimelineEventRow | undefined;
+
+      const paymentConfirmedAtText = paymentConfirmedEvent?.created_at ? formatTimestamp(paymentConfirmedEvent.created_at) : "—";
+
+      const shippingRecorded = Boolean(details?.shipping_carrier || details?.tracking_number || details?.shipped_date);
+
+      const offersAsc = (offers ?? []) as DealOfferRow[];
+      const offerLines = offersAsc
+        .map((o) => {
+          const when = o.created_at ? formatTimestamp(o.created_at) : "";
+          const amount = o.offer_amount != null ? money(Number(o.offer_amount)) : "—";
+          const fromRole = o.from_user_id === deal.buyer_user_id ? "Buyer" : o.from_user_id === deal.seller_user_id ? "Seller" : "Participant";
+          return `${fromRole} offered ${amount}${when ? ` on ${when}` : ""} (${String(o.status ?? "").replace(/_/g, " ")})`;
+        })
+        .join("\n");
+
+      const timelineLines = (timelineEvents ?? [])
+        .map((e: DealTimelineEventRow) => {
+          const when = e.created_at ? formatTimestamp(e.created_at) : "";
+          return `${e.title}${when ? ` — ${when}` : ""}`;
+        })
+        .join("\n");
+
+      const cardImageHtml = (card as any).image_url
+        ? `<img class="card-img" src="${escapeHtml(driveToImageSrc((card as any).image_url, { variant: "detail" }))}" alt="Card image" />`
+        : `<div class="card-img placeholder"></div>`;
+
+      const shippingSectionHtml = shippingRecorded
+        ? `
+          <div class="section">
+            <h2>Shipping Details</h2>
+            <div class="kv"><div class="k">Shipping carrier</div><div class="v">${escapeHtml(details?.shipping_carrier ?? "—")}</div></div>
+            <div class="kv"><div class="k">Tracking number</div><div class="v">${escapeHtml(details?.tracking_number ?? "—")}</div></div>
+            <div class="kv"><div class="k">Date shipped</div><div class="v">${escapeHtml(details?.shipped_date ? String(details.shipped_date) : "—")}</div></div>
+            <div class="kv"><div class="k">Date delivered</div><div class="v">${escapeHtml(details?.delivered_date ? String(details.delivered_date) : "—")}</div></div>
+            <div class="kv"><div class="k">Shipping cost</div><div class="v">${details?.shipping_cost != null ? escapeHtml(money(Number(details.shipping_cost))) : "—"}</div></div>
+            <div class="kv"><div class="k">Insurance Purchased</div><div class="v">${details?.insurance_purchased ? "Yes" : "No"}</div></div>
+            <div class="kv"><div class="k">Insurance Amount</div><div class="v">${details?.insurance_amount != null ? escapeHtml(money(Number(details.insurance_amount))) : "—"}</div></div>
+            <div class="kv"><div class="k">Signature Required</div><div class="v">${details?.signature_required ? "Yes" : "No"}</div></div>
+          </div>
+        `
+        : "";
+
+      const paymentSectionHtml = details?.paid_date
+        ? `
+          <div class="section">
+            <h2>Payment Details</h2>
+            <div class="kv"><div class="k">Payment status</div><div class="v">${paymentConfirmed ? "Seller confirmed payment received" : "Payment details recorded (awaiting seller confirmation)"}</div></div>
+            <div class="kv"><div class="k">Paid date</div><div class="v">${escapeHtml(String(details.paid_date) || "—")}</div></div>
+            <div class="kv"><div class="k">Amount paid</div><div class="v">${escapeHtml(agreedPriceText)}</div></div>
+            <div class="kv"><div class="k">Payment confirmed date</div><div class="v">${escapeHtml(paymentConfirmedAtText || "—")}</div></div>
+            <div class="kv"><div class="k">Payment reference/note</div><div class="v">${escapeHtml(details?.payment_reference_note ?? "—")}</div></div>
+            <div class="kv"><div class="k">Payment method note</div><div class="v">${escapeHtml(details?.payment_method_note ?? "—")}</div></div>
+          </div>
+        `
+        : "";
+
+      const notesSectionHtml = `
+        <div class="section">
+          <h2>Notes</h2>
+          <div class="kv"><div class="k">Buyer notes</div><div class="v">${escapeHtml(details?.buyer_notes ?? "—")}</div></div>
+          <div class="kv"><div class="k">Seller notes</div><div class="v">${escapeHtml(details?.seller_notes ?? "—")}</div></div>
+          <div class="kv"><div class="k">Condition notes</div><div class="v">${escapeHtml(details?.condition_notes ?? "—")}</div></div>
+          <div class="kv"><div class="k">Included extras</div><div class="v">${escapeHtml(details?.included_extras ?? "—")}</div></div>
+          <div class="kv"><div class="k">Issue reported</div><div class="v">${details?.issue_reported ? "Yes" : "No"}</div></div>
+          <div class="kv"><div class="k">Issue notes</div><div class="v">${escapeHtml(details?.issue_notes ?? "—")}</div></div>
+        </div>
+      `;
+
+      const disclaimer =
+        "CardCat Deal Records are documentation tools only. CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.";
+
+      const html = `
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <title>${escapeHtml(`deal_record_${dealRecordId}`)}</title>
+            <style>
+              :root { --text: #0f172a; --muted: #475569; --border: #e2e8f0; --bg: #ffffff; --accent: #0f766e; }
+              body { margin: 24px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background: var(--bg); color: var(--text); }
+              .wrap { position: relative; max-width: 920px; }
+              .header { display:flex; align-items:flex-start; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+              .brand { display:flex; flex-direction: column; }
+              .brand .name { font-size: 22px; font-weight: 900; color: var(--accent); line-height: 1.1; }
+              .brand .sub { margin-top: 6px; font-size: 14px; color: var(--muted); }
+              .meta { text-align: right; font-size: 13px; color: var(--muted); }
+              h2 { margin: 18px 0 10px; font-size: 16px; font-weight: 900; }
+              .section { border: 1px solid var(--border); border-radius: 12px; padding: 14px 14px; margin-top: 12px; }
+              .kv { display:flex; gap: 12px; margin: 8px 0; }
+              .k { width: 190px; color: var(--muted); font-weight: 650; font-size: 13px; }
+              .v { flex: 1; font-weight: 600; font-size: 13.5px; }
+              .card-block { display:flex; gap: 14px; align-items:flex-start; }
+              .card-img { width: 86px; height: 112px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); background: #f8fafc; }
+              .list { white-space: pre-line; font-size: 13.5px; color: var(--text); line-height: 1.45; }
+              .footer { margin-top: 16px; font-size: 12px; color: var(--muted); }
+              .pill { display:inline-block; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: #f8fafc; font-weight: 800; }
+            </style>
+          </head>
+          <body>
+            <div class="wrap">
+              <div class="header">
+                <div class="brand">
+                  <div class="name">CardCat</div>
+                  <div class="sub">Deal Record</div>
+                </div>
+                <div class="meta">
+                  <div><b>Deal ID</b>: ${escapeHtml(dealIdShort)}</div>
+                  <div><b>Generated</b>: ${escapeHtml(new Date().toLocaleString())}</div>
+                  <div style="margin-top: 10px;"><span class="pill">${escapeHtml(dealStatusText)}</span></div>
+                </div>
+              </div>
+
+              <div class="section">
+                <h2>Card Information</h2>
+                <div class="card-block">
+                  ${cardImageHtml}
+                  <div style="flex:1;">
+                    <div style="font-size: 18px; font-weight: 900;">${escapeHtml(card.player_name)}</div>
+                    <div style="color: var(--muted); margin-top: 4px;">${escapeHtml(
+                      [card.year, card.brand, card.set_name].filter(Boolean).join(" ") || "—"
+                    )}</div>
+                    <div style="color: var(--muted); margin-top: 4px;">Parallel: ${escapeHtml(card.parallel ?? "—")}</div>
+                    <div style="color: var(--muted); margin-top: 4px;">Card #: ${escapeHtml(card.card_number ?? "—")}</div>
+                    <div style="margin-top: 10px; font-weight: 900; color: var(--accent);">Asking price: ${escapeHtml(
+                      (card as any).asking_price != null ? money(Number((card as any).asking_price)) : card.sold_price != null ? money(Number(card.sold_price)) : "—"
+                    )}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="section">
+                <h2>Agreement Details</h2>
+                <div class="kv"><div class="k">Currency</div><div class="v">${escapeHtml(deal.currency ?? "USD")}</div></div>
+                <div class="kv"><div class="k">Agreed price</div><div class="v">${escapeHtml(agreedPriceText)}</div></div>
+                <div class="kv"><div class="k">Date offer accepted</div><div class="v">${escapeHtml(acceptedAtText)}</div></div>
+                <div class="kv"><div class="k">Buyer</div><div class="v">${escapeHtml(buyerLabel)}</div></div>
+                <div class="kv"><div class="k">Seller</div><div class="v">${escapeHtml(sellerLabel)}</div></div>
+              </div>
+
+              <div class="section">
+                <h2>Offer History</h2>
+                <div class="list">${escapeHtml(offerLines || "No offers recorded yet.")}</div>
+              </div>
+
+              ${paymentSectionHtml}
+              ${shippingSectionHtml}
+              ${notesSectionHtml}
+
+              <div class="section">
+                <h2>Timeline</h2>
+                <div class="list">${escapeHtml(timelineLines || "No timeline events recorded yet.")}</div>
+              </div>
+
+              <div class="footer">
+                <div><b>Generated by CardCat</b> — Exported: ${escapeHtml(new Date().toLocaleString())}</div>
+                <div style="margin-top: 10px;">${escapeHtml(disclaimer)}</div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `;
+
+      downloadHtmlFile({ html, filename: `deal_record_${dealRecordId}.html` });
+    } catch (err: any) {
+      alert(err?.message || "Could not download receipt.");
+    } finally {
+      setReceiptDownloadingDealId(null);
+    }
+  }
 
   const onSaveSaleEdit = async () => {
     if (!saleEditCard?.id) return;
@@ -954,14 +1278,18 @@ export default function SoldPage() {
 	                        {card.buyer_username ? (
 	                          <div className="mt-1 text-xs text-slate-500">Buyer: @{card.buyer_username}</div>
 	                        ) : null}
-	                        {card.deal_conversation_id ? (
-	                          <a
-	                            href={`/messages?conversation=${encodeURIComponent(card.deal_conversation_id)}`}
-	                            className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08]"
+	                        {card.deal_record_id ? (
+	                          <button
+	                            type="button"
+	                            disabled={receiptDownloadingDealId === String(card.deal_record_id)}
+	                            onClick={() => void onDownloadReceipt(card)}
+	                            className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60 disabled:cursor-not-allowed"
 	                          >
-	                            View deal{card.deal_record_id ? ` (#${String(card.deal_record_id).slice(0, 8)})` : ""}
-	                          </a>
-	                        ) : null}
+	                            {receiptDownloadingDealId === String(card.deal_record_id) ? "Downloading…" : "Download Receipt"}
+	                          </button>
+	                        ) : (
+	                          <div className="mt-2 text-[12px] text-slate-500">No receipt available</div>
+	                        )}
                           </div>
                         </div>
                   </div>
@@ -1011,10 +1339,20 @@ export default function SoldPage() {
                         <div className="text-slate-400">Date</div>
                         <div className="font-semibold text-white">{shortDate(card.sold_at)}</div>
                       </div>
-                      <div className="rounded-2xl bg-slate-950/70 px-3 py-2">
-                        <div className="text-slate-400">Platform</div>
-                        <div className="font-semibold text-white">{normalizePlatformLabel(card.sale_platform)}</div>
-                      </div>
+	                      <div className="rounded-2xl bg-slate-950/70 px-3 py-2">
+	                        <div className="text-slate-400">Platform</div>
+	                        <div>
+	                          <span
+	                            className={
+	                              card.deal_record_id
+	                                ? "inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-200"
+	                                : "inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] font-semibold text-slate-200"
+	                            }
+	                          >
+	                            {platformForCard(card)}
+	                          </span>
+	                        </div>
+	                      </div>
                       <div className="rounded-2xl bg-slate-950/70 px-3 py-2">
                         <div className="text-slate-400">Grade</div>
                         <div className="font-semibold text-white">{card.graded === "yes" && card.grade != null ? card.grade : "-"}</div>
@@ -1029,13 +1367,15 @@ export default function SoldPage() {
 	                    {card.buyer_username ? (
 	                      <div className="mt-2 text-xs text-slate-500">Buyer: @{card.buyer_username}</div>
 	                    ) : null}
-	                    {card.deal_conversation_id ? (
-	                      <a
-	                        href={`/messages?conversation=${encodeURIComponent(card.deal_conversation_id)}`}
-	                        className="mt-1 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08]"
+	                    {card.deal_record_id ? (
+	                      <button
+	                        type="button"
+	                        disabled={receiptDownloadingDealId === String(card.deal_record_id)}
+	                        onClick={() => void onDownloadReceipt(card)}
+	                        className="mt-1 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60 disabled:cursor-not-allowed"
 	                      >
-	                        View deal{card.deal_record_id ? ` (#${String(card.deal_record_id).slice(0, 8)})` : ""}
-	                      </a>
+	                        {receiptDownloadingDealId === String(card.deal_record_id) ? "Downloading…" : "Download Receipt"}
+	                      </button>
 	                    ) : null}
 	                    <button
 	                      type="button"
@@ -1076,7 +1416,17 @@ export default function SoldPage() {
                         <td className="px-4 py-3 text-slate-200">{card.quantity}</td>
                         <td className="px-4 py-3 font-semibold text-emerald-300">{money(card.metrics.grossSale)}</td>
                         <td className="px-4 py-3 text-slate-200">{shortDate(card.sold_at)}</td>
-                        <td className="px-4 py-3 text-slate-200">{normalizePlatformLabel(card.sale_platform)}</td>
+	                        <td className="px-4 py-3 text-slate-200">
+	                          <span
+	                            className={
+	                              card.deal_record_id
+	                                ? "inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-semibold text-emerald-200"
+	                                : "inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] font-semibold text-slate-200"
+	                            }
+	                          >
+	                            {platformForCard(card)}
+	                          </span>
+	                        </td>
                         <td className="px-4 py-3 text-slate-200">
                           <div>{card.graded === "yes" && card.grade != null ? card.grade : "-"}</div>
                           {!isCollectorPreview ? <div className="mt-1 text-xs text-slate-500">Net {money(card.metrics.netProfit)}</div> : null}
@@ -1085,14 +1435,18 @@ export default function SoldPage() {
 	                          {card.buyer_username ? (
 	                            <div className="text-xs text-slate-500">Buyer: @{card.buyer_username}</div>
 	                          ) : null}
-	                          {card.deal_conversation_id ? (
-	                            <a
-	                              href={`/messages?conversation=${encodeURIComponent(card.deal_conversation_id)}`}
-	                              className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08]"
+	                          {card.deal_record_id ? (
+	                            <button
+	                              type="button"
+	                              disabled={receiptDownloadingDealId === String(card.deal_record_id)}
+	                              onClick={() => void onDownloadReceipt(card)}
+	                              className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60 disabled:cursor-not-allowed"
 	                            >
-	                              Deal{card.deal_record_id ? ` (#${String(card.deal_record_id).slice(0, 8)})` : ""}
-	                            </a>
-	                          ) : null}
+	                              {receiptDownloadingDealId === String(card.deal_record_id) ? "Downloading…" : "Download Receipt"}
+	                            </button>
+	                          ) : (
+	                            <div className="mt-2 text-[12px] text-slate-500">No receipt available</div>
+	                          )}
 	                          <button
 	                            type="button"
 	                            onClick={() => openSaleEdit(card)}

@@ -78,7 +78,7 @@ begin
   set status = 'Sold',
       sold_price = v_deal.agreed_price,
       sold_at = v_now,
-      sale_platform = coalesce(sale_platform, null)
+      sale_platform = 'CardCat'
   where id = v_deal.card_id
     and user_id = v_deal.seller_user_id
     and status = 'Listed';

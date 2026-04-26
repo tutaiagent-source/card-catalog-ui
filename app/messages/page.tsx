@@ -1605,6 +1605,7 @@ export default function MessagesPage() {
                 status: "Sold",
                 sold_price: dealRecordForDisplay.agreed_price ?? null,
                 sold_at: confirmedAtIso,
+                sale_platform: "CardCat",
               })
               .eq("id", fallbackCardId)
               .eq("user_id", user.id)
