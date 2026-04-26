@@ -13,7 +13,10 @@ export default function MarketFeaturesPage() {
             </div>
             <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">How The Market Works</h1>
             <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
-              View member listings, check comps, and message sellers to start a sale or trade. Market messaging is designed to be listing-initiated so threads stay grounded.
+              List cards in the CardCat Market so other members can search, message, and make offers about specific cards. Market messaging is listing-initiated so conversations stay grounded. No CardCat buyer fees. No CardCat seller fees.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes. Payment and shipping decisions are handled directly between buyer and seller.
             </p>
           </div>
         </section>
@@ -61,7 +64,7 @@ export default function MarketFeaturesPage() {
 
             <h2 className="mt-8 text-2xl font-bold text-white">Trade Or Sale</h2>
             <p className="mt-3 text-sm leading-7 text-emerald-100/90">
-              Once you agree, finish the deal however you want, then move the card to Sold on your side (so profit math and history stay consistent).
+              Once you agree, finish the deal however you want, then move the card to Sold on your side (so profit math and history stay consistent). For CardCat Market deals, you can download a sale receipt.
             </p>
           </div>
         </section>

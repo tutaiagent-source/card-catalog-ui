@@ -33,6 +33,10 @@ export default function ProPlanPage() {
               Pro expands your workflow with CSV import/export, bulk inventory actions, and richer sold analytics like net profit and ROI.
             </p>
 
+            <p className="mt-4 text-sm leading-6 text-slate-200">
+              Membership keeps the marketplace cleaner with no CardCat buyer fees and no CardCat seller fees. CardCat helps document deals, but does not process payments or provide escrow.
+            </p>
+
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href="/login"

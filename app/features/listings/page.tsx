@@ -35,7 +35,7 @@ const shareUseCases = [
 ];
 
 const safetyTips = [
-  "Use protected payment methods like PayPal Goods & Services.",
+  "Use payment methods you’re comfortable with (for example, PayPal Goods & Services).",
   "Confirm card condition, front/back photos, and grading details before payment.",
   "Use tracked shipping and insurance for higher-value cards.",
   "Keep proof of packaging, shipment, and any agreement made in messages.",
@@ -196,6 +196,10 @@ export default function ListingsFeaturePage() {
             <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">CardCat Is A Connection Platform, Not The Seller Of Record</h2>
             <p className="mt-3 text-sm leading-7 text-slate-100/90">
               CardCat helps collectors show cards and connect with each other. Payments, shipping, condition disputes, refunds, and delivery arrangements stay between the buyer and seller.
+            </p>
+
+            <p className="mt-3 text-sm leading-6 text-slate-100/90">
+              No CardCat buyer fees. No CardCat seller fees. CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.
             </p>
 
             <ul className="mt-5 space-y-2 text-sm text-slate-100/90">

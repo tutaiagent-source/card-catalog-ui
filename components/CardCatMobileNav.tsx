@@ -11,7 +11,7 @@ const items = [
   { href: "/pc", label: "PC ★", icon: "☆" },
   { href: "/listed", label: "Listings", icon: "📣" },
   { href: "/messages", label: "Msgs", icon: "✉️" },
-  { href: "/add-card", label: "Add", icon: "＋" },
+  { href: "/add-card", label: "Add Card", icon: "＋" },
   { href: "/import", label: "Import", icon: "⬆️" },
   { href: "/sold", label: "Sold", icon: "💰" },
   { href: "/account", label: "Account", icon: "⚙️" },

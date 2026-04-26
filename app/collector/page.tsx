@@ -34,6 +34,10 @@ export default function CollectorPlanPage() {
               Collector is built for fast day-to-day organization without extra complexity.
             </p>
 
+            <p className="mt-4 text-sm leading-6 text-slate-200">
+              Membership keeps the marketplace cleaner with no CardCat buyer fees and no CardCat seller fees. CardCat documents deals, but does not process payments or provide escrow.
+            </p>
+
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href="/login"

@@ -4,8 +4,8 @@ import ShareSheetFeaturePreview from "@/components/ShareSheetFeaturePreview";
 
 const featureCards = [
   {
-    title: "No selling fees",
-    body: "Sell cards without fees. CardCat focuses on collectors, not transaction take-rates.",
+    title: "No CardCat seller fees",
+    body: "Sell cards without CardCat taking a percentage. No CardCat seller fees.",
   },
   {
     title: "Built-in deal system",
@@ -50,18 +50,18 @@ const workflow = [
   },
   {
     step: "04",
-    title: "Record",
-    body: "Add payment details and confirm seller payment.",
+    title: "Record Payment",
+    body: "Add payment notes and seller confirmation so the deal is documented.",
   },
   {
     step: "05",
-    title: "Ship",
-    body: "Store tracking and shipping details for your records.",
+    title: "Add Shipping",
+    body: "Add shipping carrier, tracking, and shipping cost.",
   },
   {
     step: "06",
-    title: "Download receipt",
-    body: "Export a printable receipt so the whole transaction stays tied together.",
+    title: "Download Receipt",
+    body: "Download a clean sale receipt for your records.",
   },
 ];
 
@@ -69,14 +69,14 @@ const pricingTiers = [
   {
     name: "Collector",
     price: "$5 / Month",
-    caption: "A Strong Starting Point For Personal Collections And Lighter Tracking.",
+    caption: "A strong starting point for personal collections, with no CardCat buyer fees and no CardCat seller fees.",
     features: ["Up To 150 Cards", "Manual Card Entry", "Personal Collection View", "Basic Sold Tracking"],
     accent: "border-white/10 bg-white/[0.04]",
   },
   {
     name: "Pro",
     price: "$12 / Month",
-    caption: "For Bigger Inventories, Cleaner Workflows, And Deeper Tracking Tools.",
+    caption: "For bigger inventories and deeper tracking tools, with no CardCat buyer fees and no CardCat seller fees.",
     features: ["CSV Import And Export", "Bulk Inventory Tools", "Advanced Sold Insights", "More Room To Grow"],
     accent: "border-amber-500/25 bg-amber-500/[0.08]",
     highlight: true,
@@ -85,16 +85,36 @@ const pricingTiers = [
 
 const faq = [
   {
-    q: "Is CardCat Only For Sellers?",
-    a: "No. CardCat is built for collectors first. Selling tools are there when you need them, but the app should still feel useful even if you mainly care about your collection.",
+    q: "Does CardCat charge seller fees?",
+    a: "No. CardCat does not take a percentage of your sale when you sell through the CardCat Market. If you choose to use PayPal Goods & Services, eBay, Stripe, or another payment platform, that provider may charge its own fees.",
   },
   {
-    q: "Can I Keep A Personal Collection?",
-    a: "Yes. CardCat includes a dedicated PC view so you can separate personal favorites from the rest of your inventory.",
+    q: "Does CardCat process payments?",
+    a: "No. Buyers and sellers handle payment directly using the method they choose. CardCat helps document the deal, but does not process payments or hold funds.",
   },
   {
-    q: "Can I Import A Spreadsheet?",
-    a: "Yes. CSV import is part of the workflow, with duplicate review and row-level fixes so you can clean things up before saving.",
+    q: "Is CardCat an escrow service?",
+    a: "No. CardCat is not an escrow service and does not hold funds. Deal Records are documentation tools only.",
+  },
+  {
+    q: "What is a Deal Record?",
+    a: "A Deal Record is a structured summary of a transaction. It can include the accepted price, buyer and seller, card details, payment notes, shipping info, tracking, and a downloadable receipt.",
+  },
+  {
+    q: "Can I sell cards listed on eBay?",
+    a: "Yes. Listings can be used to track cards you have for sale anywhere. You can add external links, including eBay listing links, while still managing everything inside CardCat.",
+  },
+  {
+    q: "Can I share my listings with people who are not on CardCat?",
+    a: "Yes. Generate a temporary share link to show people what you currently have available outside the CardCat ecosystem.",
+  },
+  {
+    q: "Can I import my current spreadsheet?",
+    a: "Yes. Import your CSV and map your columns to CardCat fields. CardCat can also provide a formatting prompt to convert your spreadsheet into a CardCat-compatible CSV.",
+  },
+  {
+    q: "Is the Market public?",
+    a: "No. The CardCat Market is available to CardCat members. Members can search listings, message sellers about specific cards, and send offers.",
   },
 ];
 
@@ -109,19 +129,23 @@ export default function Home() {
           <div className="relative grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-                No-fee deal marketplace
+                Private collector marketplace
               </div>
 
               <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-                Buy, sell, and trade cards — without the fees
+                Track your cards. Make deals. Keep more of every sale.
               </h1>
 
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                Make deals, track your collection, and document every transaction — all in one place.
+                CardCat helps collectors catalog their cards, manage listings, buy and sell in a private member marketplace, and document every deal with clean sales records.
               </p>
 
               <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-200">
-                No selling fees. No middleman. Just collectors.
+                No CardCat buyer fees. No CardCat seller fees. Just collectors making deals.
+              </p>
+
+              <p className="mt-3 max-w-2xl text-xs leading-6 text-slate-400">
+                CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes. Payment and shipping decisions are handled directly between buyer and seller.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -132,18 +156,18 @@ export default function Home() {
                   Start your collection
                 </a>
                 <a
-                  href="/add-card"
+                  href="/features/market"
                   className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
                 >
-                  List your first card
+                  Explore the Marketplace
                 </a>
               </div>
 
               <div className="mt-5 max-w-xl rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4 shadow-[0_18px_40px_rgba(245,158,11,0.08)]">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Membership-based marketplace</div>
-                <div className="mt-2 text-sm font-semibold text-white">Reduce spam and scams with structured deal records.</div>
+                <div className="mt-2 text-sm font-semibold text-white">Structured deals keep everything organized.</div>
                 <div className="mt-1 text-sm leading-6 text-slate-200">
-                  Structured deals keep every step clear: offers, acceptance, payment confirmation, and a downloadable receipt.
+                  Offers, acceptance, payment notes (including seller confirmation), shipping details, and a downloadable receipt that stays tied to the conversation.
                 </div>
               </div>
 
@@ -168,9 +192,9 @@ export default function Home() {
         <section className="mt-8">
           <div className="max-w-3xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Why collectors use CardCat</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">No selling fees + structured deals + receipts</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">A private marketplace with no CardCat fees</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
-              CardCat is a membership-based marketplace built to reduce spam and scams, with deal records for every transaction.
+              List cards in the CardCat Market and make direct collector-to-collector deals. No CardCat buyer fees. No CardCat seller fees. Keep every deal documented with receipts.
             </p>
           </div>
 
@@ -315,9 +339,9 @@ export default function Home() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_30px_80px_rgba(2,6,23,0.35)] sm:p-8">
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Deal Flow</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Message → Offer → Accept → Record → Ship → Receipt</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Message → Offer → Accept → Record Payment → Add Shipping → Download Receipt</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
-              Start a deal in Messages. Once you confirm, CardCat records every step with structured deal receipts.
+              Start a deal in Messages. When an offer is accepted, CardCat helps you record each step and download a receipt.
             </p>
           </div>
 
@@ -335,12 +359,12 @@ export default function Home() {
         <section className="mt-12 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-6">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Why It Feels Different</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Made To Feel Like A Product, Not Just A Spreadsheet With A Logo On It</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Made for collectors, not marketplace fees</h2>
             <p className="mt-4 text-sm leading-7 text-slate-300">
-              CardCat is opinionated about clarity. The goal is not to throw every possible feature at the screen. The goal is to help collectors stay organized and keep the important stuff easy to see.
+              CardCat is built around collector-to-collector deals, clean records, and receipts you can keep. Membership keeps the marketplace focused, with no CardCat buyer fees and no CardCat seller fees.
             </p>
             <p className="mt-4 text-sm leading-7 text-slate-300">
-              Start cataloging for less than the cost of a cup of coffee.
+              Catalog your cards, manage listings, and document each sale from message to receipt.
             </p>
             <div className="mt-6 space-y-4 text-sm text-slate-200">
               {[
@@ -453,19 +477,19 @@ export default function Home() {
 
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.12),rgba(213,0,0,0.10))] p-6 shadow-[0_30px_90px_rgba(120,53,15,0.2)] sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-100">Ready When You Are</div>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Start Building A Cleaner Home For Your Collection</h2>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-100">Ready When You Are</div>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Join a cleaner card marketplace built around collectors</h2>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
-                Whether you are tracking a growing PC or a bigger inventory, CardCat is built to help you stay organized without losing the feel of the hobby.
+                Catalog your cards, manage listings, make direct deals, and download receipts. No CardCat buyer fees. No CardCat seller fees.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <a href="/login" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100">
-                Create Account
+                Start Your Collection
               </a>
-              <a href="/features" className="rounded-xl border border-white/20 bg-black/15 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black/25">
-                View Features
+              <a href="/features/market" className="rounded-xl border border-white/20 bg-black/15 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black/25">
+                Explore the Marketplace
               </a>
             </div>
           </div>

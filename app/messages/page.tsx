@@ -48,7 +48,7 @@ const appNavItems = [
   { href: "/pc", label: "PC ★" },
   { href: "/listed", label: "Listings" },
   { href: "/messages", label: "Messages" },
-  { href: "/add-card", label: "Add" },
+  { href: "/add-card", label: "Add Card" },
   { href: "/import", label: "Import" },
   { href: "/sold", label: "Sold" },
   { href: "/account", label: "Account" },

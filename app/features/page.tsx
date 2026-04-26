@@ -4,43 +4,43 @@ import ShareSheetFeaturePreview from "@/components/ShareSheetFeaturePreview";
 const featureCards = [
   {
     title: "Catalog",
-    body: "Keep cards organized with cleaner search, images, and status tracking across Collection, Active Listings, and Sold.",
+    body: "Catalog cards in one place with cleaner search, images, and status tracking across Collection, Active Listings, and Sold.",
     href: "/catalog",
     label: "Open Catalog",
   },
   {
     title: "Card Posts",
-    body: "Turn saved cards into Card Post images with optional pricing and front/back layout.",
+    body: "Turn saved cards into Card Post images with optional pricing and front/back layout for faster sharing.",
     href: "/features/share-sheets",
     label: "See Card Posts",
   },
   {
     title: "Listings",
-    body: "View, update, and share your Active Listings from one shelf with view-only links.",
+    body: "Manage what you’re actively trying to sell, including external links and temporary share links outside CardCat.",
     href: "/features/listings",
     label: "See Listings",
   },
   {
     title: "CSV Import",
-    body: "Import larger collections from CSV, then clean up duplicates and messy rows before saving.",
+    body: "Import inventory from CSV, map columns to CardCat fields, and clean up duplicates before saving.",
     href: "/guides/csv",
     label: "CSV Guide",
   },
   {
     title: "PC + Sold",
-    body: "Star cards in PC (PC ★) and keep Sold history attached to the same record.",
+    body: "Build your PC showcase and keep Sold history attached to the same card record.",
     href: "/guides/pc",
     label: "PC Guide",
   },
 ];
 
 const quickLinks = [
-  { title: "Market", body: "View member listings, check comps, and message sellers directly from the card preview.", href: "/features/market" },
+  { title: "Market", body: "A private member marketplace for collector-to-collector deals. No CardCat buyer fees, no CardCat seller fees.", href: "/features/market" },
   { title: "Card Posts", body: "How Card Post images are generated, what they include, and how to share or download on mobile and desktop.", href: "/features/share-sheets" },
-  { title: "Listings", body: "How Active Listings move from Catalog into your Listings shelf, plus how view-only listing share links work.", href: "/features/listings" },
-  { title: "CSV Import", body: "How to structure a CSV file, map fields, and avoid common cleanup issues.", href: "/guides/csv" },
+  { title: "Listings", body: "How Active Listings move from Catalog into your Listings shelf, plus view-only share links outside CardCat.", href: "/features/listings" },
+  { title: "CSV Import", body: "How to structure a CSV file, map fields, and clean duplicates before saving.", href: "/guides/csv" },
   { title: "Image Uploads", body: "How front/back images power flip previews and improve Card Posts.", href: "/guides/images" },
-  { title: "Sold Tracking", body: "How Listed and Sold records stay connected to the original card record.", href: "/guides/sold" },
+  { title: "Sold Tracking", body: "How Sold records stay connected to the original card record, with receipts for CardCat Market deals.", href: "/guides/sold" },
 ];
 
 export default function FeaturesPage() {
@@ -58,7 +58,7 @@ export default function FeaturesPage() {
               The Key Features, Without The Wall Of Text.
             </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                CardCat keeps your Catalog organized, connects PC (PC ★) and Sold history, and helps you sell with Card Posts and view-only Active Listings sharing.
+                CardCat helps collectors catalog their collection, build a PC showcase, manage listings, and make direct deals in a private member marketplace with downloadable receipts.
               </p>
             </div>
         </section>

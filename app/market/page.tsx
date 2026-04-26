@@ -275,7 +275,10 @@ export default function MarketPage() {
           <div>
             <CardCatLogo />
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-white">Market</h1>
-            <div className="mt-2 text-sm text-slate-400">Member-Only Market Feed: browse active listings from other CardCat members, then message sellers directly from the card.</div>
+            <div className="mt-2 text-sm text-slate-400">Member-Only Market Feed: browse active listings from other CardCat members, then message sellers directly from the card. No CardCat buyer fees. No CardCat seller fees.</div>
+            <div className="mt-2 text-xs leading-5 text-slate-500">
+              CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes. Payment and shipping decisions are handled directly between buyer and seller.
+            </div>
           </div>
           <div className="flex gap-3">
             <a href="/listed" className="rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]">Listings</a>
