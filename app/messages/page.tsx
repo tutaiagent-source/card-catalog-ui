@@ -2709,7 +2709,7 @@ export default function MessagesPage() {
                     ) : null}
                   </div>
 
-	          <div className="mt-4 min-h-0 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(16,185,129,0.18)] max-h-[62vh] overflow-y-auto [-webkit-overflow-scrolling:touch] lg:max-h-[78vh]">
+	          <div className="mt-4 min-h-0 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4 shadow-[0_0_0_1px_rgba(16,185,129,0.18)] max-h-[72vh] overflow-y-auto [-webkit-overflow-scrolling:touch] lg:max-h-[88vh]">
 	                    <div className="flex items-start justify-between gap-3">
 	                    <div>
 	                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Deal Summary</div>
@@ -2907,7 +2907,7 @@ export default function MessagesPage() {
 	                              {showPaymentForm && !paymentConfirmed ? (
 	                                <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
 	                                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Payment Details</div>
-	                                  <div className="flex flex-wrap gap-2">
+	                                  <div className="flex flex-wrap gap-2 sticky bottom-0 bg-white/[0.03] pt-3 pb-2">
 	                                    <input
 	                                      type="date"
 	                                      value={paidDateDraft}
