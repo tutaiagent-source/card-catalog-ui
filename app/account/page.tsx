@@ -82,7 +82,7 @@ export default function AccountPage() {
   const totalCards = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0), 0), [cards]);
   const estimatedTotal = useMemo(() => cards.reduce((sum, c) => sum + Number(c.quantity || 0) * Number(c.estimated_price || 0), 0), [cards]);
   const soldRows = useMemo(() => cards.filter((card) => String(card.status || "") === "Sold"), [cards]);
-  const collectorCardCap = 100;
+  const collectorCardCap = 250;
   const collectorAddOnCards = 100;
   const collectorAddOnPricePerMonth = 2;
   const proPricePerMonth = 10;
@@ -508,23 +508,24 @@ export default function AccountPage() {
               <div className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4">
                 <div className="text-sm font-semibold text-amber-200">Collector limit reached</div>
                 <p className="mt-2 text-sm leading-6 text-slate-200">
-                  Add +{collectorAddOnCards} cards for ${collectorAddOnPricePerMonth} / month, or switch to Pro for
-                  ${proPricePerMonth} / month and unlimited.
+                  You’re at the Collector cap ({collectorCardCap} catalog cards). Upgrade to Pro (${proPricePerMonth} / month) or Seller ($25 / month)
+                  for higher catalog capacity and more active CardCat Market listings per month.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    className="rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-4 py-2 text-sm font-semibold text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
-                    disabled
-                  >
-                    +{collectorAddOnCards} add-on (${collectorAddOnPricePerMonth}/mo)
-                  </button>
                   <button
                     type="button"
                     className="rounded-xl border border-white/10 bg-[#d50000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b80000]"
                     onClick={() => setPlanPreview("pro")}
                   >
                     Switch to Pro (${proPricePerMonth}/mo)
+                  </button>
+
+                  <button
+                    type="button"
+                    className="rounded-xl border border-white/10 bg-[#f59e0b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d97706]"
+                    onClick={() => setPlanPreview("seller")}
+                  >
+                    Switch to Seller ($25/mo)
                   </button>
                 </div>
               </div>
@@ -541,10 +542,10 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Collector</div>
                   <div className="text-sm font-semibold text-white">$5 / month ($50 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Catalog up to 100 cards, with a fair-use allowance of ~5–50 active listings per month.</div>
+                <div className="mt-1 text-sm text-slate-400">Catalog up to 250 cards, with 10 active CardCat Market listings per month.</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                  <li>• Up to 100 catalog cards</li>
-                  <li>• Fair-use: ~5–50 active listings/month</li>
+                  <li>• Up to 250 catalog cards</li>
+                  <li>• 10 active CardCat Market listings/month</li>
                   <li>• Manual add/edit</li>
                   <li>• Personal Collection (PC) view</li>
                   <li>• Basic sold tracking + basic dashboard</li>
@@ -575,10 +576,10 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Seller</div>
                   <div className="text-sm font-semibold text-white">$25 / month ($250 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Unlimited catalog cards for serious selling, with a fair-use allowance of ~25–250 active listings per month.</div>
+                <div className="mt-1 text-sm text-slate-400">Catalog up to 10,000 cards, with 250 active CardCat Market listings per month.</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                  <li>• Unlimited catalog cards (fair-use storage)</li>
-                  <li>• Fair-use: ~25–250 active listings/month</li>
+                  <li>• Up to 10,000 catalog cards</li>
+                  <li>• 250 active CardCat Market listings/month</li>
                   <li>• CSV import/export</li>
                   <li>• Deeper sold tracking</li>
                   <li>• Advanced seller analytics</li>
@@ -609,10 +610,10 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Pro</div>
                   <div className="text-sm font-semibold text-white">$10 / month ($100 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Unlimited catalog cards, with a fair-use allowance of ~10–100 active listings per month.</div>
+                <div className="mt-1 text-sm text-slate-400">Catalog up to 1,000 cards, with 50 active CardCat Market listings per month.</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-300">
-                  <li>• Unlimited catalog cards (fair-use storage)</li>
-                  <li>• Fair-use: ~10–100 active listings/month</li>
+                  <li>• Up to 1,000 catalog cards</li>
+                  <li>• 50 active CardCat Market listings/month</li>
                   <li>• CSV import/export</li>
                   <li>• Bulk inventory tools</li>
                   <li>• Revenue, net profit, ROI, platform analytics</li>

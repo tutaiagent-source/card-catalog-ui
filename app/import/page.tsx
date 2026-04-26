@@ -959,7 +959,8 @@ export default function ImportPage() {
                 <div className="text-sm font-semibold text-slate-100">Collector keeps it simple</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-300">
                   <li>• Manual add/edit</li>
-                  <li>• Up to 150 cards</li>
+                  <li>• Up to 250 cards</li>
+                  <li>• 10 active CardCat Market listings/month</li>
                   <li>• Basic sold tracking</li>
                 </ul>
               </div>

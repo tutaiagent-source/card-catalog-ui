@@ -155,6 +155,10 @@ export default function ProPlanPage() {
               Collector covers organization and basic sold tracking. Pro expands workflows with import/export, bulk actions, and profit/ROI-ready analytics.
             </p>
 
+            <p className="mt-3 text-sm leading-6 text-slate-200">
+              Capacity & listings: Collector up to 250 cards and 10 active Market listings/month; Pro up to 1,000 cards and 50 active Market listings/month.
+            </p>
+
             <div className="mt-6 grid gap-2">
               <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.7fr_0.7fr]">
                 <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Feature</div>
@@ -163,7 +167,7 @@ export default function ProPlanPage() {
               </div>
 
               {[
-                ["Up to 150 cards", true, true],
+                ["Up to 250 cards", true, true],
                 ["More room to grow", false, true],
                 ["Manual card entry", true, true],
                 ["CSV import/export", false, true],
