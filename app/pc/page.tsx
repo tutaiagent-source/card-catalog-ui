@@ -628,7 +628,9 @@ export default function PcPage() {
                       draggable={false}
                     />
                   ) : (
-                    <div className="absolute inset-0 bg-slate-950/30" />
+                    <div className="absolute inset-0 bg-slate-950/30 flex items-center justify-center">
+                      <div className="px-3 text-center text-xs font-semibold text-slate-400">No image available</div>
+                    </div>
                   )}
                   {imageModal.backSrc ? (
                     <img
