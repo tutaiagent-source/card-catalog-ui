@@ -518,10 +518,9 @@ export default function PcPage() {
                               role="button"
                               tabIndex={0}
                               onClick={() => {
-                                if (!c.image_url) return;
                                 setImageModal({
                                   card: c,
-                                  src: driveToImageSrc(c.image_url),
+                                  src: c.image_url ? driveToImageSrc(c.image_url) : "",
                                   backSrc: c.back_image_url ? driveToImageSrc(c.back_image_url) : undefined,
                                 });
                               }}
@@ -620,13 +619,17 @@ export default function PcPage() {
                     transform: showBack ? "rotateY(180deg)" : "rotateY(0deg)",
                   }}
                 >
-                  <img
-                    alt="front"
-                    src={imageModal.src}
-                    className="absolute inset-0 h-full w-full object-contain"
-                    style={{ backfaceVisibility: "hidden" }}
-                    draggable={false}
-                  />
+                  {imageModal.src ? (
+                    <img
+                      alt="front"
+                      src={imageModal.src}
+                      className="absolute inset-0 h-full w-full object-contain"
+                      style={{ backfaceVisibility: "hidden" }}
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-slate-950/30" />
+                  )}
                   {imageModal.backSrc ? (
                     <img
                       alt="back"
