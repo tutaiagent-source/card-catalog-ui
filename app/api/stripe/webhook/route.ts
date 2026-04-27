@@ -241,10 +241,14 @@ export async function POST(req: Request) {
             await supabaseAdmin.from("email_events").update({
               status: "sent",
               resend_message_id: resendMessageId,
-            }).eq("id", claimedEmailEventId);
+            }).eq("id", claimedEmailEventId).eq("status", "sending");
           } catch (sendErr) {
             console.error("Subscription welcome email send failed", sendErr);
-            await supabaseAdmin.from("email_events").update({ status: "failed" }).eq("id", claimedEmailEventId);
+            await supabaseAdmin
+              .from("email_events")
+              .update({ status: "failed" })
+              .eq("id", claimedEmailEventId)
+              .eq("status", "sending");
           }
         }
 
