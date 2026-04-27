@@ -274,50 +274,6 @@ export default function CatalogPage() {
   const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
   const { isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<Card[]>([]);
-
-  const [entitlementsLoading, setEntitlementsLoading] = useState(true);
-  const [effectiveTier, setEffectiveTier] = useState<"collector" | "pro" | "seller">("collector");
-
-  useEffect(() => {
-    if (!user?.id || !supabaseConfigured || !supabase) return;
-
-    let cancelled = false;
-
-    (async () => {
-      setEntitlementsLoading(true);
-      try {
-        const { data: ent, error: entErr } = await supabase
-          .from("user_entitlements")
-          .select("tier, status")
-          .eq("user_id", user.id)
-          .single();
-
-        if (cancelled) return;
-        if (entErr) {
-          setEffectiveTier("collector");
-          return;
-        }
-
-        const status = String(ent?.status || "");
-        const active = ["active", "trialing", "grandfathered"].includes(status);
-        const tier = active ? String(ent?.tier || "collector") : "collector";
-
-        setEffectiveTier(tier === "pro" ? "pro" : tier === "seller" ? "seller" : "collector");
-      } catch {
-        if (cancelled) return;
-        setEffectiveTier("collector");
-      } finally {
-        if (cancelled) return;
-        setEntitlementsLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id, supabaseConfigured]);
-
-  const canUseBulkActions = !entitlementsLoading && effectiveTier !== "collector";
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [modalShowBack, setModalShowBack] = useState(false);
@@ -2570,17 +2526,9 @@ export default function CatalogPage() {
           </button>
           <button
             type="button"
-            className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
-            onClick={() => setBulkEditModal({ platform: "", askingPrice: "" })}
-            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
-          >
-            Edit
-          </button>
-          <button
-            type="button"
             className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition-colors duration-150 hover:bg-amber-500/15"
             onClick={bulkMoveToPc}
-            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
+            disabled={selectedCardIds.length === 0}
           >
             Move to PC
           </button>
@@ -2588,7 +2536,7 @@ export default function CatalogPage() {
             type="button"
             className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
             onClick={() => bulkUpdateStatus("Collection")}
-            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
+            disabled={selectedCardIds.length === 0}
           >
             Move to Collection
           </button>
@@ -2596,7 +2544,7 @@ export default function CatalogPage() {
             type="button"
             className="rounded-full bg-[#d50000] px-3 py-1.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#b80000]"
             onClick={() => bulkUpdateStatus("Listed")}
-            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
+            disabled={selectedCardIds.length === 0}
           >
             Move to Listings
           </button>
@@ -2617,7 +2565,7 @@ export default function CatalogPage() {
                 platformFee: String(seller.meta.platformFee ?? ""),
               });
             }}
-            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
+            disabled={selectedCardIds.length === 0}
           >
             Mark Sold
           </button>
@@ -2625,7 +2573,7 @@ export default function CatalogPage() {
             type="button"
             className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition-colors duration-150 hover:bg-red-500/15"
             onClick={bulkDeleteSelected}
-            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
+            disabled={selectedCardIds.length === 0}
           >
             Delete
           </button>
