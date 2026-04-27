@@ -137,18 +137,19 @@ export async function POST(req: Request) {
           let claimedEmailEventId: string | null = null;
 
           // User-level gate (so this stays correct even if uniqueness is mid-migration).
-          const { data: existingBeforeClaim } = await supabaseAdmin
+          // We query all rows to avoid the “maybeSingle returns a failed row even though another row is already sent” edge case.
+          const { data: existingBeforeClaimRows } = await supabaseAdmin
             .from("email_events")
             .select("id, status")
             .eq("email_type", emailType)
-            .eq("user_id", userId)
-            .maybeSingle();
+            .eq("user_id", userId);
 
-          if (existingBeforeClaim?.status === "sent" || existingBeforeClaim?.status === "sending") {
-            break;
-          }
+          const rows = Array.isArray(existingBeforeClaimRows) ? existingBeforeClaimRows : [];
+          const hasSentOrSending = rows.some((r) => r?.status === "sent" || r?.status === "sending");
+          if (hasSentOrSending) break;
 
-          if (existingBeforeClaim?.status === "failed") {
+          const failedRow = rows.find((r) => r?.status === "failed");
+          if (failedRow?.id) {
             const { data: reClaimed, error: reClaimErr } = await supabaseAdmin
               .from("email_events")
               .update({
@@ -158,7 +159,7 @@ export async function POST(req: Request) {
                 status: "sending",
                 resend_message_id: null,
               })
-              .eq("id", existingBeforeClaim.id)
+              .eq("id", failedRow.id)
               .eq("status", "failed")
               .select("id")
               .maybeSingle();
@@ -193,20 +194,22 @@ export async function POST(req: Request) {
                 console.error("Welcome email claim failed (continuing to check existing state)", e);
               }
 
-              const { data: existing } = await supabaseAdmin
+              const { data: existingRows } = await supabaseAdmin
                 .from("email_events")
                 .select("id, status")
                 .eq("email_type", emailType)
-                .eq("user_id", userId)
-                .maybeSingle();
+                .eq("user_id", userId);
 
-              if (!existing) break;
-              if (existing.status === "sent" || existing.status === "sending") {
-                // Another webhook already sent (or is sending).
-                break;
-              }
+              const existing = Array.isArray(existingRows) ? existingRows : [];
+              if (!existing.length) break;
 
-              if (existing.status === "failed") {
+              const hasSentOrSendingExisting = existing.some(
+                (r) => r?.status === "sent" || r?.status === "sending"
+              );
+              if (hasSentOrSendingExisting) break;
+
+              const failedExistingRow = existing.find((r) => r?.status === "failed");
+              if (failedExistingRow?.id) {
                 const { data: reClaimed, error: reClaimErr } = await supabaseAdmin
                   .from("email_events")
                   .update({
@@ -216,7 +219,7 @@ export async function POST(req: Request) {
                     status: "sending",
                     resend_message_id: null,
                   })
-                  .eq("id", existing.id)
+                  .eq("id", failedExistingRow.id)
                   .eq("status", "failed")
                   .select("id")
                   .maybeSingle();
