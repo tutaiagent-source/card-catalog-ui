@@ -274,6 +274,54 @@ export default function CatalogPage() {
   const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
   const { isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<Card[]>([]);
+
+  const [entitlementsLoading, setEntitlementsLoading] = useState(true);
+  const [effectiveTier, setEffectiveTier] = useState<"collector" | "pro" | "seller">("collector");
+
+  useEffect(() => {
+    if (!user?.id || !supabaseConfigured || !supabase) {
+      setEntitlementsLoading(false);
+      setEffectiveTier("collector");
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      setEntitlementsLoading(true);
+      try {
+        const { data: ent, error: entErr } = await supabase
+          .from("user_entitlements")
+          .select("tier, status")
+          .eq("user_id", user.id)
+          .single();
+
+        if (cancelled) return;
+        if (entErr) {
+          setEffectiveTier("collector");
+          return;
+        }
+
+        const status = String(ent?.status || "");
+        const active = ["active", "trialing", "grandfathered"].includes(status);
+        const tier = active ? String(ent?.tier || "collector") : "collector";
+
+        setEffectiveTier(tier === "pro" ? "pro" : tier === "seller" ? "seller" : "collector");
+      } catch {
+        if (cancelled) return;
+        setEffectiveTier("collector");
+      } finally {
+        if (cancelled) return;
+        setEntitlementsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const canUseBulkActions = !entitlementsLoading && effectiveTier !== "collector";
   const [q, setQ] = useState("");
   const [previewCard, setPreviewCard] = useState<Card | null>(null);
   const [modalShowBack, setModalShowBack] = useState(false);
@@ -2448,7 +2496,7 @@ export default function CatalogPage() {
           )}
         </section>
       </div>
-    {selectionMode && !isCollectorPreview ? (
+    {selectionMode && canUseBulkActions ? (
       <div className="fixed inset-x-0 bottom-20 z-40 px-3 md:bottom-4 md:px-4">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur">
           <div className="mr-1 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">
