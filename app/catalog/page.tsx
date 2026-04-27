@@ -279,11 +279,7 @@ export default function CatalogPage() {
   const [effectiveTier, setEffectiveTier] = useState<"collector" | "pro" | "seller">("collector");
 
   useEffect(() => {
-    if (!user?.id || !supabaseConfigured || !supabase) {
-      setEntitlementsLoading(false);
-      setEffectiveTier("collector");
-      return;
-    }
+    if (!user?.id || !supabaseConfigured || !supabase) return;
 
     let cancelled = false;
 
@@ -319,7 +315,7 @@ export default function CatalogPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, supabaseConfigured]);
 
   const canUseBulkActions = !entitlementsLoading && effectiveTier !== "collector";
   const [q, setQ] = useState("");
@@ -977,6 +973,60 @@ export default function CatalogPage() {
           }
         : undefined,
     });
+    sync();
+  };
+
+  const bulkMoveToPc = async () => {
+    if (selectedCardIds.length === 0) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!user?.id) return;
+
+    const count = selectedCardIds.length;
+    const snapshots = cards.filter((card) => card.id && selectedCardIds.includes(card.id));
+
+    const ok = confirm(`Move ${count} selected card${count === 1 ? "" : "s"} to PC?`);
+    if (!ok) return;
+
+    const pcPosition = Date.now();
+    const { error } = await supabase
+      .from("cards")
+      .update({ pc_position: pcPosition })
+      .in("id", selectedCardIds)
+      .eq("user_id", user.id);
+
+    if (error) {
+      alert(`Bulk move to PC failed: ${error.message}`);
+      return;
+    }
+
+    setSelectedCardIds([]);
+    setStatusToast({
+      message: `Moved ${count} card${count === 1 ? "" : "s"} to PC.`,
+      actionLabel: snapshots.length ? "Undo" : undefined,
+      tone: "success",
+      onAction: snapshots.length
+        ? async () => {
+            if (!supabaseConfigured || !supabase) return;
+            if (!user?.id) return;
+            for (const snapshot of snapshots) {
+              if (!snapshot.id) continue;
+              const prevPcPosition = snapshot.pc_position ?? null;
+              const { error: undoError } = await supabase
+                .from("cards")
+                .update({ pc_position: prevPcPosition })
+                .eq("id", snapshot.id)
+                .eq("user_id", user.id);
+              if (undoError) {
+                alert(`Undo failed: ${undoError.message}`);
+                return;
+              }
+            }
+            setStatusToast({ message: `Undid move to PC for ${snapshots.length} card${snapshots.length === 1 ? "" : "s"}.`, tone: "success" });
+            sync();
+          }
+        : undefined,
+    });
+
     sync();
   };
 
@@ -2496,7 +2546,7 @@ export default function CatalogPage() {
           )}
         </section>
       </div>
-    {selectionMode && canUseBulkActions ? (
+    {selectionMode && canUseBulkActions && selectedCardIds.length > 0 ? (
       <div className="fixed inset-x-0 bottom-20 z-40 px-3 md:bottom-4 md:px-4">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur">
           <div className="mr-1 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">
@@ -2516,7 +2566,7 @@ export default function CatalogPage() {
             onClick={() => setSelectedCardIds([])}
             disabled={selectedCardIds.length === 0}
           >
-            Clear
+            Clear Selection
           </button>
           <button
             type="button"
@@ -2528,11 +2578,19 @@ export default function CatalogPage() {
           </button>
           <button
             type="button"
+            className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition-colors duration-150 hover:bg-amber-500/15"
+            onClick={bulkMoveToPc}
+            disabled={selectedCardIds.length === 0}
+          >
+            Move to PC
+          </button>
+          <button
+            type="button"
             className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
             onClick={() => bulkUpdateStatus("Collection")}
             disabled={selectedCardIds.length === 0}
           >
-            Collection
+            Move to Collection
           </button>
           <button
             type="button"
@@ -2540,7 +2598,7 @@ export default function CatalogPage() {
             onClick={() => bulkUpdateStatus("Listed")}
             disabled={selectedCardIds.length === 0}
           >
-            Listed
+            Move to Listings
           </button>
           <button
             type="button"
@@ -2561,7 +2619,7 @@ export default function CatalogPage() {
             }}
             disabled={selectedCardIds.length === 0}
           >
-            Sold
+            Mark Sold
           </button>
           <button
             type="button"
