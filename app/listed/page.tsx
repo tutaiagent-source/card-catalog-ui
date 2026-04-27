@@ -129,6 +129,9 @@ export default function ListedPage() {
   const [bulkSelectedCardIds, setBulkSelectedCardIds] = useState<string[]>([]);
   const [bulkUpdatingMarketVisibility, setBulkUpdatingMarketVisibility] = useState(false);
 
+  const [moveSelectingCards, setMoveSelectingCards] = useState(false);
+  const [moveSelectedCardIds, setMoveSelectedCardIds] = useState<string[]>([]);
+
   const sortedCards = useMemo(() => {
     return cards
       .slice()
@@ -373,6 +376,60 @@ export default function ListedPage() {
     } finally {
       setBulkUpdatingMarketVisibility(false);
     }
+  }
+
+  const toggleMoveSelection = (cardId?: string) => {
+    if (!cardId) return;
+    setMoveSelectedCardIds((prev) => (prev.includes(cardId) ? prev.filter((id) => id !== cardId) : [...prev, cardId]));
+  };
+
+  async function moveSelectedToCatalog() {
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+    if (moveSelectedCardIds.length === 0) return;
+
+    const count = moveSelectedCardIds.length;
+    const ok = confirm(`Move ${count} selected card${count === 1 ? "" : "s"} back to Catalog?`);
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from("cards")
+      .update({ status: "Collection", sold_at: null, sold_price: null })
+      .in("id", moveSelectedCardIds)
+      .eq("user_id", user.id);
+
+    if (error) {
+      alert(`Could not move selected cards back to Catalog: ${error.message}`);
+      return;
+    }
+
+    setMoveSelectedCardIds([]);
+    setMoveSelectingCards(false);
+    setActiveCard(null);
+    await loadListedCards();
+    alert(`Moved ${count} card${count === 1 ? "" : "s"} back to Catalog.`);
+  }
+
+  async function moveActiveCardToCatalog() {
+    if (!activeCard?.id) return;
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+
+    const ok = confirm(`Move this card back to Catalog?`);
+    if (!ok) return;
+
+    const { error } = await supabase
+      .from("cards")
+      .update({ status: "Collection", sold_at: null, sold_price: null })
+      .eq("id", activeCard.id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      alert(`Could not move card back to Catalog: ${error.message}`);
+      return;
+    }
+
+    setActiveCard(null);
+    await loadListedCards();
+    alert("Moved back to Catalog.");
   }
 
   function shareDurationLabel(s: ListingShare) {
@@ -659,6 +716,77 @@ export default function ListedPage() {
           ) : null}
         </section>
 
+        <section className="mt-4 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-white">Move back to Catalog</div>
+              <div className="mt-1 text-sm text-slate-300">
+                Move selected listed cards back into your Catalog (status becomes <span className="text-slate-200 font-semibold">Collection</span>).
+              </div>
+            </div>
+            {!moveSelectingCards ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setMoveSelectedCardIds([]);
+                  setMoveSelectingCards(true);
+                }}
+                className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+              >
+                Select cards to move
+              </button>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-xs text-slate-300">Tap cards to select for moving back to Catalog.</div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMoveSelectingCards(false);
+                    setMoveSelectedCardIds([]);
+                  }}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+                >
+                  Done
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {moveSelectingCards && moveSelectedCardIds.length > 0 ? (
+          <div className="fixed inset-x-0 top-16 z-[99999] px-3 md:top-24">
+            <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur">
+              <div className="mr-1 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">
+                {moveSelectedCardIds.length} selected
+              </div>
+              <button
+                type="button"
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
+                onClick={() => {
+                  const visible = sortedCards.map((c) => c.id).filter(Boolean) as string[];
+                  setMoveSelectedCardIds(visible);
+                }}
+              >
+                Select visible
+              </button>
+              <button
+                type="button"
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
+                onClick={() => setMoveSelectedCardIds([])}
+              >
+                Clear
+              </button>
+              <button
+                type="button"
+                className="ml-auto rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition-colors duration-150 hover:bg-emerald-500/15"
+                onClick={() => void moveSelectedToCatalog()}
+              >
+                Move to Catalog
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {activeListingShares.length > 0 ? (
           <div className="mt-4 rounded-3xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
             ⚠️ {activeListingShares.length} active share link{activeListingShares.length === 1 ? "" : "s"} for your listings.
@@ -694,12 +822,17 @@ export default function ListedPage() {
                       (marketMode === "all_listed" && c.status === "Listed") ||
                       (marketMode === "selected_cards" && Boolean(c.public_market_visible));
                     const isSelected = c.id ? bulkSelectedCardIds.includes(c.id) : false;
+                    const isMoveSelected = c.id ? moveSelectedCardIds.includes(c.id) : false;
                     return (
                       <div
                         key={c.id}
                         role="listitem"
                         tabIndex={0}
                         onClick={() => {
+                          if (moveSelectingCards && c.id) {
+                            toggleMoveSelection(c.id as string);
+                            return;
+                          }
                           if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
                             void toggleMarketVisibility(c.id as string, !isOnMarket);
                             return;
@@ -710,6 +843,10 @@ export default function ListedPage() {
                         aria-label={`View ${c.player_name}`}
                         onKeyDown={(e) => {
                           if (!(e.key === "Enter" || e.key === " ")) return;
+                          if (moveSelectingCards && c.id) {
+                            toggleMoveSelection(c.id as string);
+                            return;
+                          }
                           if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
                             void toggleMarketVisibility(c.id as string, !isOnMarket);
                             return;
@@ -717,6 +854,14 @@ export default function ListedPage() {
                           setActiveCard(c);
                         }}
                       >
+                        {moveSelectingCards && c.id && isMoveSelected ? (
+                          <div
+                            aria-hidden="true"
+                            className="absolute left-2 top-2 z-40 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-500/15 text-xs font-bold text-emerald-200"
+                          >
+                            ✓
+                          </div>
+                        ) : null}
                         {marketMode === "selected_cards" && bulkSelectingCards && c.id && isSelected ? (
                           <div
                             aria-hidden="true"
@@ -782,12 +927,17 @@ export default function ListedPage() {
                         (marketMode === "all_listed" && c.status === "Listed") ||
                         (marketMode === "selected_cards" && Boolean(c.public_market_visible));
                       const isSelected = c.id ? bulkSelectedCardIds.includes(c.id) : false;
+                      const isMoveSelected = c.id ? moveSelectedCardIds.includes(c.id) : false;
                       return (
                         <div
                           key={c.id}
                           role="button"
                           tabIndex={0}
                         onClick={() => {
+                          if (moveSelectingCards && c.id) {
+                            toggleMoveSelection(c.id as string);
+                            return;
+                          }
                           if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
                             void toggleMarketVisibility(c.id as string, !isOnMarket);
                             return;
@@ -797,6 +947,10 @@ export default function ListedPage() {
                           className={`relative rounded-2xl border p-3 ${isOnMarket ? "border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/15" : "border-red-500/20 bg-red-500/10 hover:bg-red-500/15"}`}
                           onKeyDown={(e) => {
                             if (!(e.key === "Enter" || e.key === " ")) return;
+                            if (moveSelectingCards && c.id) {
+                              toggleMoveSelection(c.id as string);
+                              return;
+                            }
                             if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
                               void toggleMarketVisibility(c.id as string, !isOnMarket);
                               return;
@@ -818,6 +972,15 @@ export default function ListedPage() {
                             >
                               Go ↗
                             </a>
+                          ) : null}
+
+                          {moveSelectingCards && c.id && isMoveSelected ? (
+                            <div
+                              aria-hidden="true"
+                              className="absolute left-3 top-3 z-30 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-500/15 text-xs font-bold text-emerald-200"
+                            >
+                              ✓
+                            </div>
                           ) : null}
 
                           {marketMode === "selected_cards" && bulkSelectingCards && c.id && isSelected ? (
@@ -1100,6 +1263,15 @@ export default function ListedPage() {
                             className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200 hover:bg-red-500/15 disabled:opacity-60"
                           >
                             {isMarkingSold ? "Marking…" : "Mark sold"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => void moveActiveCardToCatalog()}
+                            disabled={isSavingDetails || isMarkingSold}
+                            className="sm:col-span-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
+                          >
+                            Move back to Catalog
                           </button>
                         </>
                       )}
