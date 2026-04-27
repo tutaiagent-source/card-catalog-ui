@@ -8,6 +8,7 @@ import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { normalizeBrandAndSet, normalizeCatalogTaxonomy } from "@/lib/cardTaxonomy";
 import { GradeCompany, parseGradeCompany, parseGradeNumber, upsertGradeCompanyInNotes, upsertNotesLines } from "@/lib/gradeNotes";
 import { usePlanPreview } from "@/lib/planPreview";
+import { mapPlanLimitErrorMessage } from "@/lib/planLimitError";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
@@ -925,7 +926,8 @@ export default function ImportPage() {
         const { error } = await supabase.from("cards").insert(createInsertPayload(effectivePayload, user.id));
         if (error) {
           failed += 1;
-          failures.push(`Row ${row.rowNumber}: ${error.message}`);
+          const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+          failures.push(`Row ${row.rowNumber}: ${friendly}`);
         } else {
           created += 1;
         }
@@ -950,7 +952,8 @@ export default function ImportPage() {
 
         if (error) {
           failed += 1;
-          failures.push(`Row ${row.rowNumber}: ${error.message}`);
+          const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+          failures.push(`Row ${row.rowNumber}: ${friendly}`);
         } else {
           updated += 1;
         }

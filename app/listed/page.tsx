@@ -11,6 +11,7 @@ import EmailVerificationNotice from "@/components/EmailVerificationNotice";
 import UsernamePromptBanner from "@/components/UsernamePromptBanner";
 import { useUserProfile } from "@/lib/useUserProfile";
 import CatalogShareModal from "@/components/CatalogShareModal";
+import { mapPlanLimitErrorMessage } from "@/lib/planLimitError";
 
 type CardStatus = "Collection" | "Listed" | "Sold";
 
@@ -302,7 +303,8 @@ export default function ListedPage() {
       .eq("user_id", user.id);
 
     if (error) {
-      alert(`Could not update market visibility: ${error.message}`);
+      const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+      alert(`Could not update market visibility: ${friendly}`);
       return;
     }
 
@@ -332,7 +334,8 @@ export default function ListedPage() {
     setMarketModeSaving(false);
 
     if (error) {
-      alert(`Could not update market visibility: ${error.message}`);
+      const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+      alert(`Could not update market visibility: ${friendly}`);
       return;
     }
 
@@ -364,7 +367,8 @@ export default function ListedPage() {
         .eq("user_id", user.id);
 
       if (error) {
-        alert(`Could not post selected cards: ${error.message}`);
+        const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+        alert(`Could not post selected cards: ${friendly}`);
         return;
       }
 
@@ -398,7 +402,8 @@ export default function ListedPage() {
       .eq("user_id", user.id);
 
     if (error) {
-      alert(`Could not move selected cards back to Catalog: ${error.message}`);
+      const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+      alert(`Could not move selected cards back to Catalog: ${friendly}`);
       return;
     }
 
@@ -423,7 +428,8 @@ export default function ListedPage() {
       .eq("user_id", user.id);
 
     if (error) {
-      alert(`Could not move card back to Catalog: ${error.message}`);
+      const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+      alert(`Could not move card back to Catalog: ${friendly}`);
       return;
     }
 

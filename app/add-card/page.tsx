@@ -14,6 +14,7 @@ import { buildSellerNotes, parseSellerMeta } from "@/lib/cardSellerMeta";
 import { usePlanPreview } from "@/lib/planPreview";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
+import { mapPlanLimitErrorMessage } from "@/lib/planLimitError";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
 import UsernamePromptBanner from "@/components/UsernamePromptBanner";
 
@@ -548,7 +549,8 @@ export default function AddCardPage() {
           .eq("user_id", user.id);
 
         if (error) {
-          alert(`Save failed: ${error.message}`);
+          const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+          alert(`Save failed: ${friendly}`);
           return;
         }
 
@@ -617,7 +619,8 @@ export default function AddCardPage() {
             .eq("user_id", user.id);
 
           if (upErr) {
-            alert(`Save failed: ${upErr.message}`);
+            const friendly = mapPlanLimitErrorMessage(upErr.message) ?? upErr.message;
+            alert(`Save failed: ${friendly}`);
             return;
           }
 
@@ -630,7 +633,8 @@ export default function AddCardPage() {
       const { error } = await supabase.from("cards").insert(row);
 
       if (error) {
-        alert(`Save failed: ${error.message}`);
+        const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+        alert(`Save failed: ${friendly}`);
         return;
       }
 

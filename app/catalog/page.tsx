@@ -8,6 +8,7 @@ import { normalizeCatalogTaxonomy } from "@/lib/cardTaxonomy";
 import { buildSellerNotes, parseSellerMeta } from "@/lib/cardSellerMeta";
 import { driveToImageSrc } from "@/lib/googleDrive";
 import { usePlanPreview } from "@/lib/planPreview";
+import { mapPlanLimitErrorMessage } from "@/lib/planLimitError";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import CardCatLogo from "@/components/CardCatLogo";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
@@ -899,7 +900,8 @@ export default function CatalogPage() {
       .eq("user_id", user.id);
 
     if (error) {
-      alert(`Bulk update failed: ${error.message}`);
+      const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+      alert(`Bulk update failed: ${friendly}`);
       return;
     }
 
@@ -951,7 +953,8 @@ export default function CatalogPage() {
       .eq("user_id", user.id);
 
     if (error) {
-      alert(`Bulk move to PC failed: ${error.message}`);
+      const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+      alert(`Bulk move to PC failed: ${friendly}`);
       return;
     }
 
@@ -1044,7 +1047,8 @@ export default function CatalogPage() {
       .eq("user_id", userId);
 
     if (statusError) {
-      alert(`Bulk move failed: ${statusError.message}`);
+      const friendly = mapPlanLimitErrorMessage(statusError.message) ?? statusError.message;
+      alert(`Bulk move failed: ${friendly}`);
       return;
     }
 
@@ -1129,10 +1133,11 @@ export default function CatalogPage() {
       .in("id", selectedCardIds)
       .eq("user_id", user.id);
 
-    if (error) {
-      alert(`Bulk edit failed: ${error.message}`);
-      return;
-    }
+        if (error) {
+          const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+          alert(`Bulk edit failed: ${friendly}`);
+          return;
+        }
 
     setBulkEditModal(null);
     setStatusToast({ message: `Updated ${count} selected card${count === 1 ? "" : "s"}.` });
@@ -1155,10 +1160,11 @@ export default function CatalogPage() {
       .in("id", selectedCardIds)
       .eq("user_id", user.id);
 
-    if (error) {
-      alert(`Bulk delete failed: ${error.message}`);
-      return;
-    }
+      if (error) {
+        const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
+        alert(`Bulk delete failed: ${friendly}`);
+        return;
+      }
 
     setSelectedCardIds([]);
     setStatusToast({
