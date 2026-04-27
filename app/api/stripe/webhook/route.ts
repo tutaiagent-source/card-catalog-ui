@@ -264,23 +264,39 @@ export async function POST(req: Request) {
         const userId: string | undefined = subscription?.metadata?.user_id;
         if (!userId) break;
 
-        let tier: "collector" | "pro" | "seller" = "collector";
+        // Fail-safe: do not silently overwrite the user's tier with "collector" when the priceId is unknown.
+        // On subscription deletion we still mark the entitlement inactive, but we preserve the existing tier
+        // if we can't map the Stripe price.
+        const { data: existingEnt } = await supabaseAdmin
+          .from("user_entitlements")
+          .select("tier")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        const fallbackTier: "collector" | "pro" | "seller" =
+          existingEnt?.tier === "pro" || existingEnt?.tier === "seller" || existingEnt?.tier === "collector"
+            ? existingEnt.tier
+            : "collector";
+
+        let mappedTier: "collector" | "pro" | "seller" | null = null;
         if (subscriptionId) {
           try {
             const fullSubscription = await stripe.subscriptions.retrieve(subscriptionId, {
               expand: ["items.data.price"],
             });
             const priceId = fullSubscription?.items?.data?.[0]?.price?.id;
-            if (priceId) tier = priceIdToTier(priceId) ?? "collector";
+            mappedTier = priceId ? priceIdToTier(priceId) : null;
           } catch (e) {
-            console.warn("Could not map tier from deleted subscription items; defaulting to collector", e);
+            console.warn("Could not map tier from deleted subscription items; preserving existing tier.", e);
           }
         }
+
+        const tierToSet: "collector" | "pro" | "seller" = mappedTier ?? fallbackTier;
 
         await supabaseAdmin.from("user_entitlements").upsert(
           {
             user_id: userId,
-            tier,
+            tier: tierToSet,
             status: "inactive",
             stripe_subscription_id: subscriptionId,
             current_period_end: null,
