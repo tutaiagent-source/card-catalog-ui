@@ -2547,7 +2547,7 @@ export default function CatalogPage() {
         </section>
       </div>
     {selectionMode && selectedCardIds.length > 0 ? (
-      <div className="fixed inset-x-0 top-24 z-50 px-3 md:top-24 md:px-4">
+      <div className="fixed inset-x-0 top-4 z-[999999] px-3 md:top-6 md:px-4">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur">
           <div className="mr-1 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">
             {selectedCardIds.length} selected
