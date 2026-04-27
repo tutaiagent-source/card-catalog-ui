@@ -2546,7 +2546,7 @@ export default function CatalogPage() {
           )}
         </section>
       </div>
-    {selectionMode && canUseBulkActions && selectedCardIds.length > 0 ? (
+    {selectionMode && selectedCardIds.length > 0 ? (
       <div className="fixed inset-x-0 bottom-20 z-40 px-3 md:bottom-4 md:px-4">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-[0_20px_80px_rgba(0,0,0,0.45)] backdrop-blur">
           <div className="mr-1 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200">
@@ -2572,7 +2572,7 @@ export default function CatalogPage() {
             type="button"
             className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
             onClick={() => setBulkEditModal({ platform: "", askingPrice: "" })}
-            disabled={selectedCardIds.length === 0}
+            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
           >
             Edit
           </button>
@@ -2580,7 +2580,7 @@ export default function CatalogPage() {
             type="button"
             className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition-colors duration-150 hover:bg-amber-500/15"
             onClick={bulkMoveToPc}
-            disabled={selectedCardIds.length === 0}
+            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
           >
             Move to PC
           </button>
@@ -2588,7 +2588,7 @@ export default function CatalogPage() {
             type="button"
             className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors duration-150 hover:bg-white/[0.1]"
             onClick={() => bulkUpdateStatus("Collection")}
-            disabled={selectedCardIds.length === 0}
+            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
           >
             Move to Collection
           </button>
@@ -2596,7 +2596,7 @@ export default function CatalogPage() {
             type="button"
             className="rounded-full bg-[#d50000] px-3 py-1.5 text-xs font-semibold text-white transition-colors duration-150 hover:bg-[#b80000]"
             onClick={() => bulkUpdateStatus("Listed")}
-            disabled={selectedCardIds.length === 0}
+            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
           >
             Move to Listings
           </button>
@@ -2617,7 +2617,7 @@ export default function CatalogPage() {
                 platformFee: String(seller.meta.platformFee ?? ""),
               });
             }}
-            disabled={selectedCardIds.length === 0}
+            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
           >
             Mark Sold
           </button>
@@ -2625,7 +2625,7 @@ export default function CatalogPage() {
             type="button"
             className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition-colors duration-150 hover:bg-red-500/15"
             onClick={bulkDeleteSelected}
-            disabled={selectedCardIds.length === 0}
+            disabled={selectedCardIds.length === 0 || !canUseBulkActions}
           >
             Delete
           </button>
