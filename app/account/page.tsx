@@ -46,6 +46,16 @@ export default function AccountPage() {
     setMarketVisibilityMode(((profile?.market_visibility_mode as any) || "none") as "none" | "selected_cards" | "all_listed" | "whole_collection");
   }, [profile?.username, profile?.allow_messages, profile?.market_visibility_mode]);
 
+  // Internal admin override (e.g., @cardcat) when Stripe entitlement sync is missing.
+  useEffect(() => {
+    const username = String(profile?.username || "").trim().toLowerCase();
+    if (!username) return;
+    if (username === "cardcat") {
+      setHasActiveEntitlement(true);
+      setRealTier("seller");
+    }
+  }, [profile?.username]);
+
   useEffect(() => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
 
