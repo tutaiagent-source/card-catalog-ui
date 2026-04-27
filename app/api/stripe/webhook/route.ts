@@ -97,7 +97,14 @@ export async function POST(req: Request) {
         const priceId = item?.price?.id;
         if (!priceId) break;
 
-        const tier = priceIdToTier(priceId);
+        let tier: "collector" | "pro" | "seller" | null = priceIdToTier(priceId);
+        const metadataTier = subscription.metadata?.tier ? String(subscription.metadata.tier) : null;
+
+        // Fail-safe: if Stripe priceId mapping is unknown, fall back to subscription metadata.
+        // Our checkout route sets subscription_data.metadata.tier to one of collector/pro/seller.
+        if (!tier && metadataTier && ["collector", "pro", "seller"].includes(metadataTier)) {
+          tier = metadataTier as "collector" | "pro" | "seller";
+        }
         const userId = subscription.metadata?.user_id as string | undefined;
 
         const recipientEmail: string | undefined =
@@ -111,7 +118,9 @@ export async function POST(req: Request) {
         const currentPeriodEnd = subscription.current_period_end ? Number(subscription.current_period_end) : null;
 
         if (!tier) {
-          console.warn(`Unknown Stripe priceId for checkout.session.completed: ${priceId}. Skipping entitlement update.`);
+          console.warn(
+            `Unknown Stripe priceId for checkout.session.completed: ${priceId} (and metadata.tier was not usable). Skipping entitlement update.`
+          );
           break;
         }
 
@@ -323,10 +332,18 @@ export async function POST(req: Request) {
         if (!userId) break;
 
         const currentPeriodEnd = subscription.current_period_end ? Number(subscription.current_period_end) : null;
-        const tier = priceIdToTier(priceId);
+        let tier: "collector" | "pro" | "seller" | null = priceIdToTier(priceId);
+        const metadataTier = subscription.metadata?.tier ? String(subscription.metadata.tier) : null;
+
+        // Fail-safe: if Stripe priceId mapping is unknown, fall back to subscription metadata.
+        if (!tier && metadataTier && ["collector", "pro", "seller"].includes(metadataTier)) {
+          tier = metadataTier as "collector" | "pro" | "seller";
+        }
 
         if (!tier) {
-          console.warn(`Unknown Stripe priceId for invoice.paid: ${priceId}. Skipping entitlement update.`);
+          console.warn(
+            `Unknown Stripe priceId for invoice.paid: ${priceId} (and metadata.tier was not usable). Skipping entitlement update.`
+          );
           break;
         }
 
