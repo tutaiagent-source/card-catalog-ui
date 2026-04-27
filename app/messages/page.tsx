@@ -2924,6 +2924,9 @@ export default function MessagesPage() {
 	                              {showPaymentForm && !paymentConfirmed ? (
 	                                <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-3">
 	                                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">Payment Details</div>
+	                                  <div className="text-[11px] leading-5 text-slate-400">
+	                                    CardCat doesn’t process payments. This documents seller-confirmed payment for your Deal Record.
+	                                  </div>
 	                                  <div className="flex flex-wrap gap-2 sticky bottom-0 bg-white/[0.03] pt-3 pb-2">
 	                                    <input
 	                                      type="date"
