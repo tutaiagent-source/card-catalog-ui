@@ -84,7 +84,7 @@ export default function AccountPage() {
         // Ignore until migration is applied / table exists.
       }
     })();
-  }, [user?.id]);
+  }, [user?.id, supabaseConfigured, supabase]);
 
   const catalogCardsCount = useMemo(
     () =>
@@ -118,11 +118,7 @@ export default function AccountPage() {
       : realTier === "pro"
         ? 1000
         : 10000
-    : planPreview === "collector"
-      ? 250
-      : planPreview === "seller"
-        ? 10000
-        : 1000;
+    : 250;
 
   const marketLimit = realTier
     ? realTier === "collector"
@@ -130,11 +126,7 @@ export default function AccountPage() {
       : realTier === "pro"
         ? 50
         : 250
-    : planPreview === "collector"
-      ? 10
-      : planPreview === "seller"
-        ? 250
-        : 50;
+    : 10;
 
   const activeMarketListingsCount = useMemo(() => {
     const mode = String(profile?.market_visibility_mode || "none");
@@ -149,7 +141,7 @@ export default function AccountPage() {
   const catalogUsagePct = Math.min(100, Math.round((catalogCardsCount / catalogLimit) * 100));
   const marketUsagePct = Math.min(100, Math.round((activeMarketListingsCount / marketLimit) * 100));
 
-  const effectiveTier: "collector" | "pro" | "seller" = realTier ?? (planPreview === "collector" ? "collector" : planPreview === "seller" ? "seller" : "pro");
+  // Access gating (limit messaging + disabled states) must reflect Stripe-synced tier/status, not the UI preview toggle.
   const usernameLocked = Boolean(String(profile?.username || "").trim());
 
   const startStripeCheckout = async (tier: "collector" | "pro" | "seller", interval: "month" | "annual") => {
@@ -577,7 +569,7 @@ export default function AccountPage() {
               />
             </div>
 
-            {effectiveTier === "collector" && catalogCardsCount >= 250 ? (
+            {realTier === "collector" && catalogCardsCount >= 250 ? (
               <div className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4">
                 <div className="text-sm font-semibold text-amber-200">Collector limit reached</div>
                 <p className="mt-2 text-sm leading-6 text-slate-200">
@@ -637,7 +629,7 @@ export default function AccountPage() {
                     type="button"
                     className="rounded-xl border border-white/10 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => startStripeCheckout("collector", "month")}
-                    disabled={effectiveTier === "collector"}
+                    disabled={realTier === "collector"}
                   >
                     Collector Monthly
                   </button>
@@ -645,7 +637,7 @@ export default function AccountPage() {
                     type="button"
                     className="rounded-xl border border-white/10 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => startStripeCheckout("collector", "annual")}
-                    disabled={effectiveTier === "collector"}
+                    disabled={realTier === "collector"}
                   >
                     Collector Annual ($50/yr)
                   </button>
@@ -672,7 +664,7 @@ export default function AccountPage() {
                     type="button"
                     className="rounded-xl border border-white/10 bg-[#f59e0b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d97706] disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => startStripeCheckout("seller", "month")}
-                    disabled={effectiveTier === "seller"}
+                    disabled={realTier === "seller"}
                   >
                     Seller Monthly
                   </button>
@@ -680,7 +672,7 @@ export default function AccountPage() {
                     type="button"
                     className="rounded-xl border border-white/10 bg-[#f59e0b] px-4 py-2 text-sm font-semibold text-white hover:bg-[#d97706] disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => startStripeCheckout("seller", "annual")}
-                    disabled={effectiveTier === "seller"}
+                    disabled={realTier === "seller"}
                   >
                     Seller Annual ($250/yr)
                   </button>
@@ -705,7 +697,7 @@ export default function AccountPage() {
                     type="button"
                     className="rounded-xl border border-white/10 bg-[#d50000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b80000] disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => startStripeCheckout("pro", "month")}
-                    disabled={effectiveTier === "pro"}
+                    disabled={realTier === "pro"}
                   >
                     Pro Monthly
                   </button>
@@ -713,7 +705,7 @@ export default function AccountPage() {
                     type="button"
                     className="rounded-xl border border-white/10 bg-[#d50000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b80000] disabled:cursor-not-allowed disabled:opacity-60"
                     onClick={() => startStripeCheckout("pro", "annual")}
-                    disabled={effectiveTier === "pro"}
+                    disabled={realTier === "pro"}
                   >
                     Pro Annual ($100/yr)
                   </button>
