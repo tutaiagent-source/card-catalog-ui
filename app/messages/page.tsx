@@ -2218,7 +2218,15 @@ export default function MessagesPage() {
       const conversationId = await startDirectConversation(targetUsername, undefined, null);
       window.location.href = `/messages?conversation=${encodeURIComponent(conversationId)}`;
     } catch (err: any) {
-      setError(err?.message || "Could not start conversation.");
+      const raw = String(err?.message || "");
+      const m = raw.toLowerCase();
+      if (m.includes("card listing initiation required")) {
+        setError(
+          "Messaging starts from a card listing. Open a seller's listing first, or send a friend request so you can message without a listing."
+        );
+        return;
+      }
+      setError(raw || "Could not start conversation.");
     }
   }
 
