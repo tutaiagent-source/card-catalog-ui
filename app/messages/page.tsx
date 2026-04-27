@@ -1649,15 +1649,15 @@ export default function MessagesPage() {
             userId: user.id,
             eventType: "payment_confirmed_by_seller",
             title: "Seller marked payment as received",
-            description: `Seller marked payment as received (paid date: ${formatPaidDate(paidDate)}). Marketplace sold update RPC is missing on the server.`,
+            description: `Seller marked payment as received (paid date: ${formatPaidDate(paidDate)}).`,
           });
 
           setShowPaymentForm(false);
           setDealError("");
           setDealSoldNotice(
             fallbackMarkedSold
-              ? "Seller marked payment as received, and the listing was marked sold (server RPC missing; best-effort update applied)."
-              : "Seller marked payment as received, but the listing could not be marked sold because the server RPC isn’t deployed yet."
+              ? "Seller marked payment as received, and the listing was marked sold. If any updates lag, it should refresh shortly."
+              : "Seller marked payment as received, but the listing couldn’t be marked sold yet. Your payment confirmation is saved."
           );
           await refreshDeals();
         } else {
