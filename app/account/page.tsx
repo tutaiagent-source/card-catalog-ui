@@ -510,7 +510,9 @@ export default function AccountPage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold">Plans & Usage</h2>
-              <p className="mt-1 text-sm text-slate-400">3-tier preview for launch: Collector (capped), Pro (unlimited), and Seller.</p>
+              <p className="mt-1 text-sm text-slate-400">
+                Preview (UI-only): Collector (capped), Pro (unlimited), and Seller. Real limits & access are based on your Stripe-synced plan.
+              </p>
             </div>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">
@@ -524,7 +526,9 @@ export default function AccountPage() {
 
           <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
             <div className="text-sm font-semibold text-slate-200">Preview the paid-wall experience</div>
-            <div className="mt-1 text-sm text-slate-400">Flip between Collector, Pro, and Seller to see which tools stay visible, which tools get gated, and where upgrade prompts show up.</div>
+            <div className="mt-1 text-sm text-slate-400">
+              Flip between Collector, Pro, and Seller to see which tools stay visible, which tools get gated, and where upgrade prompts show up. This is preview only; your Stripe plan controls actual caps.
+            </div>
             <div className="mt-3 inline-flex items-center rounded-full border border-white/10 bg-slate-900/90 p-1">
               <button
                 type="button"

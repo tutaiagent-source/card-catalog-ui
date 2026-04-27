@@ -68,11 +68,11 @@ const workflow = [
 const pricingTiers = [
   {
     name: "Collector",
-    price: "$5 / Month",
+    price: "$5 / month",
     caption: "A strong starting point for personal collections, with no CardCat buyer fees and no CardCat seller fees.",
     features: [
       "Up To 250 Cards",
-      "10 Active CardCat Market Listings / Month",
+      "10 active CardCat Market listings",
       "Manual Card Entry",
       "Personal Collection (PC) view",
       "Basic sold tracking",
@@ -81,11 +81,11 @@ const pricingTiers = [
   },
   {
     name: "Pro",
-    price: "$10 / Month",
+    price: "$10 / month",
     caption: "For bigger inventories and deeper tracking tools, with no CardCat buyer fees and no CardCat seller fees.",
     features: [
       "Up To 1,000 Cards",
-      "50 Active CardCat Market Listings / Month",
+      "50 active CardCat Market listings",
       "CSV import/export",
       "Bulk inventory tools",
       "ROI / net profit tracking",
@@ -95,11 +95,11 @@ const pricingTiers = [
   },
   {
     name: "Seller",
-    price: "$25 / Month",
+    price: "$25 / month",
     caption: "For active sellers who want deeper sold tracking and advanced seller analytics.",
     features: [
       "Up To 10,000 Cards",
-      "250 Active CardCat Market Listings / Month",
+      "250 active CardCat Market listings",
       "CSV import/export",
       "Deeper sold tracking",
       "Advanced seller analytics",

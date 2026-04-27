@@ -469,6 +469,9 @@ export default function MarketPage() {
                     <div className="mt-3 text-sm font-semibold text-white line-clamp-2">{card.player_name}</div>
                     <div className="mt-1 text-xs text-slate-400 line-clamp-2">{[card.year, card.brand, card.set_name].filter(Boolean).join(" · ")}</div>
                     {sellerUsername ? <div className="mt-1 text-xs text-emerald-200">@{sellerUsername}</div> : null}
+                    <div className="mt-2 inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
+                      Visible on CardCat Market
+                    </div>
                     {card.asking_price != null ? (
                       <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(card.asking_price))}</div>
                     ) : null}
@@ -485,6 +488,9 @@ export default function MarketPage() {
               <div className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-4 sm:px-6">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Market listing</div>
+                  <div className="mt-2 inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
+                    Visible on CardCat Market
+                  </div>
                   <div className="mt-2 text-xl font-bold text-white">{[activeCard.year, activeCard.player_name].filter(Boolean).join(" ")}</div>
                   {sellerMap.get(activeCard.user_id) ? <div className="mt-2 text-sm text-slate-400">Seller: <span className="text-slate-200">@{sellerMap.get(activeCard.user_id)}</span></div> : null}
                 </div>

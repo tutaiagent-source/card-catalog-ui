@@ -1654,6 +1654,12 @@ export default function CatalogPage() {
             </div>
           </div>
 
+          {!isCollectorPreview && selectionMode ? (
+            <div className="mt-2 text-xs text-slate-400">
+              Selection mode is on. Use the bulk actions bar above to move, mark sold, or delete your selected cards.
+            </div>
+          ) : null}
+
           <div className={`${showFilters ? "mt-3" : "mt-3 hidden"} sm:block`}>
           <div className="flex flex-wrap gap-2">
           <button

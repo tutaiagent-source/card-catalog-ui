@@ -538,7 +538,7 @@ export default function SoldPage() {
         ? `
           <div class="section">
             <h2>Payment Details</h2>
-            <div class="kv"><div class="k">Payment status</div><div class="v">${paymentConfirmed ? "Seller confirmed payment received" : "Payment details recorded (awaiting seller confirmation)"}</div></div>
+            <div class="kv"><div class="k">Payment status</div><div class="v">${paymentConfirmed ? "Seller marked payment as received" : "Payment details recorded (awaiting seller confirmation)"}</div></div>
             <div class="kv"><div class="k">Paid date</div><div class="v">${escapeHtml(String(details.paid_date) || "—")}</div></div>
             <div class="kv"><div class="k">Amount paid</div><div class="v">${escapeHtml(agreedPriceText)}</div></div>
             <div class="kv"><div class="k">Payment confirmed date</div><div class="v">${escapeHtml(paymentConfirmedAtText || "—")}</div></div>

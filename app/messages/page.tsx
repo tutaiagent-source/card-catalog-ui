@@ -1355,7 +1355,7 @@ export default function MessagesPage() {
       ? `
         <div class="section">
           <h2>Payment Details</h2>
-          <div class="kv"><div class="k">Payment status</div><div class="v">${paymentConfirmed ? "Seller confirmed payment received" : "Payment details recorded (awaiting seller confirmation)"}</div></div>
+          <div class="kv"><div class="k">Payment status</div><div class="v">${paymentConfirmed ? "Seller marked payment as received" : "Payment details recorded (awaiting seller confirmation)"}</div></div>
           <div class="kv"><div class="k">Payment method note</div><div class="v">${escapeHtml(dealDetails?.payment_method_note ?? "") || "—"}</div></div>
           <div class="kv"><div class="k">Paid date</div><div class="v">${escapeHtml(formatPaidDate(dealDetails?.paid_date ?? null) || "—")}</div></div>
           <div class="kv"><div class="k">Amount paid</div><div class="v">${escapeHtml(agreedPriceText)}</div></div>
@@ -1565,7 +1565,7 @@ export default function MessagesPage() {
           dealRecordId: dealRecordForDisplay.id,
           userId: user.id,
           eventType: "payment_confirmed_by_seller",
-          title: "Payment confirmed by seller",
+          title: "Seller marked payment as received",
           description: `Seller marked payment as received (paid date: ${formatPaidDate(paidDate)}).`,
         });
 
@@ -1648,7 +1648,7 @@ export default function MessagesPage() {
             dealRecordId: dealRecordForDisplay.id,
             userId: user.id,
             eventType: "payment_confirmed_by_seller",
-            title: "Payment confirmed by seller",
+            title: "Seller marked payment as received",
             description: `Seller marked payment as received (paid date: ${formatPaidDate(paidDate)}). Marketplace sold update RPC is missing on the server.`,
           });
 
@@ -2861,11 +2861,11 @@ export default function MessagesPage() {
 	                              <div className="text-xs text-slate-300">
 	                                {dealCompleted
 	                                  ? "Deal completed."
-	                                  : paymentConfirmed
-	                                    ? "Payment confirmed by seller."
-	                                    : paymentRecorded
-	                                      ? "Payment details recorded. Waiting for seller confirmation."
-	                                      : "Offer accepted. Add payment details to document this deal."}
+                                    : paymentConfirmed
+                                      ? "Seller marked payment as received."
+                                      : paymentRecorded
+                                        ? "Payment details recorded. Waiting for seller to mark payment as received."
+                                        : "Offer accepted. Add payment details to document this deal."}
 	                              </div>
 
 	                              {!paymentConfirmed ? (
