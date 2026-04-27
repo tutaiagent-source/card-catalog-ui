@@ -659,6 +659,9 @@ export default function ImportPage() {
         ? 1000
         : 10000;
 
+  const marketLimit =
+    effectiveTierForLimits === "collector" ? 10 : effectiveTierForLimits === "pro" ? 50 : 250;
+
   const existingByKey = useMemo(() => {
     const map = new Map<string, Card>();
     for (const card of existingCards) {
@@ -866,31 +869,70 @@ export default function ImportPage() {
       return;
     }
 
-    // Pre-check: block imports that would exceed server-side catalog limits.
-    // This avoids partial imports.
+    // Pre-check: block imports that would exceed server-side catalog + Market listing limits.
+    // This avoids partial imports and keeps user-facing errors clear.
     try {
       const currentCatalogCount = existingCards
         .filter((c) => String(c.status || "").toLowerCase() !== "sold")
         .reduce((sum, c) => sum + Number(c.quantity || 0), 0);
 
-      let delta = 0;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("market_visibility_mode")
+        .eq("id", user.id)
+        .single();
+
+      const marketMode = String(profile?.market_visibility_mode || "none");
+
+      const isVisibleOnMarket = (statusNorm: string, publicVisible: boolean) => {
+        if (statusNorm !== "listed") return false;
+        if (marketMode === "whole_collection" || marketMode === "all_listed") return true;
+        if (marketMode === "selected_cards") return Boolean(publicVisible);
+        return false;
+      };
+
+      const currentMarketListingsCount = existingCards.filter((c) => {
+        const statusNorm = String(c.status || "Collection").toLowerCase();
+        const publicVisible = Boolean((c as any).public_market_visible);
+        return isVisibleOnMarket(statusNorm, publicVisible);
+      }).length;
+
+      let catalogDelta = 0;
+      let marketDelta = 0;
+
       for (const row of readyRows) {
         const effectivePayload = editedPreviewPayloadByRowNumber[row.rowNumber] ?? row.payload;
 
-        const payloadStatus = String(effectivePayload.status || "Collection").toLowerCase();
-        const isPayloadSold = payloadStatus === "sold";
         const importQty = Number(effectivePayload.quantity || 1);
 
-        if (row.action === "create" || (row.action === "needs_attention" && !row.matchId)) {
-          const newContribution = isPayloadSold ? 0 : importQty;
-          delta += newContribution;
-          continue;
-        }
+        const isCreateRow = row.action === "create" || (row.action === "needs_attention" && !row.matchId);
 
-        if ((row.action === "update" || row.action === "needs_attention") && row.matchId && row.matchedCard) {
+        const existingStatusNorm = isCreateRow
+          ? "collection"
+          : String(row.matchedCard?.status || "Collection").toLowerCase();
+
+        const resultingStatusNorm = (() => {
+          // For creates, createInsertPayload defaults missing status to Collection.
+          if (isCreateRow) {
+            return String((effectivePayload.status ?? "Collection") as any).toLowerCase();
+          }
+
+          // For updates, if status isn’t part of the update payload, keep the existing card’s status.
+          return effectivePayload.status !== undefined
+            ? String(effectivePayload.status as any).toLowerCase()
+            : existingStatusNorm;
+        })();
+
+        const isResultSold = resultingStatusNorm === "sold";
+        const isResultListed = resultingStatusNorm === "listed";
+
+        // Catalog delta (sum(quantity) where status <> 'Sold')
+        if (isCreateRow) {
+          const newContribution = isResultSold ? 0 : importQty;
+          catalogDelta += newContribution;
+        } else if ((row.action === "update" || row.action === "needs_attention") && row.matchId && row.matchedCard) {
           const existingQty = Number(row.matchedCard.quantity || 0);
-          const existingStatus = String(row.matchedCard.status || "Collection").toLowerCase();
-          const oldContribution = existingStatus === "sold" ? 0 : existingQty;
+          const oldContribution = existingStatusNorm === "sold" ? 0 : existingQty;
 
           let resultingQty = importQty;
           if (row.action === "update") {
@@ -898,19 +940,43 @@ export default function ImportPage() {
             if (choice === "add_quantity") resultingQty = existingQty + importQty;
           }
 
-          const newContribution = isPayloadSold ? 0 : resultingQty;
-          delta += newContribution - oldContribution;
+          const newContribution = isResultSold ? 0 : resultingQty;
+          catalogDelta += newContribution - oldContribution;
         }
+
+        // Market delta (count visible Listed cards)
+        const oldPublicVisible = isCreateRow
+          ? false
+          : Boolean((row.matchedCard as any)?.public_market_visible);
+
+        const oldVisible = isVisibleOnMarket(existingStatusNorm, oldPublicVisible);
+
+        const newPublicVisible = isCreateRow
+          ? Boolean((effectivePayload as any).public_market_visible)
+          : Boolean(
+              (effectivePayload as any).public_market_visible ?? (row.matchedCard as any)?.public_market_visible
+            );
+
+        const newVisible = isResultListed && isVisibleOnMarket(resultingStatusNorm, newPublicVisible);
+        marketDelta += (newVisible ? 1 : 0) - (oldVisible ? 1 : 0);
       }
 
-      const estimatedNewCatalogCount = currentCatalogCount + delta;
+      const estimatedNewCatalogCount = currentCatalogCount + catalogDelta;
       if (estimatedNewCatalogCount > catalogLimit) {
         setImportSummary(
           `This import would exceed your plan limit of ${catalogLimit} catalog cards (estimated: ${estimatedNewCatalogCount}).`
         );
         return;
       }
-    } catch {
+
+      const estimatedNewMarketListingsCount = currentMarketListingsCount + marketDelta;
+      if (estimatedNewMarketListingsCount > marketLimit) {
+        setImportSummary(
+          `This import would exceed your plan limit of ${marketLimit} active CardCat Market listings (estimated: ${estimatedNewMarketListingsCount}).`
+        );
+        return;
+      }
+    } catch (e) {
       // If pre-check fails, let server-side enforcement be the source of truth.
     }
 
@@ -920,6 +986,8 @@ export default function ImportPage() {
     let failed = 0;
     const failures: string[] = [];
 
+    let planLimitHit: string | null = null;
+
     for (const row of readyRows) {
       const effectivePayload = editedPreviewPayloadByRowNumber[row.rowNumber] ?? row.payload;
       if (row.action === "create" || (row.action === "needs_attention" && !row.matchId)) {
@@ -928,6 +996,11 @@ export default function ImportPage() {
           failed += 1;
           const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
           failures.push(`Row ${row.rowNumber}: ${friendly}`);
+
+          if (mapPlanLimitErrorMessage(error.message)) {
+            planLimitHit = friendly;
+            break;
+          }
         } else {
           created += 1;
         }
@@ -954,10 +1027,23 @@ export default function ImportPage() {
           failed += 1;
           const friendly = mapPlanLimitErrorMessage(error.message) ?? error.message;
           failures.push(`Row ${row.rowNumber}: ${friendly}`);
+
+          if (mapPlanLimitErrorMessage(error.message)) {
+            planLimitHit = friendly;
+            break;
+          }
         } else {
           updated += 1;
         }
       }
+    }
+
+    if (planLimitHit) {
+      setImporting(false);
+      setImportSummary(`Import stopped because of your plan limits: ${planLimitHit}`);
+      setParseErrors(failures);
+      await loadExistingCards();
+      return;
     }
 
     setImporting(false);
