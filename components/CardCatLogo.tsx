@@ -53,13 +53,14 @@ export default function CardCatLogo({
 
   const markSizeToClass = (s: "sm" | "md" | "lg") => (s === "sm" ? "h-9 w-9" : s === "lg" ? "h-12 w-12" : "h-11 w-11");
   const horizontalWidthPx = size === "sm" ? 200 : size === "lg" ? 260 : 220;
+  const verticalWidthPx = size === "sm" ? 220 : size === "lg" ? 360 : 280;
 
-  if (variant === "horizontal") {
-    const src = "/brand/card_cat_horizontal.png";
-    const widthPx = horizontalWidthPx;
-    const aspect = 11783 / 4958;
+  if (variant === "horizontal" || variant === "vertical") {
+    const src =
+      variant === "horizontal" ? "/brand/card_cat_horizontal.png" : "/brand/card_cat_vertical.png";
+    const widthPx = variant === "horizontal" ? horizontalWidthPx : verticalWidthPx;
+    const aspect = variant === "horizontal" ? 11783 / 4958 : 1;
     const heightPx = Math.round(widthPx / aspect);
-    const objectPosition = "60% 50%";
 
     return (
       <div className={`inline-flex ${alignClasses} ${className}`.trim()}>
@@ -70,24 +71,9 @@ export default function CardCatLogo({
             fill
             priority={priority}
             sizes={`${widthPx}px`}
-            style={{ objectFit: "contain", objectPosition }}
+            style={{ objectFit: "contain", objectPosition: "center" }}
             className={imageClassName || "object-contain object-center"}
           />
-        </div>
-      </div>
-    );
-  }
-
-  if (variant === "vertical") {
-    const alignItems = align === "center" ? "items-center" : "items-start";
-    const wordSize = size === "sm" ? "text-2xl" : size === "lg" ? "text-4xl" : "text-3xl";
-
-    return (
-      <div className={`inline-flex flex-col ${alignItems} ${className}`.trim()}>
-        <CardCatMark className={markClassName ?? markSizeToClass(size)} />
-        <div className={`mt-3 ${wordSize} font-black tracking-[-0.08em] leading-none text-center`}>
-          <span className="text-white">Card</span>
-          <span className="text-[#D50000]">Cat</span>
         </div>
       </div>
     );
