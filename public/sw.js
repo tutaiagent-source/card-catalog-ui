@@ -21,6 +21,15 @@ self.addEventListener("activate", (event) => {
             .map((k) => caches.delete(k))
         )
       ),
+      // Fully disable this service worker so iOS/WebView stops using it.
+      // This helps if an older SW version got stuck and causes navigation loops.
+      (async () => {
+        try {
+          await self.registration.unregister();
+        } catch (_e) {
+          // ignore
+        }
+      })(),
     ])
   );
 });
