@@ -283,4 +283,3 @@ before update of market_visibility_mode
 on public.profiles
 for each row
 execute function public.enforce_plan_limits_profiles();
-

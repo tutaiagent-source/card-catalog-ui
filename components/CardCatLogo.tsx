@@ -7,6 +7,8 @@ type CardCatLogoProps = {
   markClassName?: string;
   showTagline?: boolean;
   align?: "left" | "center";
+  variant?: "standard" | "horizontal" | "vertical";
+  imageClassName?: string;
 };
 
 export function CardCatMark({ className = "h-10 w-10" }: CardCatMarkProps) {
@@ -36,7 +38,20 @@ export default function CardCatLogo({
   markClassName = "h-11 w-11",
   showTagline = true,
   align = "left",
+  variant = "standard",
+  imageClassName = "h-10 w-auto",
 }: CardCatLogoProps) {
+  if (variant === "horizontal" || variant === "vertical") {
+    const src = variant === "horizontal" ? "/logos/card_cat_horizontal.png" : "/logos/card_cat_vertical.png";
+    return (
+      <div
+        className={`inline-flex ${align === "center" ? "justify-center" : "justify-start"} ${className}`.trim()}
+      >
+        <img src={src} alt="CardCat" className={imageClassName} />
+      </div>
+    );
+  }
+
   return (
     <div className={`inline-flex items-center gap-3 ${align === "center" ? "text-center" : "text-left"} ${className}`.trim()}>
       <div className="relative rounded-2xl border border-white/10 bg-white/[0.04] p-1.5 shadow-[0_18px_40px_rgba(2,6,23,0.28)]">
