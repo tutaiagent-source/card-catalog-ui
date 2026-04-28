@@ -54,78 +54,26 @@ export default function CardCatLogo({
   const markSizeToClass = (s: "sm" | "md" | "lg") => (s === "sm" ? "h-9 w-9" : s === "lg" ? "h-12 w-12" : "h-11 w-11");
   const horizontalWidthPx = size === "sm" ? 200 : size === "lg" ? 260 : 220;
   const verticalWidthPx = size === "sm" ? 220 : size === "lg" ? 360 : 280;
-  const iconSrc = "/brand/card_cat_icon.png";
 
-  if (variant === "horizontal") {
-    const widthPx = horizontalWidthPx;
-    const heightPx = Math.round(widthPx / (11783 / 4958));
-
-    const iconSize = Math.round(heightPx * 0.62);
-    const fontSize = Math.round(heightPx * 0.48);
-    const gapPx = Math.round(heightPx * 0.12);
+  if (variant === "horizontal" || variant === "vertical") {
+    const src =
+      variant === "horizontal" ? "/brand/card_cat_horizontal.png" : "/brand/card_cat_vertical.png";
+    const widthPx = variant === "horizontal" ? horizontalWidthPx : verticalWidthPx;
+    const aspect = variant === "horizontal" ? 11783 / 4958 : 1;
+    const heightPx = Math.round(widthPx / aspect);
 
     return (
-      <div className={`flex ${align === "center" ? "justify-center" : "justify-start"} ${className}`.trim()} style={{ width: `${widthPx}px`, height: `${heightPx}px` }}>
-        <div className="flex items-center" style={{ gap: `${gapPx}px` }}>
-          <div className="relative" style={{ width: `${iconSize}px`, height: `${iconSize}px` }}>
-            <Image
-              src={iconSrc}
-              alt="CardCat"
-              fill
-              priority={priority}
-              sizes={`${iconSize}px`}
-              style={{ objectFit: "contain", objectPosition: "center" }}
-            />
-          </div>
-          <div
-            style={{
-              fontSize: `${fontSize}px`,
-              fontWeight: 900,
-              letterSpacing: "-0.035em",
-              lineHeight: 1,
-            }}
-            className="select-none"
-          >
-            <span style={{ color: "#FFFFFF" }}>Card</span>
-            <span style={{ color: "#D50000" }}>Cat</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (variant === "vertical") {
-    const widthPx = verticalWidthPx;
-    const heightPx = widthPx;
-
-    const iconSize = Math.round(heightPx * 0.52);
-    const fontSize = Math.round(heightPx * 0.28);
-    const gapPx = Math.round(heightPx * 0.065);
-
-    return (
-      <div className={`flex ${align === "center" ? "items-center justify-center" : "items-start justify-start"} flex-col ${className}`.trim()} style={{ width: `${widthPx}px`, height: `${heightPx}px` }}>
-        <div className="relative" style={{ width: `${iconSize}px`, height: `${iconSize}px` }}>
+      <div className={`inline-flex ${alignClasses} ${className}`.trim()}>
+        <div className="relative" style={{ width: `${widthPx}px`, height: `${heightPx}px` }}>
           <Image
-            src={iconSrc}
+            src={src}
             alt="CardCat"
             fill
             priority={priority}
-            sizes={`${iconSize}px`}
+            sizes={`${widthPx}px`}
             style={{ objectFit: "contain", objectPosition: "center" }}
+            className={imageClassName || "object-contain object-center"}
           />
-        </div>
-        <div
-          style={{
-            marginTop: `${gapPx}px`,
-            fontSize: `${fontSize}px`,
-            fontWeight: 900,
-            letterSpacing: "-0.06em",
-            lineHeight: 1,
-          }}
-          className="select-none text-center"
-        >
-          <span style={{ color: "#FFFFFF" }}>Card</span>
-          <span style={{ color: "#D50000" }}>Cat</span>
         </div>
       </div>
     );
