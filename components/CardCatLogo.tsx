@@ -70,8 +70,8 @@ export default function CardCatLogo({
             fill
             priority={priority}
             sizes={`${widthPx}px`}
-            style={{ objectFit: "contain" }}
-            className={imageClassName || "object-contain"}
+            style={{ objectFit: "contain", objectPosition: "center" }}
+            className={imageClassName || "object-contain object-center"}
           />
         </div>
       </div>
