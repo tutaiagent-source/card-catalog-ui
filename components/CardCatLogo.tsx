@@ -65,9 +65,17 @@ export default function CardCatLogo({
     const gapPx = Math.round(heightPx * 0.12);
 
     return (
-      <div className={`flex ${align === "center" ? "justify-center" : "justify-start"} ${className}`.trim()} style={{ width: `${widthPx}px`, height: `${heightPx}px` }}>
-        <div className="flex items-center" style={{ gap: `${gapPx}px` }}>
-          <div className="relative" style={{ width: `${iconSize}px`, height: `${iconSize}px` }}>
+      <div
+        className={className}
+        style={{
+          width: `${widthPx}px`,
+          height: `${heightPx}px`,
+          display: "flex",
+          justifyContent: align === "center" ? "center" : "flex-start",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: `${gapPx}px` }}>
+          <div style={{ position: "relative", width: `${iconSize}px`, height: `${iconSize}px` }}>
             <Image
               src={iconSrc}
               alt="CardCat"
@@ -84,7 +92,6 @@ export default function CardCatLogo({
               letterSpacing: "-0.035em",
               lineHeight: 1,
             }}
-            className="select-none"
           >
             <span style={{ color: "#FFFFFF" }}>Card</span>
             <span style={{ color: "#D50000" }}>Cat</span>
@@ -103,8 +110,18 @@ export default function CardCatLogo({
     const gapPx = Math.round(heightPx * 0.065);
 
     return (
-      <div className={`flex ${align === "center" ? "items-center justify-center" : "items-start justify-start"} flex-col ${className}`.trim()} style={{ width: `${widthPx}px`, height: `${heightPx}px` }}>
-        <div className="relative" style={{ width: `${iconSize}px`, height: `${iconSize}px` }}>
+      <div
+        className={className}
+        style={{
+          width: `${widthPx}px`,
+          height: `${heightPx}px`,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: align === "center" ? "center" : "flex-start",
+          justifyContent: "flex-start",
+        }}
+      >
+        <div style={{ position: "relative", width: `${iconSize}px`, height: `${iconSize}px` }}>
           <Image
             src={iconSrc}
             alt="CardCat"
@@ -121,8 +138,8 @@ export default function CardCatLogo({
             fontWeight: 900,
             letterSpacing: "-0.06em",
             lineHeight: 1,
+            textAlign: "center",
           }}
-          className="select-none text-center"
         >
           <span style={{ color: "#FFFFFF" }}>Card</span>
           <span style={{ color: "#D50000" }}>Cat</span>
