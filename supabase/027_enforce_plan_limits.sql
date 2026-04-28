@@ -39,9 +39,10 @@ returns bigint
 language sql
 as $$
   select case
-    when p_tier = 'collector' then 250
-    when p_tier = 'pro' then 1000
-    when p_tier = 'seller' then 10000
+    -- Launch pricing: Starter (Collector) is capped; Pro is unlimited.
+    when p_tier = 'collector' then 100
+    when p_tier = 'pro' then null
+    when p_tier = 'seller' then null
     else null
   end::bigint;
 $$;
@@ -283,4 +284,3 @@ before update of market_visibility_mode
 on public.profiles
 for each row
 execute function public.enforce_plan_limits_profiles();
-

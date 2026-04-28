@@ -111,7 +111,7 @@ export default function AccountPage() {
     [cards]
   );
   const soldRows = useMemo(() => cards.filter((card) => String(card.status || "") === "Sold"), [cards]);
-  const collectorCardCap = 250;
+  const collectorCardCap = 100;
   const collectorAddOnCards = 100;
   const collectorAddOnPricePerMonth = 2;
   const proPricePerMonth = 10;
@@ -124,11 +124,9 @@ export default function AccountPage() {
     : false;
   const catalogLimit = realTier
     ? realTier === "collector"
-      ? 250
-      : realTier === "pro"
-        ? 1000
-        : 10000
-    : 250;
+      ? 100
+      : 1000000
+    : 100;
 
   const marketLimit = realTier
     ? realTier === "collector"
@@ -579,7 +577,7 @@ export default function AccountPage() {
               />
             </div>
 
-            {realTier === "collector" && catalogCardsCount >= 250 ? (
+            {realTier === "collector" && catalogCardsCount >= 100 ? (
               <div className="mt-3 rounded-2xl border border-amber-500/20 bg-amber-500/[0.08] p-4">
                 <div className="text-sm font-semibold text-amber-200">Collector limit reached</div>
                 <p className="mt-2 text-sm leading-6 text-slate-200">
@@ -625,9 +623,9 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Collector</div>
                   <div className="text-sm font-semibold text-white">$5 / month ($50 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Catalog up to 250 cards, with 10 active CardCat Market listings.</div>
+                <div className="mt-1 text-sm text-slate-400">Catalog up to 100 cards, with 10 active CardCat Market listings.</div>
                 <ul className="mt-3 list-none pl-0 space-y-2 text-sm text-slate-300 text-center">
-                  <li>• Up to 250 catalog cards</li>
+                  <li>• Up to 100 catalog cards</li>
                   <li>• 10 active CardCat Market listings</li>
                   <li>• Manual add/edit</li>
                   <li>• Personal Collection (PC) view</li>
@@ -659,9 +657,9 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Seller</div>
                   <div className="text-sm font-semibold text-white">$25 / month ($250 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Catalog up to 10,000 cards, with 250 active CardCat Market listings.</div>
+                <div className="mt-1 text-sm text-slate-400">Unlimited catalog cards, with 250 active CardCat Market listings.</div>
                 <ul className="mt-3 list-none pl-0 space-y-2 text-sm text-slate-300 text-center">
-                  <li>• Up to 10,000 catalog cards</li>
+                  <li>• Unlimited catalog cards</li>
                   <li>• 250 active CardCat Market listings</li>
                   <li>• CSV import/export</li>
                   <li>• Deeper sold tracking</li>
@@ -693,9 +691,9 @@ export default function AccountPage() {
                   <div className="text-sm font-semibold text-slate-100">Pro</div>
                   <div className="text-sm font-semibold text-white">$10 / month ($100 / yr)</div>
                 </div>
-                <div className="mt-1 text-sm text-slate-400">Catalog up to 1,000 cards, with 50 active CardCat Market listings.</div>
+                <div className="mt-1 text-sm text-slate-400">Unlimited catalog cards, with 50 active CardCat Market listings.</div>
                 <ul className="mt-3 list-none pl-0 space-y-2 text-sm text-slate-300 text-center">
-                  <li>• Up to 1,000 catalog cards</li>
+                  <li>• Unlimited catalog cards</li>
                   <li>• 50 active CardCat Market listings</li>
                   <li>• CSV import/export</li>
                   <li>• Bulk inventory tools</li>
