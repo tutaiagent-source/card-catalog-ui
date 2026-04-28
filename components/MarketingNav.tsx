@@ -4,7 +4,7 @@ export default function MarketingNav() {
   return (
     <header className="sticky top-0 z-40 mb-6 backdrop-blur">
       <div className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 shadow-[0_18px_50px_rgba(2,6,23,0.28)] sm:px-5">
-        <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <a href="/" className="inline-flex">
             <CardCatLogo variant="horizontal" size="md" />
           </a>
