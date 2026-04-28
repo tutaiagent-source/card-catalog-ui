@@ -14,7 +14,7 @@ function tierToPlanDetails(tier: SubscriptionTier): PlanDetails {
       return {
         planName: "Collector",
         monthlyPrice: "$5/month",
-        catalogUpTo: "Up to 250 cards",
+        catalogUpTo: "Up to 100 cards",
         activeListings: "10 active CardCat Market listings",
         showRoiNetProfit: false,
       };

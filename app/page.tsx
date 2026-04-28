@@ -71,7 +71,7 @@ const pricingTiers = [
     price: "$5 / month",
     caption: "A strong starting point for personal collections, with no CardCat buyer fees and no CardCat seller fees.",
     features: [
-      "Up To 250 Cards",
+      "Up To 100 Cards",
       "10 active CardCat Market listings",
       "Manual Card Entry",
       "Personal Collection (PC) view",

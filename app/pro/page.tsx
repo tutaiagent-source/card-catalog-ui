@@ -156,7 +156,7 @@ export default function ProPlanPage() {
             </p>
 
             <p className="mt-3 text-sm leading-6 text-slate-200">
-              Capacity & listings: Collector up to 250 cards and 10 active Market listings; Pro up to 1,000 cards and 50 active Market listings.
+              Capacity & listings: Collector up to 100 cards and 10 active Market listings; Pro up to 1,000 cards and 50 active Market listings.
             </p>
 
             <div className="mt-6 grid gap-2">
@@ -167,7 +167,7 @@ export default function ProPlanPage() {
               </div>
 
               {[
-                ["Up to 250 cards", true, true],
+                ["Up to 100 cards", true, true],
                 ["More room to grow", false, true],
                 ["Manual card entry", true, true],
                 ["CSV import/export", false, true],
