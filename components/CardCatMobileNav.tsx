@@ -7,7 +7,7 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 
 const items = [
-  { href: "/catalog", label: "Catalog", icon: <CardCatMark className="h-4.5 w-4.5" /> },
+  { href: "/catalog", label: "Catalog", icon: <CardCatMark className="h-5 w-5" /> },
   { href: "/pc", label: "PC ★", icon: "☆" },
   { href: "/listed", label: "Listings", icon: "📣" },
   { href: "/messages", label: "Msgs", icon: "✉️" },
