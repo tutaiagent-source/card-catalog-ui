@@ -61,7 +61,6 @@ export default function CardCatLogo({
     const widthPx = variant === "horizontal" ? horizontalWidthPx : verticalWidthPx;
     const aspect = variant === "horizontal" ? 11783 / 4958 : 1;
     const heightPx = Math.round(widthPx / aspect);
-    const objectPosition = variant === "horizontal" ? "60% 50%" : "center";
 
     return (
       <div className={`inline-flex ${alignClasses} ${className}`.trim()}>
@@ -72,7 +71,7 @@ export default function CardCatLogo({
             fill
             priority={priority}
             sizes={`${widthPx}px`}
-            style={{ objectFit: "contain", objectPosition }}
+            style={{ objectFit: "contain", objectPosition: "center" }}
             className={imageClassName || "object-contain object-center"}
           />
         </div>
