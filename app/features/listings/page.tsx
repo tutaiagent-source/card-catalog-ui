@@ -1,212 +1,83 @@
 import MarketingNav from "@/components/MarketingNav";
 import ListingsFeaturePreview from "@/components/ListingsFeaturePreview";
 
-const steps = [
-  {
-    title: "Mark A Card As Listed",
-    body: "In your Catalog, set a card’s status to Listed and add its asking price, listed date, and sale link (eBay/Whatnot/local/etc.).",
-    icon: "📌",
-  },
-  {
-    title: "It Moves Into Your Listings Shelf",
-    body: "Once saved, the card shows up in your Active Listings page automatically.",
-    icon: "🗂️",
-  },
-  {
-    title: "View + Edit Quickly",
-    body: "Open a card to update the asking price, listed date, and sale link, then share your Active Listing when you’re ready.",
-    icon: "✍️",
-  },
-];
-
-const shareUseCases = [
-  {
-    title: "Before A Card Show",
-    body: "Share the cards you plan to bring so people can browse ahead of time and message you before the show starts.",
-  },
-  {
-    title: "Discord, Reddit, And Facebook",
-    body: "Post one clean link instead of a long message thread or a pile of screenshots whenever you want people to browse your active cards.",
-  },
-  {
-    title: "Local Meetups And Trade Nights",
-    body: "Let other collectors quickly scan what is available without giving them edit access to your catalog.",
-  },
-];
-
-const safetyTips = [
-  "Use payment methods you’re comfortable with (for example, PayPal Goods & Services).",
-  "Confirm card condition, front/back photos, and grading details before payment.",
-  "Use tracked shipping and insurance for higher-value cards.",
-  "Keep proof of packaging, shipment, and any agreement made in messages.",
-];
-
-const connectionFlow = [
-  "Share your listing publicly or with a specific community.",
-  "Interested buyers or traders review the cards in a view-only page.",
-  "They contact you directly to discuss price, trade terms, shipping, and payment.",
-  "The transaction happens off-platform, while CardCat stays focused on cataloging and discovery.",
-];
-
 export default function ListingsFeaturePage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-6 pb-16 sm:px-6 lg:px-8">
         <MarketingNav />
 
-        <section className="relative mt-2 overflow-hidden rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_32%),radial-gradient(circle_at_70%_20%,rgba(16,185,129,0.16),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] px-5 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.55)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-          <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-emerald-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute -right-28 top-0 h-72 w-72 rounded-full bg-blue-500/15 blur-3xl" />
-
+        <section className="relative mt-2 overflow-hidden rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-5 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.55)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
           <div className="relative grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
-                <span>🧾</span>
-                Active Listings
+                📌 Listings
               </div>
               <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-                One Place To View And Update Every Item You’re Selling
+                Manage the cards you have for sale.
               </h1>
-              <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                Save your listing once, then keep everything attached to the card record: asking price, listed date, and the exact sale link.
-                Your Active Listings shelf stays in sync.
+              <p className="mt-5 text-base leading-7 text-slate-300">
+                Listings is where you keep track of what you’re actively selling, with asking prices, sale links, and notes.
               </p>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                {["💸 Update asking price", "📅 Keep listed date", "🔗 Sale link stays attached", "🌐 Share your listings shelf"].map((t) => (
-                  <div
-                    key={t}
-                    className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-100"
-                  >
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80 shadow-[0_0_0_4px_rgba(52,211,153,0.12)]" />
-                    <span>{t}</span>
-                  </div>
-                ))}
+              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4 sm:col-span-1">
+                  <h2 className="text-lg font-bold text-white">What</h2>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    A single place for your active sale inventory.
+                  </p>
+                </div>
+                <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4 sm:col-span-1">
+                  <h2 className="text-lg font-bold text-white">How</h2>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    Move cards from Catalog or PC into Listings.
+                  </p>
+                </div>
+                <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4 sm:col-span-1">
+                  <h2 className="text-lg font-bold text-white">Why</h2>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    Keep everything together instead of juggling spreadsheets and screenshots.
+                  </p>
+                </div>
               </div>
 
-              <div className="mt-7 flex flex-wrap gap-3">
+              <div className="mt-8 rounded-[32px] border border-white/10 bg-slate-950/40 p-6">
+                <h3 className="text-lg font-bold text-white">Listings bullets</h3>
+                <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-300">
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                    Track cards for sale
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                    Add external listing links
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                    Share your available inventory
+                  </li>
+                </ul>
+              </div>
+
+              <div className="mt-8 flex flex-wrap items-center gap-3">
                 <a
-                  href="/listed"
-                  className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100"
+                  href="/login"
+                  className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
                 >
-                  View Active Listings
+                  Manage Listings
                 </a>
                 <a
-                  href="/catalog"
-                  className="rounded-xl border border-white/20 bg-black/15 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black/25"
+                  href="/pro"
+                  className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
                 >
-                  Update a Card in Catalog
+                  View Plans
                 </a>
               </div>
             </div>
 
-            <ListingsFeaturePreview />
-          </div>
-        </section>
-
-        <section className="mt-12 rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.12),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(6,95,70,0.18)] sm:p-8">
-          <div className="max-w-2xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">How It Works</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">3 Quick Steps</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-100/85">
-              No extra spreadsheet for selling. Listings is your Catalog, filtered into your Active Listings shelf.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
-            {steps.map((s, idx) => (
-              <div
-                key={s.title}
-                className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 shadow-[0_30px_90px_rgba(2,6,23,0.20)]"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] text-lg font-black text-white">
-                    {idx + 1}
-                  </div>
-                  <div>
-                    <div className="text-lg font-semibold text-white">
-                      <span className="mr-2">{s.icon}</span>
-                      {s.title}
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">{s.body}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-10 rounded-[32px] border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.16),rgba(59,130,246,0.07))] p-6 sm:p-8">
-          <div className="max-w-3xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Tip</div>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">Keep Your Listing Link With The Card</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-200">
-              In Listings, you’ll be able to quickly open and share the card, and update the sale link you’re currently using (eBay, Whatnot, local, etc.).
-            </p>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              {[
-                "Open Listing ↗",
-                "Price Stays Attached 💰",
-                "Share When Ready 🚀",
-              ].map((chip) => (
-                <div key={chip} className="rounded-2xl border border-white/10 bg-black/15 px-4 py-3 text-sm font-semibold text-slate-100">
-                  {chip}
-                </div>
-              ))}
+            <div>
+              <ListingsFeaturePreview />
             </div>
-          </div>
-        </section>
-
-        <section className="mt-10 rounded-[32px] border border-blue-500/20 bg-[linear-gradient(135deg,rgba(59,130,246,0.14),rgba(16,185,129,0.08))] p-6 shadow-[0_30px_90px_rgba(30,64,175,0.16)] sm:p-8">
-          <div className="max-w-3xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Shared Listing Links</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Share Your Whole Listings Shelf Without Exposing Your Full Catalog</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-100/90 sm:text-base">
-              Generate a view-only share link for your Active Listings shelf. Choose whether to show pricing, pick an expiration (24 hours, 7 days, 1 month, or permanently), and disable it anytime.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
-            {shareUseCases.map((item) => (
-              <div key={item.title} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
-                <div className="text-lg font-semibold text-white">{item.title}</div>
-                <p className="mt-3 text-sm leading-6 text-slate-300">{item.body}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-10 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">How Member-To-Member Deals Can Work</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">CardCat Can Help People Connect Without Becoming The Checkout Layer</h2>
-            <ol className="mt-6 space-y-3 text-sm leading-7 text-slate-300">
-              {connectionFlow.map((step, idx) => (
-                <li key={step} className="flex gap-4">
-                  <span className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-bold text-emerald-200">{idx + 1}</span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <div className="rounded-[32px] border border-amber-500/20 bg-amber-500/[0.08] p-6 sm:p-8">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Safety Note</div>
-            <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">CardCat Is A Connection Platform, Not The Seller Of Record</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-100/90">
-              CardCat helps collectors show cards and connect with each other. Payments, shipping, condition disputes, refunds, and delivery arrangements stay between the buyer and seller.
-            </p>
-
-            <p className="mt-3 text-sm leading-6 text-slate-100/90">
-              No CardCat buyer fees. No CardCat seller fees. CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.
-            </p>
-
-            <ul className="mt-5 space-y-2 text-sm text-slate-100/90">
-              {safetyTips.map((tip) => (
-                <li key={tip}>• {tip}</li>
-              ))}
-            </ul>
           </div>
         </section>
       </div>

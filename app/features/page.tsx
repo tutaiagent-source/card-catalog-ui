@@ -5,7 +5,7 @@ const featureCards = [
   {
     title: "Catalog",
     body: "Catalog cards in one place with cleaner search, images, and status tracking across Collection, Active Listings, and Sold.",
-    href: "/catalog",
+    href: "/features/catalog",
     label: "Open Catalog",
   },
   {
@@ -23,7 +23,7 @@ const featureCards = [
   {
     title: "CSV Import",
     body: "Import inventory from CSV, map columns to CardCat fields, and clean up duplicates before saving.",
-    href: "/guides/csv",
+    href: "/features/import",
     label: "CSV Guide",
   },
   {

@@ -1,65 +1,58 @@
 import MarketingNav from "@/components/MarketingNav";
 
-export default function MarketFeaturePage() {
+export default function SoldFeaturePage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-6 pb-16 sm:px-6 lg:px-8">
         <MarketingNav />
 
-        <section className="relative mt-2 overflow-hidden rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-5 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.55)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+        <section className="relative mt-2 overflow-hidden rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-5 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.55)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
-              💬 CardCat Market
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
+              💰 Sold
             </div>
             <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-              List cards in a member marketplace with no CardCat seller fees.
+              Track what sold and what you made.
             </h1>
-            <p className="mt-5 text-base leading-7 text-slate-300">
-              The CardCat Market is where members can browse cards, message sellers about specific cards, and make offers.
-            </p>
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
               <h2 className="text-lg font-bold text-white">What</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300">
-                A private member marketplace for collector-to-collector deals.
+                Sold is where completed sales are stored with sale details, platform, shipping cost, and profit tracking.
               </p>
             </div>
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
               <h2 className="text-lg font-bold text-white">How</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300">
-                Publish cards from Listings to the Market. Buyers browse, message you, and send offers.
+                When a card is marked sold, or when a CardCat Market deal is completed, it moves into Sold with the right fields.
               </p>
             </div>
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5">
               <h2 className="text-lg font-bold text-white">Why</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300">
-                CardCat helps collectors make deals without taking a CardCat buyer or seller fee.
+                Collectors and sellers need more than a sold pile. Sold helps you track ROI and net profit over time.
               </p>
             </div>
           </div>
 
           <div className="mt-8 rounded-[32px] border border-white/10 bg-slate-950/40 p-6">
-            <h3 className="text-lg font-bold text-white">Market essentials</h3>
+            <h3 className="text-lg font-bold text-white">Sold essentials</h3>
             <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-300">
               <li className="flex items-start gap-3">
                 <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                List cards in the CardCat Market
+                Track sold cards
               </li>
               <li className="flex items-start gap-3">
                 <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                Receive messages and offers
+                Record platform and sale price
               </li>
               <li className="flex items-start gap-3">
                 <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                No CardCat buyer or seller fees
+                Monitor ROI and net profit
               </li>
             </ul>
-
-            <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-4 text-sm leading-6 text-red-100">
-              CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.
-            </div>
           </div>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -67,7 +60,7 @@ export default function MarketFeaturePage() {
               href="/login"
               className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
             >
-              Explore the Market
+              Track Sales
             </a>
             <a
               href="/pro"
