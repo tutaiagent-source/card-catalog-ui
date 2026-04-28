@@ -7,7 +7,11 @@ import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 
 const items = [
-  { href: "/catalog", label: "Catalog", icon: <CardCatMark className="h-5 w-5" /> },
+  {
+    href: "/catalog",
+    label: "Catalog",
+    icon: <CardCatMark className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />,
+  },
   { href: "/pc", label: "PC ★", icon: "☆" },
   { href: "/listed", label: "Listings", icon: "📣" },
   { href: "/messages", label: "Msgs", icon: "✉️" },
@@ -100,9 +104,9 @@ export default function CardCatMobileNav() {
             <a
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center justify-center rounded-lg px-1 py-1 text-[10px] font-semibold ${active ? "bg-amber-500/15 text-amber-200" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
+              className={`flex flex-col items-center justify-center rounded-lg px-1 py-1 text-[10px] font-semibold sm:text-[11px] lg:text-[12px] ${active ? "bg-amber-500/15 text-amber-200" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"}`}
             >
-              <span className="relative flex h-5 items-center justify-center text-base leading-none">
+              <span className="relative flex h-5 items-center justify-center text-base leading-none sm:h-6 lg:h-7 sm:text-lg lg:text-[20px]">
                 {item.icon}
                 {showUnreadDot ? (
                   <span
