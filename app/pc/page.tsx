@@ -348,7 +348,7 @@ export default function PcPage() {
         <div className="flex items-end justify-between gap-4">
           <div>
             <div className="hidden sm:block">
-              <CardCatLogo variant="horizontal" size="md" />
+              <CardCatLogo variant="horizontal" size="md" align="center" />
             </div>
             <div className="sm:hidden">
               <CardCatLogo variant="icon" size="md" />

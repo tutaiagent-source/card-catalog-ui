@@ -2266,7 +2266,7 @@ export default function MessagesPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="hidden sm:block">
-                <CardCatLogo variant="horizontal" size="md" />
+                <CardCatLogo variant="horizontal" size="md" align="center" />
               </div>
               <div className="sm:hidden">
                 <CardCatLogo variant="icon" size="md" />
