@@ -27,7 +27,9 @@ const nextConfig: NextConfig = {
 
 export default withPWA({
   dest: "public",
-  register: true,
+  register: false,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === "development",
+  // Temporarily disable PWA in production while we debug a mobile load/redirect loop.
+  // Existing service workers on devices may still remain until site data is cleared.
+  disable: true,
 })(nextConfig);
