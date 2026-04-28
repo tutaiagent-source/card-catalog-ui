@@ -76,7 +76,14 @@ export function buildSubscriptionWelcomeEmail(tier: SubscriptionTier) {
   const html = `
   <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color: #0f172a; line-height: 1.45;">
     <div style="max-width: 640px; margin: 0 auto; padding: 24px;">
-      <div style="font-size: 14px; color: #475569;">CardCat</div>
+      <div>
+        <img
+          src="${baseUrl}/brand/card_cat_horizontal.png"
+          alt="CardCat"
+          width="220"
+          style="display:block; height:auto; max-width:100%; margin: 0 0 6px 0; object-fit:contain;"
+        />
+      </div>
       <h1 style="margin: 8px 0 0; font-size: 26px; letter-spacing: -0.02em;">Welcome to CardCat</h1>
       <p style="margin: 12px 0 0; font-size: 16px;">Congrats, you’ve signed up for the <strong>${d.planName}</strong> plan.</p>
 

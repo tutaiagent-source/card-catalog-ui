@@ -563,6 +563,8 @@ export default function SoldPage() {
       const disclaimer =
         "CardCat Deal Records are documentation tools only. CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.";
 
+      const logoUrl = `${window.location.origin}/brand/card_cat_horizontal.png`;
+
       const html = `
         <!doctype html>
         <html>
@@ -577,6 +579,7 @@ export default function SoldPage() {
               .brand { display:flex; flex-direction: column; }
               .brand .name { font-size: 22px; font-weight: 900; color: var(--accent); line-height: 1.1; }
               .brand .sub { margin-top: 6px; font-size: 14px; color: var(--muted); }
+              .deal-logo { width: 220px; height: auto; object-fit: contain; margin-bottom: 6px; display:block; }
               .meta { text-align: right; font-size: 13px; color: var(--muted); }
               h2 { margin: 18px 0 10px; font-size: 16px; font-weight: 900; }
               .section { border: 1px solid var(--border); border-radius: 12px; padding: 14px 14px; margin-top: 12px; }
@@ -594,6 +597,7 @@ export default function SoldPage() {
             <div class="wrap">
               <div class="header">
                 <div class="brand">
+                  <img class="deal-logo" src="${escapeHtml(logoUrl)}" alt="CardCat" />
                   <div class="name">CardCat</div>
                   <div class="sub">Deal Record</div>
                 </div>
@@ -951,7 +955,12 @@ export default function SoldPage() {
         <UsernamePromptBanner userId={user?.id} />
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <CardCatLogo />
+            <div className="hidden sm:block">
+              <CardCatLogo variant="horizontal" size="md" />
+            </div>
+            <div className="sm:hidden">
+              <CardCatLogo variant="icon" size="md" />
+            </div>
             <h1 className="mt-3 text-3xl font-bold tracking-tight">Sales Dashboard</h1>
             <div className="mt-2 max-w-2xl text-sm text-slate-400">
               Your sold cards, revenue performance, and recent sales momentum in one cleaner view.

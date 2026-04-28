@@ -7,7 +7,7 @@
   "theme_color": "#0b1220",
   "icons": [
     {
-      "src": "/logos/card_cat_icon.png",
+      "src": "/brand/card_cat_icon.png",
       "sizes": "any",
       "type": "image/png"
     }

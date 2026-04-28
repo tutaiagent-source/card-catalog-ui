@@ -1358,12 +1358,17 @@ export default function CatalogPage() {
       <div className="mx-auto max-w-5xl px-4 py-8 pb-24 md:pb-24">
         <EmailVerificationNotice needsVerification={needsEmailVerification} email={(user as any)?.email} />
         <UsernamePromptBanner userId={user?.id} />
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardCatLogo />
-            <h1 className="mt-3 text-2xl font-bold">Catalog</h1>
-            <div className="mt-1 text-sm text-slate-400">Search, sort, and move inventory without losing the plot.</div>
-          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="hidden sm:block">
+                <CardCatLogo variant="horizontal" size="md" />
+              </div>
+              <div className="sm:hidden">
+                <CardCatLogo variant="icon" size="md" />
+              </div>
+              <h1 className="mt-3 text-2xl font-bold">Catalog</h1>
+              <div className="mt-1 text-sm text-slate-400">Search, sort, and move inventory without losing the plot.</div>
+            </div>
           <div className="flex flex-wrap gap-3">
             <div className="flex flex-wrap gap-3 md:hidden">
               <a

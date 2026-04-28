@@ -594,7 +594,12 @@ export default function ListedPage() {
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <CardCatLogo />
+            <div className="hidden sm:block">
+              <CardCatLogo variant="horizontal" size="md" />
+            </div>
+            <div className="sm:hidden">
+              <CardCatLogo variant="icon" size="md" />
+            </div>
             <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-200">
               <span>📣</span>
               <span>Listed</span>

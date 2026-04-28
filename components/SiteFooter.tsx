@@ -1,9 +1,13 @@
 import Link from "next/link";
+import CardCatLogo from "@/components/CardCatLogo";
 
 export default function SiteFooter() {
   return (
     <footer className="border-t border-white/10 bg-slate-950/70">
       <div className="mx-auto max-w-7xl px-4 py-6 text-center text-xs text-slate-400 sm:px-6 lg:px-8">
+        <div className="mb-4 flex justify-center">
+          <CardCatLogo variant="vertical" size="sm" align="center" />
+        </div>
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
           <Link
             href="/privacy"

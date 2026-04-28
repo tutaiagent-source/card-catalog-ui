@@ -273,7 +273,12 @@ export default function MarketPage() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <CardCatLogo />
+            <div className="hidden sm:block">
+              <CardCatLogo variant="horizontal" size="md" />
+            </div>
+            <div className="sm:hidden">
+              <CardCatLogo variant="icon" size="md" />
+            </div>
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-white">Market</h1>
             <div className="mt-2 text-sm text-slate-400">Member-Only Market Feed: browse active listings from other CardCat members, then message sellers directly from the card. No CardCat buyer fees. No CardCat seller fees.</div>
             <div className="mt-2 text-xs leading-5 text-slate-500">

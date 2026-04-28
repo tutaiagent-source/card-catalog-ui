@@ -1293,6 +1293,8 @@ export default function MessagesPage() {
   function buildDealRecordHtml(params: { draft: boolean; title: string }) {
     if (!dealRecordForDisplay) return "";
 
+    const logoUrl = `${window.location.origin}/brand/card_cat_horizontal.png`;
+
     const card = activeConversationCard;
     const buyerHandle = profileHandleById(dealRecordForDisplay.buyer_user_id);
     const sellerHandle = profileHandleById(dealRecordForDisplay.seller_user_id);
@@ -1423,6 +1425,7 @@ export default function MessagesPage() {
             .brand { display:flex; flex-direction: column; }
             .brand .name { font-size: 22px; font-weight: 900; color: var(--accent); line-height: 1.1; }
             .brand .sub { margin-top: 6px; font-size: 14px; color: var(--muted); }
+            .deal-logo { width: 220px; height: auto; object-fit: contain; margin-bottom: 6px; display:block; }
             .meta { text-align: right; font-size: 13px; color: var(--muted); }
             .meta b { color: var(--text); }
             h2 { margin: 18px 0 10px; font-size: 16px; font-weight: 900; }
@@ -1440,13 +1443,14 @@ export default function MessagesPage() {
           </style>
         </head>
         <body>
-          <div class="wrap">
-            ${watermarkHtml}
-            <div class="header">
-              <div class="brand">
-                <div class="name">CardCat</div>
-                <div class="sub">Deal Record</div>
-              </div>
+            <div class="wrap">
+              ${watermarkHtml}
+              <div class="header">
+                <div class="brand">
+                  <img class="deal-logo" src="${escapeHtml(logoUrl)}" alt="CardCat" />
+                  <div class="name">CardCat</div>
+                  <div class="sub">Deal Record</div>
+                </div>
               <div class="meta">
                 <div><b>Deal ID</b>: ${escapeHtml(dealIdShort)}</div>
                 <div><b>Generated</b>: ${escapeHtml(new Date().toLocaleString())}</div>
@@ -2261,7 +2265,12 @@ export default function MessagesPage() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <CardCatLogo />
+              <div className="hidden sm:block">
+                <CardCatLogo variant="horizontal" size="md" />
+              </div>
+              <div className="sm:hidden">
+                <CardCatLogo variant="icon" size="md" />
+              </div>
               <h1 className="mt-3 text-3xl font-bold tracking-tight text-white">Messages</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
                 <span>Member-to-member card conversations, now back inside the real CardCat app nav.</span>

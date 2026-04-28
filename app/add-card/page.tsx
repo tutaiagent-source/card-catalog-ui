@@ -913,7 +913,12 @@ export default function AddCardPage() {
         <UsernamePromptBanner userId={user?.id} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardCatLogo />
+            <div className="hidden sm:block">
+              <CardCatLogo variant="horizontal" size="md" />
+            </div>
+            <div className="sm:hidden">
+              <CardCatLogo variant="icon" size="md" />
+            </div>
             <h1 className="mt-3 text-2xl font-bold">{editingId ? "Edit Card" : "Add Card"}</h1>
             <div className="mt-1 text-sm text-slate-400">Signed in as {user.email}</div>
           </div>

@@ -1111,7 +1111,12 @@ export default function ImportPage() {
         <div className="mx-auto max-w-4xl px-4 py-8 pb-24 md:pb-24">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardCatLogo />
+              <div className="hidden sm:block">
+                <CardCatLogo variant="horizontal" size="md" />
+              </div>
+              <div className="sm:hidden">
+                <CardCatLogo variant="icon" size="md" />
+              </div>
               <h1 className="mt-3 text-2xl font-bold">Import Collection</h1>
               <div className="mt-1 text-sm text-slate-400">Collector preview keeps this locked so you can feel the upgrade boundary.</div>
             </div>
@@ -1159,7 +1164,12 @@ export default function ImportPage() {
         <UsernamePromptBanner userId={user?.id} />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardCatLogo />
+            <div className="hidden sm:block">
+              <CardCatLogo variant="horizontal" size="md" />
+            </div>
+            <div className="sm:hidden">
+              <CardCatLogo variant="icon" size="md" />
+            </div>
             <h1 className="mt-3 text-2xl font-bold">Import Collection</h1>
             <div className="mt-1 text-sm text-slate-400">Upload a CSV, review the mapping, then import only the rows that are ready.</div>
           </div>

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import MarketingNav from "@/components/MarketingNav";
+import CardCatLogo from "@/components/CardCatLogo";
 
 // Support email used for the contact mailto link (so messages can be filtered by subject).
 const SUPPORT_EMAIL = "support@cardcat.io";
@@ -134,6 +135,14 @@ export default function ContactPage() {
         <MarketingNav />
 
         <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_30px_90px_rgba(2,6,23,0.35)] sm:p-8">
+          <div className="mb-4">
+            <div className="hidden sm:block">
+              <CardCatLogo variant="horizontal" size="md" />
+            </div>
+            <div className="sm:hidden">
+              <CardCatLogo variant="icon" size="md" />
+            </div>
+          </div>
           <h1 className="text-3xl font-black tracking-[-0.03em]">Contact Us</h1>
           <p className="mt-3 text-sm leading-6 text-slate-300">
             CardCat is built for collectors, and we’re constantly trying to improve the

@@ -1,4 +1,5 @@
 import MarketingNav from "@/components/MarketingNav";
+import CardCatLogo from "@/components/CardCatLogo";
 import { CatalogShowcase, ImportShowcase, SoldShowcase } from "@/components/MarketingScreens";
 import ShareSheetFeaturePreview from "@/components/ShareSheetFeaturePreview";
 
@@ -153,6 +154,13 @@ export default function Home() {
           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(213,0,0,0.08),transparent_36%,transparent_64%,rgba(59,130,246,0.08))]" />
           <div className="relative grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
             <div>
+              <div className="mb-5 hidden md:block">
+                <CardCatLogo variant="vertical" size="lg" priority />
+              </div>
+              <div className="mb-5 md:hidden">
+                <CardCatLogo variant="vertical" size="md" priority />
+              </div>
+
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
                 Private collector marketplace
               </div>

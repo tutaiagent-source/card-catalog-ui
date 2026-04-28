@@ -6,7 +6,7 @@ export default function MarketingNav() {
       <div className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 shadow-[0_18px_50px_rgba(2,6,23,0.28)] sm:px-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <a href="/" className="inline-flex">
-            <CardCatLogo variant="horizontal" imageClassName="h-10 w-auto" />
+            <CardCatLogo variant="horizontal" size="md" />
           </a>
 
           <nav className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-300 sm:justify-end">

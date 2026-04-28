@@ -347,7 +347,12 @@ export default function PcPage() {
         <UsernamePromptBanner userId={user?.id} />
         <div className="flex items-end justify-between gap-4">
           <div>
-            <CardCatLogo />
+            <div className="hidden sm:block">
+              <CardCatLogo variant="horizontal" size="md" />
+            </div>
+            <div className="sm:hidden">
+              <CardCatLogo variant="icon" size="md" />
+            </div>
             <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">
               <span>⭐</span>
               <span>PC</span>
