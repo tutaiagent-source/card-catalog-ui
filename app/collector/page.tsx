@@ -60,7 +60,7 @@ export default function CollectorPlanPage() {
             <h2 className="text-2xl font-bold text-white">What Collector Gives You</h2>
             <ul className="mt-5 space-y-3 text-sm text-slate-200">
               {[
-                "Up To 100 Cards",
+                "Up To 250 Cards",
                 "10 Active CardCat Market listings",
                 "Manual Card Entry",
                 "Personal Collection (PC) View",
@@ -160,7 +160,7 @@ export default function CollectorPlanPage() {
             </p>
 
             <p className="mt-3 text-sm leading-6 text-slate-200">
-              Capacity & listings: Collector up to 100 cards and 10 active Market listings; Pro up to 1,000 cards and 50 active Market listings.
+              Capacity & listings: Collector up to 250 cards and 10 active Market listings; Pro up to 1,000 cards and 50 active Market listings.
             </p>
 
             <div className="mt-6 grid gap-2">
@@ -171,7 +171,7 @@ export default function CollectorPlanPage() {
               </div>
 
               {[
-                ["Up to 100 cards", true, true],
+                ["Up to 250 cards", true, true],
                 ["More room to grow", false, true],
                 ["Manual card entry", true, true],
                 ["CSV import/export", false, true],

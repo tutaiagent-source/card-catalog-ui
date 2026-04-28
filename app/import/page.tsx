@@ -654,8 +654,10 @@ export default function ImportPage() {
 
   const catalogLimit =
     effectiveTierForLimits === "collector"
-      ? 100
-      : 1000000;
+      ? 250
+      : effectiveTierForLimits === "pro"
+        ? 1000
+        : 10000;
 
   const marketLimit =
     effectiveTierForLimits === "collector" ? 10 : effectiveTierForLimits === "pro" ? 50 : 250;
@@ -1129,7 +1131,7 @@ export default function ImportPage() {
                 <div className="text-sm font-semibold text-slate-100">Collector keeps it simple</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-300">
                   <li>• Manual add/edit</li>
-                  <li>• Up to 100 cards</li>
+                  <li>• Up to 250 cards</li>
                   <li>• 10 active CardCat Market listings</li>
                   <li>• Basic sold tracking</li>
                 </ul>

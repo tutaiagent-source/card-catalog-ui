@@ -39,10 +39,9 @@ returns bigint
 language sql
 as $$
   select case
-    -- Launch pricing: Starter (Collector) is capped; Pro is unlimited.
-    when p_tier = 'collector' then 100
-    when p_tier = 'pro' then null
-    when p_tier = 'seller' then null
+    when p_tier = 'collector' then 250
+    when p_tier = 'pro' then 1000
+    when p_tier = 'seller' then 10000
     else null
   end::bigint;
 $$;
