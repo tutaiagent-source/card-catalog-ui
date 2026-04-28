@@ -39,11 +39,12 @@ self.addEventListener("fetch", (event) => {
   const isHtmlDocument = isNavigate || request.destination === "document";
   const isApi = pathname.startsWith("/api/");
 
-  // IMPORTANT:
-  // Don’t intercept navigations or JS/API requests at all.
-  // Some iOS/WebView builds treat SW-handled navigation responses poorly and
-  // can end up in reload/error loops. Let the browser handle those.
-  if (isHtmlDocument || isNextAsset || isApi) return;
+  // Always go to the network for navigations and JS/CSS assets.
+  // This avoids stale chunk / redirect / reload loops in in-app browsers.
+  if (isHtmlDocument || isNextAsset || isApi) {
+    event.respondWith(fetch(request));
+    return;
+  }
 
   // Cache only static images and branding assets.
   const shouldCache =
@@ -51,7 +52,7 @@ self.addEventListener("fetch", (event) => {
     /\.(png|jpg|jpeg|gif|webp|svg|ico)$/i.test(pathname);
 
   if (!shouldCache) {
-    // Don’t intercept anything else.
+    event.respondWith(fetch(request));
     return;
   }
 
