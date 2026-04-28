@@ -956,7 +956,7 @@ export default function SoldPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="hidden sm:block">
-              <CardCatLogo variant="horizontal" size="md" align="center" />
+              <CardCatLogo variant="horizontal" size="md" />
             </div>
             <div className="sm:hidden">
               <CardCatLogo variant="icon" size="md" />

@@ -914,7 +914,7 @@ export default function AddCardPage() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="hidden sm:block">
-              <CardCatLogo variant="horizontal" size="md" align="center" />
+              <CardCatLogo variant="horizontal" size="md" />
             </div>
             <div className="sm:hidden">
               <CardCatLogo variant="icon" size="md" />

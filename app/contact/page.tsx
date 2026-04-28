@@ -136,8 +136,8 @@ export default function ContactPage() {
 
         <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_30px_90px_rgba(2,6,23,0.35)] sm:p-8">
           <div className="mb-4">
-            <div className="hidden sm:block flex justify-center">
-              <CardCatLogo variant="horizontal" size="md" align="center" />
+            <div className="hidden sm:block">
+              <CardCatLogo variant="horizontal" size="md" />
             </div>
             <div className="sm:hidden">
               <CardCatLogo variant="icon" size="md" />
