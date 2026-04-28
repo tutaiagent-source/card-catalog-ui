@@ -80,21 +80,9 @@ export default function CardCatLogo({
   }
 
   if (variant === "icon") {
-    const iconSrc = "/brand/card_cat_icon.png";
-    const iconSizeClass = markClassName ?? markSizeToClass(size);
-
     return (
       <div className={`inline-flex ${alignClasses} ${className}`.trim()}>
-        <div className={`relative ${iconSizeClass}`.trim()}>
-          <Image
-            src={iconSrc}
-            alt="CardCat"
-            fill
-            priority={priority}
-            sizes={size === "sm" ? "36px" : size === "lg" ? "48px" : "44px"}
-            style={{ objectFit: "contain", objectPosition: "center" }}
-          />
-        </div>
+        <CardCatMark className={markClassName ?? markSizeToClass(size)} />
       </div>
     );
   }
