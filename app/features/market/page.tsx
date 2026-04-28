@@ -1,4 +1,5 @@
 import MarketingNav from "@/components/MarketingNav";
+import PhoneFeatureMockup from "@/components/PhoneFeatureMockup";
 
 export default function MarketFeaturePage() {
   return (
@@ -61,6 +62,32 @@ export default function MarketFeaturePage() {
               CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.
             </div>
           </div>
+
+          <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
+            <div className="flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-xl">
+                <h2 className="text-2xl font-bold text-white">Message, then make the deal</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-300">
+                  Market keeps conversations grounded in the card: message sellers about specific items, make offers, and finish the deal inside CardCat.
+                </p>
+                <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-300">
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                    Receive messages and offers
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                    Keep deal steps organized
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                    Move into Sold when complete
+                  </li>
+                </ul>
+              </div>
+              <PhoneFeatureMockup variant="market" />
+            </div>
+          </section>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a

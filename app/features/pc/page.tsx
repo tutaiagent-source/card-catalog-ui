@@ -1,4 +1,5 @@
 import MarketingNav from "@/components/MarketingNav";
+import PhoneFeatureMockup from "@/components/PhoneFeatureMockup";
 
 export default function PcFeaturePage() {
   return (
@@ -54,6 +55,32 @@ export default function PcFeaturePage() {
               </li>
             </ul>
           </div>
+
+          <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
+            <div className="flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-xl">
+                <h2 className="text-2xl font-bold text-white">Your PC, always tidy</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-300">
+                  PC keeps your favorites separate from the cards you’re trying to sell, so your personal view stays easy to revisit.
+                </p>
+                <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-300">
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-blue-300" />
+                    Star any card from Catalog
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-blue-300" />
+                    Keep PC value signals up to date
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-blue-300" />
+                    Tap through details fast
+                  </li>
+                </ul>
+              </div>
+              <PhoneFeatureMockup variant="pc" />
+            </div>
+          </section>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a

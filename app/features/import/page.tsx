@@ -1,4 +1,5 @@
 import MarketingNav from "@/components/MarketingNav";
+import PhoneFeatureMockup from "@/components/PhoneFeatureMockup";
 
 export default function ImportFeaturePage() {
   return (
@@ -54,6 +55,32 @@ export default function ImportFeaturePage() {
               </li>
             </ul>
           </div>
+
+          <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
+            <div className="flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-xl">
+                <h2 className="text-2xl font-bold text-white">Clean mapping before anything gets saved</h2>
+                <p className="mt-3 text-sm leading-7 text-slate-300">
+                  Import is built for review first: map your columns, check duplicates, and only bring in rows that are ready.
+                </p>
+                <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-300">
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-blue-300" />
+                    Map columns to CardCat fields
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-blue-300" />
+                    Preview what will change
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="mt-1 h-2 w-2 rounded-full bg-blue-300" />
+                    Export anytime as backup
+                  </li>
+                </ul>
+              </div>
+              <PhoneFeatureMockup variant="import" />
+            </div>
+          </section>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a
