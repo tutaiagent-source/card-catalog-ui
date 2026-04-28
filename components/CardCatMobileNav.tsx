@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { CardCatMark } from "@/components/CardCatLogo";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
@@ -10,7 +10,14 @@ const items = [
   {
     href: "/catalog",
     label: "Catalog",
-    icon: <CardCatMark className="h-5 w-5 sm:h-6 sm:w-6 lg:h-7 lg:w-7" />,
+    icon: (
+      <Image
+        src="/brand/card_cat_icon.png"
+        alt="CardCat"
+        fill
+        className="object-contain object-center"
+      />
+    ),
   },
   { href: "/pc", label: "PC ★", icon: "☆" },
   { href: "/listed", label: "Listings", icon: "📣" },
