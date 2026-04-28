@@ -59,11 +59,12 @@ export default function CardCatLogo({
     const src =
       variant === "horizontal" ? "/brand/card_cat_horizontal.png" : "/brand/card_cat_vertical.png";
     const widthPx = variant === "horizontal" ? horizontalWidthPx : verticalWidthPx;
-    const aspectRatio = variant === "horizontal" ? "11783/4958" : "1/1";
+    const aspect = variant === "horizontal" ? 11783 / 4958 : 1;
+    const heightPx = Math.round(widthPx / aspect);
 
     return (
       <div className={`inline-flex ${alignClasses} ${className}`.trim()}>
-        <div className="relative" style={{ width: `${widthPx}px`, aspectRatio }}>
+        <div className="relative" style={{ width: `${widthPx}px`, height: `${heightPx}px` }}>
           <Image
             src={src}
             alt="CardCat"
