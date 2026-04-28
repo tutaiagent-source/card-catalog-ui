@@ -7,9 +7,9 @@
   "theme_color": "#0b1220",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/logos/card_cat_icon.png",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/png"
     }
   ]
 }

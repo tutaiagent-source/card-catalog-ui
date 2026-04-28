@@ -136,7 +136,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="mx-auto max-w-md px-4 py-16">
-        <CardCatLogo markClassName="h-12 w-12" />
+        <CardCatLogo variant="vertical" imageClassName="h-16 w-auto" />
         <h1 className="mt-4 text-3xl font-bold">Sign In to CardCat</h1>
         <p className="mt-3 text-slate-300">
           Save your collection, track prices, and manage the cards you keep, list, or sell in one place.
