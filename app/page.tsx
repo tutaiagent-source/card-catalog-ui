@@ -1,5 +1,6 @@
 import MarketingNav from "@/components/MarketingNav";
 import CardCatLogo from "@/components/CardCatLogo";
+import PlanTierCaps from "@/components/PlanTierCaps";
 
 const homepageFeatures = [
   {
@@ -213,6 +214,10 @@ export default function Home() {
                   {p.label}
                 </span>
               ))}
+            </div>
+
+            <div className="mt-6">
+              <PlanTierCaps className="rounded-[28px] border border-white/10 bg-slate-950/40 p-5" />
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">

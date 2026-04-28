@@ -1,5 +1,6 @@
 import MarketingNav from "@/components/MarketingNav";
 import PhoneFeatureMockup from "@/components/PhoneFeatureMockup";
+import PlanTierCaps from "@/components/PlanTierCaps";
 
 export default function SoldFeaturePage() {
   return (
@@ -81,6 +82,8 @@ export default function SoldFeaturePage() {
               <PhoneFeatureMockup variant="sold" />
             </div>
           </section>
+
+          <PlanTierCaps className="mt-8" />
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <a

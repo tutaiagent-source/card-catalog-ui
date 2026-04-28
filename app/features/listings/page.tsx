@@ -1,6 +1,7 @@
 import MarketingNav from "@/components/MarketingNav";
 import ListingsFeaturePreview from "@/components/ListingsFeaturePreview";
 import PhoneFeatureMockup from "@/components/PhoneFeatureMockup";
+import PlanTierCaps from "@/components/PlanTierCaps";
 
 export default function ListingsFeaturePage() {
   return (
@@ -107,6 +108,8 @@ export default function ListingsFeaturePage() {
             <PhoneFeatureMockup variant="listings" />
           </div>
         </section>
+
+        <PlanTierCaps className="mt-8" />
       </div>
     </main>
   );
