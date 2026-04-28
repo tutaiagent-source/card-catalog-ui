@@ -154,36 +154,39 @@ export default function CollectorPlanPage() {
         <section className="mt-12 rounded-[32px] border border-amber-500/20 bg-amber-500/[0.06] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Plan comparison</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">What’s Different in Pro</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">Collector / Pro / Seller (What Changes)</h2>
             <p className="mt-3 text-sm leading-7 text-slate-200">
               Collector keeps your workflow clean. Pro adds seller-focused workflow upgrades, including import/export, bulk tools, and profit/ROI analytics.
+              Seller includes Pro, plus higher caps for catalog size and active listings.
             </p>
 
             <p className="mt-3 text-sm leading-6 text-slate-200">
-              Capacity & listings: Collector up to 250 cards and 10 active Market listings; Pro up to 1,000 cards and 50 active Market listings.
+              Capacity & listings: Collector up to 250 cards and 10 active Market listings; Pro up to 1,000 cards and 50 active Market listings; Seller up to 10,000 cards and 250 active Market listings.
             </p>
 
             <div className="mt-6 grid gap-2">
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.7fr_0.7fr]">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr]">
                 <div className="rounded-2xl border border-amber-500/20 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Feature</div>
                 <div className="rounded-2xl border border-amber-500/20 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Collector</div>
                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.10] p-4 text-sm font-semibold text-amber-200">Pro</div>
+                <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.12] p-4 text-sm font-semibold text-orange-200">Seller</div>
               </div>
 
               {[
-                ["Up to 250 cards", true, true],
-                ["More room to grow", false, true],
-                ["Manual card entry", true, true],
-                ["CSV import/export", false, true],
-                ["Personal Collection (PC) view", true, true],
-                ["Cleaner catalog browsing", true, true],
-                ["Basic sold tracking", true, true],
-                ["Advanced sold insights", false, true],
-                ["Profit + ROI metrics", false, true],
-                ["Sales CSV export with analytics fields", false, true],
-              ].map(([feature, cOn, pOn]) => (
-                <div key={String(feature)} className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.7fr_0.7fr] items-center">
+                ["Up to 250 cards", true, false, false],
+                ["More room to grow", false, true, true],
+                ["Manual card entry", true, true, true],
+                ["CSV import/export", false, true, true],
+                ["Personal Collection (PC) view", true, true, true],
+                ["Cleaner catalog browsing", true, true, true],
+                ["Basic sold tracking", true, true, true],
+                ["Advanced sold insights", false, true, true],
+                ["Profit + ROI metrics", false, true, true],
+                ["Sales CSV export with analytics fields", false, true, true],
+              ].map(([feature, cOn, pOn, sOn]) => (
+                <div key={String(feature)} className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr] items-center">
                   <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-200">{String(feature)}</div>
+
                   <div
                     className={`rounded-2xl border border-white/10 p-4 text-center text-sm font-semibold ${
                       cOn ? "bg-white/[0.04] text-emerald-300" : "bg-white/[0.02] text-slate-500"
@@ -191,12 +194,21 @@ export default function CollectorPlanPage() {
                   >
                     {cOn ? "✓" : "—"}
                   </div>
+
                   <div
                     className={`rounded-2xl border border-amber-500/20 p-4 text-center text-sm font-semibold ${
                       pOn ? "bg-amber-500/[0.10] text-amber-200" : "bg-white/[0.02] text-slate-500"
                     }`}
                   >
                     {pOn ? "✓" : "—"}
+                  </div>
+
+                  <div
+                    className={`rounded-2xl border border-orange-500/20 p-4 text-center text-sm font-semibold ${
+                      sOn ? "bg-orange-500/[0.12] text-orange-200" : "bg-white/[0.02] text-slate-500"
+                    }`}
+                  >
+                    {sOn ? "✓" : "—"}
                   </div>
                 </div>
               ))}
@@ -208,6 +220,12 @@ export default function CollectorPlanPage() {
                 className="rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-5 py-3 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/[0.12]"
               >
                 See Pro
+              </a>
+              <a
+                href="/seller"
+                className="rounded-xl border border-orange-500/25 bg-orange-500/[0.10] px-5 py-3 text-sm font-semibold text-orange-200 transition-colors hover:bg-orange-500/[0.14]"
+              >
+                See Seller
               </a>
               <a
                 href="/login"
@@ -225,7 +243,7 @@ export default function CollectorPlanPage() {
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">When you should upgrade</div>
               <h2 className="mt-3 text-2xl font-bold text-white">When Your Workflow Starts Becoming a Seller Workflow</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300">
-                Pro adds CSV import/export, bulk inventory tools, and deeper sold analytics like profit and ROI. If you track costs and want export-ready insights, it’s the next step.
+                Pro adds CSV import/export, bulk inventory tools, and deeper sold analytics like profit and ROI. If you’re scaling up your selling volume, Seller includes Pro and adds higher caps for catalog size and active listings.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -234,6 +252,12 @@ export default function CollectorPlanPage() {
                 className="rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-5 py-3 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/[0.12]"
               >
                 See Pro
+              </a>
+              <a
+                href="/seller"
+                className="rounded-xl border border-orange-500/25 bg-orange-500/[0.10] px-5 py-3 text-sm font-semibold text-orange-200 transition-colors hover:bg-orange-500/[0.14]"
+              >
+                See Seller
               </a>
               <a
                 href="/login"

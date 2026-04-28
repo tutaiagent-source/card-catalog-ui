@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import MarketingNav from "@/components/MarketingNav";
 import { ImportShowcase, PcShowcase, SoldShowcase } from "@/components/MarketingScreens";
@@ -104,12 +105,13 @@ export default function ProPlanPage() {
 
         <section className="mt-12 rounded-[32px] border border-amber-500/25 bg-amber-500/[0.06] p-6 sm:p-8">
           <div className="max-w-5xl">
-            <h2 className="text-2xl font-bold text-white">Collector vs Pro (Quick Visual)</h2>
+            <h2 className="text-2xl font-bold text-white">Collector / Pro / Seller (Quick Visual)</h2>
             <p className="mt-3 text-sm leading-7 text-slate-200">
-              Collector is built for organization. Pro is built for workflows that need import/export, bulk tools, and profit/ROI visibility.
+              Collector is built for organization. Pro is built for seller workflows that need import/export, bulk tools, and profit/ROI visibility.
+              Seller includes Pro, then scales your caps and analytics for higher volume.
             </p>
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <div className="mt-6 grid gap-4 lg:grid-cols-3">
               <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">Collector</div>
                 <ul className="mt-4 space-y-3 text-sm text-slate-200">
@@ -143,6 +145,23 @@ export default function ProPlanPage() {
                   ))}
                 </ul>
               </div>
+
+              <div className="rounded-[28px] border border-orange-500/25 bg-orange-500/[0.10] p-6">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-200">Seller</div>
+                <ul className="mt-4 space-y-3 text-sm text-slate-100">
+                  {[
+                    "Higher catalog + listing caps",
+                    "Deeper seller analytics",
+                    "Bulk tools + exports",
+                    "Export-ready sold receipts",
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-start gap-3">
+                      <span className="mt-1 text-orange-200">✓</span>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </section>
@@ -150,36 +169,39 @@ export default function ProPlanPage() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Plan comparison</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">Everything Pro Adds (Clearly)</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">Everything Pro Adds, plus Seller (Clearly)</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Collector covers organization and basic sold tracking. Pro expands workflows with import/export, bulk actions, and profit/ROI-ready analytics.
+              Seller includes Pro, then scales your caps for higher-volume selling.
             </p>
 
             <p className="mt-3 text-sm leading-6 text-slate-200">
-              Capacity & listings: Collector up to 250 cards and 10 active Market listings; Pro up to 1,000 cards and 50 active Market listings.
+              Capacity & listings: Collector up to 250 cards and 10 active Market listings; Pro up to 1,000 cards and 50 active Market listings; Seller up to 10,000 cards and 250 active Market listings.
             </p>
 
             <div className="mt-6 grid gap-2">
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.7fr_0.7fr]">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr]">
                 <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Feature</div>
                 <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Collector</div>
                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.10] p-4 text-sm font-semibold text-amber-200">Pro</div>
+                <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.12] p-4 text-sm font-semibold text-orange-200">Seller</div>
               </div>
 
               {[
-                ["Up to 250 cards", true, true],
-                ["More room to grow", false, true],
-                ["Manual card entry", true, true],
-                ["CSV import/export", false, true],
-                ["Personal Collection (PC) view", true, true],
-                ["Cleaner catalog browsing", true, true],
-                ["Basic sold tracking", true, true],
-                ["Advanced sold insights", false, true],
-                ["Profit + ROI metrics", false, true],
-                ["Sales CSV export with analytics fields", false, true],
-              ].map(([feature, cOn, pOn]) => (
-                <div key={String(feature)} className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.7fr_0.7fr] items-center">
+                ["Up to 250 cards", true, false, false],
+                ["More room to grow", false, true, true],
+                ["Manual card entry", true, true, true],
+                ["CSV import/export", false, true, true],
+                ["Personal Collection (PC) view", true, true, true],
+                ["Cleaner catalog browsing", true, true, true],
+                ["Basic sold tracking", true, true, true],
+                ["Advanced sold insights", false, true, true],
+                ["Profit + ROI metrics", false, true, true],
+                ["Sales CSV export with analytics fields", false, true, true],
+              ].map(([feature, cOn, pOn, sOn]) => (
+                <div key={String(feature)} className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr] items-center">
                   <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-200">{String(feature)}</div>
+
                   <div
                     className={`rounded-2xl border border-white/10 p-4 text-center text-sm font-semibold ${
                       cOn ? "bg-white/[0.04] text-emerald-300" : "bg-white/[0.02] text-slate-500"
@@ -187,12 +209,21 @@ export default function ProPlanPage() {
                   >
                     {cOn ? "✓" : "—"}
                   </div>
+
                   <div
                     className={`rounded-2xl border border-amber-500/20 p-4 text-center text-sm font-semibold ${
                       pOn ? "bg-amber-500/[0.10] text-amber-200" : "bg-white/[0.02] text-slate-500"
                     }`}
                   >
                     {pOn ? "✓" : "—"}
+                  </div>
+
+                  <div
+                    className={`rounded-2xl border border-orange-500/20 p-4 text-center text-sm font-semibold ${
+                      sOn ? "bg-orange-500/[0.12] text-orange-200" : "bg-white/[0.02] text-slate-500"
+                    }`}
+                  >
+                    {sOn ? "✓" : "—"}
                   </div>
                 </div>
               ))}
@@ -205,7 +236,13 @@ export default function ProPlanPage() {
               >
                 Start with Pro
               </a>
-              <a href="/collector" className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">
+              <a href="/seller" className="rounded-xl border border-orange-500/25 bg-orange-500/[0.10] px-5 py-3 text-sm font-semibold text-orange-200 transition-colors hover:bg-orange-500/[0.14]">
+                See Seller
+              </a>
+              <a
+                href="/collector"
+                className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
+              >
                 See Collector
               </a>
             </div>
@@ -269,9 +306,12 @@ export default function ProPlanPage() {
               <a href="/collector" className="rounded-xl border border-blue-500/20 bg-blue-500/[0.08] px-5 py-3 text-sm font-semibold text-blue-200 transition-colors hover:bg-blue-500/[0.12]">
                 Compare With Collector
               </a>
-              <a href="/" className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]">
+              <Link
+                href="/"
+                className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
+              >
                 Back to Home
-              </a>
+              </Link>
             </div>
           </div>
         </section>
