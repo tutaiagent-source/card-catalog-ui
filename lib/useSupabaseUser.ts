@@ -16,11 +16,21 @@ export function useSupabaseUser() {
 
     let active = true;
 
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active) return;
-      setUser(data.user ?? null);
-      setLoading(false);
-    });
+    // Supabase can fail in certain mobile/private-network contexts
+    // (storage/cookie restrictions). We must catch to avoid unhandled
+    // rejections that can crash older browsers.
+    supabase.auth
+      .getUser()
+      .then(({ data }) => {
+        if (!active) return;
+        setUser(data.user ?? null);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setUser(null);
+        setLoading(false);
+      });
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!active) return;
