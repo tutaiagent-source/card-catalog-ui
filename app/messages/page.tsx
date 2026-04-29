@@ -133,7 +133,7 @@ export default function MessagesPage() {
   const [offerMessageDraft, setOfferMessageDraft] = useState<string>("");
   const [counterAmountDraft, setCounterAmountDraft] = useState<string>("");
 
-  const [messageFolder, setMessageFolder] = useState<"inbox" | "unread" | "deleted">("inbox");
+  const [messageFolder, setMessageFolder] = useState<"inbox" | "unread" | "deleted" | "archived">("inbox");
 
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -259,18 +259,42 @@ export default function MessagesPage() {
     setLoadingInbox(true);
     setError("");
 
+    const participantSelectBase = "conversation_id, user_id, joined_at, last_read_at, is_muted, is_blocked";
+    const participantSelectWithArchived = `${participantSelectBase}, archived_at`;
+
     const { data: myParticipantRows, error: myParticipantError } = await supabase
       .from("conversation_participants")
-      .select("conversation_id, user_id, joined_at, last_read_at, is_muted, is_blocked")
+      .select(participantSelectWithArchived)
       .eq("user_id", user.id);
 
+    let nextMyParticipantRows = [] as ConversationParticipantRow[];
     if (myParticipantError) {
-      setLoadingInbox(false);
-      setError(myParticipantError.message);
-      return;
-    }
+      const msg = String(myParticipantError.message || "").toLowerCase();
+      const missingArchivedAt =
+        msg.includes("archived_at") &&
+        (msg.includes("does not exist") || msg.includes("unknown column") || msg.includes("column"));
 
-    let nextMyParticipantRows = (myParticipantRows ?? []) as ConversationParticipantRow[];
+      if (missingArchivedAt) {
+        const { data: fallbackRows, error: fallbackError } = await supabase
+          .from("conversation_participants")
+          .select(participantSelectBase)
+          .eq("user_id", user.id);
+
+        if (fallbackError) {
+          setLoadingInbox(false);
+          setError(fallbackError.message);
+          return;
+        }
+
+        nextMyParticipantRows = (fallbackRows ?? []) as ConversationParticipantRow[];
+      } else {
+        setLoadingInbox(false);
+        setError(myParticipantError.message);
+        return;
+      }
+    } else {
+      nextMyParticipantRows = (myParticipantRows ?? []) as ConversationParticipantRow[];
+    }
     let conversationIds = Array.from(new Set(nextMyParticipantRows.map((row: any) => String(row.conversation_id || "")).filter(Boolean)));
 
     if (conversationParam && !conversationIds.includes(conversationParam)) {
@@ -283,17 +307,40 @@ export default function MessagesPage() {
       } else {
         const { data: refreshedMyParticipantRows, error: refreshedMyParticipantError } = await supabase
           .from("conversation_participants")
-          .select("conversation_id, user_id, joined_at, last_read_at, is_muted, is_blocked")
+          .select(participantSelectWithArchived)
           .eq("user_id", user.id);
 
         if (refreshedMyParticipantError) {
-          setLoadingInbox(false);
-          setError(refreshedMyParticipantError.message);
-          return;
+          const msg = String(refreshedMyParticipantError.message || "").toLowerCase();
+          const missingArchivedAt =
+            msg.includes("archived_at") &&
+            (msg.includes("does not exist") || msg.includes("unknown column") || msg.includes("column"));
+
+          if (missingArchivedAt) {
+            const { data: fallbackRows, error: fallbackError } = await supabase
+              .from("conversation_participants")
+              .select(participantSelectBase)
+              .eq("user_id", user.id);
+
+            if (fallbackError) {
+              setLoadingInbox(false);
+              setError(fallbackError.message);
+              return;
+            }
+
+            nextMyParticipantRows = (fallbackRows ?? []) as ConversationParticipantRow[];
+          } else {
+            setLoadingInbox(false);
+            setError(refreshedMyParticipantError.message);
+            return;
+          }
+        } else {
+          nextMyParticipantRows = (refreshedMyParticipantRows ?? []) as ConversationParticipantRow[];
         }
 
-        nextMyParticipantRows = (refreshedMyParticipantRows ?? []) as ConversationParticipantRow[];
-        conversationIds = Array.from(new Set(nextMyParticipantRows.map((row: any) => String(row.conversation_id || "")).filter(Boolean)));
+        conversationIds = Array.from(
+          new Set(nextMyParticipantRows.map((row: any) => String(row.conversation_id || "")).filter(Boolean))
+        );
       }
     }
 
@@ -346,15 +393,40 @@ export default function MessagesPage() {
       nextConversationContextCards = [];
     }
 
-    const { data: participantRows, error: participantError } = await supabase
-      .from("conversation_participants")
-      .select("conversation_id, user_id, joined_at, last_read_at, is_muted, is_blocked")
-      .in("conversation_id", conversationIds);
+    let participantRows: ConversationParticipantRow[] = [];
+    {
+      const { data, error } = await supabase
+        .from("conversation_participants")
+        .select(participantSelectWithArchived)
+        .in("conversation_id", conversationIds);
 
-    if (participantError) {
-      setLoadingInbox(false);
-      setError(participantError.message);
-      return;
+      if (error) {
+        const msg = String(error.message || "").toLowerCase();
+        const missingArchivedAt =
+          msg.includes("archived_at") &&
+          (msg.includes("does not exist") || msg.includes("unknown column") || msg.includes("column"));
+
+        if (missingArchivedAt) {
+          const { data: fallbackRows, error: fallbackError } = await supabase
+            .from("conversation_participants")
+            .select(participantSelectBase)
+            .in("conversation_id", conversationIds);
+
+          if (fallbackError) {
+            setLoadingInbox(false);
+            setError(fallbackError.message);
+            return;
+          }
+
+          participantRows = (fallbackRows ?? []) as ConversationParticipantRow[];
+        } else {
+          setLoadingInbox(false);
+          setError(error.message);
+          return;
+        }
+      } else {
+        participantRows = (data ?? []) as ConversationParticipantRow[];
+      }
     }
 
     const { data: messageRows, error: messageError } = await supabase
@@ -443,6 +515,7 @@ export default function MessagesPage() {
     return conversations.map((conversation) => {
       const convoParticipants = participants.filter((row) => row.conversation_id === conversation.id);
       const myParticipant = convoParticipants.find((row) => row.user_id === user?.id);
+      const isArchived = Boolean(myParticipant?.archived_at);
 
       const convoMessages = messages.filter((m) => m.conversation_id === conversation.id);
       const nonDeletedMessages = convoMessages.filter((m) => !m.deleted_at);
@@ -463,6 +536,7 @@ export default function MessagesPage() {
 
       const unread = Boolean(
         myParticipant &&
+          !isArchived &&
           latestNonDeletedMessage &&
           latestNonDeletedMessage.sender_user_id !== user?.id &&
           (!myParticipant.last_read_at || new Date(latestNonDeletedMessage.created_at).getTime() > new Date(myParticipant.last_read_at).getTime())
@@ -491,6 +565,7 @@ export default function MessagesPage() {
         hasDeletedMessages: deletedMessages.length > 0,
         hasNonDeletedMessages: nonDeletedMessages.length > 0,
         myParticipant,
+        isArchived,
         otherProfile,
         otherUserId: otherUserId,
         unread,
@@ -506,16 +581,20 @@ export default function MessagesPage() {
 
     const base = (() => {
       switch (messageFolder) {
+        case "archived":
+          return conversationViews.filter((v) => v.isArchived);
         case "deleted":
-          return conversationViews.filter((v) => v.hasDeletedMessages);
+          return conversationViews.filter((v) => !v.isArchived && v.hasDeletedMessages);
         case "unread":
-          return conversationViews.filter((v) => v.hasNonDeletedMessages && v.unread);
+          return conversationViews.filter((v) => !v.isArchived && v.hasNonDeletedMessages && v.unread);
         case "inbox":
         default:
           // Inbox shows threads with non-deleted messages, plus truly empty (no-message-yet) threads.
           // Threads with only deleted messages belong in the Deleted folder.
           return conversationViews.filter(
-            (v) => v.hasNonDeletedMessages || (!v.hasDeletedMessages && !v.hasNonDeletedMessages)
+            (v) =>
+              !v.isArchived &&
+              (v.hasNonDeletedMessages || (!v.hasDeletedMessages && !v.hasNonDeletedMessages))
           );
       }
     })();
@@ -523,7 +602,10 @@ export default function MessagesPage() {
     if (!q) return base;
 
     return base.filter((v) => {
-      const preview = messageFolder === "deleted" ? v.latestDeletedMessage : v.latestNonDeletedMessage;
+      const preview =
+        messageFolder === "deleted"
+          ? v.latestDeletedMessage
+          : v.latestNonDeletedMessage ?? v.latestDeletedMessage;
       const subject = String(v.title || "").toLowerCase();
       const sender = String(v.fromLabel || "").toLowerCase();
       const body = String(preview?.body || "").toLowerCase();
@@ -1875,6 +1957,70 @@ export default function MessagesPage() {
     }
   }
 
+  async function onArchiveActiveConversation() {
+    if (!supabaseConfigured || !supabase || !user?.id || !activeConversationId) return;
+
+    if (!confirm("Archive this conversation (moves it to Archived for your account)?")) return;
+
+    setConversationActionSaving(true);
+    setError("");
+
+    try {
+      const { error: updateError } = await supabase
+        .from("conversation_participants")
+        .update({ archived_at: new Date().toISOString() })
+        .eq("conversation_id", activeConversationId)
+        .eq("user_id", user.id);
+
+      if (updateError) throw updateError;
+
+      setMessageFolder("archived");
+      await loadInbox();
+    } catch (err: any) {
+      const msg = String(err?.message || "");
+      const lower = msg.toLowerCase();
+      if (lower.includes("archived_at") && (lower.includes("does not exist") || lower.includes("unknown column") || lower.includes("column"))) {
+        setError("Archiving isn’t enabled on the server yet. Ask the CardCat admin to deploy the archived conversations migration.");
+      } else {
+        setError(err?.message || "Could not archive conversation.");
+      }
+    } finally {
+      setConversationActionSaving(false);
+    }
+  }
+
+  async function onUnarchiveActiveConversation() {
+    if (!supabaseConfigured || !supabase || !user?.id || !activeConversationId) return;
+
+    if (!confirm("Unarchive this conversation (moves it back to Inbox)?")) return;
+
+    setConversationActionSaving(true);
+    setError("");
+
+    try {
+      const { error: updateError } = await supabase
+        .from("conversation_participants")
+        .update({ archived_at: null })
+        .eq("conversation_id", activeConversationId)
+        .eq("user_id", user.id);
+
+      if (updateError) throw updateError;
+
+      setMessageFolder("inbox");
+      await loadInbox();
+    } catch (err: any) {
+      const msg = String(err?.message || "");
+      const lower = msg.toLowerCase();
+      if (lower.includes("archived_at") && (lower.includes("does not exist") || lower.includes("unknown column") || lower.includes("column"))) {
+        setError("Archiving isn’t enabled on the server yet. Ask the CardCat admin to deploy the archived conversations migration.");
+      } else {
+        setError(err?.message || "Could not unarchive conversation.");
+      }
+    } finally {
+      setConversationActionSaving(false);
+    }
+  }
+
   async function onDeleteActiveConversation() {
     if (!supabaseConfigured || !supabase || !user?.id || !activeConversationId) return;
 
@@ -1904,6 +2050,22 @@ export default function MessagesPage() {
     setError("");
 
     try {
+      // If the thread was archived, clear that flag so it can move into the Deleted folder.
+      const { error: clearArchiveError } = await supabase
+        .from("conversation_participants")
+        .update({ archived_at: null })
+        .eq("conversation_id", activeConversationId)
+        .eq("user_id", user.id);
+
+      if (clearArchiveError) {
+        const msg = String(clearArchiveError.message || "");
+        const lower = msg.toLowerCase();
+        const missingArchivedAt =
+          lower.includes("archived_at") &&
+          (lower.includes("does not exist") || lower.includes("unknown column") || lower.includes("column"));
+        if (!missingArchivedAt) throw clearArchiveError;
+      }
+
       const { data: messageRows, error: messagesError } = await supabase
         .from("messages")
         .select("id")
@@ -2112,6 +2274,22 @@ export default function MessagesPage() {
     setBulkDeleteError("");
 
     try {
+      // If the conversations were archived, clear that flag so they can move into the Deleted folder.
+      const { error: clearArchiveError } = await supabase
+        .from("conversation_participants")
+        .update({ archived_at: null })
+        .eq("user_id", user.id)
+        .in("conversation_id", selectedConversationIds);
+
+      if (clearArchiveError) {
+        const msg = String(clearArchiveError.message || "");
+        const lower = msg.toLowerCase();
+        const missingArchivedAt =
+          lower.includes("archived_at") &&
+          (lower.includes("does not exist") || lower.includes("unknown column") || lower.includes("column"));
+        if (!missingArchivedAt) throw clearArchiveError;
+      }
+
       // Get all non-deleted messages in the selected conversations.
       const { data: messageRows, error: messagesError } = await supabase
         .from("messages")
@@ -2384,8 +2562,9 @@ export default function MessagesPage() {
                 ["inbox", "Inbox"],
                 ["unread", "Unread"],
                 ["deleted", "Deleted"],
+                ["archived", "Archived"],
               ] as const).map(([key, label]) => {
-                const badgeCount = key === "deleted" ? 0 : unreadConversationCount;
+                const badgeCount = key === "deleted" || key === "archived" ? 0 : unreadConversationCount;
                 return (
                   <button
                     key={key}
@@ -2431,11 +2610,13 @@ export default function MessagesPage() {
               <div className="mt-4 flex flex-1 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-slate-950/40 px-5 py-10 text-center text-sm text-slate-400">
                 {activeConversation && messageFolder === "inbox"
                   ? "This thread is open, but its earlier messages are cleared from Inbox. You can still reply from the conversation panel."
-                  : messageFolder === "deleted"
-                    ? "No deleted messages yet."
-                    : messageFolder === "unread"
-                      ? "No unread conversations."
-                      : "No conversations yet. Once members can message sellers from listings, threads will show up here."}
+                  : messageFolder === "archived"
+                    ? "No archived conversations yet."
+                    : messageFolder === "deleted"
+                      ? "No deleted messages yet."
+                      : messageFolder === "unread"
+                        ? "No unread conversations."
+                        : "No conversations yet. Once members can message sellers from listings, threads will show up here."}
               </div>
 	            ) : (
 	              <div className="mt-4 flex-1 min-h-0 overflow-y-auto pr-1 pb-2">
@@ -2449,7 +2630,7 @@ export default function MessagesPage() {
 	                <div>
 	                  {displayConversationViews.map((row) => {
 	                    const previewMessage =
-	                      messageFolder === "deleted" ? row.latestDeletedMessage : row.latestNonDeletedMessage;
+	                      messageFolder === "deleted" ? row.latestDeletedMessage : row.latestNonDeletedMessage ?? row.latestDeletedMessage;
 	                    const previewTimestamp = previewMessage?.created_at ?? row.conversation.last_message_at;
 	                    return (
 	                      <button
@@ -2700,6 +2881,26 @@ export default function MessagesPage() {
 	                  </div>
 
                   <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                    {messageFolder === "archived" ? (
+                      <button
+                        type="button"
+                        onClick={() => void onUnarchiveActiveConversation()}
+                        disabled={conversationActionSaving}
+                        className="rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-3 py-2 text-xs font-semibold text-amber-200 hover:bg-amber-500/[0.14] disabled:opacity-60"
+                      >
+                        {conversationActionSaving ? "Unarchiving…" : "Unarchive thread"}
+                      </button>
+                    ) : messageFolder !== "deleted" ? (
+                      <button
+                        type="button"
+                        onClick={() => void onArchiveActiveConversation()}
+                        disabled={conversationActionSaving}
+                        className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-3 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/[0.14] disabled:opacity-60"
+                      >
+                        {conversationActionSaving ? "Archiving…" : "Archive thread"}
+                      </button>
+                    ) : null}
+
                     {messageFolder !== "deleted" && !activeConversationIsBlocked ? (
                       <button
                         type="button"
@@ -2711,7 +2912,7 @@ export default function MessagesPage() {
                       </button>
                     ) : null}
 
-                    {messageFolder !== "deleted" ? (
+                    {messageFolder !== "deleted" && messageFolder !== "archived" ? (
                       <button
                         type="button"
                         onClick={() => void onMarkConversationUnread()}

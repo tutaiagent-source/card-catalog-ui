@@ -16,6 +16,7 @@ export type ConversationParticipantRow = {
   last_read_at?: string | null;
   is_muted?: boolean;
   is_blocked?: boolean;
+  archived_at?: string | null;
 };
 
 export type MessageRow = {
