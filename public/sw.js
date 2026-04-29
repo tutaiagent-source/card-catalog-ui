@@ -56,3 +56,5 @@ self.addEventListener("fetch", (event) => {
     })()
   );
 });
+
+// icon update marker
