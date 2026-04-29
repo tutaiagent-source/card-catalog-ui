@@ -107,17 +107,17 @@ export default function FeaturesPage() {
         <section id="card-posts" className="mt-12 rounded-[32px] border border-emerald-500/20 bg-[linear-gradient(135deg,rgba(16,185,129,0.10),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(6,95,70,0.18)] sm:p-8">
           <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Featured Seller Tool</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Featured Card Posts tool</div>
               <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Card Posts</h2>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-100/85 sm:text-base">
-                Turn a saved card into a Card Post image that is easier to share in Facebook groups, Discord, Reddit sales threads, or text messages. Optional price, front/back layout, and less retyping.
+                Turn a saved card into a Card Post image you can share in Facebook groups, Discord, Reddit, or text messages. Optional price, front/back layout, and less retyping.
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <a href="/features/share-sheets" className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100">
-                  Full Card Post Details
+                  Card Post details
                 </a>
                 <a href="/catalog" className="rounded-xl border border-white/20 bg-black/15 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-black/25">
-                  Open Catalog
+                  Open catalog
                 </a>
               </div>
             </div>
@@ -128,7 +128,7 @@ export default function FeaturesPage() {
 
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-2xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Need Details?</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Want details?</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Pick a workflow, then go</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
                 Use this page to find what you need, then jump into the exact workflow you care about: Catalog, card posts, active listings sharing, or PC + sold.

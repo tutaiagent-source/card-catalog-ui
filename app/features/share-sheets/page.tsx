@@ -2,27 +2,27 @@ import MarketingNav from "@/components/MarketingNav";
 import ShareSheetFeaturePreview from "@/components/ShareSheetFeaturePreview";
 
 const keyPoints = [
-  "Square Card Post Image Built From The Saved Card Record",
-  "Optional Price On The Image",
-  "Front + Back Layout When Both Images Exist",
-  "Mobile Share / Save Image Flow",
-  "Desktop JPG Download + Caption Copy",
+  "Square Card Post image built from the saved card record",
+  "Optional price on the image",
+  "Front + back layout when both images exist",
+  "Mobile share and save flow",
+  "Desktop JPG download and caption copy",
 ];
 
 const workflow = [
   {
-    title: "Open Share",
-    body: "Start from a card inside Catalog or PC preview and open the Share action.",
+    title: "Open share",
+    body: "Start with a card in Catalog or PC, then open Share.",
     icon: "📤",
   },
   {
-    title: "Choose Price Or Leave It Off",
-    body: "Use pricing only when the image should act like a true sale post.",
+    title: "Choose price or leave it off",
+    body: "Add pricing when the image should look like a sale post.",
     icon: "🏷️",
   },
   {
-    title: "Share Or Save The Image",
-    body: "Use your phone share sheet or download the JPG on desktop and post it where you sell.",
+    title: "Share or save the image",
+    body: "Use your phone share sheet, or download the JPG on desktop and post it where you sell.",
     icon: "📲",
   },
 ];
@@ -41,14 +41,14 @@ const usage = [
     bullets: [
       "Download the JPG and upload it wherever you are posting the card.",
       "Copy the caption if you want faster post writing.",
-      "Good for Facebook groups, Reddit, Discord, and marketplace-style communities.",
+      "Works well for Facebook groups, Reddit, Discord, and other collector communities.",
     ],
   },
 ];
 
 const benefits = [
   "Less retyping, because the card details come from the catalog entry.",
-  "Cleaner and more consistent sale posts.",
+  "Sale posts that look consistent.",
   "Better use of saved front/back images.",
   "A practical reason to keep card data organized in CardCat.",
 ];
@@ -66,10 +66,10 @@ export default function ShareSheetsPage() {
                 Card Posts
               </div>
               <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-                A Faster Way to Turn Saved Cards into Clean Card Posts.
+                A cleaner way to turn saved cards into Card Posts.
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                CardCat generates a Card Post image using the card details and images already stored in your Catalog. It’s built for quick posting without rebuilding the listing by hand.
+                CardCat generates a Card Post image from the details and images in your Catalog. Post it without rebuilding the listing by hand.
               </p>
               <ul className="mt-6 space-y-3 text-sm text-slate-200 sm:text-base">
                 {keyPoints.map((item) => (
@@ -87,10 +87,10 @@ export default function ShareSheetsPage() {
 
         <section className="mt-12 grid gap-6 lg:grid-cols-2">
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">How It Works</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Three Quick Steps</h2>
-          <div className="mt-6 space-y-4">
-            {workflow.map((item, index) => (
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-200">How it works</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Three simple steps</h2>
+            <div className="mt-6 space-y-4">
+              {workflow.map((item, index) => (
               <div key={item.title} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 shadow-[0_18px_60px_rgba(2,6,23,0.28)]">
                 <div className="flex items-start justify-between gap-4">
                   <div className="text-sm font-semibold text-white">{index + 1}. {item.title}</div>
@@ -105,8 +105,8 @@ export default function ShareSheetsPage() {
           </div>
 
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Why It Helps</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Good For Casual Sellers & Regular Sellers</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Why it helps</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Good for casual sellers and regular sellers</h2>
             <div className="mt-6 space-y-4 text-sm text-slate-200">
               {benefits.map((item) => (
                 <div key={item} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">{item}</div>
@@ -117,8 +117,8 @@ export default function ShareSheetsPage() {
 
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-2xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Using It</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Mobile & Desktop</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Using it</div>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Mobile and desktop</h2>
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-2">
