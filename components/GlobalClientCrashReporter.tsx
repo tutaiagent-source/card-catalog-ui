@@ -26,6 +26,7 @@ function safeStringify(value: unknown) {
 export default function GlobalClientCrashReporter() {
   const [lastCrashId, setLastCrashId] = useState<string | null>(null);
   const [lastCrashAt, setLastCrashAt] = useState<string | null>(null);
+  const [lastClickedHref, setLastClickedHref] = useState<string | null>(null);
 
   useEffect(() => {
     // Load last crash id for a visible breadcrumb.
@@ -35,6 +36,13 @@ export default function GlobalClientCrashReporter() {
       const parsed = JSON.parse(raw) as CrashRecord;
       setLastCrashId(parsed?.id ?? null);
       setLastCrashAt(parsed?.at ?? null);
+    } catch (_e) {
+      // ignore
+    }
+
+    // Load last clicked href so we can correlate browser crashes.
+    try {
+      setLastClickedHref(sessionStorage.getItem("cardcat_last_clicked_href"));
     } catch (_e) {
       // ignore
     }
@@ -157,8 +165,6 @@ export default function GlobalClientCrashReporter() {
     };
   }, [sendCrash]);
 
-  if (!lastCrashId) return null;
-
   return (
     <div
       style={{
@@ -179,10 +185,12 @@ export default function GlobalClientCrashReporter() {
     >
       <div style={{ fontWeight: 700, marginBottom: 2 }}>Crash breadcrumb</div>
       <div>
-        id: <span style={{ fontFamily: "monospace" }}>{lastCrashId}</span>
+        id: <span style={{ fontFamily: "monospace" }}>{lastCrashId ?? "(none yet)"}</span>
         {lastCrashAt ? <span> · {new Date(lastCrashAt).toLocaleTimeString()}</span> : null}
+        <div style={{ marginTop: 4, color: "#fbbf24" }}>
+          last click: <span style={{ fontFamily: "monospace" }}>{lastClickedHref ?? "(none)"}</span>
+        </div>
       </div>
     </div>
   );
 }
-
