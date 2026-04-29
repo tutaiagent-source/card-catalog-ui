@@ -1,6 +1,5 @@
 import MarketingNav from "@/components/MarketingNav";
 import ListingsFeaturePreview from "@/components/ListingsFeaturePreview";
-import PhoneFeatureMockup from "@/components/PhoneFeatureMockup";
 import PlanTierCaps from "@/components/PlanTierCaps";
 
 export default function ListingsFeaturePage() {
@@ -84,7 +83,7 @@ export default function ListingsFeaturePage() {
         </section>
 
         <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
-          <div className="flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-xl">
               <h2 className="text-2xl font-bold text-white">Share your inventory from your phone</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300">
@@ -105,7 +104,14 @@ export default function ListingsFeaturePage() {
                 </li>
               </ul>
             </div>
-            <PhoneFeatureMockup variant="listings" />
+            <div className="relative w-[280px] max-w-full">
+              <img
+                src="/features-listings-phone.png"
+                alt="Listings on your phone"
+                draggable={false}
+                className="w-full h-auto rounded-[38px] border border-white/10 bg-slate-950/40 shadow-[0_40px_120px_rgba(2,6,23,0.6)]"
+              />
+            </div>
           </div>
         </section>
 
