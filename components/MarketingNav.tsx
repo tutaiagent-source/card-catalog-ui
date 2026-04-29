@@ -16,7 +16,7 @@ export default function MarketingNav() {
             <a href="/features" className="rounded-full px-3 py-2 transition-colors hover:bg-white/[0.06] hover:text-white">
               Features
             </a>
-            <a href="/#pricing" className="rounded-full px-3 py-2 transition-colors hover:bg-white/[0.06] hover:text-white">
+            <a href="/pricing" className="rounded-full px-3 py-2 transition-colors hover:bg-white/[0.06] hover:text-white">
               Pricing
             </a>
             <a href="/contact" className="rounded-full px-3 py-2 transition-colors hover:bg-white/[0.06] hover:text-white">
