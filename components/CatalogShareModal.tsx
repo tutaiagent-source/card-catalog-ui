@@ -314,7 +314,26 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
     try {
       const logo = await loadImage("/brand/card_cat_horizontal.svg?v=2");
       // Bottom-right logo area (replaces the old icon + text).
-      ctx.drawImage(logo, 770, panelY + panelHeight - 64, 260, 54);
+      const boxX = 770;
+      const boxY = panelY + panelHeight - 64;
+      const boxW = 260;
+      const boxH = 54;
+
+      const naturalW = logo.naturalWidth || logo.width || boxW;
+      const naturalH = logo.naturalHeight || logo.height || boxH;
+      const aspect = naturalW / (naturalH || 1) || boxW / boxH;
+
+      // Fit while preserving aspect ratio (avoid any non-uniform scaling that looks like “skew”).
+      let drawW = boxW;
+      let drawH = boxW / aspect;
+      if (drawH > boxH) {
+        drawH = boxH;
+        drawW = boxH * aspect;
+      }
+
+      const drawX = boxX + (boxW - drawW) / 2;
+      const drawY = boxY + (boxH - drawH) / 2;
+      ctx.drawImage(logo, drawX, drawY, drawW, drawH);
     } catch {
       // fall back to text only
       ctx.fillStyle = "#94a3b8";
