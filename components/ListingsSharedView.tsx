@@ -497,7 +497,7 @@ export default function ListingsSharedView({
                 </button>
               </div>
 
-              <div className="grid gap-6 p-4 sm:p-6 grid-cols-[2fr_1fr]">
+              <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[1.1fr_0.9fr]">
                 <div className="rounded-[24px] border border-white/10 bg-slate-900 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -521,7 +521,7 @@ export default function ListingsSharedView({
 
                   <div className="mt-4">
                     <div
-                      className="relative h-[420px] w-full overflow-hidden rounded-2xl bg-slate-950 sm:h-[520px]"
+                      className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-950"
                       role={activeCard.back_image_url ? "button" : undefined}
                       tabIndex={activeCard.back_image_url ? 0 : -1}
                       aria-label={activeCard.back_image_url ? "Flip card" : undefined}
