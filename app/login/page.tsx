@@ -134,21 +134,21 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-md px-4 py-16">
-        <CardCatLogo variant="vertical" size="md" />
+    <main className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center px-4">
+      <div className="mx-auto max-w-md w-full py-16 text-center">
+        <CardCatLogo variant="vertical" size="md" align="center" />
         <h1 className="mt-4 text-3xl font-bold">Sign In to CardCat</h1>
         <p className="mt-3 text-slate-300">
           Save your collection, track prices, and manage the cards you keep, list, or sell in one place.
         </p>
 
-        <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-300">
+        <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs text-slate-300">
           <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">Inventory</div>
           <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">Pricing</div>
           <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5">Sold tracking</div>
         </div>
 
-        <div className="mt-6 flex gap-2 rounded-xl border border-slate-800 bg-slate-900 p-2">
+        <div className="mt-6 flex justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900 p-2">
           <button
             type="button"
             className={`flex-1 rounded px-3 py-2 text-sm font-semibold ${mode === "signin" ? "bg-[#d50000]" : "bg-slate-950 hover:bg-slate-800"}`}
@@ -183,7 +183,7 @@ export default function LoginPage() {
 
         <form
           onSubmit={mode === "signin" ? onPasswordSignIn : mode === "signup" ? onPasswordSignUp : onMagicLink}
-          className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]"
+          className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] text-left"
         >
           <label className="block">
             <div className="mb-2 text-sm text-slate-300">Email</div>
@@ -245,8 +245,8 @@ export default function LoginPage() {
             </label>
           )}
 
-          {message ? <div className="mt-4 rounded border border-emerald-800 bg-emerald-950/30 p-3 text-sm text-emerald-200">{message}</div> : null}
-          {error ? <div className="mt-4 rounded border border-red-800 bg-red-950/30 p-3 text-sm text-red-200">{error}</div> : null}
+          {message ? <div className="mt-4 rounded border border-emerald-800 bg-emerald-950/30 p-3 text-sm text-emerald-200 text-center">{message}</div> : null}
+          {error ? <div className="mt-4 rounded border border-red-800 bg-red-950/30 p-3 text-sm text-red-200 text-center">{error}</div> : null}
 
           <button
             type="submit"
@@ -265,7 +265,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-4 text-sm text-slate-400">
+        <div className="mt-4 text-sm text-slate-400 text-center">
           Already signed in? <a href="/catalog" className="text-red-300 hover:underline">Go to your catalog</a>
         </div>
       </div>
