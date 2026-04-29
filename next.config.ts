@@ -27,7 +27,9 @@ const nextConfig: NextConfig = {
 
 export default withPWA({
   dest: "public",
-  register: true,
+  register: false,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === "development",
+  // Hard-disable next-pwa in production while we eliminate iOS/Chrome
+  // service worker navigation loop issues.
+  disable: true,
 })(nextConfig);
