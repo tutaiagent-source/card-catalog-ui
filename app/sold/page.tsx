@@ -563,7 +563,7 @@ export default function SoldPage() {
       const disclaimer =
         "CardCat Deal Records are documentation tools only. CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.";
 
-      const logoUrl = `${window.location.origin}/brand/card_cat_horizontal.png`;
+      const logoUrl = `${window.location.origin}/brand/card_cat_horizontal_black.png`;
 
       const html = `
         <!doctype html>
