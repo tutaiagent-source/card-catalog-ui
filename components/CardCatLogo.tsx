@@ -24,6 +24,10 @@ export function CardCatMark({ className = "h-10 w-10" }: CardCatMarkProps) {
       aria-hidden="true"
       className={`${className} object-contain`}
       draggable={false}
+      onError={(e) => {
+        const el = e.currentTarget;
+        el.src = "/icon.svg?v=3";
+      }}
     />
   );
 }

@@ -1380,6 +1380,7 @@ export default function MessagesPage() {
     if (!dealRecordForDisplay) return "";
 
     const logoUrl = `${window.location.origin}/brand/card_cat_horizontal_black.png`;
+    const logoUrlFallback = `${window.location.origin}/brand/card_cat_horizontal.png`;
 
     const card = activeConversationCard;
     const buyerHandle = profileHandleById(dealRecordForDisplay.buyer_user_id);
@@ -1533,7 +1534,7 @@ export default function MessagesPage() {
               ${watermarkHtml}
               <div class="header">
                 <div class="brand">
-                  <img class="deal-logo" src="${escapeHtml(logoUrl)}" alt="CardCat" />
+                  <img class="deal-logo" src="${escapeHtml(logoUrl)}" alt="CardCat" onerror="this.onerror=null;this.src='${escapeHtml(logoUrlFallback)}'" />
                   <div class="name">CardCat</div>
                   <div class="sub">Deal Record</div>
                 </div>

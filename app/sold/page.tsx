@@ -564,6 +564,7 @@ export default function SoldPage() {
         "CardCat Deal Records are documentation tools only. CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.";
 
       const logoUrl = `${window.location.origin}/brand/card_cat_horizontal_black.png`;
+      const logoUrlFallback = `${window.location.origin}/brand/card_cat_horizontal.png`;
 
       const html = `
         <!doctype html>
@@ -597,7 +598,7 @@ export default function SoldPage() {
             <div class="wrap">
               <div class="header">
                 <div class="brand">
-                  <img class="deal-logo" src="${escapeHtml(logoUrl)}" alt="CardCat" />
+                  <img class="deal-logo" src="${escapeHtml(logoUrl)}" alt="CardCat" onerror="this.onerror=null;this.src='${escapeHtml(logoUrlFallback)}'" />
                   <div class="name">CardCat</div>
                   <div class="sub">Deal Record</div>
                 </div>
