@@ -173,69 +173,100 @@ export default function ProPlanPage() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-5xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Plan comparison</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">Everything Pro Adds, plus Seller (Clearly)</h2>
+            <h2 className="mt-3 text-2xl font-bold text-white">Collector → Pro adds the workflow. Seller adds the headroom.</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
-              Collector covers organization and basic sold tracking. Pro expands workflows with import/export, bulk actions, and profit/ROI-ready analytics.
-              Seller includes Pro, then raises your catalog and active listing caps for higher-volume selling (analytics and exports are the same as Pro).
+              Collector gives clean organization and basic sold tracking. Pro adds the seller workflow upgrades (CSV import/export, bulk inventory tools, and profit/ROI analytics).
+              Seller keeps Pro and mainly raises your catalog + active listing caps so you can stay in the same workflow as you scale.
             </p>
 
-            <p className="mt-3 text-sm leading-6 text-slate-200">
-              Capacity & listings: Collector up to 250 cards and 10 active Market listings; Pro up to 1,000 cards and 50 active Market listings; Seller up to 10,000 cards and 250 active Market listings.
-            </p>
+            <div className="mt-6 grid gap-6">
+              <div>
+                <div className="text-lg font-semibold text-white">Collector → Pro</div>
+                <p className="mt-2 text-sm leading-6 text-slate-200">
+                  Upgrade from “organized” to “seller workflow” (imports, bulk tools, profit/ROI, and sales exports).
+                </p>
 
-            <div className="mt-6 grid gap-2">
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr]">
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Feature</div>
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Collector</div>
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.10] p-4 text-sm font-semibold text-amber-200">Pro</div>
-                <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.12] p-4 text-sm font-semibold text-orange-200">Seller</div>
+                <div className="mt-4 grid gap-2">
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr]">
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Feature</div>
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Collector</div>
+                    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.10] p-4 text-sm font-semibold text-amber-200">Pro</div>
+                  </div>
+
+                  {[
+                    ["Up to 250 cards (Collector cap)", true, false],
+                    ["Up to 1,000 cards (Pro cap)", false, true],
+                    ["10 active Market listings (Collector cap)", true, false],
+                    ["50 active Market listings (Pro cap)", false, true],
+                    ["CSV import/export", false, true],
+                    ["Bulk inventory tools", false, true],
+                    ["Profit/ROI dashboards + Sales CSV export (analytics fields)", false, true],
+                  ].map(([feature, cOn, pOn]) => (
+                    <div key={String(feature)} className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr] items-center">
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-200">{String(feature)}</div>
+
+                      <div
+                        className={`rounded-2xl border border-white/10 p-4 text-center text-sm font-semibold ${
+                          cOn ? "bg-white/[0.04] text-emerald-300" : "bg-white/[0.02] text-slate-500"
+                        }`}
+                      >
+                        {cOn ? "✓" : "—"}
+                      </div>
+
+                      <div
+                        className={`rounded-2xl border border-amber-500/20 p-4 text-center text-sm font-semibold ${
+                          pOn ? "bg-amber-500/[0.10] text-amber-200" : "bg-white/[0.02] text-slate-500"
+                        }`}
+                      >
+                        {pOn ? "✓" : "—"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              {[
-                ["Up to 250 cards (Collector cap)", true, false, false],
-                ["Up to 1,000 cards (Pro cap)", false, true, false],
-                ["Up to 10,000 cards (Seller cap)", false, false, true],
-                ["10 active Market listings (Collector cap)", true, false, false],
-                ["50 active Market listings (Pro cap)", false, true, false],
-                ["250 active Market listings (Seller cap)", false, false, true],
-                ["Manual card entry", true, true, true],
-                ["CSV import/export", false, true, true],
-                ["Bulk inventory tools", false, true, true],
-                ["Personal Collection (PC) view", true, true, true],
-                ["Cleaner catalog browsing", true, true, true],
-                ["Basic sold tracking", true, true, true],
-                ["Advanced sold insights", false, true, true],
-                ["Profit + ROI metrics", false, true, true],
-                ["Sales CSV export with analytics fields", false, true, true],
-              ].map(([feature, cOn, pOn, sOn]) => (
-                <div key={String(feature)} className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr] items-center">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-200">{String(feature)}</div>
+              <div>
+                <div className="text-lg font-semibold text-white">Pro → Seller</div>
+                <p className="mt-2 text-sm leading-6 text-slate-200">
+                  Same seller workflow. Higher caps so you don’t hit limits.
+                </p>
 
-                  <div
-                    className={`rounded-2xl border border-white/10 p-4 text-center text-sm font-semibold ${
-                      cOn ? "bg-white/[0.04] text-emerald-300" : "bg-white/[0.02] text-slate-500"
-                    }`}
-                  >
-                    {cOn ? "✓" : "—"}
+                <div className="mt-4 grid gap-2">
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr]">
+                    <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Feature</div>
+                    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.10] p-4 text-sm font-semibold text-amber-200">Pro</div>
+                    <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.12] p-4 text-sm font-semibold text-orange-200">Seller</div>
                   </div>
 
-                  <div
-                    className={`rounded-2xl border border-amber-500/20 p-4 text-center text-sm font-semibold ${
-                      pOn ? "bg-amber-500/[0.10] text-amber-200" : "bg-white/[0.02] text-slate-500"
-                    }`}
-                  >
-                    {pOn ? "✓" : "—"}
-                  </div>
+                  {[
+                    ["Up to 1,000 cards (Pro cap)", true, false],
+                    ["Up to 10,000 cards (Seller cap)", false, true],
+                    ["50 active Market listings (Pro cap)", true, false],
+                    ["250 active Market listings (Seller cap)", false, true],
+                    ["Pro’s seller suite (CSV import/export, bulk tools, profit/ROI + sales exports) is the same suite, just scaled", true, true],
+                  ].map(([feature, pOn, sOn]) => (
+                    <div key={String(feature)} className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr] items-center">
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-200">{String(feature)}</div>
 
-                  <div
-                    className={`rounded-2xl border border-orange-500/20 p-4 text-center text-sm font-semibold ${
-                      sOn ? "bg-orange-500/[0.12] text-orange-200" : "bg-white/[0.02] text-slate-500"
-                    }`}
-                  >
-                    {sOn ? "✓" : "—"}
-                  </div>
+                      <div
+                        className={`rounded-2xl border border-amber-500/20 p-4 text-center text-sm font-semibold ${
+                          pOn ? "bg-amber-500/[0.10] text-amber-200" : "bg-white/[0.02] text-slate-500"
+                        }`}
+                      >
+                        {pOn ? "✓" : "—"}
+                      </div>
+
+                      <div
+                        className={`rounded-2xl border border-orange-500/20 p-4 text-center text-sm font-semibold ${
+                          sOn ? "bg-orange-500/[0.12] text-orange-200" : "bg-white/[0.02] text-slate-500"
+                        }`}
+                      >
+                        {sOn ? "✓" : "—"}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">

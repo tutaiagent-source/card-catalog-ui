@@ -108,50 +108,29 @@ export default function SellerPlanPage() {
 
         <section className="mt-12 rounded-[32px] border border-orange-500/25 bg-orange-500/[0.06] p-6 sm:p-8">
           <div className="max-w-5xl">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Plan comparison</div>
-            <h2 className="mt-3 text-2xl font-bold text-white">Collector vs Pro vs Seller (Clearly)</h2>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Pro → Seller</div>
+            <h2 className="mt-3 text-2xl font-bold text-white">Same Pro suite, higher limits</h2>
             <p className="mt-3 text-sm leading-7 text-slate-200">
-              Collector is for organization and basic sold tracking. Pro adds seller workflow upgrades and profit/ROI visibility. Seller includes Pro, then raises your catalog and active listing caps for high-volume selling.
-              <span className="block">
-                The profit/ROI analytics and CSV exports are the same as Pro, just scaled to bigger catalogs.
-              </span>
+              If you like Pro’s workflow (CSV import/export, bulk tools, and profit/ROI dashboards + sales exports), Seller is mainly for scaling.
+              <span className="block">You keep the same suite, but raise the caps to support bigger catalogs and more active listings.</span>
             </p>
 
             <div className="mt-6 grid gap-2">
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr]">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr]">
                 <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Feature</div>
-                <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm font-semibold text-slate-100">Collector</div>
                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.10] p-4 text-sm font-semibold text-amber-200">Pro</div>
                 <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.12] p-4 text-sm font-semibold text-orange-200">Seller</div>
               </div>
 
               {[
-                ["Up to 250 cards (Collector cap)", true, false, false],
-                ["Up to 1,000 cards (Pro cap)", false, true, false],
-                ["Up to 10,000 cards (Seller cap)", false, false, true],
-                ["10 active Market listings (Collector cap)", true, false, false],
-                ["50 active Market listings (Pro cap)", false, true, false],
-                ["250 active Market listings (Seller cap)", false, false, true],
-                ["Manual card entry", true, true, true],
-                ["CSV import/export", false, true, true],
-                ["Bulk inventory tools", false, true, true],
-                ["Personal Collection (PC) view", true, true, true],
-                ["Cleaner catalog browsing", true, true, true],
-                ["Basic sold tracking", true, true, true],
-                ["Advanced sold insights", false, true, true],
-                ["Profit + ROI metrics", false, true, true],
-                ["Sales CSV export with analytics fields", false, true, true],
-              ].map(([feature, cOn, pOn, sOn]) => (
-                <div key={String(feature)} className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr] items-center">
+                ["Up to 1,000 cards (Pro cap)", true, false],
+                ["Up to 10,000 cards (Seller cap)", false, true],
+                ["50 active Market listings (Pro cap)", true, false],
+                ["250 active Market listings (Seller cap)", false, true],
+                ["Pro’s suite (CSV import/export, bulk tools, profit/ROI + sales exports) is the same suite, scaled", true, true],
+              ].map(([feature, pOn, sOn]) => (
+                <div key={String(feature)} className="grid grid-cols-1 gap-2 md:grid-cols-[1.6fr_0.6fr_0.6fr] items-center">
                   <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-200">{String(feature)}</div>
-
-                  <div
-                    className={`rounded-2xl border border-white/10 p-4 text-center text-sm font-semibold ${
-                      cOn ? "bg-white/[0.04] text-emerald-300" : "bg-white/[0.02] text-slate-500"
-                    }`}
-                  >
-                    {cOn ? "✓" : "—"}
-                  </div>
 
                   <div
                     className={`rounded-2xl border border-amber-500/20 p-4 text-center text-sm font-semibold ${
