@@ -90,7 +90,7 @@ function buildShareSvg(card: ShareCard, includePrice: boolean, price: string) {
   <rect x="80" y="80" width="920" height="560" rx="32" fill="url(#fade)" opacity="0.2" />
   <text x="80" y="120" font-size="22" letter-spacing="6" fill="#fbbf24">CARDCAT SHARE</text>
   ${textNodes}
-  <text x="1000" y="1000" text-anchor="end" font-size="24" fill="#64748b">cardcat.io</text>
+  <image href="/brand/card_cat_horizontal.png" x="390" y="948" width="300" height="126" preserveAspectRatio="xMidYMid meet" />
   <defs>
     <linearGradient id="fade" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0%" stop-color="#f59e0b" />
@@ -180,7 +180,14 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                     {card.serial_number_text ? <div className="mt-2 text-sm text-slate-400">Serial: {card.serial_number_text}</div> : null}
                     {includePrice && price.trim() ? <div className="mt-5 text-3xl font-bold text-emerald-300">${price.trim()}</div> : null}
                   </div>
-                  <div className="pt-4 text-right text-sm font-semibold uppercase tracking-[0.16em] text-slate-500">cardcat.io</div>
+                  <div className="pt-4 flex items-center justify-center">
+                    <img
+                      src="/brand/card_cat_horizontal.png"
+                      alt="CardCat"
+                      className="h-12 w-auto opacity-90"
+                      draggable={false}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
