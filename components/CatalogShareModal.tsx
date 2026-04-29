@@ -312,14 +312,15 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
 
     ctx.textAlign = "left";
     try {
-      const logo = await loadImage("/icon.svg");
-      ctx.drawImage(logo, 850, panelY + panelHeight - 62, 42, 42);
+      const logo = await loadImage("/brand/card_cat_horizontal.svg?v=2");
+      // Bottom-right logo area (replaces the old icon + text).
+      ctx.drawImage(logo, 770, panelY + panelHeight - 64, 260, 54);
     } catch {
       // fall back to text only
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "600 24px Inter, Arial, sans-serif";
+      ctx.fillText("CardCat", 904, panelY + panelHeight - 32);
     }
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "600 24px Inter, Arial, sans-serif";
-    ctx.fillText("CardCat", 904, panelY + panelHeight - 32);
 
     return canvas;
   }
@@ -397,9 +398,13 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                   {card.serial_number_text ? <div className="mt-1.5 text-xs text-slate-400 sm:mt-2 sm:text-sm">Serial: {card.serial_number_text}</div> : null}
                   {includePrice && price.trim() ? <div className="mt-3 text-xl font-bold text-emerald-300 sm:mt-4 sm:text-2xl">${price.trim()}</div> : null}
                 </div>
-                <div className="mt-4 flex items-center justify-end gap-2 text-right text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 sm:text-sm">
-                  <img src="/icon.svg" alt="CardCat" className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span>CardCat</span>
+                <div className="mt-4 flex items-center justify-end text-right">
+                  <img
+                    src="/brand/card_cat_horizontal.svg?v=2"
+                    alt="CardCat"
+                    className="h-6 w-auto"
+                    loading="lazy"
+                  />
                 </div>
               </div>
             </div>
