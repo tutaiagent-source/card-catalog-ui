@@ -16,9 +16,11 @@ export default function PwaRegister() {
       .getRegistrations()
       .then((regs) => Promise.all(regs.map((r) => r.unregister())).catch(() => {}))
       .finally(() => {
-        // Register from `/sw` (served via Next route) so we control caching.
+        // Register a versioned SW script so iOS/WebView reliably replaces any
+        // older (possibly broken) controller.
         navigator.serviceWorker
-          .register("/sw?sw=v3")
+          .register("/sw.js?sw=v3")
+          .then((reg) => reg.update().catch(() => {}))
           .catch(() => {
             // no-op
           });

@@ -9,17 +9,6 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Ensure the service worker script is never served stale.
-        // iOS/WebView can be sensitive to SW update timing/caching.
-        source: "/sw.js",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
-          },
-        ],
-      },
-      {
         source: "/(.*)",
         headers: [
           {
