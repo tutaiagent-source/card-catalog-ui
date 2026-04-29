@@ -16,8 +16,9 @@ export default function PwaRegister() {
       .getRegistrations()
       .then((regs) => Promise.all(regs.map((r) => r.unregister())).catch(() => {}))
       .finally(() => {
+        // Register from `/sw` (served via Next route) so we control caching.
         navigator.serviceWorker
-          .register("/sw.js?sw=v2")
+          .register("/sw?sw=v3")
           .catch(() => {
             // no-op
           });
