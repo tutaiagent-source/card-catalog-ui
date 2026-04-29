@@ -77,8 +77,8 @@ export function buildSubscriptionWelcomeEmail(tier: SubscriptionTier) {
   <div style="font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color: #0f172a; line-height: 1.45;">
     <div style="max-width: 640px; margin: 0 auto; padding: 24px;">
       <div>
-        <img
-          src="${baseUrl}/brand/card_cat_horizontal.png"
+          <img
+          src="${baseUrl}/brand/card_cat_horizontal.svg"
           alt="CardCat"
           width="220"
           style="display:block; height:auto; max-width:100%; margin: 0 0 6px 0; object-fit:contain;"

@@ -1379,8 +1379,8 @@ export default function MessagesPage() {
   function buildDealRecordHtml(params: { draft: boolean; title: string }) {
     if (!dealRecordForDisplay) return "";
 
-    const logoUrl = `${window.location.origin}/brand/card_cat_horizontal_black.png`;
-    const logoUrlFallback = `${window.location.origin}/brand/card_cat_horizontal.png`;
+    const logoUrl = `${window.location.origin}/brand/card_cat_horizontal_black.svg`;
+    const logoUrlFallback = `${window.location.origin}/brand/card_cat_horizontal.svg`;
 
     const card = activeConversationCard;
     const buyerHandle = profileHandleById(dealRecordForDisplay.buyer_user_id);
