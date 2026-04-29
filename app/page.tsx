@@ -210,7 +210,7 @@ export default function Home() {
         </section>
 
         {/* Pricing teaser */}
-        <section className="mt-10 rounded-[32px] border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.14),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(245,158,11,0.10)] sm:p-8">
+        <section id="pricing" className="mt-10 rounded-[32px] border border-amber-500/20 bg-[linear-gradient(135deg,rgba(245,158,11,0.14),rgba(59,130,246,0.08))] p-6 shadow-[0_30px_90px_rgba(245,158,11,0.10)] sm:p-8">
           <div className="max-w-3xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Pricing</div>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Built for collectors, priced like it.</h2>
