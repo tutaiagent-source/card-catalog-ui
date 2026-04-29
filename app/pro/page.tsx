@@ -7,11 +7,11 @@ import { ImportShowcase, PcShowcase, SoldShowcase } from "@/components/Marketing
 export const metadata: Metadata = {
   title: "Pro Plan | CardCat",
   description:
-    "CardCat Pro plan unlocks CSV import/export, bulk tools, and deeper sold insights including profit and ROI metrics for your seller workflow.",
+    "CardCat Pro plan unlocks CSV import/export, bulk tools, and profit/ROI sold analytics for serious sellers (up to 1,000 cards + 50 active Market listings).",
   openGraph: {
     title: "Pro Plan | CardCat",
     description:
-      "CardCat Pro plan unlocks CSV import/export, bulk tools, and deeper sold insights including profit and ROI metrics for your seller workflow.",
+      "CardCat Pro plan unlocks CSV import/export, bulk tools, and profit/ROI sold analytics for serious sellers (up to 1,000 cards + 50 active Market listings).",
     type: "website",
   },
 };
@@ -32,6 +32,9 @@ export default function ProPlanPage() {
             </h1>
             <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
               Pro expands your workflow with CSV import/export, bulk inventory actions, and richer sold analytics like net profit and ROI.
+              <span className="block mt-1 text-sm text-slate-200">
+                Pro is built for serious selling within limits of up to 1,000 cards and 50 active Market listings.
+              </span>
             </p>
 
             <p className="mt-4 text-sm leading-6 text-slate-200">
@@ -108,7 +111,8 @@ export default function ProPlanPage() {
             <h2 className="text-2xl font-bold text-white">Collector / Pro / Seller (Quick Visual)</h2>
             <p className="mt-3 text-sm leading-7 text-slate-200">
               Collector is built for organization. Pro is built for seller workflows that need import/export, bulk tools, and profit/ROI visibility.
-              Seller includes Pro, then scales your caps and analytics for higher volume.
+              Seller includes Pro, then increases your caps for high-volume catalogs and active listings.
+              <span className="block">The profit/ROI analytics and CSV exports are the same as Pro, just scaled to higher volume.</span>
             </p>
 
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -151,7 +155,7 @@ export default function ProPlanPage() {
                 <ul className="mt-4 space-y-3 text-sm text-slate-100">
                   {[
                     "Higher catalog + listing caps",
-                    "Deeper seller analytics",
+                    "Profit/ROI analytics at scale (same suite as Pro)",
                     "Bulk tools + exports",
                     "Export-ready sold receipts",
                   ].map((feature) => (
@@ -172,7 +176,7 @@ export default function ProPlanPage() {
             <h2 className="mt-3 text-2xl font-bold text-white">Everything Pro Adds, plus Seller (Clearly)</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
               Collector covers organization and basic sold tracking. Pro expands workflows with import/export, bulk actions, and profit/ROI-ready analytics.
-              Seller includes Pro, then scales your caps for higher-volume selling.
+              Seller includes Pro, then raises your catalog and active listing caps for higher-volume selling (analytics and exports are the same as Pro).
             </p>
 
             <p className="mt-3 text-sm leading-6 text-slate-200">
@@ -188,10 +192,15 @@ export default function ProPlanPage() {
               </div>
 
               {[
-                ["Up to 250 cards", true, false, false],
-                ["More room to grow", false, true, true],
+                ["Up to 250 cards (Collector cap)", true, false, false],
+                ["Up to 1,000 cards (Pro cap)", false, true, false],
+                ["Up to 10,000 cards (Seller cap)", false, false, true],
+                ["10 active Market listings (Collector cap)", true, false, false],
+                ["50 active Market listings (Pro cap)", false, true, false],
+                ["250 active Market listings (Seller cap)", false, false, true],
                 ["Manual card entry", true, true, true],
                 ["CSV import/export", false, true, true],
+                ["Bulk inventory tools", false, true, true],
                 ["Personal Collection (PC) view", true, true, true],
                 ["Cleaner catalog browsing", true, true, true],
                 ["Basic sold tracking", true, true, true],

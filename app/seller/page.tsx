@@ -6,11 +6,11 @@ import { CatalogShowcase, PcShowcase, SoldShowcase, ImportShowcase } from "@/com
 export const metadata: Metadata = {
   title: "Seller Plan | CardCat",
   description:
-    "CardCat Seller plan is built for high-volume seller workflows, advanced analytics, and export-ready sold tracking at scale.",
+    "CardCat Seller plan unlocks everything in Pro, plus higher caps for catalog size and active Market listings (up to 10,000 cards + 250 active listings).",
   openGraph: {
     title: "Seller Plan | CardCat",
     description:
-      "CardCat Seller plan is built for high-volume seller workflows, advanced analytics, and export-ready sold tracking at scale.",
+      "CardCat Seller plan unlocks everything in Pro, plus higher caps for catalog size and active Market listings (up to 10,000 cards + 250 active listings).",
     type: "website",
   },
 };
@@ -30,7 +30,10 @@ export default function SellerPlanPage() {
               Built for real seller volume.
             </h1>
             <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
-              Seller keeps the Pro workflow upgrades, then scales your catalog and active listings with deeper seller-focused analytics.
+              Seller includes everything in Pro, plus higher caps for catalog size and active Market listings (up to 10,000 cards + 250 active listings).
+              <span className="block mt-1 text-sm text-slate-200">
+                You keep the same profit/ROI dashboards and CSV exports, just scaled for higher volume.
+              </span>
             </p>
 
             <p className="mt-4 text-sm leading-6 text-slate-200">
@@ -59,12 +62,12 @@ export default function SellerPlanPage() {
             <h2 className="text-2xl font-bold text-white">What Seller Unlocks</h2>
             <ul className="mt-5 space-y-3 text-sm text-slate-200">
               {[
-                "Higher caps for catalog + active listings",
-                "CSV Import And Export",
-                "Bulk Inventory Tools",
-                "Advanced Sold Tracking + Seller Analytics",
-                "Profit / ROI Metrics",
-                "Sales CSV Export With Analytics Fields",
+                "Higher caps for catalog + active listings (10,000 cards + 250 active Market listings)",
+                "CSV Import And Export (same as Pro)",
+                "Bulk Inventory Tools (same as Pro)",
+                "Advanced Sold Tracking + Seller Analytics (same profit/ROI suite as Pro)",
+                "Profit / ROI Metrics (same calculations as Pro)",
+                "Sales CSV Export With Analytics Fields (same exports as Pro)",
               ].map((feature) => (
                 <li key={feature} className="flex items-start gap-3">
                   <span className="mt-1 text-amber-300">•</span>
@@ -77,7 +80,7 @@ export default function SellerPlanPage() {
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
             <h2 className="text-2xl font-bold text-white">Best For</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
-              Active sellers who need higher throughput, more active listings, and export-ready insights to review performance fast.
+              Active sellers who need higher throughput and more active listings. Seller is the same analytics as Pro, just scaled to higher volume.
             </p>
             <div className="mt-6 rounded-2xl border border-orange-500/20 bg-orange-500/[0.08] p-4">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-200">Seller tip</div>
@@ -108,7 +111,10 @@ export default function SellerPlanPage() {
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Plan comparison</div>
             <h2 className="mt-3 text-2xl font-bold text-white">Collector vs Pro vs Seller (Clearly)</h2>
             <p className="mt-3 text-sm leading-7 text-slate-200">
-              Collector is for organization and basic sold tracking. Pro adds seller workflow upgrades and profit/ROI visibility. Seller includes Pro, then scales your caps and analytics for high-volume selling.
+              Collector is for organization and basic sold tracking. Pro adds seller workflow upgrades and profit/ROI visibility. Seller includes Pro, then raises your catalog and active listing caps for high-volume selling.
+              <span className="block">
+                The profit/ROI analytics and CSV exports are the same as Pro, just scaled to bigger catalogs.
+              </span>
             </p>
 
             <div className="mt-6 grid gap-2">
@@ -120,10 +126,15 @@ export default function SellerPlanPage() {
               </div>
 
               {[
-                ["Up to 250 cards", true, false, false],
-                ["More room to grow", false, true, true],
+                ["Up to 250 cards (Collector cap)", true, false, false],
+                ["Up to 1,000 cards (Pro cap)", false, true, false],
+                ["Up to 10,000 cards (Seller cap)", false, false, true],
+                ["10 active Market listings (Collector cap)", true, false, false],
+                ["50 active Market listings (Pro cap)", false, true, false],
+                ["250 active Market listings (Seller cap)", false, false, true],
                 ["Manual card entry", true, true, true],
                 ["CSV import/export", false, true, true],
+                ["Bulk inventory tools", false, true, true],
                 ["Personal Collection (PC) view", true, true, true],
                 ["Cleaner catalog browsing", true, true, true],
                 ["Basic sold tracking", true, true, true],
@@ -184,9 +195,9 @@ export default function SellerPlanPage() {
             <h2 className="mt-3 text-2xl font-bold text-white">Seller Questions</h2>
 
             <div className="mt-6 space-y-4">
-              {[{
+              {[{ 
                 q: "Is Seller just higher caps, or are tools different?",
-                a: "Seller includes everything Pro includes, plus the higher caps for catalog size and active listings, so your seller workflow stays smooth as volume increases.",
+                a: "Yes, mostly. Seller is Pro plus higher caps for catalog size and active Market listings (10,000 cards + 250 active listings), so you don't hit limits as you scale. The profit/ROI analytics and exports use the same calculations as Pro.",
               }, {
                 q: "Does Seller export sold data with profit/ROI fields?",
                 a: "Yes. Seller exports include the same analytics fields, so your reports match the Sold dashboard calculations.",
@@ -206,4 +217,3 @@ export default function SellerPlanPage() {
     </main>
   );
 }
-
