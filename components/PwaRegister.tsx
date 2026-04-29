@@ -31,7 +31,7 @@ export default function PwaRegister() {
         .finally(() => {
           // Register a fresh copy of our safe SW.
           navigator.serviceWorker
-            .register(`/sw.js?sw=ios_${bust}`)
+            .register(`/sw.v2.js`)
             .then((reg) => reg.update().catch(() => {}))
             .catch(() => {
               // no-op

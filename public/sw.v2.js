@@ -37,7 +37,5 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-self.addEventListener("fetch", (_event) => {
-  // Intentionally no interception.
-});
-
+// No `fetch` handler on purpose. Some iOS/WebView versions can behave
+// unexpectedly when a fetch listener is present.
