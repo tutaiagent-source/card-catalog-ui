@@ -6,31 +6,31 @@ const featureCards = [
     title: "Catalog",
     body: "Catalog cards in one place with cleaner search, images, and status tracking across Collection, Active Listings, and Sold.",
     href: "/features/catalog",
-    label: "Open Catalog",
+    label: "Open catalog",
   },
   {
     title: "Card Posts",
     body: "Turn saved cards into Card Post images with optional pricing and front/back layout for faster sharing.",
     href: "/features/share-sheets",
-    label: "See Card Posts",
+    label: "See card posts",
   },
   {
     title: "Listings",
     body: "Manage what you’re actively trying to sell, including external links and temporary share links outside CardCat.",
     href: "/features/listings",
-    label: "See Listings",
+    label: "See listings",
   },
   {
     title: "CSV Import",
     body: "Import inventory from CSV, map columns to CardCat fields, and clean up duplicates before saving.",
     href: "/features/import",
-    label: "CSV Guide",
+    label: "CSV guide",
   },
   {
     title: "PC + Sold",
     body: "Build your PC showcase and keep Sold history attached to the same card record.",
     href: "/guides/pc",
-    label: "PC Guide",
+    label: "PC guide",
   },
 ];
 
@@ -55,10 +55,11 @@ export default function FeaturesPage() {
                 CardCat Features
               </div>
             <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-              The Key Features, Without The Wall Of Text.
+              Features that matter to collectors.
             </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">
-                CardCat helps collectors catalog their collection, build a PC showcase, manage listings, and make direct deals in a private member marketplace with downloadable receipts.
+                CardCat helps you catalog your collection, build your PC, and manage listings in one place.
+                You can also download receipts when a deal is done.
               </p>
             </div>
         </section>
@@ -128,9 +129,9 @@ export default function FeaturesPage() {
         <section className="mt-12 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
           <div className="max-w-2xl">
             <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Need Details?</div>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Use The Focused Pages For The Deeper Stuff</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">Pick a workflow, then go</h2>
               <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
-                Keep this page focused, then jump into the exact workflow you care about: Catalog, Card Posts, Active Listings sharing, or PC + Sold.
+                Use this page to find what you need, then jump into the exact workflow you care about: Catalog, card posts, active listings sharing, or PC + sold.
               </p>
           </div>
 
