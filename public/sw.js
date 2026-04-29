@@ -1,11 +1,6 @@
-/* Disabled-by-default service worker.
- *
- * Mobile iOS/WebView can get stuck in navigation loops if this worker
- * intercepts fetches and/or serves cached HTML.
- *
- * This worker intentionally does NOT call `event.respondWith(...)` for
- * fetch events, letting the browser perform normal network handling.
- */
+/* Minimal runtime-cache service worker for “Add to Home Screen” and basic offline support. */
+
+const CACHE_NAME = "cardcat-pwa-v1";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
@@ -13,23 +8,51 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    (async () => {
-      try {
-        await self.clients.claim();
-      } catch (_e) {
-        // ignore
-      }
+    Promise.all([
+      self.clients.claim(),
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys
+            .filter((k) => k !== CACHE_NAME)
+            .map((k) => caches.delete(k))
+        )
+      ),
+    ])
+  );
+});
 
-      // Clear any old caches to prevent stale HTML.
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+
+  if (request.method !== "GET") return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return;
+
+  event.respondWith(
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+
+      // Try network first.
       try {
-        const keys = await caches.keys();
-        await Promise.all(keys.map((k) => caches.delete(k)));
-      } catch (_e) {
-        // ignore
+        const freshResponse = await fetch(request);
+        // Cache only successful responses.
+        if (freshResponse && freshResponse.ok) {
+          cache.put(request, freshResponse.clone()).catch(() => {});
+        }
+        return freshResponse;
+      } catch (err) {
+        // Fall back to cache.
+        const cached = await cache.match(request);
+        if (cached) return cached;
+
+        // If navigation fails, try cached root.
+        if (request.mode === "navigate") {
+          const cachedRoot = await cache.match("/");
+          if (cachedRoot) return cachedRoot;
+        }
+
+        throw err;
       }
     })()
   );
 });
-
-// No `fetch` handler on purpose. Some iOS/WebView versions can behave
-// unexpectedly when a fetch listener is present.
