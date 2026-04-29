@@ -34,6 +34,7 @@ type SharedCard = {
   back_image_url?: string;
 
   asking_price?: number | null;
+  listed_at?: string | null;
   estimated_price?: number | null;
   sale_platform?: string | null;
   notes?: string | null;
@@ -56,6 +57,13 @@ export default function ListingsSharedView({
   const [activeCard, setActiveCard] = useState<SharedCard | null>(null);
   const [showBack, setShowBack] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [listedRecency, setListedRecency] = useState<"any" | "24h" | "7d" | "30d" | "90d">("any");
+  const [priceMin, setPriceMin] = useState<string>("");
+  const [priceMax, setPriceMax] = useState<string>("");
+  const [onlyAutos, setOnlyAutos] = useState(false);
+  const [onlyGraded, setOnlyGraded] = useState(false);
+  const [onlyRookie, setOnlyRookie] = useState(false);
+  const [onlyMemorabilia, setOnlyMemorabilia] = useState(false);
   const [messageStarting, setMessageStarting] = useState(false);
   const [messageError, setMessageError] = useState("");
 
@@ -99,9 +107,65 @@ export default function ListingsSharedView({
 
   const filteredCards = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return sortedCards;
-    return sortedCards.filter((card) => String(card.player_name || "").toLowerCase().includes(q));
-  }, [sortedCards, searchQuery]);
+
+    const parsedMin = priceMin.trim() ? Number(priceMin) : null;
+    const parsedMax = priceMax.trim() ? Number(priceMax) : null;
+
+    const now = Date.now();
+    const cutoffMs = (() => {
+      switch (listedRecency) {
+        case "24h":
+          return now - 24 * 60 * 60 * 1000;
+        case "7d":
+          return now - 7 * 24 * 60 * 60 * 1000;
+        case "30d":
+          return now - 30 * 24 * 60 * 60 * 1000;
+        case "90d":
+          return now - 90 * 24 * 60 * 60 * 1000;
+        case "any":
+        default:
+          return null;
+      }
+    })();
+
+    return sortedCards.filter((card) => {
+      if (cutoffMs != null) {
+        const listedAtMs = card.listed_at ? new Date(card.listed_at).getTime() : NaN;
+        if (!Number.isFinite(listedAtMs) || listedAtMs < cutoffMs) return false;
+      }
+
+      if (parsedMin != null || parsedMax != null) {
+        const price = card.asking_price != null ? Number(card.asking_price) : NaN;
+        if (!Number.isFinite(price)) return false;
+        if (parsedMin != null && price < parsedMin) return false;
+        if (parsedMax != null && price > parsedMax) return false;
+      }
+
+      if (onlyAutos && !yes(card.is_autograph)) return false;
+      if (onlyGraded && !yes(card.graded)) return false;
+      if (onlyRookie && !yes(card.rookie)) return false;
+      if (onlyMemorabilia && !yes(card.has_memorabilia)) return false;
+
+      if (!q) return true;
+
+      const sellerNotes = parseSellerMeta(card.notes).publicNotes;
+      const haystack = [
+        card.player_name,
+        card.year,
+        card.brand,
+        card.set_name,
+        card.parallel,
+        card.team,
+        card.sport,
+        card.competition,
+        sellerNotes,
+      ]
+        .map((value) => String(value || "").toLowerCase())
+        .join(" ");
+
+      return haystack.includes(q);
+    });
+  }, [sortedCards, searchQuery, listedRecency, priceMin, priceMax, onlyAutos, onlyGraded, onlyRookie, onlyMemorabilia]);
 
   const activeCardPublicNotes = useMemo(() => parseSellerMeta(activeCard?.notes).publicNotes, [activeCard?.notes]);
 
@@ -177,6 +241,91 @@ export default function ListingsSharedView({
                   className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none sm:max-w-xs"
                   aria-label="Search shared listings by player name"
                 />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Listed</div>
+                  <select
+                    value={listedRecency}
+                    onChange={(e) => setListedRecency(e.target.value as any)}
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    aria-label="Filter by listed recency"
+                  >
+                    <option value="any">Any time</option>
+                    <option value="24h">Last 24h</option>
+                    <option value="7d">Last 7d</option>
+                    <option value="30d">Last 30d</option>
+                    <option value="90d">Last 90d</option>
+                  </select>
+                </label>
+
+                <label className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Price min (USD)</div>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step="0.01"
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                    placeholder="0"
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    aria-label="Minimum asking price"
+                  />
+                </label>
+
+                <label className="block">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Price max (USD)</div>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={0}
+                    step="0.01"
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                    placeholder=""
+                    className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    aria-label="Maximum asking price"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                  <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-slate-950" checked={onlyAutos} onChange={(e) => setOnlyAutos(e.target.checked)} />
+                  Auto
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                  <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-slate-950" checked={onlyGraded} onChange={(e) => setOnlyGraded(e.target.checked)} />
+                  Graded
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                  <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-slate-950" checked={onlyRookie} onChange={(e) => setOnlyRookie(e.target.checked)} />
+                  Rookie
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                  <input type="checkbox" className="h-4 w-4 rounded border-white/20 bg-slate-950" checked={onlyMemorabilia} onChange={(e) => setOnlyMemorabilia(e.target.checked)} />
+                  Memorabilia
+                </label>
+
+                {(listedRecency !== "any" || priceMin.trim() !== "" || priceMax.trim() !== "" || onlyAutos || onlyGraded || onlyRookie || onlyMemorabilia) ? (
+                  <button
+                    type="button"
+                    className="ml-auto rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]"
+                    onClick={() => {
+                      setListedRecency("any");
+                      setPriceMin("");
+                      setPriceMax("");
+                      setOnlyAutos(false);
+                      setOnlyGraded(false);
+                      setOnlyRookie(false);
+                      setOnlyMemorabilia(false);
+                    }}
+                  >
+                    Clear filters
+                  </button>
+                ) : null}
               </div>
 
               {filteredCards.length === 0 ? (
