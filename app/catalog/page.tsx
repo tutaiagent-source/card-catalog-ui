@@ -298,6 +298,7 @@ export default function CatalogPage() {
     parallel: "",
     card_number: "",
     serial_number_text: "",
+    notes: "",
   });
   const [cardDetailsSaving, setCardDetailsSaving] = useState(false);
 
@@ -384,6 +385,7 @@ export default function CatalogPage() {
         : ""
     );
 
+    const seller = parseSellerMeta(imageModal.card.notes);
     setCardDetailsDraft({
       player_name: imageModal.card.player_name ?? "",
       year: imageModal.card.year ?? "",
@@ -392,6 +394,7 @@ export default function CatalogPage() {
       parallel: imageModal.card.parallel ?? "",
       card_number: imageModal.card.card_number ?? "",
       serial_number_text: imageModal.card.serial_number_text ?? "",
+      notes: seller.publicNotes,
     });
   }, [imageModal]);
 
@@ -1267,6 +1270,10 @@ export default function CatalogPage() {
     if (!supabaseConfigured || !supabase) return;
     if (!user?.id) return;
 
+    const seller = parseSellerMeta(imageModal.card.notes);
+    const publicNotesOnly = parseSellerMeta(String(cardDetailsDraft.notes || "")).publicNotes;
+    const notesNext = buildSellerNotes(publicNotesOnly, seller.meta);
+
     const payload = {
       player_name: cardDetailsDraft.player_name.trim(),
       year: cardDetailsDraft.year.trim(),
@@ -1275,6 +1282,7 @@ export default function CatalogPage() {
       parallel: cardDetailsDraft.parallel.trim(),
       card_number: cardDetailsDraft.card_number.trim(),
       serial_number_text: cardDetailsDraft.serial_number_text.trim(),
+      notes: notesNext,
     };
 
     setCardDetailsSaving(true);
@@ -3079,6 +3087,16 @@ export default function CatalogPage() {
                     className="w-full rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
                     value={cardDetailsDraft.serial_number_text}
                     onChange={(e) => setCardDetailsDraft((p) => ({ ...p, serial_number_text: e.target.value }))}
+                  />
+                </label>
+
+                <label className="block sm:col-span-2">
+                  <div className="mb-1 text-xs font-semibold text-slate-300">Special notes</div>
+                  <textarea
+                    className="min-h-[96px] w-full resize-y rounded-2xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none"
+                    value={cardDetailsDraft.notes}
+                    onChange={(e) => setCardDetailsDraft((p) => ({ ...p, notes: e.target.value }))}
+                    placeholder="Seller info, card location, or anything else worth noting..."
                   />
                 </label>
               </div>

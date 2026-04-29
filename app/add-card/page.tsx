@@ -427,7 +427,8 @@ export default function AddCardPage() {
       }
 
       const normalizedBrandSet = normalizeBrandAndSet(String(card.brand || ""), String(card.set_name || ""));
-      const sellerNotes = buildSellerNotes(String(card.notes || ""), {
+      const publicNotesOnly = parseSellerMeta(String(card.notes || "")).publicNotes;
+      const sellerNotes = buildSellerNotes(publicNotesOnly, {
         costBasis: card.cost_basis ?? null,
         shippingCost: card.shipping_cost ?? null,
         platformFee: card.platform_fee ?? null,
@@ -1455,6 +1456,16 @@ export default function AddCardPage() {
                     </button>
                   </div>
                 </div>
+
+                <label className="block">
+                  <div className="mb-1 text-sm text-slate-300">Special notes</div>
+                  <textarea
+                    className="min-h-[96px] w-full rounded bg-slate-950 px-3 py-2"
+                    value={String(card.notes || "")}
+                    onChange={(e) => set("notes", e.target.value)}
+                    placeholder="Seller info, card location, or anything else worth noting..."
+                  />
+                </label>
 
                 <div className="rounded border border-slate-800 p-3 space-y-3">
                   <div>
