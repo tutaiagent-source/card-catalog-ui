@@ -121,7 +121,7 @@ export default function Home() {
             {/* Lightweight value list */}
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
               <img
-                src="/home-cardcat-signin.jpg"
+                src="/home-cardcat-signin.png"
                 alt="CardCat mobile preview"
                 draggable={false}
                 className="w-full rounded-2xl border border-white/10 object-cover"
