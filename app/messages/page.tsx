@@ -141,6 +141,9 @@ export default function MessagesPage() {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [bulkDeleteError, setBulkDeleteError] = useState("");
 
+  const [bulkArchiving, setBulkArchiving] = useState(false);
+  const [bulkArchiveError, setBulkArchiveError] = useState("");
+
   const [bulkMarking, setBulkMarking] = useState(false);
 
   const [conversationActionSaving, setConversationActionSaving] = useState(false);
@@ -159,6 +162,7 @@ export default function MessagesPage() {
   useEffect(() => {
     setSelectedConversationIds([]);
     setBulkDeleteError("");
+    setBulkArchiveError("");
     setIsSelectingConversations(false);
   }, [messageFolder]);
 
@@ -2321,6 +2325,49 @@ export default function MessagesPage() {
     }
   }
 
+  async function onBulkArchiveSelectedConversations() {
+    if (!supabaseConfigured || !supabase || !user?.id) return;
+    if (selectedConversationIds.length === 0) return;
+
+    if (messageFolder === "archived") return;
+
+    if (!confirm(`Move ${selectedConversationIds.length} conversation${selectedConversationIds.length === 1 ? "" : "s"} to Archived?`)) {
+      return;
+    }
+
+    setBulkArchiving(true);
+    setBulkArchiveError("");
+
+    try {
+      const { error: updateError } = await supabase
+        .from("conversation_participants")
+        .update({ archived_at: new Date().toISOString() })
+        .eq("user_id", user.id)
+        .in("conversation_id", selectedConversationIds);
+
+      if (updateError) throw updateError;
+
+      setSelectedConversationIds([]);
+      setConversationParam("");
+      setActiveConversationId(null);
+      await loadInbox();
+    } catch (err: any) {
+      const msg = String(err?.message || "");
+      const lower = msg.toLowerCase();
+      const missingArchivedAt =
+        lower.includes("archived_at") &&
+        (lower.includes("does not exist") || lower.includes("unknown column") || lower.includes("column"));
+
+      if (missingArchivedAt) {
+        setBulkArchiveError("Archiving isn’t enabled on the server yet. Ask the CardCat admin to deploy the archived conversations migration.");
+      } else {
+        setBulkArchiveError(err?.message || "Could not archive selected conversations.");
+      }
+    } finally {
+      setBulkArchiving(false);
+    }
+  }
+
   async function onBulkSetSelectedConversationsRead(lastReadAt: string | null) {
     if (!supabaseConfigured || !supabase || !user?.id) return;
     if (selectedConversationIds.length === 0) return;
@@ -2490,6 +2537,10 @@ export default function MessagesPage() {
           <div className="mt-3 rounded-2xl border border-red-500/25 bg-red-500/[0.08] px-4 py-3 text-sm text-red-100">{bulkDeleteError}</div>
         ) : null}
 
+        {bulkArchiveError ? (
+          <div className="mt-3 rounded-2xl border border-amber-500/25 bg-amber-500/[0.08] px-4 py-3 text-sm text-amber-100">{bulkArchiveError}</div>
+        ) : null}
+
         <div className="mt-6 grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
           <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 flex flex-col h-[calc(100vh-220px)] overflow-hidden">
             <div className="flex items-center justify-between gap-3">
@@ -2500,7 +2551,7 @@ export default function MessagesPage() {
 	                  <button
 	                    type="button"
 	                    onClick={() => setIsSelectingConversations(true)}
-	                    disabled={bulkDeleting || bulkMarking}
+	                    disabled={bulkDeleting || bulkMarking || bulkArchiving}
 	                    className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
 	                  >
 	                    Select
@@ -2513,7 +2564,7 @@ export default function MessagesPage() {
 	                        setIsSelectingConversations(false);
 	                        setSelectedConversationIds([]);
 	                      }}
-	                      disabled={bulkDeleting || bulkMarking}
+	                      disabled={bulkDeleting || bulkMarking || bulkArchiving}
 	                      className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60"
 	                    >
 	                      Cancel
@@ -2530,15 +2581,23 @@ export default function MessagesPage() {
 	                    <button
 	                      type="button"
 	                      onClick={() => void onBulkMarkSelectedConversationsUnread()}
-	                      disabled={bulkDeleting || bulkMarking || selectedConversationIds.length === 0}
+                        disabled={bulkDeleting || bulkMarking || bulkArchiving || selectedConversationIds.length === 0 || messageFolder === "archived"}
 	                      className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
 	                    >
 	                      Mark Unread
 	                    </button>
 	                    <button
 	                      type="button"
+	                      onClick={() => void onBulkArchiveSelectedConversations()}
+	                      disabled={bulkDeleting || bulkMarking || bulkArchiving || selectedConversationIds.length === 0 || messageFolder === "archived"}
+	                      className="rounded-lg border border-amber-500/30 bg-amber-500/[0.08] px-3 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-500/[0.14] disabled:cursor-not-allowed disabled:opacity-60"
+	                    >
+	                      {bulkArchiving ? "Archiving…" : "Move to Archive"}
+	                    </button>
+	                    <button
+	                      type="button"
 	                      onClick={() => void onBulkDeleteSelectedConversations()}
-	                      disabled={bulkDeleting || bulkMarking || selectedConversationIds.length === 0}
+	                      disabled={bulkDeleting || bulkMarking || bulkArchiving || selectedConversationIds.length === 0}
 	                      className="rounded-lg border border-red-500/30 bg-red-500/[0.08] px-3 py-1.5 text-xs font-semibold text-red-100 hover:bg-red-500/[0.14] disabled:cursor-not-allowed disabled:opacity-60"
 	                    >
 	                      {bulkDeleting ? "Deleting…" : "Delete"}
