@@ -124,7 +124,7 @@ export default function Home() {
                 src="/home-cardcat-signin.png"
                 alt="CardCat mobile preview"
                 draggable={false}
-                className="w-full rounded-2xl border border-white/10 object-cover"
+                className="w-full rounded-2xl border border-white/10 object-cover cardcat-slide-in-right"
               />
 
               <div className="mt-3 text-xs leading-6 text-slate-300">
