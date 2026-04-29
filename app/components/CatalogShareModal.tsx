@@ -90,7 +90,7 @@ function buildShareSvg(card: ShareCard, includePrice: boolean, price: string) {
   <rect x="80" y="80" width="920" height="560" rx="32" fill="url(#fade)" opacity="0.2" />
   <text x="80" y="120" font-size="22" letter-spacing="6" fill="#fbbf24">CARDCAT SHARE</text>
   ${textNodes}
-  <image href="/brand/card_cat_horizontal.svg" x="390" y="948" width="300" height="126" preserveAspectRatio="xMidYMid meet" />
+  <image href="/brand/card_cat_horizontal.svg?v=2" x="390" y="948" width="300" height="126" preserveAspectRatio="xMidYMid meet" />
   <defs>
     <linearGradient id="fade" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0%" stop-color="#f59e0b" />
@@ -182,7 +182,7 @@ export default function CatalogShareModal({ card, onClose }: { card: ShareCard; 
                   </div>
                   <div className="pt-4 flex items-center justify-center">
                     <img
-                      src="/brand/card_cat_horizontal.svg"
+                      src="/brand/card_cat_horizontal.svg?v=2"
                       alt="CardCat"
                       className="h-12 w-auto opacity-90"
                       draggable={false}
