@@ -15,6 +15,7 @@ export function useSupabaseUser() {
     }
 
     let active = true;
+    let sub: any = null;
 
     // Supabase can fail in certain mobile/private-network contexts
     // (storage/cookie restrictions). We must catch to avoid unhandled
@@ -32,15 +33,29 @@ export function useSupabaseUser() {
         setLoading(false);
       });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!active) return;
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    try {
+      ({ data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (!active) return;
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }));
+    } catch (_e) {
+      // If the listener cannot be attached (common in some constrained
+      // mobile/privacy contexts), we just treat this as logged-out.
+      if (active) {
+        setUser(null);
+        setLoading(false);
+      }
+    }
 
     return () => {
       active = false;
-      sub.subscription.unsubscribe();
+      try {
+        if (sub?.subscription?.unsubscribe) sub.subscription.unsubscribe();
+        else if (sub?.unsubscribe) sub.unsubscribe();
+      } catch (_e) {
+        // ignore
+      }
     };
   }, []);
 
