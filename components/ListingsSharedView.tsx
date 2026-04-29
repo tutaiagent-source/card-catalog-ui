@@ -184,56 +184,145 @@ export default function ListingsSharedView({
                   No cards match that search.
                 </div>
               ) : (
-              <div className="grid grid-cols-4 gap-2 sm:grid-cols-5" role="list" aria-label="Shared listed cards">
-                {filteredCards.map((c) => {
-                  const goHref = toUrl(c.sale_platform);
-                    return (
-                      <div
-                        key={c.id}
-                        role="listitem"
-                        tabIndex={0}
-                      onClick={() => setActiveCard(c)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") setActiveCard(c);
-                      }}
-                      className="relative cursor-pointer rounded-xl border border-slate-800 bg-slate-950/40 p-2"
-                        aria-label={`View ${c.player_name}`}
-                    >
-	                      <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center">
-	                        {c.image_url && c.id ? (
-	                          <img alt={c.player_name} src={proxyImageSrc(c.id, "front", "detail")} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
-	                        ) : (
-	                          <div className="h-full w-full" />
-	                        )}
-	                      </div>
+                <>
+                  <div
+                    className="md:hidden space-y-3"
+                    role="list"
+                    aria-label="Shared listed cards"
+                  >
+                    {filteredCards.map((c) => {
+                      const goHref = toUrl(c.sale_platform);
+                      return (
+                        <div
+                          key={c.id}
+                          role="listitem"
+                          tabIndex={0}
+                          onClick={() => setActiveCard(c)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") setActiveCard(c);
+                          }}
+                          className="cursor-pointer rounded-2xl border border-slate-800 bg-slate-950/40 p-3"
+                          aria-label={`View ${c.player_name}`}
+                        >
+                          <div className="flex gap-3">
+                            {c.image_url && c.id ? (
+                              <button
+                                type="button"
+                                className="h-20 w-14 flex-shrink-0 overflow-hidden rounded border border-slate-800 bg-slate-950"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveCard(c);
+                                }}
+                                aria-label={`View ${c.player_name}`}
+                              >
+                                <img
+                                  alt={c.player_name}
+                                  src={proxyImageSrc(c.id, "front", "grid")}
+                                  className="h-full w-full object-contain"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              </button>
+                            ) : (
+                              <div className="h-20 w-14 flex-shrink-0 rounded border border-slate-800 bg-slate-950" />
+                            )}
 
-                      <div className="mt-2 text-center">
-                        <div className="line-clamp-2 text-sm font-semibold text-white">{c.player_name}</div>
-                        <div className="mt-1 text-xs text-slate-300">
-                          {c.year} · {c.brand}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-400">
-                          {c.set_name} · {c.parallel}
-                        </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="truncate text-sm font-semibold text-white">{c.player_name}</div>
+                                  <div className="mt-0.5 text-sm text-slate-300">
+                                    {c.year} · {c.brand}
+                                  </div>
+                                  <div className="mt-1 text-xs text-slate-400">
+                                    {c.set_name} · {c.parallel}
+                                  </div>
+                                </div>
 
-                        {c.asking_price != null ? (
-                          showPricing ? (
-                            <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
-                          ) : (
-                            <div className="mt-2 text-sm font-semibold text-emerald-200">✅ Accepting offers</div>
-                          )
-                        ) : null}
-                      </div>
+                                {goHref ? (
+                                  <div className="mt-0.5 rounded-full border border-white/10 bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-slate-200">
+                                    ↗
+                                  </div>
+                                ) : null}
+                              </div>
 
-                      {goHref ? (
-                        <div className="absolute right-2 top-2 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
-                          ↗
+                              {c.asking_price != null ? (
+                                showPricing ? (
+                                  <div className="mt-2 text-sm font-semibold text-slate-100">
+                                    {formatMoney(Number(c.asking_price))}
+                                  </div>
+                                ) : (
+                                  <div className="mt-2 text-sm font-semibold text-emerald-200">✅ Accepting offers</div>
+                                )
+                              ) : null}
+                            </div>
+                          </div>
                         </div>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
+                      );
+                    })}
+                  </div>
+
+                  <div
+                    className="hidden md:grid grid-cols-4 gap-2 sm:grid-cols-5"
+                    role="list"
+                    aria-label="Shared listed cards"
+                  >
+                    {filteredCards.map((c) => {
+                      const goHref = toUrl(c.sale_platform);
+                      return (
+                        <div
+                          key={c.id}
+                          role="listitem"
+                          tabIndex={0}
+                          onClick={() => setActiveCard(c)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") setActiveCard(c);
+                          }}
+                          className="relative cursor-pointer rounded-xl border border-slate-800 bg-slate-950/40 p-2"
+                          aria-label={`View ${c.player_name}`}
+                        >
+                          <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center">
+                            {c.image_url && c.id ? (
+                              <img
+                                alt={c.player_name}
+                                src={proxyImageSrc(c.id, "front", "detail")}
+                                className="max-h-full max-w-full object-contain"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            ) : (
+                              <div className="h-full w-full" />
+                            )}
+                          </div>
+
+                          <div className="mt-2 text-center">
+                            <div className="line-clamp-2 text-sm font-semibold text-white">{c.player_name}</div>
+                            <div className="mt-1 text-xs text-slate-300">
+                              {c.year} · {c.brand}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-400">
+                              {c.set_name} · {c.parallel}
+                            </div>
+
+                            {c.asking_price != null ? (
+                              showPricing ? (
+                                <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
+                              ) : (
+                                <div className="mt-2 text-sm font-semibold text-emerald-200">✅ Accepting offers</div>
+                              )
+                            ) : null}
+                          </div>
+
+                          {goHref ? (
+                            <div className="absolute right-2 top-2 z-20 rounded-full border border-white/10 bg-slate-950/75 px-2.5 py-1 text-[10px] font-semibold text-slate-200">
+                              ↗
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </div>
           </section>
@@ -259,7 +348,7 @@ export default function ListingsSharedView({
                 </button>
               </div>
 
-              <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="grid gap-6 p-4 sm:p-6 grid-cols-[2fr_1fr]">
                 <div className="rounded-[24px] border border-white/10 bg-slate-900 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -283,7 +372,7 @@ export default function ListingsSharedView({
 
                   <div className="mt-4">
                     <div
-                      className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl bg-slate-950"
+                      className="relative h-[420px] w-full overflow-hidden rounded-2xl bg-slate-950 sm:h-[520px]"
                       role={activeCard.back_image_url ? "button" : undefined}
                       tabIndex={activeCard.back_image_url ? 0 : -1}
                       aria-label={activeCard.back_image_url ? "Flip card" : undefined}
