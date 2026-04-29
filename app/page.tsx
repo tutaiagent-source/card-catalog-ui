@@ -120,6 +120,17 @@ export default function Home() {
 
             {/* Lightweight value list */}
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+              <img
+                src="/home-cardcat-signin.jpg"
+                alt="CardCat mobile preview"
+                draggable={false}
+                className="w-full rounded-2xl border border-white/10 bg-slate-950/40 object-cover"
+              />
+
+              <div className="mt-3 text-xs leading-6 text-slate-300">
+                Sign in, catalog your cards, list to the Market, then track sold (profits + ROI) in one place.
+              </div>
+
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">What you do in CardCat</div>
               <div className="mt-3 space-y-3">
                 {[
