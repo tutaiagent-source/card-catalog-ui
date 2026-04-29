@@ -7,6 +7,26 @@ export default function PwaRegister() {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
 
+    const ua = navigator.userAgent || "";
+    const isIOS = /iPad|iPhone|iPod/.test(ua);
+
+    // iOS has known service worker instability issues that can manifest as
+    // "A problem repeatedly occurred" loops. For now, we permanently disable
+    // SW registration on iOS and only unregister any existing SWs.
+    if (isIOS) {
+      const didReload = sessionStorage.getItem("cardcat_sw_unreg_reload") === "1";
+      navigator.serviceWorker
+        .getRegistrations()
+        .then((regs) => Promise.all(regs.map((r) => r.unregister())).catch(() => {}))
+        .finally(() => {
+          if (!didReload) {
+            sessionStorage.setItem("cardcat_sw_unreg_reload", "1");
+            window.location.reload();
+          }
+        });
+      return;
+    }
+
     // Force replacement of any older SW versions that may be causing
     // iOS/WebView navigation loops.
     //
