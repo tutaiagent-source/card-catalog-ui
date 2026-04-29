@@ -27,17 +27,9 @@ self.addEventListener("activate", (event) => {
       } catch (_e) {
         // ignore
       }
-
-      // Best-effort: unregister so this worker stops controlling.
-      try {
-        await self.registration.unregister();
-      } catch (_e) {
-        // ignore
-      }
     })()
   );
 });
 
-self.addEventListener("fetch", (_event) => {
-  // Intentionally no interception.
-});
+// No `fetch` handler on purpose. Some iOS/WebView versions can behave
+// unexpectedly when a fetch listener is present.
