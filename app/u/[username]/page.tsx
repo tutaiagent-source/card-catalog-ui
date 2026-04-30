@@ -232,7 +232,7 @@ export default function SellerProfilePage() {
       if (!ctx) throw new Error("Could not process that image file.");
       ctx.drawImage(img, 0, 0, targetW, targetH);
 
-      const blob: Blob | null = await new Promise((resolve, reject) => {
+      const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob(
           (b) => {
             if (!b) reject(new Error("Could not process that image file."));
