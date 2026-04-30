@@ -141,13 +141,33 @@ export default function MarketPage() {
       }
 
       const { data: profileRows, error: profileError } = await supabase
-        .from("profiles")
+        .from("profiles_public")
         .select(
           "id, username, market_visibility_mode, display_name, avatar_url, bio, is_shop, shop_name, shop_verification_status"
         )
         .in("id", sellerIds);
 
       if (profileError) {
+        const msg = String(profileError.message || "");
+        if (msg.toLowerCase().includes("profiles_public") || msg.toLowerCase().includes("does not exist")) {
+          const { data: fallbackRows, error: fallbackErr } = await supabase
+            .from("profiles")
+            .select(
+              "id, username, market_visibility_mode, display_name, avatar_url, bio, is_shop, shop_name, shop_verification_status"
+            )
+            .in("id", sellerIds);
+
+          if (fallbackErr) {
+            setError(fallbackErr.message);
+            setLoadingCards(false);
+            return;
+          }
+
+          setProfiles((fallbackRows ?? []) as SellerProfile[]);
+          setLoadingCards(false);
+          return;
+        }
+
         setError(profileError.message);
         setLoadingCards(false);
         return;

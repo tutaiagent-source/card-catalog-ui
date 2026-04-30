@@ -117,22 +117,49 @@ export default function SellerProfilePage() {
       setLoadingCards(true);
       try {
         const { data: profileRow, error: profileErr } = await supabase
-          .from("profiles")
+          .from("profiles_public")
           .select(
             "id, username, display_name, avatar_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
           )
           .eq("username", routeUsername)
           .maybeSingle();
 
-        if (profileErr) throw profileErr;
-        if (!profileRow) {
-          setError("Seller not found.");
-          return;
-        }
+	        let effectiveSeller: SellerProfile | null = null;
+	        if (profileErr) {
+	          const msg = String(profileErr.message || "").toLowerCase();
+	          if (msg.includes("profiles_public") || msg.includes("does not exist")) {
+	            const { data: fallbackProfileRow, error: fallbackProfileErr } = await supabase
+	              .from("profiles")
+	              .select(
+	                "id, username, display_name, avatar_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
+	              )
+	              .eq("username", routeUsername)
+	              .maybeSingle();
 
-        setSeller(profileRow as SellerProfile);
+	            if (fallbackProfileErr) throw fallbackProfileErr;
+	            if (!fallbackProfileRow) {
+	              setError("Seller not found.");
+	              return;
+	            }
+	            effectiveSeller = fallbackProfileRow as SellerProfile;
+	          } else {
+	            throw profileErr;
+	          }
+	        } else {
+	          if (!profileRow) {
+	            setError("Seller not found.");
+	            return;
+	          }
+	          effectiveSeller = profileRow as SellerProfile;
+	        }
 
-        const mode = String((profileRow as SellerProfile).market_visibility_mode || "none");
+	        if (!effectiveSeller) {
+	          setError("Seller not found.");
+	          return;
+	        }
+
+	        setSeller(effectiveSeller);
+	        const mode = String((effectiveSeller.market_visibility_mode || "none") as string);
 
         if (mode === "none") {
           setCards([]);
@@ -142,7 +169,7 @@ export default function SellerProfilePage() {
             .select(
               "id, user_id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, serial_number_text, image_url, back_image_url, asking_price, listed_at, sale_platform, public_market_visible, notes"
             )
-            .eq("user_id", (profileRow as SellerProfile).id)
+	            .eq("user_id", effectiveSeller.id)
             .eq("status", "Listed")
             .order("listed_at", { ascending: false });
 
