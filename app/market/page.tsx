@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import CardCatLogo from "@/components/CardCatLogo";
 import CardCatMobileNav from "@/components/CardCatMobileNav";
 import EmailVerificationNotice from "@/components/EmailVerificationNotice";
@@ -47,6 +48,9 @@ type SellerProfile = {
   id: string;
   username: string;
   market_visibility_mode?: string;
+  display_name?: string;
+  avatar_url?: string;
+  bio?: string;
 };
 
 function formatMoney(value: number) {
@@ -134,7 +138,7 @@ export default function MarketPage() {
 
       const { data: profileRows, error: profileError } = await supabase
         .from("profiles")
-        .select("id, username, market_visibility_mode")
+        .select("id, username, market_visibility_mode, display_name, avatar_url, bio")
         .in("id", sellerIds);
 
       if (profileError) {
@@ -148,7 +152,7 @@ export default function MarketPage() {
     })();
   }, [user?.id]);
 
-  const sellerMap = useMemo(() => new Map(profiles.map((profile) => [profile.id, profile.username])), [profiles]);
+  const sellerMap = useMemo(() => new Map(profiles.map((profile) => [profile.id, profile])), [profiles]);
   const activeCardPublicNotes = useMemo(() => parseSellerMeta(activeCard?.notes).publicNotes, [activeCard?.notes]);
 
   const filteredCards = useMemo(() => {
@@ -222,7 +226,7 @@ export default function MarketPage() {
   }, [cards, searchQuery, sellerFilter, sellerMap, profiles, listedRecency, priceMin, priceMax, onlyAutos, onlyGraded, onlyRookie, onlyMemorabilia]);
 
   async function handleMessageSeller(card: MarketCard) {
-    const sellerUsername = String(sellerMap.get(card.user_id) || "").trim();
+    const sellerUsername = String(sellerMap.get(card.user_id)?.username || "").trim();
     if (!sellerUsername || !user?.id) return;
 
     if (!card.id) {
@@ -450,15 +454,21 @@ export default function MarketPage() {
         ) : filteredCards.length === 0 ? (
           <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">No public listings match that search yet.</div>
         ) : (
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                  <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               {filteredCards.map((card) => {
-                const sellerUsername = String(sellerMap.get(card.user_id) || "").trim();
+                const seller = sellerMap.get(card.user_id);
+                const sellerUsername = String(seller?.username || "").trim();
                 return (
-	                    <button
+	                    <div
 	                      key={card.id}
-	                      type="button"
+	                      role="button"
+	                      tabIndex={0}
 	                      onClick={() => setActiveCard(card)}
-	                      className="rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-left hover:bg-slate-950/60"
+	                      onKeyDown={(e) => {
+	                        if (!(e.key === "Enter" || e.key === " ")) return;
+	                        setActiveCard(card);
+	                      }}
+	                      className="rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-left hover:bg-slate-950/60 cursor-pointer"
 	                    >
 	                      <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950 flex items-center justify-center">
 	                        {card.image_url ? (
@@ -471,16 +481,34 @@ export default function MarketPage() {
 	                          />
 	                        ) : <div className="h-full w-full" />}
 	                      </div>
-                    <div className="mt-3 text-sm font-semibold text-white line-clamp-2">{card.player_name}</div>
-                    <div className="mt-1 text-xs text-slate-400 line-clamp-2">{[card.year, card.brand, card.set_name].filter(Boolean).join(" · ")}</div>
-                    {sellerUsername ? <div className="mt-1 text-xs text-emerald-200">@{sellerUsername}</div> : null}
-                    <div className="mt-2 inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
-                      Visible on CardCat Market
-                    </div>
-                    {card.asking_price != null ? (
-                      <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(card.asking_price))}</div>
-                    ) : null}
-                  </button>
+	                      <div className="mt-3 text-sm font-semibold text-white line-clamp-2">{card.player_name}</div>
+	                      <div className="mt-1 text-xs text-slate-400 line-clamp-2">{[card.year, card.brand, card.set_name].filter(Boolean).join(" · ")}</div>
+	                      {sellerUsername ? (
+	                        <div className="mt-1 flex items-center gap-2">
+	                          {seller?.avatar_url ? (
+	                            <img
+	                              src={driveToImageSrc(seller.avatar_url, { variant: "grid" })}
+	                              alt={sellerUsername}
+	                              className="h-4 w-4 rounded-full object-cover"
+	                            />
+	                          ) : null}
+	                          <Link
+	                            href={`/u/${encodeURIComponent(sellerUsername)}`}
+	                            onClick={(e) => e.stopPropagation()}
+	                            className="text-xs font-semibold text-emerald-200 hover:underline"
+	                          >
+	                            {seller?.display_name ? seller.display_name : `@${sellerUsername}`}
+	                            {seller?.display_name ? <span className="ml-1 text-[10px] text-slate-400">@{sellerUsername}</span> : null}
+	                          </Link>
+	                        </div>
+	                      ) : null}
+	                      <div className="mt-2 inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
+	                        Visible on CardCat Market
+	                      </div>
+	                      {card.asking_price != null ? (
+	                        <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(card.asking_price))}</div>
+	                      ) : null}
+	                    </div>
                 );
               })}
             </div>
@@ -497,7 +525,23 @@ export default function MarketPage() {
                     Visible on CardCat Market
                   </div>
                   <div className="mt-2 text-xl font-bold text-white">{[activeCard.year, activeCard.player_name].filter(Boolean).join(" ")}</div>
-                  {sellerMap.get(activeCard.user_id) ? <div className="mt-2 text-sm text-slate-400">Seller: <span className="text-slate-200">@{sellerMap.get(activeCard.user_id)}</span></div> : null}
+					{(() => {
+					  const seller = sellerMap.get(activeCard.user_id);
+					  const sellerUsername = seller?.username ? String(seller.username).trim() : "";
+					  if (!sellerUsername) return null;
+						  return (
+						    <div className="mt-2 text-sm text-slate-400">
+						      Seller:{" "}
+						      <Link
+						        href={`/u/${encodeURIComponent(sellerUsername)}`}
+						        className="text-slate-200 hover:underline"
+						        aria-label={`View ${sellerUsername} profile`}
+						      >
+						        {seller?.display_name ? seller.display_name : `@${sellerUsername}`}
+						      </Link>
+						    </div>
+						  );
+					})()}
                 </div>
                 <button type="button" onClick={() => setActiveCard(null)} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">Close</button>
               </div>
@@ -580,7 +624,7 @@ export default function MarketPage() {
                         </a>
                       ) : null}
 
-                      {String(sellerMap.get(activeCard.user_id) || "").trim() && activeCard.user_id !== user.id ? (
+						  {String(sellerMap.get(activeCard.user_id)?.username || "").trim() && activeCard.user_id !== user.id ? (
                         <button
                           type="button"
                           onClick={() => handleMessageSeller(activeCard)}
@@ -591,18 +635,19 @@ export default function MarketPage() {
                         </button>
                       ) : null}
 
-                      {String(sellerMap.get(activeCard.user_id) || "").trim() ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSellerFilter(String(sellerMap.get(activeCard.user_id) || ""));
-                            setActiveCard(null);
-                          }}
-                          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
-                        >
-                          See seller's cards
-                        </button>
-                      ) : null}
+						{(() => {
+						  const seller = sellerMap.get(activeCard.user_id);
+						  const sellerUsername = seller?.username ? String(seller.username).trim() : "";
+						  if (!sellerUsername) return null;
+						  return (
+						    <Link
+						      href={`/u/${encodeURIComponent(sellerUsername)}`}
+						      className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+						    >
+						      See seller's cards
+						    </Link>
+						  );
+						})()}
 
                       <a href={buildEbaySearchUrl(activeCard)} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/15">
                         Comp check ↗
