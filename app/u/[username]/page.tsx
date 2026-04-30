@@ -69,6 +69,11 @@ export default function SellerProfilePage() {
   const [loadingCards, setLoadingCards] = useState(false);
   const [error, setError] = useState("");
 
+  const [editMode, setEditMode] = useState(false);
+  const [displayNameDraft, setDisplayNameDraft] = useState("");
+  const [bioDraft, setBioDraft] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
   const [activeCard, setActiveCard] = useState<SellerCard | null>(null);
   const [showBack, setShowBack] = useState(false);
   const [messageStarting, setMessageStarting] = useState(false);
@@ -76,6 +81,8 @@ export default function SellerProfilePage() {
   useEffect(() => {
     setShowBack(false);
   }, [activeCard?.id]);
+
+  const isOwnProfile = Boolean(seller?.id && user?.id && seller.id === user.id);
 
   const activeCardPublicNotes = useMemo(
     () => (activeCard?.notes ? parseSellerMeta(activeCard.notes).publicNotes : ""),
@@ -126,6 +133,114 @@ export default function SellerProfilePage() {
       }
     })();
   }, [routeUsername, user?.id]);
+
+  useEffect(() => {
+    if (!seller) return;
+    setDisplayNameDraft(seller.display_name ?? "");
+    setBioDraft(seller.bio ?? "");
+  }, [seller?.id]);
+
+  async function saveProfileEdits() {
+    if (!isOwnProfile) return;
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+
+    setError("");
+
+    const nextDisplayName = String(displayNameDraft || "").slice(0, 80);
+    const nextBio = String(bioDraft || "").slice(0, 800);
+
+    const { error: upErr } = await supabase.from("profiles").update({
+      display_name: nextDisplayName,
+      bio: nextBio,
+    }).eq("id", user.id);
+
+    if (upErr) {
+      setError(upErr.message);
+      return;
+    }
+
+    // Optimistic update.
+    setSeller((prev) => (prev ? { ...prev, display_name: nextDisplayName, bio: nextBio } : prev));
+    setEditMode(false);
+  }
+
+  async function uploadAvatar(file: File) {
+    if (!isOwnProfile) return;
+    if (!supabaseConfigured || !supabase || !user?.id) return;
+    setError("");
+
+    setAvatarUploading(true);
+    try {
+      const allowedMimes = new Set(["image/png", "image/jpeg", "image/webp"]);
+      const MAX_BYTES = 6 * 1024 * 1024;
+      if (!allowedMimes.has(file.type)) throw new Error("Avatar must be a PNG, JPG, or WebP image.");
+      if (file.size > MAX_BYTES) throw new Error("Avatar is too large (max 6MB). Please use a smaller file.");
+
+      const loadImage = (f: File) =>
+        new Promise<HTMLImageElement>((resolve, reject) => {
+          const url = URL.createObjectURL(f);
+          const img = new Image();
+          img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Could not read that image file."));
+          };
+          img.src = url;
+        });
+
+      const img = await loadImage(file);
+      const MAX_DIM = 800;
+      const scale = Math.min(1, MAX_DIM / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+      const targetW = Math.max(1, Math.round((img.naturalWidth || 1) * scale));
+      const targetH = Math.max(1, Math.round((img.naturalHeight || 1) * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Could not process that image file.");
+      ctx.drawImage(img, 0, 0, targetW, targetH);
+
+      const blob: Blob | null = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (b) => {
+            if (!b) reject(new Error("Could not process that image file."));
+            else resolve(b);
+          },
+          "image/webp",
+          0.82
+        );
+      });
+
+      const avatarUuid = crypto.randomUUID();
+      const bucket = "card-images";
+      const folder = `avatars/${avatarUuid}`;
+      const mainPath = `${folder}/main.webp`;
+      const mainFile = new File([blob], "main.webp", { type: "image/webp" });
+
+      const { error: uploadErr } = await supabase.storage.from(bucket).upload(mainPath, mainFile, {
+        upsert: false,
+        contentType: "image/webp",
+      });
+      if (uploadErr) throw uploadErr;
+
+      const { data: pub } = await supabase.storage.from(bucket).getPublicUrl(mainPath);
+      const publicUrl = pub.publicUrl;
+      if (!publicUrl) throw new Error("Could not get avatar URL after upload.");
+
+      const { error: upErr } = await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", user.id);
+      if (upErr) throw upErr;
+
+      setSeller((prev) => (prev ? { ...prev, avatar_url: publicUrl } : prev));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Avatar upload failed.");
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
 
   async function handleMessageSeller(card: SellerCard) {
     if (!seller?.username) return;
@@ -194,6 +309,77 @@ export default function SellerProfilePage() {
             ) : null}
 
             {seller?.bio ? <p className="mt-3 text-sm text-slate-400 whitespace-pre-wrap">{seller.bio}</p> : null}
+
+            {isOwnProfile ? (
+              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                {editMode ? (
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-sm font-semibold text-white">Avatar</div>
+                      <div className="mt-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={avatarUploading}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (!f) return;
+                            void uploadAvatar(f);
+                          }}
+                          className="block w-full text-sm text-slate-300"
+                        />
+                      </div>
+                      {avatarUploading ? <div className="mt-2 text-xs text-slate-400">Uploading avatar…</div> : null}
+                    </div>
+
+                    <label className="block">
+                      <div className="text-sm font-semibold text-white">Display name</div>
+                      <input
+                        value={displayNameDraft}
+                        onChange={(e) => setDisplayNameDraft(e.target.value)}
+                        className="mt-2 w-full rounded bg-slate-950 px-3 py-2 text-sm text-white"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <div className="text-sm font-semibold text-white">Bio</div>
+                      <textarea
+                        value={bioDraft}
+                        onChange={(e) => setBioDraft(e.target.value)}
+                        className="mt-2 min-h-[88px] w-full rounded bg-slate-950 px-3 py-2 text-sm text-white"
+                      />
+                    </label>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]"
+                        onClick={() => setEditMode(false)}
+                        disabled={avatarUploading}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                        onClick={() => void saveProfileEdits()}
+                        disabled={avatarUploading}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="mt-1 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08]"
+                    onClick={() => setEditMode(true)}
+                  >
+                    Edit profile
+                  </button>
+                )}
+              </div>
+            ) : null}
 
             <div className="mt-3 inline-flex items-center gap-2 text-xs text-slate-500">
               <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">Member Market</span>
