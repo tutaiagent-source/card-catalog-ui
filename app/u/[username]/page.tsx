@@ -20,6 +20,17 @@ type SellerProfile = {
   avatar_url?: string;
   bio?: string;
   market_visibility_mode?: string;
+
+  is_shop?: boolean;
+  shop_name?: string;
+  shop_address?: string;
+  shop_phone?: string;
+  shop_website?: string;
+  shop_show_address?: boolean;
+  shop_show_phone?: boolean;
+  shop_show_website?: boolean;
+  shop_verification_status?: string;
+  shop_verified_at?: string | null;
 };
 
 type SellerCard = {
@@ -78,6 +89,10 @@ export default function SellerProfilePage() {
   const [showBack, setShowBack] = useState(false);
   const [messageStarting, setMessageStarting] = useState(false);
 
+  const isShop = Boolean(seller?.is_shop);
+  const shopStatus = String(seller?.shop_verification_status || "unsubmitted").toLowerCase();
+  const isVerifiedShop = isShop && shopStatus === "verified";
+
   useEffect(() => {
     setShowBack(false);
   }, [activeCard?.id]);
@@ -103,7 +118,9 @@ export default function SellerProfilePage() {
       try {
         const { data: profileRow, error: profileErr } = await supabase
           .from("profiles")
-          .select("id, username, display_name, avatar_url, bio, market_visibility_mode")
+          .select(
+            "id, username, display_name, avatar_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
+          )
           .eq("username", routeUsername)
           .maybeSingle();
 
@@ -115,17 +132,28 @@ export default function SellerProfilePage() {
 
         setSeller(profileRow as SellerProfile);
 
-        const { data: cardRows, error: cardErr } = await supabase
-          .from("cards")
-          .select(
-            "id, user_id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, serial_number_text, image_url, back_image_url, asking_price, listed_at, sale_platform, public_market_visible, notes"
-          )
-          .eq("user_id", (profileRow as SellerProfile).id)
-          .eq("status", "Listed")
-          .order("listed_at", { ascending: false });
+        const mode = String((profileRow as SellerProfile).market_visibility_mode || "none");
 
-        if (cardErr) throw cardErr;
-        setCards((cardRows ?? []) as SellerCard[]);
+        if (mode === "none") {
+          setCards([]);
+        } else {
+          let q = supabase
+            .from("cards")
+            .select(
+              "id, user_id, player_name, year, brand, set_name, parallel, card_number, team, sport, competition, serial_number_text, image_url, back_image_url, asking_price, listed_at, sale_platform, public_market_visible, notes"
+            )
+            .eq("user_id", (profileRow as SellerProfile).id)
+            .eq("status", "Listed")
+            .order("listed_at", { ascending: false });
+
+          if (mode === "selected_cards") {
+            q = q.eq("public_market_visible", true);
+          }
+
+          const { data: cardRows, error: cardErr } = await q;
+          if (cardErr) throw cardErr;
+          setCards((cardRows ?? []) as SellerCard[]);
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not load seller profile.");
       } finally {
@@ -294,11 +322,31 @@ export default function SellerProfilePage() {
         />
         <UsernamePromptBanner userId={user?.id} />
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="text-sm font-semibold text-emerald-200">Seller profile</div>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">@{routeUsername}</h1>
-            {seller?.display_name ? <div className="mt-1 text-slate-300">{seller.display_name}</div> : null}
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-white">
+              {isVerifiedShop && seller?.shop_name ? seller.shop_name : `@${routeUsername}`}
+            </h1>
+
+            {seller?.is_shop ? (
+              <div className="mt-2">
+                <span
+                  className={
+                    isVerifiedShop
+                      ? "rounded-full bg-emerald-500/15 px-3 py-1 text-[12px] font-semibold text-emerald-200"
+                      : "rounded-full bg-white/[0.04] px-3 py-1 text-[12px] font-semibold text-slate-300"
+                  }
+                >
+                  {isVerifiedShop ? "Verified shop" : "Pending verification"}
+                </span>
+                {seller?.shop_name ? (
+                  <div className="mt-1 text-xs text-slate-400">@{routeUsername}</div>
+                ) : null}
+              </div>
+            ) : seller?.display_name ? (
+              <div className="mt-1 text-slate-300">{seller.display_name}</div>
+            ) : null}
 
             {seller?.avatar_url ? (
               <img
@@ -309,6 +357,44 @@ export default function SellerProfilePage() {
             ) : null}
 
             {seller?.bio ? <p className="mt-3 text-sm text-slate-400 whitespace-pre-wrap">{seller.bio}</p> : null}
+
+            {seller && seller.is_shop && isVerifiedShop ? (
+              <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                <div className="text-sm font-semibold text-white">Shop details</div>
+
+                {seller.shop_show_address && seller.shop_address ? (
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Address</div>
+                    <div className="mt-1 text-sm text-slate-200 whitespace-pre-wrap">{seller.shop_address}</div>
+                  </div>
+                ) : null}
+
+                {seller.shop_show_phone && seller.shop_phone ? (
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Phone</div>
+                    <div className="mt-1 text-sm text-slate-200">{seller.shop_phone}</div>
+                  </div>
+                ) : null}
+
+                {seller.shop_show_website && seller.shop_website ? (
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Website</div>
+                    {toUrl(seller.shop_website) ? (
+                      <a
+                        href={toUrl(seller.shop_website) || "#"}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 inline-flex text-sm font-semibold text-emerald-200 hover:underline"
+                      >
+                        {seller.shop_website}
+                      </a>
+                    ) : (
+                      <div className="mt-1 text-sm text-slate-200">{seller.shop_website}</div>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             {isOwnProfile ? (
               <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">

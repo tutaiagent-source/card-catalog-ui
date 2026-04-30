@@ -40,11 +40,47 @@ export default function AccountPage() {
   const [marketVisibilityMode, setMarketVisibilityMode] = useState<"none" | "selected_cards" | "all_listed" | "whole_collection">("none");
   const { profile, tableReady, refreshProfile } = useUserProfile(user?.id);
 
+  const [isShop, setIsShop] = useState(false);
+  const [shopNameDraft, setShopNameDraft] = useState("");
+  const [shopAddressDraft, setShopAddressDraft] = useState("");
+  const [shopPhoneDraft, setShopPhoneDraft] = useState("");
+  const [shopWebsiteDraft, setShopWebsiteDraft] = useState("");
+
+  const [shopShowAddress, setShopShowAddress] = useState(false);
+  const [shopShowPhone, setShopShowPhone] = useState(false);
+  const [shopShowWebsite, setShopShowWebsite] = useState(false);
+
+  const [shopSubmitting, setShopSubmitting] = useState(false);
+  const [shopSavingVisibility, setShopSavingVisibility] = useState(false);
+
   useEffect(() => {
     setUsernameDraft(String(profile?.username || ""));
     setAllowMessages(profile?.allow_messages ?? true);
     setMarketVisibilityMode(((profile?.market_visibility_mode as any) || "none") as "none" | "selected_cards" | "all_listed" | "whole_collection");
-  }, [profile?.username, profile?.allow_messages, profile?.market_visibility_mode]);
+
+    setIsShop(Boolean(profile?.is_shop));
+    setShopNameDraft(String(profile?.shop_name || ""));
+    setShopAddressDraft(String(profile?.shop_address || ""));
+    setShopPhoneDraft(String(profile?.shop_phone || ""));
+    setShopWebsiteDraft(String(profile?.shop_website || ""));
+
+    setShopShowAddress(Boolean(profile?.shop_show_address));
+    setShopShowPhone(Boolean(profile?.shop_show_phone));
+    setShopShowWebsite(Boolean(profile?.shop_show_website));
+  }, [
+    profile?.username,
+    profile?.allow_messages,
+    profile?.market_visibility_mode,
+    profile?.is_shop,
+    profile?.shop_name,
+    profile?.shop_address,
+    profile?.shop_phone,
+    profile?.shop_website,
+    profile?.shop_show_address,
+    profile?.shop_show_phone,
+    profile?.shop_show_website,
+    profile?.shop_verification_status,
+  ]);
 
   // Internal admin override (e.g., @cardcat) when Stripe entitlement sync is missing.
   useEffect(() => {
@@ -150,6 +186,8 @@ export default function AccountPage() {
 
   const catalogUsagePct = Math.min(100, Math.round((catalogCardsCount / catalogLimit) * 100));
   const marketUsagePct = Math.min(100, Math.round((activeMarketListingsCount / marketLimit) * 100));
+
+  const shopVerificationStatus = String(profile?.shop_verification_status || "unsubmitted").toLowerCase();
 
   // Access gating (limit messaging + disabled states) must reflect Stripe-synced tier/status, not the UI preview toggle.
   const usernameLocked = Boolean(String(profile?.username || "").trim());
@@ -270,6 +308,76 @@ export default function AccountPage() {
     setUsernameDraft(normalized);
     await refreshProfile();
     setMessage(`Profile saved. Your username is @${normalized}.`);
+  };
+
+  const submitShopVerification = async () => {
+    setMessage("");
+    setError("");
+
+    if (!supabaseConfigured || !supabase) {
+      setError("Supabase is not configured yet.");
+      return;
+    }
+
+    if (!user?.id) return;
+
+    setShopSubmitting(true);
+    const { error: upErr } = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: user.id,
+          is_shop: true,
+          shop_name: String(shopNameDraft || "").trim(),
+          shop_address: String(shopAddressDraft || "").trim(),
+          shop_phone: String(shopPhoneDraft || "").trim(),
+          shop_website: String(shopWebsiteDraft || "").trim(),
+          shop_verification_status: "pending",
+          shop_verified_at: null,
+          shop_verified_by: null,
+        },
+        { onConflict: "id" }
+      );
+    setShopSubmitting(false);
+
+    if (upErr) {
+      setError(upErr.message);
+      return;
+    }
+
+    await refreshProfile();
+    setMessage("Submitted for shop verification. We'll review it manually.");
+  };
+
+  const saveShopVisibility = async () => {
+    setMessage("");
+    setError("");
+
+    if (!supabaseConfigured || !supabase) {
+      setError("Supabase is not configured yet.");
+      return;
+    }
+
+    if (!user?.id) return;
+
+    setShopSavingVisibility(true);
+    const { error: upErr } = await supabase
+      .from("profiles")
+      .update({
+        shop_show_address: shopShowAddress,
+        shop_show_phone: shopShowPhone,
+        shop_show_website: shopShowWebsite,
+      })
+      .eq("id", user.id);
+    setShopSavingVisibility(false);
+
+    if (upErr) {
+      setError(upErr.message);
+      return;
+    }
+
+    await refreshProfile();
+    setMessage("Saved shop visibility.");
   };
 
   const clearCatalog = async () => {
@@ -477,6 +585,105 @@ export default function AccountPage() {
                   {usernameLocked
                     ? "Your username is locked after it is chosen. You can still change your messaging preference below."
                     : "Lowercase letters, numbers, and underscores only. Once chosen, usernames are locked."}
+                </div>
+
+                <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <h3 className="text-base font-semibold text-white">Card shop verification</h3>
+                  <p className="mt-1 text-sm text-slate-400">
+                    If you sell as a shop, you can submit your shop info for manual verification. Address, phone, and website only show publicly after you’re approved.
+                  </p>
+
+                  <label className="mt-4 flex items-center gap-3 text-sm text-slate-200">
+                    <input type="checkbox" checked={isShop} onChange={(e) => setIsShop(e.target.checked)} />
+                    I’m a card shop
+                  </label>
+
+                  {isShop ? (
+                    <div className="mt-4 space-y-3">
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Shop name</div>
+                        <input
+                          value={shopNameDraft}
+                          onChange={(e) => setShopNameDraft(e.target.value)}
+                          className="w-full rounded bg-slate-950 px-3 py-2 text-sm text-white"
+                        />
+                      </label>
+
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Address</div>
+                        <textarea
+                          value={shopAddressDraft}
+                          onChange={(e) => setShopAddressDraft(e.target.value)}
+                          className="w-full min-h-[72px] rounded bg-slate-950 px-3 py-2 text-sm text-white"
+                        />
+                      </label>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="block">
+                          <div className="mb-1 text-sm text-slate-300">Phone</div>
+                          <input
+                            value={shopPhoneDraft}
+                            onChange={(e) => setShopPhoneDraft(e.target.value)}
+                            className="w-full rounded bg-slate-950 px-3 py-2 text-sm text-white"
+                          />
+                        </label>
+
+                        <label className="block">
+                          <div className="mb-1 text-sm text-slate-300">Website</div>
+                          <input
+                            value={shopWebsiteDraft}
+                            onChange={(e) => setShopWebsiteDraft(e.target.value)}
+                            className="w-full rounded bg-slate-950 px-3 py-2 text-sm text-white"
+                          />
+                        </label>
+                      </div>
+
+                      <div className="mt-2 text-xs">
+                        Status: <span className="font-semibold text-slate-200">{shopVerificationStatus}</span>
+                      </div>
+
+                      {shopVerificationStatus === "verified" ? (
+                        <div className="space-y-3 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                          <div className="text-sm font-semibold text-slate-100">What to show publicly</div>
+
+                          <label className="flex items-center gap-3 text-sm text-slate-200">
+                            <input type="checkbox" checked={shopShowAddress} onChange={(e) => setShopShowAddress(e.target.checked)} />
+                            Show address
+                          </label>
+                          <label className="flex items-center gap-3 text-sm text-slate-200">
+                            <input type="checkbox" checked={shopShowPhone} onChange={(e) => setShopShowPhone(e.target.checked)} />
+                            Show phone
+                          </label>
+                          <label className="flex items-center gap-3 text-sm text-slate-200">
+                            <input type="checkbox" checked={shopShowWebsite} onChange={(e) => setShopShowWebsite(e.target.checked)} />
+                            Show website
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={() => void saveShopVisibility()}
+                            disabled={shopSavingVisibility}
+                            className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                          >
+                            {shopSavingVisibility ? "Saving…" : "Save shop visibility"}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => void submitShopVerification()}
+                          disabled={shopSubmitting}
+                          className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                        >
+                          {shopSubmitting
+                            ? "Submitting…"
+                            : shopVerificationStatus === "pending"
+                              ? "Resubmit (pending)"
+                              : "Submit for verification"}
+                        </button>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
               </>
             ) : null}

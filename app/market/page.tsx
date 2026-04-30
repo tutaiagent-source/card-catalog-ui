@@ -51,6 +51,10 @@ type SellerProfile = {
   display_name?: string;
   avatar_url?: string;
   bio?: string;
+
+  is_shop?: boolean;
+  shop_name?: string;
+  shop_verification_status?: string;
 };
 
 function formatMoney(value: number) {
@@ -138,7 +142,9 @@ export default function MarketPage() {
 
       const { data: profileRows, error: profileError } = await supabase
         .from("profiles")
-        .select("id, username, market_visibility_mode, display_name, avatar_url, bio")
+        .select(
+          "id, username, market_visibility_mode, display_name, avatar_url, bio, is_shop, shop_name, shop_verification_status"
+        )
         .in("id", sellerIds);
 
       if (profileError) {
@@ -458,6 +464,8 @@ export default function MarketPage() {
               {filteredCards.map((card) => {
                 const seller = sellerMap.get(card.user_id);
                 const sellerUsername = String(seller?.username || "").trim();
+                const isVerifiedShop = Boolean(seller?.is_shop) && String(seller?.shop_verification_status || "").toLowerCase() === "verified";
+                const sellerLabel = isVerifiedShop ? (seller?.shop_name ? String(seller.shop_name) : seller?.display_name) : seller?.display_name;
                 return (
 	                    <div
 	                      key={card.id}
@@ -497,9 +505,19 @@ export default function MarketPage() {
 	                            onClick={(e) => e.stopPropagation()}
 	                            className="text-xs font-semibold text-emerald-200 hover:underline"
 	                          >
-	                            {seller?.display_name ? seller.display_name : `@${sellerUsername}`}
-	                            {seller?.display_name ? <span className="ml-1 text-[10px] text-slate-400">@{sellerUsername}</span> : null}
+	                            {sellerLabel ? sellerLabel : `@${sellerUsername}`}
 	                          </Link>
+	                          {seller?.is_shop ? (
+	                            <span
+	                              className={
+	                                isVerifiedShop
+	                                  ? "rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-200"
+	                                  : "rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] font-semibold text-slate-300"
+	                              }
+	                            >
+	                              {isVerifiedShop ? "Verified shop" : "Pending verification"}
+	                            </span>
+	                          ) : null}
 	                        </div>
 	                      ) : null}
 	                      <div className="mt-2 inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-200">
@@ -529,18 +547,31 @@ export default function MarketPage() {
 					  const seller = sellerMap.get(activeCard.user_id);
 					  const sellerUsername = seller?.username ? String(seller.username).trim() : "";
 					  if (!sellerUsername) return null;
-						  return (
-						    <div className="mt-2 text-sm text-slate-400">
-						      Seller:{" "}
-						      <Link
-						        href={`/u/${encodeURIComponent(sellerUsername)}`}
-						        className="text-slate-200 hover:underline"
-						        aria-label={`View ${sellerUsername} profile`}
-						      >
-						        {seller?.display_name ? seller.display_name : `@${sellerUsername}`}
-						      </Link>
-						    </div>
-						  );
+					  const isVerifiedShop = Boolean(seller?.is_shop) && String(seller?.shop_verification_status || "").toLowerCase() === "verified";
+					  const sellerLabel = isVerifiedShop ? (seller?.shop_name ? String(seller.shop_name) : seller?.display_name) : seller?.display_name;
+					  return (
+					    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
+					      <span>Seller:</span>
+					      <Link
+					        href={`/u/${encodeURIComponent(sellerUsername)}`}
+					        className="text-slate-200 hover:underline"
+					        aria-label={`View ${sellerUsername} profile`}
+					      >
+					        {sellerLabel ? sellerLabel : `@${sellerUsername}`}
+					      </Link>
+					      {seller?.is_shop ? (
+					        <span
+					          className={
+					            isVerifiedShop
+					              ? "rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-200"
+					              : "rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] font-semibold text-slate-300"
+					          }
+					        >
+					          {isVerifiedShop ? "Verified shop" : "Pending verification"}
+					        </span>
+					      ) : null}
+					    </div>
+					  );
 					})()}
                 </div>
                 <button type="button" onClick={() => setActiveCard(null)} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">Close</button>

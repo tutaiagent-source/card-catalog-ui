@@ -9,6 +9,16 @@ export type UserProfileRecord = {
   display_name?: string;
   allow_messages?: boolean;
   market_visibility_mode?: string;
+
+  is_shop?: boolean;
+  shop_name?: string;
+  shop_address?: string;
+  shop_phone?: string;
+  shop_website?: string;
+  shop_show_address?: boolean;
+  shop_show_phone?: boolean;
+  shop_show_website?: boolean;
+  shop_verification_status?: string;
 };
 
 export function useUserProfile(userId?: string | null) {
@@ -26,7 +36,9 @@ export function useUserProfile(userId?: string | null) {
     setLoading(true);
     const { data, error } = await supabase
       .from("profiles")
-      .select("id, username, display_name, allow_messages, market_visibility_mode")
+      .select(
+        "id, username, display_name, allow_messages, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
+      )
       .eq("id", userId)
       .maybeSingle();
 
