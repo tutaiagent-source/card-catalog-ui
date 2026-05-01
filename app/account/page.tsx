@@ -624,7 +624,23 @@ export default function AccountPage() {
             <div className="mt-1 font-medium">{user.email}</div>
 
             <div className="mt-4 text-sm text-slate-300">Username</div>
-            <div className="mt-1 font-medium">{profile?.username ? `@${profile.username}` : tableReady ? "Not set yet" : "Run the profiles migration first"}</div>
+            <div className="mt-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="font-medium">
+                {profile?.username
+                  ? `@${profile.username}`
+                  : tableReady
+                    ? "Not set yet"
+                    : "Run the profiles migration first"}
+              </div>
+              {profile?.username ? (
+                <a
+                  href={`/u/${encodeURIComponent(profile.username)}`}
+                  className="w-full sm:w-auto rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 text-center text-sm font-semibold text-slate-200 hover:bg-slate-950/90"
+                >
+                  View public profile
+                </a>
+              ) : null}
+            </div>
 
             {tableReady ? (
               <>
