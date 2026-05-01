@@ -178,6 +178,16 @@ export async function POST(req: Request) {
       }
     }
 
+    // IMPORTANT for Messages UI:
+    // Messages deal panel is scoped by conversations.context_card_id.
+    // If the buyer already had an existing conversation with this seller, that conversation
+    // might currently point at a different context_card_id. For bundles, we must align it
+    // with the primary card we store on the bundle deal_record.
+    await supabaseAdmin
+      .from("conversations")
+      .update({ context_card_id: primaryCardId })
+      .eq("id", conversationId);
+
     // Create bundle deal record (single negotiation thread)
     const { data: deal, error: dealErr } = await supabaseAdmin
       .from("deal_records")
