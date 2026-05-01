@@ -327,27 +327,42 @@ export default function AccountPage() {
     if (!user?.id) return;
 
     setShopSubmitting(true);
-    const { error: upErr } = await supabase
+    const shopPatch = {
+      is_shop: true,
+      shop_name: String(shopNameDraft || "").trim(),
+      shop_address: String(shopAddressDraft || "").trim(),
+      shop_phone: String(shopPhoneDraft || "").trim(),
+      shop_website: String(shopWebsiteDraft || "").trim(),
+      shop_verification_status: "pending",
+      shop_verified_at: null,
+      shop_verified_by: null,
+    };
+
+    // Update first (simpler + avoids any upsert conflict edge cases).
+    const { data: updatedRow, error: upErr } = await supabase
       .from("profiles")
-      .upsert(
-        {
-          id: user.id,
-          is_shop: true,
-          shop_name: String(shopNameDraft || "").trim(),
-          shop_address: String(shopAddressDraft || "").trim(),
-          shop_phone: String(shopPhoneDraft || "").trim(),
-          shop_website: String(shopWebsiteDraft || "").trim(),
-          shop_verification_status: "pending",
-          shop_verified_at: null,
-          shop_verified_by: null,
-        },
-        { onConflict: "id" }
-      );
+      .update(shopPatch)
+      .eq("id", user.id)
+      .select("shop_verification_status")
+      .maybeSingle();
+
     setShopSubmitting(false);
 
     if (upErr) {
       setError(upErr.message);
       return;
+    }
+
+    // If nothing updated, try inserting.
+    if (!updatedRow) {
+      const { error: insErr } = await supabase
+        .from("profiles")
+        .upsert({ id: user.id, ...shopPatch }, { onConflict: "id" });
+
+      if (insErr) {
+        setError(insErr.message);
+        return;
+      }
     }
 
     await refreshProfile();
@@ -360,8 +375,6 @@ export default function AccountPage() {
       .maybeSingle();
 
     if (freshErr) {
-      setShopVerificationStatusUi("pending");
-      setIsShop(true);
       setError(`Submitted, but couldn’t re-check status: ${freshErr.message}`);
       return;
     }
@@ -373,7 +386,7 @@ export default function AccountPage() {
     if (nextStatus === "pending") {
       setMessage("Submitted for shop verification. We'll review it manually.");
     } else {
-      setError(`Submission didn’t update as expected (status is '${nextStatus}').`);
+      setError(`Submission didn’t update as expected. Current DB status is '${nextStatus}'.`);
     }
   };
 
