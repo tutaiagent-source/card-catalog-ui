@@ -52,6 +52,7 @@ export default function AccountPage() {
 
   const [shopSubmitting, setShopSubmitting] = useState(false);
   const [shopSavingVisibility, setShopSavingVisibility] = useState(false);
+  const [shopVerificationStatusUi, setShopVerificationStatusUi] = useState<string>("unsubmitted");
 
   useEffect(() => {
     setUsernameDraft(String(profile?.username || ""));
@@ -67,6 +68,10 @@ export default function AccountPage() {
     setShopShowAddress(Boolean(profile?.shop_show_address));
     setShopShowPhone(Boolean(profile?.shop_show_phone));
     setShopShowWebsite(Boolean(profile?.shop_show_website));
+
+    setShopVerificationStatusUi(
+      String(profile?.shop_verification_status || "unsubmitted").toLowerCase()
+    );
   }, [
     profile?.username,
     profile?.allow_messages,
@@ -187,7 +192,7 @@ export default function AccountPage() {
   const catalogUsagePct = Math.min(100, Math.round((catalogCardsCount / catalogLimit) * 100));
   const marketUsagePct = Math.min(100, Math.round((activeMarketListingsCount / marketLimit) * 100));
 
-  const shopVerificationStatus = String(profile?.shop_verification_status || "unsubmitted").toLowerCase();
+  const shopVerificationStatus = shopVerificationStatusUi;
 
   // Access gating (limit messaging + disabled states) must reflect Stripe-synced tier/status, not the UI preview toggle.
   const usernameLocked = Boolean(String(profile?.username || "").trim());
@@ -346,7 +351,30 @@ export default function AccountPage() {
     }
 
     await refreshProfile();
-    setMessage("Submitted for shop verification. We'll review it manually.");
+
+    // Confirm what the DB actually saved (helps if RLS/migrations differ).
+    const { data: fresh, error: freshErr } = await supabase
+      .from("profiles")
+      .select("shop_verification_status")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (freshErr) {
+      setShopVerificationStatusUi("pending");
+      setIsShop(true);
+      setError(`Submitted, but couldn’t re-check status: ${freshErr.message}`);
+      return;
+    }
+
+    const nextStatus = String(fresh?.shop_verification_status || "unsubmitted").toLowerCase();
+    setShopVerificationStatusUi(nextStatus);
+    setIsShop(true);
+
+    if (nextStatus === "pending") {
+      setMessage("Submitted for shop verification. We'll review it manually.");
+    } else {
+      setError(`Submission didn’t update as expected (status is '${nextStatus}').`);
+    }
   };
 
   const saveShopVisibility = async () => {
@@ -668,6 +696,23 @@ export default function AccountPage() {
                             {shopSavingVisibility ? "Saving…" : "Save shop visibility"}
                           </button>
                         </div>
+                      ) : shopVerificationStatus === "pending" ? (
+                        <button
+                          type="button"
+                          disabled
+                          className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-300 disabled:opacity-100"
+                        >
+                          Pending verification
+                        </button>
+                      ) : shopVerificationStatus === "rejected" ? (
+                        <button
+                          type="button"
+                          onClick={() => void submitShopVerification()}
+                          disabled={shopSubmitting}
+                          className="w-full rounded-lg bg-[#d50000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b80000] disabled:opacity-60"
+                        >
+                          {shopSubmitting ? "Submitting…" : "Resubmit for verification"}
+                        </button>
                       ) : (
                         <button
                           type="button"
@@ -675,11 +720,7 @@ export default function AccountPage() {
                           disabled={shopSubmitting}
                           className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
                         >
-                          {shopSubmitting
-                            ? "Submitting…"
-                            : shopVerificationStatus === "pending"
-                              ? "Resubmit (pending)"
-                              : "Submit for verification"}
+                          {shopSubmitting ? "Submitting…" : "Submit for verification"}
                         </button>
                       )}
                     </div>
