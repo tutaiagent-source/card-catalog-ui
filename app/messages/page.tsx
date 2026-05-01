@@ -3744,7 +3744,7 @@ export default function MessagesPage() {
           onClick={() => setShowShippingForm(false)}
         >
           <div
-            className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl"
+            className="w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
@@ -3761,7 +3761,7 @@ export default function MessagesPage() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-5 py-5">
+            <div className="flex-1 overflow-y-auto px-5 py-5 pb-28 [-webkit-overflow-scrolling:touch]">
               <div className="space-y-4">
                 {/* Shipping Info */}
                 <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
