@@ -766,11 +766,11 @@ export default function SellerProfilePage() {
       </div>
 
       {bundleModalOpen ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-3 sm:p-4" onClick={() => setBundleModalOpen(false)}>
-          <div
-            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl [-webkit-overflow-scrolling:touch]"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-3 sm:p-4">
+            <div
+              className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl [-webkit-overflow-scrolling:touch]"
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-4 sm:px-6">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Submit Bundled Offer</div>
