@@ -36,10 +36,16 @@ export async function GET(req: Request) {
     const { data: pending, error: pendingErr } = await supabaseAdmin
       .from("profiles")
       .select(
-        "id, username, display_name, avatar_url, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status, created_at"
+        "id, username, display_name, avatar_url, " +
+          "shop_name, shop_address, shop_phone, shop_website, " +
+          "pending_shop_name, pending_shop_address, pending_shop_phone, pending_shop_website, " +
+          "shop_type, pending_shop_type, " +
+          "shop_admin_note, " +
+          "shop_show_address, shop_show_phone, shop_show_website, " +
+          "shop_verification_status, shop_verified_at, created_at"
       )
       .eq("is_shop", true)
-      .eq("shop_verification_status", "pending")
+      .in("shop_verification_status", ["pending_review", "reverification_required"])
       .order("created_at", { ascending: false });
 
     if (pendingErr) {

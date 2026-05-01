@@ -42,6 +42,7 @@ export default function AccountPage() {
 
   const [isShop, setIsShop] = useState(false);
   const [shopNameDraft, setShopNameDraft] = useState("");
+  const [shopTypeDraft, setShopTypeDraft] = useState<"physical" | "online">("physical");
   const [shopAddressDraft, setShopAddressDraft] = useState("");
   const [shopPhoneDraft, setShopPhoneDraft] = useState("");
   const [shopWebsiteDraft, setShopWebsiteDraft] = useState("");
@@ -53,6 +54,12 @@ export default function AccountPage() {
   const [shopSubmitting, setShopSubmitting] = useState(false);
   const [shopSavingVisibility, setShopSavingVisibility] = useState(false);
   const [shopVerificationStatusUi, setShopVerificationStatusUi] = useState<string>("unsubmitted");
+  const [editingVerifiedShop, setEditingVerifiedShop] = useState(false);
+
+  const shopInputsDisabled =
+    shopVerificationStatusUi === "pending_review" ||
+    shopVerificationStatusUi === "reverification_required" ||
+    (shopVerificationStatusUi === "verified" && !editingVerifiedShop);
 
   useEffect(() => {
     setUsernameDraft(String(profile?.username || ""));
@@ -61,6 +68,7 @@ export default function AccountPage() {
 
     setIsShop(Boolean(profile?.is_shop));
     setShopNameDraft(String(profile?.shop_name || ""));
+    setShopTypeDraft((String(profile?.shop_type || "physical") as any) === "online" ? "online" : "physical");
     setShopAddressDraft(String(profile?.shop_address || ""));
     setShopPhoneDraft(String(profile?.shop_phone || ""));
     setShopWebsiteDraft(String(profile?.shop_website || ""));
@@ -78,6 +86,7 @@ export default function AccountPage() {
     profile?.market_visibility_mode,
     profile?.is_shop,
     profile?.shop_name,
+    profile?.shop_type,
     profile?.shop_address,
     profile?.shop_phone,
     profile?.shop_website,
@@ -86,6 +95,12 @@ export default function AccountPage() {
     profile?.shop_show_website,
     profile?.shop_verification_status,
   ]);
+
+  useEffect(() => {
+    if (shopVerificationStatusUi === "verified") {
+      setEditingVerifiedShop(false);
+    }
+  }, [shopVerificationStatusUi]);
 
   // Internal admin override (e.g., @cardcat) when Stripe entitlement sync is missing.
   useEffect(() => {
@@ -196,9 +211,9 @@ export default function AccountPage() {
 
   const shopRequiredMissing =
     !String(shopNameDraft || "").trim() ||
-    !String(shopAddressDraft || "").trim() ||
-    !String(shopPhoneDraft || "").trim() ||
-    !String(shopWebsiteDraft || "").trim();
+    (shopTypeDraft === "physical"
+      ? !String(shopAddressDraft || "").trim()
+      : !String(shopWebsiteDraft || "").trim());
 
   // Access gating (limit messaging + disabled states) must reflect Stripe-synced tier/status, not the UI preview toggle.
   const usernameLocked = Boolean(String(profile?.username || "").trim());
@@ -333,7 +348,11 @@ export default function AccountPage() {
     if (!user?.id) return;
 
     if (shopRequiredMissing) {
-      setError("Please fill in shop name, address, phone, and website before submitting.");
+      setError(
+        shopTypeDraft === "physical"
+          ? "Please fill in shop name and address before submitting."
+          : "Please fill in shop name and website before submitting."
+      );
       return;
     }
 
@@ -341,10 +360,11 @@ export default function AccountPage() {
     const shopPatch = {
       is_shop: true,
       shop_name: String(shopNameDraft || "").trim(),
+      shop_type: shopTypeDraft,
       shop_address: String(shopAddressDraft || "").trim(),
       shop_phone: String(shopPhoneDraft || "").trim(),
       shop_website: String(shopWebsiteDraft || "").trim(),
-      shop_verification_status: "pending",
+      shop_verification_status: "pending_review",
       shop_verified_at: null,
       shop_verified_by: null,
     };
@@ -378,6 +398,25 @@ export default function AccountPage() {
 
     await refreshProfile();
 
+    // Notify via server-side emails (user + admin) for submit transitions.
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (token) {
+        await fetch("/api/shop-verification/submit-notify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ profile_id: user.id }),
+        });
+      }
+    } catch (e) {
+      // Don’t block the workflow if notification fails.
+      console.error("Shop verification submit notification failed", e);
+    }
+
     // Confirm what the DB actually saved (helps if RLS/migrations differ).
     const { data: fresh, error: freshErr } = await supabase
       .from("profiles")
@@ -394,8 +433,14 @@ export default function AccountPage() {
     setShopVerificationStatusUi(nextStatus);
     setIsShop(true);
 
-    if (nextStatus === "pending") {
-      setMessage("Submitted for shop verification. We'll review it manually.");
+    if (nextStatus === "pending_review" || nextStatus === "reverification_required") {
+      setMessage(
+        nextStatus === "pending_review"
+          ? "Submitted for shop verification. We'll review it manually."
+          : "Update submitted for re-verification. We'll review it manually."
+      );
+    } else if (nextStatus === "changes_requested") {
+      setMessage("Your submission was saved, but admin may request changes.");
     } else {
       setError(`Submission didn’t update as expected. Current DB status is '${nextStatus}'.`);
     }
@@ -642,7 +687,7 @@ export default function AccountPage() {
                 <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                   <h3 className="text-base font-semibold text-white">Card shop verification</h3>
                   <p className="mt-1 text-sm text-slate-400">
-                    If you sell as a shop, you can submit your shop info for manual verification. Address, phone, and website only show publicly after you’re approved.
+                    If you sell as a shop, you can submit your shop info for manual verification. Public address/phone/website only show after you’re approved, based on your “show” toggles.
                   </p>
 
                   <label className="mt-4 flex items-center gap-3 text-sm text-slate-200">
@@ -652,12 +697,39 @@ export default function AccountPage() {
 
                   {isShop ? (
                     <div className="mt-4 space-y-3">
+                      <div>
+                        <div className="mb-1 text-sm text-slate-300">Shop type</div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/20 px-3 py-2 text-sm text-slate-200">
+                            <input
+                              type="radio"
+                              name="shop_type"
+                              checked={shopTypeDraft === "physical"}
+                              onChange={() => setShopTypeDraft("physical")}
+                              disabled={shopInputsDisabled}
+                            />
+                            Physical
+                          </label>
+                          <label className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/20 px-3 py-2 text-sm text-slate-200">
+                            <input
+                              type="radio"
+                              name="shop_type"
+                              checked={shopTypeDraft === "online"}
+                              onChange={() => setShopTypeDraft("online")}
+                              disabled={shopInputsDisabled}
+                            />
+                            Online
+                          </label>
+                        </div>
+                      </div>
+
                       <label className="block">
                         <div className="mb-1 text-sm text-slate-300">Shop name</div>
                         <input
                           value={shopNameDraft}
                           onChange={(e) => setShopNameDraft(e.target.value)}
                           className="w-full rounded bg-slate-950 px-3 py-2 text-sm text-white"
+                          disabled={shopInputsDisabled}
                         />
                       </label>
 
@@ -667,6 +739,7 @@ export default function AccountPage() {
                           value={shopAddressDraft}
                           onChange={(e) => setShopAddressDraft(e.target.value)}
                           className="w-full min-h-[72px] rounded bg-slate-950 px-3 py-2 text-sm text-white"
+                          disabled={shopInputsDisabled}
                         />
                       </label>
 
@@ -677,6 +750,7 @@ export default function AccountPage() {
                             value={shopPhoneDraft}
                             onChange={(e) => setShopPhoneDraft(e.target.value)}
                             className="w-full rounded bg-slate-950 px-3 py-2 text-sm text-white"
+                            disabled={shopInputsDisabled}
                           />
                         </label>
 
@@ -686,6 +760,7 @@ export default function AccountPage() {
                             value={shopWebsiteDraft}
                             onChange={(e) => setShopWebsiteDraft(e.target.value)}
                             className="w-full rounded bg-slate-950 px-3 py-2 text-sm text-white"
+                            disabled={shopInputsDisabled}
                           />
                         </label>
                       </div>
@@ -695,7 +770,9 @@ export default function AccountPage() {
                       </div>
 
                       {shopRequiredMissing ? (
-                        <div className="text-xs text-slate-400">Please fill: shop name, address, phone, and website.</div>
+                        <div className="text-xs text-slate-400">
+                          Please fill: shop name and {shopTypeDraft === "physical" ? "address" : "website"}.
+                        </div>
                       ) : null}
 
                       {shopVerificationStatus === "verified" ? (
@@ -724,14 +801,34 @@ export default function AccountPage() {
                             {shopSavingVisibility ? "Saving…" : "Save shop visibility"}
                           </button>
                         </div>
-                      ) : shopVerificationStatus === "pending" ? (
+
+                      ) : null}
+
+                      {shopVerificationStatus === "pending_review" || shopVerificationStatus === "reverification_required" ? (
                         <button
                           type="button"
                           disabled
                           className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-300 disabled:opacity-100"
                         >
-                          Pending verification
+                          {shopVerificationStatus === "pending_review" ? "Pending review" : "Update pending re-verification"}
                         </button>
+                      ) : shopVerificationStatus === "changes_requested" ? (
+                        <>
+                          {profile?.shop_admin_note ? (
+                            <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-3 text-sm text-slate-200">
+                              <div className="font-semibold text-amber-100">Admin note</div>
+                              <div className="mt-1 whitespace-pre-wrap text-slate-300">{profile.shop_admin_note}</div>
+                            </div>
+                          ) : null}
+                          <button
+                            type="button"
+                            onClick={() => void submitShopVerification()}
+                            disabled={shopSubmitting || shopRequiredMissing}
+                            className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                          >
+                            {shopSubmitting ? "Submitting…" : "Submit updated info"}
+                          </button>
+                        </>
                       ) : shopVerificationStatus === "rejected" ? (
                         <button
                           type="button"
@@ -741,6 +838,28 @@ export default function AccountPage() {
                         >
                           {shopSubmitting ? "Submitting…" : "Resubmit for verification"}
                         </button>
+                      ) : shopVerificationStatus === "verified" ? (
+                        <>
+                          {!editingVerifiedShop ? (
+                            <button
+                              type="button"
+                              onClick={() => setEditingVerifiedShop(true)}
+                              disabled={shopSubmitting}
+                              className="w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
+                            >
+                              Request shop info update
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void submitShopVerification()}
+                              disabled={shopSubmitting || shopRequiredMissing}
+                              className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                            >
+                              {shopSubmitting ? "Submitting…" : "Submit update for verification"}
+                            </button>
+                          )}
+                        </>
                       ) : (
                         <button
                           type="button"

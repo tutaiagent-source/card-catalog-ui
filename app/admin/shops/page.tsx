@@ -11,11 +11,18 @@ type PendingShop = {
   username: string;
   display_name?: string;
   avatar_url?: string;
-  shop_name: string;
-  shop_address: string;
-  shop_phone: string;
-  shop_website: string;
+  shop_name?: string;
+  shop_address?: string;
+  shop_phone?: string;
+  shop_website?: string;
+
+  pending_shop_name?: string;
+  pending_shop_address?: string;
+  pending_shop_phone?: string;
+  pending_shop_website?: string;
+
   shop_verification_status: string;
+  shop_admin_note?: string;
   created_at?: string;
 };
 
@@ -29,6 +36,7 @@ export default function AdminShopsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [adminNotesById, setAdminNotesById] = useState<Record<string, string>>({});
 
   async function fetchPending() {
     setError("");
@@ -63,10 +71,12 @@ export default function AdminShopsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
-  async function reviewShop(profileId: string, action: "approve" | "reject") {
+  async function reviewShop(profileId: string, action: "verify" | "request_changes" | "reject") {
     setError("");
     if (!supabaseConfigured || !supabase) return;
     if (!user?.id) return;
+
+    const admin_note = action === "request_changes" ? String(adminNotesById[profileId] || "").trim() : "";
 
     setSavingId(profileId);
     try {
@@ -80,7 +90,7 @@ export default function AdminShopsPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ profile_id: profileId, action }),
+        body: JSON.stringify({ profile_id: profileId, action, admin_note }),
       });
 
       const payload = await resp.json().catch(() => ({}));
@@ -124,7 +134,7 @@ export default function AdminShopsPage() {
 
         <section className="mt-6 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold text-slate-200">Pending shops</div>
+            <div className="text-sm font-semibold text-slate-200">Pending shop verification</div>
             <div className="text-xs text-slate-400">{loading ? "Loading…" : `${pending.length} pending`}</div>
           </div>
 
@@ -136,26 +146,66 @@ export default function AdminShopsPage() {
             <div className="mt-4 space-y-3">
               {pending.map((p) => (
                 <div key={p.id} className="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                  {(() => {
+                    const status = String(p.shop_verification_status || "").toLowerCase();
+                    const isReverification = status === "reverification_required";
+                    const effectiveShopName = isReverification ? p.pending_shop_name : p.shop_name;
+                    const effectiveAddress = isReverification ? p.pending_shop_address : p.shop_address;
+                    const effectivePhone = isReverification ? p.pending_shop_phone : p.shop_phone;
+                    const effectiveWebsite = isReverification ? p.pending_shop_website : p.shop_website;
+
+                    return (
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <div className="text-sm font-semibold text-white">{p.shop_name || p.display_name || `@${p.username}`}</div>
+                      <div className="text-sm font-semibold text-white">{effectiveShopName || p.display_name || `@${p.username}`}</div>
                       <div className="mt-1 text-xs text-slate-400">@{p.username}</div>
                       <div className="mt-3 space-y-1 text-sm text-slate-300">
-                        {p.shop_address ? <div><span className="text-slate-400">Address:</span> {p.shop_address}</div> : null}
-                        {p.shop_phone ? <div><span className="text-slate-400">Phone:</span> {p.shop_phone}</div> : null}
-                        {p.shop_website ? <div><span className="text-slate-400">Website:</span> {p.shop_website}</div> : null}
+                        {effectiveAddress ? (
+                          <div>
+                            <span className="text-slate-400">Address:</span> {effectiveAddress}
+                          </div>
+                        ) : null}
+                        {effectivePhone ? (
+                          <div>
+                            <span className="text-slate-400">Phone:</span> {effectivePhone}
+                          </div>
+                        ) : null}
+                        {effectiveWebsite ? (
+                          <div>
+                            <span className="text-slate-400">Website:</span> {effectiveWebsite}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-3 text-xs">
+                        <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-slate-300">
+                          {status === "pending_review"
+                            ? "Pending review"
+                            : status === "reverification_required"
+                              ? "Re-verify requested"
+                              : status}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                      <textarea
+                        className="w-full rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 sm:w-72"
+                        rows={2}
+                        placeholder="Admin note (required for Request changes)"
+                        value={adminNotesById[p.id] || ""}
+                        onChange={(e) => setAdminNotesById((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                      />
+
                       <button
                         type="button"
                         disabled={savingId === p.id}
-                        onClick={() => void reviewShop(p.id, "approve")}
+                        onClick={() => void reviewShop(p.id, "verify")}
                         className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
                       >
                         {savingId === p.id ? "Updating…" : "Approve"}
                       </button>
+
                       <button
                         type="button"
                         disabled={savingId === p.id}
@@ -164,8 +214,19 @@ export default function AdminShopsPage() {
                       >
                         Reject
                       </button>
+
+                      <button
+                        type="button"
+                        disabled={savingId === p.id || !String(adminNotesById[p.id] || "").trim()}
+                        onClick={() => void reviewShop(p.id, "request_changes")}
+                        className="rounded-xl border border-amber-500/30 bg-amber-500/[0.10] px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/[0.15] disabled:opacity-60"
+                      >
+                        Request changes
+                      </button>
                     </div>
                   </div>
+                    );
+                  })()}
                 </div>
               ))}
             </div>

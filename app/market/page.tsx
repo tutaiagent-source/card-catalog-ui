@@ -484,7 +484,7 @@ export default function MarketPage() {
               {filteredCards.map((card) => {
                 const seller = sellerMap.get(card.user_id);
                 const sellerUsername = String(seller?.username || "").trim();
-                const isVerifiedShop = Boolean(seller?.is_shop) && String(seller?.shop_verification_status || "").toLowerCase() === "verified";
+                const isVerifiedShop = Boolean(seller?.is_shop) && Boolean(seller?.shop_name);
                 const sellerLabel = isVerifiedShop ? (seller?.shop_name ? String(seller.shop_name) : seller?.display_name) : seller?.display_name;
                 return (
 	                    <div
@@ -567,8 +567,8 @@ export default function MarketPage() {
 					  const seller = sellerMap.get(activeCard.user_id);
 					  const sellerUsername = seller?.username ? String(seller.username).trim() : "";
 					  if (!sellerUsername) return null;
-					  const isVerifiedShop = Boolean(seller?.is_shop) && String(seller?.shop_verification_status || "").toLowerCase() === "verified";
-					  const sellerLabel = isVerifiedShop ? (seller?.shop_name ? String(seller.shop_name) : seller?.display_name) : seller?.display_name;
+							 const isVerifiedShop = Boolean(seller?.is_shop) && Boolean(seller?.shop_name);
+							 const sellerLabel = isVerifiedShop ? (seller?.shop_name ? String(seller.shop_name) : seller?.display_name) : seller?.display_name;
 					  return (
 					    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-400">
 					      <span>Seller:</span>

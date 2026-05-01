@@ -90,8 +90,7 @@ export default function SellerProfilePage() {
   const [messageStarting, setMessageStarting] = useState(false);
 
   const isShop = Boolean(seller?.is_shop);
-  const shopStatus = String(seller?.shop_verification_status || "unsubmitted").toLowerCase();
-  const isVerifiedShop = isShop && shopStatus === "verified";
+  const isVerifiedShop = isShop && Boolean(seller?.shop_name);
 
   useEffect(() => {
     setShowBack(false);
