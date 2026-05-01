@@ -194,6 +194,12 @@ export default function AccountPage() {
 
   const shopVerificationStatus = shopVerificationStatusUi;
 
+  const shopRequiredMissing =
+    !String(shopNameDraft || "").trim() ||
+    !String(shopAddressDraft || "").trim() ||
+    !String(shopPhoneDraft || "").trim() ||
+    !String(shopWebsiteDraft || "").trim();
+
   // Access gating (limit messaging + disabled states) must reflect Stripe-synced tier/status, not the UI preview toggle.
   const usernameLocked = Boolean(String(profile?.username || "").trim());
 
@@ -325,6 +331,11 @@ export default function AccountPage() {
     }
 
     if (!user?.id) return;
+
+    if (shopRequiredMissing) {
+      setError("Please fill in shop name, address, phone, and website before submitting.");
+      return;
+    }
 
     setShopSubmitting(true);
     const shopPatch = {
@@ -683,6 +694,10 @@ export default function AccountPage() {
                         Status: <span className="font-semibold text-slate-200">{shopVerificationStatus}</span>
                       </div>
 
+                      {shopRequiredMissing ? (
+                        <div className="text-xs text-slate-400">Please fill: shop name, address, phone, and website.</div>
+                      ) : null}
+
                       {shopVerificationStatus === "verified" ? (
                         <div className="space-y-3 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
                           <div className="text-sm font-semibold text-slate-100">What to show publicly</div>
@@ -721,7 +736,7 @@ export default function AccountPage() {
                         <button
                           type="button"
                           onClick={() => void submitShopVerification()}
-                          disabled={shopSubmitting}
+                          disabled={shopSubmitting || shopRequiredMissing}
                           className="w-full rounded-lg bg-[#d50000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#b80000] disabled:opacity-60"
                         >
                           {shopSubmitting ? "Submitting…" : "Resubmit for verification"}
@@ -730,7 +745,7 @@ export default function AccountPage() {
                         <button
                           type="button"
                           onClick={() => void submitShopVerification()}
-                          disabled={shopSubmitting}
+                          disabled={shopSubmitting || shopRequiredMissing}
                           className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
                         >
                           {shopSubmitting ? "Submitting…" : "Submit for verification"}
