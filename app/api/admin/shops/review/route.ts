@@ -77,24 +77,20 @@ export async function POST(req: Request) {
     // For reject: if it was already verified, keep verified public info; otherwise clear.
     const isCurrentlyVerified = !!row.shop_verified_at;
 
+    const isReverification = String(row.shop_verification_status || "").toLowerCase() === "reverification_required";
+
     const patch =
       action === "verify"
         ? {
             shop_verification_status: "verified",
             shop_verified_at: nowIso,
             shop_verified_by: adminUserId,
-            shop_name: row.pending_shop_name ? row.pending_shop_name : row.shop_name,
-            shop_address: row.pending_shop_address ? row.pending_shop_address : row.shop_address,
-            shop_phone: row.pending_shop_phone ? row.pending_shop_phone : row.shop_phone,
-            shop_website: row.pending_shop_website ? row.pending_shop_website : row.shop_website,
-            shop_type:
-              String(row.shop_verification_status || "").toLowerCase() === "reverification_required" &&
-              row.pending_shop_type &&
-              row.pending_shop_type !== ""
-                ? row.pending_shop_type
-                : row.shop_type,
-            avatar_url:
-              row.pending_avatar_url && row.pending_avatar_url !== "" ? row.pending_avatar_url : row.avatar_url,
+            shop_name: isReverification ? (row.pending_shop_name ?? row.shop_name) : row.shop_name,
+            shop_address: isReverification ? (row.pending_shop_address ?? row.shop_address) : row.shop_address,
+            shop_phone: isReverification ? (row.pending_shop_phone ?? row.shop_phone) : row.shop_phone,
+            shop_website: isReverification ? (row.pending_shop_website ?? row.shop_website) : row.shop_website,
+            shop_type: isReverification ? (row.pending_shop_type ?? row.shop_type) : row.shop_type,
+            avatar_url: isReverification ? (row.pending_avatar_url ?? row.avatar_url) : row.avatar_url,
             shop_admin_note: "",
           }
         : action === "request_changes"

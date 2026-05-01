@@ -80,6 +80,15 @@ export default function SellerProfilePage() {
   const [loadingCards, setLoadingCards] = useState(false);
   const [error, setError] = useState("");
 
+  // Bundled offer selection (buyer -> this seller)
+  const [bundleMode, setBundleMode] = useState(false);
+  const [selectedBundleCardIds, setSelectedBundleCardIds] = useState<Set<string>>(new Set());
+  const [bundleModalOpen, setBundleModalOpen] = useState(false);
+  const [bundleOfferAmountDraft, setBundleOfferAmountDraft] = useState<string>("");
+  const [bundleNoteDraft, setBundleNoteDraft] = useState<string>("");
+  const [bundleSubmitting, setBundleSubmitting] = useState(false);
+  const [bundleModalError, setBundleModalError] = useState<string>("");
+
   const [editMode, setEditMode] = useState(false);
   const [displayNameDraft, setDisplayNameDraft] = useState("");
   const [bioDraft, setBioDraft] = useState("");
@@ -97,6 +106,51 @@ export default function SellerProfilePage() {
   }, [activeCard?.id]);
 
   const isOwnProfile = Boolean(seller?.id && user?.id && seller.id === user.id);
+
+  const selectedBundleCards = useMemo(() => {
+    if (!selectedBundleCardIds.size) return [] as SellerCard[];
+    return cards.filter((c) => c.id && selectedBundleCardIds.has(String(c.id)));
+  }, [cards, selectedBundleCardIds]);
+
+  const selectedBundleCount = selectedBundleCardIds.size;
+
+  const bundleTotalAsking = useMemo(() => {
+    return selectedBundleCards.reduce((sum, c) => {
+      const ask = c.asking_price != null ? Number(c.asking_price) : NaN;
+      return sum + (Number.isFinite(ask) ? ask : 0);
+    }, 0);
+  }, [selectedBundleCards]);
+
+  function resetBundleFlow() {
+    setBundleMode(false);
+    setSelectedBundleCardIds(new Set());
+    setBundleModalOpen(false);
+    setBundleOfferAmountDraft("");
+    setBundleNoteDraft("");
+    setBundleModalError("");
+  }
+
+  function toggleBundleCard(card: SellerCard) {
+    if (!bundleMode) return;
+    if (!card.id) return;
+    // Displayed cards are expected to be active; still guard basic invariants.
+    if (card.asking_price == null) return;
+
+    setSelectedBundleCardIds((prev) => {
+      const next = new Set(prev);
+      const id = String(card.id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function openBundleSubmitModal() {
+    setBundleModalError("");
+    setBundleOfferAmountDraft(bundleTotalAsking > 0 ? String(Math.round(bundleTotalAsking)) : "");
+    setBundleNoteDraft("");
+    setBundleModalOpen(true);
+  }
 
   const activeCardPublicNotes = useMemo(
     () => (activeCard?.notes ? parseSellerMeta(activeCard.notes).publicNotes : ""),
@@ -317,6 +371,65 @@ export default function SellerProfilePage() {
     }
   }
 
+  async function submitBundledOffer() {
+    if (!user?.id) return;
+    if (!supabaseConfigured || !supabase) return;
+    if (!seller?.id) return;
+
+    if (selectedBundleCount < 2) {
+      setBundleModalError("Select at least 2 cards.");
+      return;
+    }
+
+    const amount = Number(String(bundleOfferAmountDraft || "").trim());
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setBundleModalError("Enter a valid bundled offer amount.");
+      return;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
+      setBundleModalError("Missing session token. Please sign out and back in.");
+      return;
+    }
+
+    setBundleSubmitting(true);
+    setBundleModalError("");
+
+    try {
+      const cardIdList = selectedBundleCards.map((c) => String(c.id));
+      const resp = await fetch("/api/bundle-offers/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          card_ids: cardIdList,
+          offer_amount: amount,
+          note: bundleNoteDraft.trim() ? bundleNoteDraft.trim() : null,
+        }),
+      });
+
+      const payload = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(payload?.error || "Bundle offer submission failed.");
+      }
+
+      const conversationId = String(payload?.conversation_id || "");
+      if (!conversationId) throw new Error("Missing conversation_id from server.");
+
+      // Buyer is redirected to the deal thread.
+      window.location.href = `/messages?conversation=${encodeURIComponent(conversationId)}`;
+      resetBundleFlow();
+    } catch (e: any) {
+      setBundleModalError(e?.message || "Could not submit bundle offer.");
+    } finally {
+      setBundleSubmitting(false);
+    }
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -516,6 +629,29 @@ export default function SellerProfilePage() {
               <div className="text-sm font-semibold text-slate-200">Active listings on CardCat Market</div>
               <div className="mt-1 text-xs text-slate-500">{loadingCards ? "Loading…" : `${cards.length} card${cards.length === 1 ? "" : "s"}`}</div>
             </div>
+
+            {user?.id && !isOwnProfile ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (bundleMode) {
+                    resetBundleFlow();
+                  } else {
+                    setBundleModalOpen(false);
+                    setBundleModalError("");
+                    setSelectedBundleCardIds(new Set());
+                    setBundleMode(true);
+                  }
+                }}
+                className={
+                  bundleMode
+                    ? "rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.06]"
+                    : "rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
+                }
+              >
+                {bundleMode ? "Cancel Bundle" : "Bundle an Offer"}
+              </button>
+            ) : null}
           </div>
 
           {loadingCards ? (
@@ -529,13 +665,46 @@ export default function SellerProfilePage() {
                   key={card.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => setActiveCard(card)}
+                  onClick={(e) => {
+                    if (bundleMode) {
+                      const t = e.target as HTMLElement | null;
+                      const tag = (t?.tagName || "").toLowerCase();
+                      if (tag === "input") return;
+                      toggleBundleCard(card);
+                    } else {
+                      setActiveCard(card);
+                    }
+                  }}
                   onKeyDown={(e) => {
                     if (!(e.key === "Enter" || e.key === " ")) return;
-                    setActiveCard(card);
+                    if (bundleMode) toggleBundleCard(card);
+                    else setActiveCard(card);
                   }}
-                  className="cursor-pointer rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-left hover:bg-slate-950/60"
+                  className={
+                    bundleMode
+                      ? `cursor-pointer rounded-2xl border p-3 text-left hover:bg-slate-950/60 ${
+                          selectedBundleCardIds.has(String(card.id))
+                            ? "border-emerald-400/60 bg-emerald-500/10"
+                            : "border-white/10 bg-slate-950/40"
+                        }`
+                      : "cursor-pointer rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-left hover:bg-slate-950/60"
+                  }
                 >
+                  {bundleMode ? (
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedBundleCardIds.has(String(card.id))}
+                          onChange={() => toggleBundleCard(card)}
+                          onClick={(e) => e.stopPropagation()}
+                          disabled={card.asking_price == null}
+                        />
+                        <span className="text-xs font-semibold text-emerald-200">Select</span>
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-950 flex items-center justify-center">
                     {card.image_url ? (
                       <img
@@ -565,7 +734,158 @@ export default function SellerProfilePage() {
             </div>
           )}
         </section>
+
+        {bundleMode ? (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur border-t border-white/10">
+            <div className="mx-auto max-w-7xl px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm font-semibold text-slate-200">
+                {selectedBundleCount} card{selectedBundleCount === 1 ? "" : "s"} selected
+                <div className="mt-1 text-xs text-slate-400">
+                  Total asking price: {formatMoney(bundleTotalAsking)}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={selectedBundleCount < 2}
+                onClick={() => {
+                  if (selectedBundleCount < 2) return;
+                  openBundleSubmitModal();
+                }}
+                className={
+                  selectedBundleCount < 2
+                    ? "rounded-xl bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-400 disabled:opacity-100 cursor-not-allowed"
+                    : "rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
+                }
+              >
+                Submit Bundled Offer
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
+
+      {bundleModalOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-3 sm:p-4" onClick={() => setBundleModalOpen(false)}>
+          <div
+            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl [-webkit-overflow-scrolling:touch]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 px-4 py-4 sm:px-6">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Submit Bundled Offer</div>
+                <div className="mt-2 text-xl font-bold text-white">
+                  {seller?.shop_name ? seller.shop_name : `@${routeUsername}`}
+                </div>
+                <div className="mt-1 text-sm text-slate-400">
+                  Your offer will be sent to the seller for all selected cards. Payment and shipping are handled directly between buyer and seller.
+                </div>
+              </div>
+              <button type="button" onClick={() => setBundleModalOpen(false)} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/[0.08]">
+                Close
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-6">
+              {bundleModalError ? (
+                <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/[0.08] px-3 py-2 text-sm text-red-100">{bundleModalError}</div>
+              ) : null}
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div className="text-sm font-semibold text-white">Selected cards</div>
+                <div className="mt-2 text-xs text-slate-400">{selectedBundleCards.length} selected</div>
+
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {selectedBundleCards.map((c) => (
+                    <div key={c.id} className="flex gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-3">
+                      <div className="h-16 w-16 overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center border border-white/10">
+                        {c.image_url ? (
+                          <img
+                            alt={c.player_name}
+                            src={driveToImageSrc(c.image_url, { variant: "grid" })}
+                            className="h-full w-full object-contain"
+                          />
+                        ) : null}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-white line-clamp-1">
+                          {c.player_name}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-400 line-clamp-1">
+                          {[c.year, c.brand, c.set_name].filter(Boolean).join(" · ")}
+                        </div>
+                        <div className="mt-2 text-sm font-semibold text-slate-100">
+                          {c.asking_price != null ? formatMoney(Number(c.asking_price)) : "—"}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 text-sm text-slate-300">
+                  Total asking price: <span className="font-bold text-white">{formatMoney(bundleTotalAsking)}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <div className="mb-1 text-sm text-slate-300">Offer amount</div>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    value={bundleOfferAmountDraft}
+                    onChange={(e) => setBundleOfferAmountDraft(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
+                    placeholder="0.00"
+                  />
+                </label>
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Offer note (optional)</div>
+                  <div className="mt-2 text-xs text-slate-500">You can include a message for the seller.</div>
+                </div>
+              </div>
+
+              <label className="block mt-3">
+                <div className="mb-1 text-sm text-slate-300">Buyer note</div>
+                <textarea
+                  value={bundleNoteDraft}
+                  onChange={(e) => setBundleNoteDraft(e.target.value)}
+                  className="w-full min-h-[88px] rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white outline-none"
+                  placeholder="Optional note"
+                />
+              </label>
+
+              <div className="mt-5 flex flex-wrap items-center gap-2 justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBundleModalOpen(false);
+                    setBundleModalError("");
+                  }}
+                  className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+                  disabled={bundleSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submitBundledOffer()}
+                  disabled={bundleSubmitting || selectedBundleCount < 2}
+                  className={
+                    selectedBundleCount < 2
+                      ? "rounded-xl bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-400 disabled:opacity-100"
+                      : "rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
+                  }
+                >
+                  {bundleSubmitting ? "Submitting…" : "Submit Offer"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {activeCard ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4" onClick={() => setActiveCard(null)}>

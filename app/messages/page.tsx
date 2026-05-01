@@ -111,6 +111,8 @@ export default function MessagesPage() {
   const [dealTimelineEvents, setDealTimelineEvents] = useState<DealTimelineEventRow[]>([]);
   const [dealDetailsLoading, setDealDetailsLoading] = useState(false);
 
+  const [bundleDealItems, setBundleDealItems] = useState<any[]>([]);
+
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showShippingForm, setShowShippingForm] = useState(false);
 
@@ -673,6 +675,18 @@ export default function MessagesPage() {
     return activeDealRecord;
   }, [activeDealRecord, activeConversationId, activeConversationContextCardId]);
 
+  const isBundleDeal = useMemo(() => {
+    if (!dealRecordForDisplay) return false;
+    return String(dealRecordForDisplay.deal_type || "").toLowerCase() === "bundle_sale";
+  }, [dealRecordForDisplay]);
+
+  const bundleTotalAsking = useMemo(() => {
+    return (bundleDealItems ?? []).reduce((sum, it: any) => {
+      const v = Number(it?.asking_price_at_offer ?? 0);
+      return sum + (Number.isFinite(v) ? v : 0);
+    }, 0);
+  }, [bundleDealItems]);
+
   const dealStatusLower = String(dealRecordForDisplay?.status ?? "").toLowerCase();
   const paymentRecorded = Boolean(dealDetails?.paid_date);
   const paymentConfirmed = ["payment_confirmed", "shipping_entered", "completed"].includes(dealStatusLower);
@@ -770,6 +784,45 @@ export default function MessagesPage() {
       cancelled = true;
     };
   }, [dealRecordForDisplay]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function run() {
+      if (!dealRecordForDisplay) {
+        setBundleDealItems([]);
+        return;
+      }
+
+      const dt = String(dealRecordForDisplay.deal_type || "").toLowerCase();
+      if (dt !== "bundle_sale") {
+        setBundleDealItems([]);
+        return;
+      }
+
+      if (!supabaseConfigured || !supabase) return;
+
+      const { data, error } = await supabase
+        .from("bundle_deal_items")
+        .select("card_id, seller_user_id, asking_price_at_offer, card_snapshot_json, created_at")
+        .eq("deal_record_id", dealRecordForDisplay.id)
+        .order("created_at", { ascending: true });
+
+      if (cancelled) return;
+      if (error) {
+        console.warn("Failed to load bundle_deal_items", error);
+        setBundleDealItems([]);
+        return;
+      }
+
+      setBundleDealItems((data ?? []) as any[]);
+    }
+
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [dealRecordForDisplay?.id, dealRecordForDisplay?.deal_type]);
 
   useEffect(() => {
     if (!showShippingForm) return;
@@ -1208,6 +1261,29 @@ export default function MessagesPage() {
     setDealActionSaving(true);
     setDealError("");
     try {
+      if (String(dealRecordForDisplay.deal_type || "").toLowerCase() === "bundle_sale") {
+        if (!supabaseConfigured || !supabase) throw new Error("Supabase is not configured.");
+
+        const offered = offer.offer_amount != null ? Number(offer.offer_amount) : null;
+
+        const { error: acceptErr } = await supabase.rpc("accept_bundle_deal_offer", {
+          p_offer_id: offer.id,
+        });
+        if (acceptErr) throw acceptErr;
+
+        await addDealTimelineEvent({
+          dealRecordId: dealRecordForDisplay.id,
+          userId: user.id,
+          eventType: "offer_accepted",
+          title: "Offer accepted",
+          description: offered != null ? `Accepted ${formatDealMoney(offered)}.` : "Offer accepted.",
+          metadata: { offer_amount: offered },
+        });
+
+        await refreshDeals();
+        return;
+      }
+
       await respondToDealOffer({
         offerId: offer.id,
         actorUserId: user.id,
@@ -1645,10 +1721,10 @@ export default function MessagesPage() {
       setDealActionSaving(true);
       setDealError("");
       try {
-        const { error: rpcError } = await supabase.rpc(
-          "confirm_deal_payment_and_mark_sold",
-          { p_deal_record_id: dealRecordForDisplay.id }
-        );
+        const rpcName =
+          isBundleDeal ? "confirm_bundle_payment_and_mark_sold" : "confirm_deal_payment_and_mark_sold";
+
+        const { error: rpcError } = await supabase.rpc(rpcName, { p_deal_record_id: dealRecordForDisplay.id });
 
         if (rpcError) throw rpcError;
 
@@ -3074,13 +3150,46 @@ export default function MessagesPage() {
 	                                Offer: <span className="font-semibold text-white">{formatDealMoney(Number(pendingDealOffer.offer_amount || 0))}</span>
 	                                <span className="text-slate-400"> ({dealOfferStatusLabel(pendingDealOffer.status)})</span>
 	                              </div>
-	                              {pendingDealOffer.message ? (
-	                                <div className="text-xs text-slate-400 whitespace-pre-wrap">{pendingDealOffer.message}</div>
-	                              ) : null}
+                              {pendingDealOffer.message ? (
+                                <div className="text-xs text-slate-400 whitespace-pre-wrap">{pendingDealOffer.message}</div>
+                              ) : null}
 
-	                              <div className="flex flex-wrap gap-2">
-	                                <button
-	                                  type="button"
+                              {isBundleDeal ? (
+                                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200">Bundled cards</div>
+                                  <div className="mt-2 flex flex-col gap-2">
+                                    {(bundleDealItems ?? []).map((it: any) => {
+                                      const snap = it?.card_snapshot_json ?? {};
+                                      return (
+                                        <div key={String(it?.card_id)} className="flex items-center gap-3">
+                                          <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center border border-white/10">
+                                            {snap?.image_url ? (
+                                              <img
+                                                alt={snap?.player_name}
+                                                src={driveToImageSrc(snap.image_url, { variant: "grid" })}
+                                                className="h-full w-full object-contain"
+                                              />
+                                            ) : null}
+                                          </div>
+                                          <div className="min-w-0">
+                                            <div className="text-xs font-semibold text-white line-clamp-1">{snap?.player_name || "Card"}</div>
+                                            <div className="mt-1 text-[11px] text-slate-400 line-clamp-1">{[snap?.year, snap?.brand, snap?.set_name].filter(Boolean).join(" · ")}</div>
+                                            <div className="mt-1 text-xs font-semibold text-slate-100">{formatDealMoney(Number(it?.asking_price_at_offer ?? 0))}</div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+
+                                  <div className="mt-3 text-xs text-slate-300">
+                                    Total asking price: {formatDealMoney(bundleTotalAsking)}
+                                  </div>
+                                </div>
+                              ) : null}
+
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
 	                                  disabled={dealActionSaving}
 	                                  onClick={() => void onAcceptOffer(pendingDealOffer)}
 	                                  className="rounded-xl bg-emerald-500 px-3 py-2 text-xs font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
@@ -3122,13 +3231,46 @@ export default function MessagesPage() {
 
 
 	                            </div>
-	                          ) : pendingDealOffer.from_user_id === user.id ? (
-	                            <div className="space-y-2">
-	                              <div className="text-xs text-slate-300">
-	                                Offer pending. Waiting for the other user to respond.
-	                              </div>
+                          ) : pendingDealOffer.from_user_id === user.id ? (
+                            <div className="space-y-2">
+                              <div className="text-xs text-slate-300">
+                                Offer pending. Waiting for the other user to respond.
+                              </div>
 
-	                            </div>
+                              {isBundleDeal ? (
+                                <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200">Bundled cards</div>
+                                  <div className="mt-2 flex flex-col gap-2">
+                                    {(bundleDealItems ?? []).map((it: any) => {
+                                      const snap = it?.card_snapshot_json ?? {};
+                                      return (
+                                        <div key={String(it?.card_id)} className="flex items-center gap-3">
+                                          <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center border border-white/10">
+                                            {snap?.image_url ? (
+                                              <img
+                                                alt={snap?.player_name}
+                                                src={driveToImageSrc(snap.image_url, { variant: "grid" })}
+                                                className="h-full w-full object-contain"
+                                              />
+                                            ) : null}
+                                          </div>
+                                          <div className="min-w-0">
+                                            <div className="text-xs font-semibold text-white line-clamp-1">{snap?.player_name || "Card"}</div>
+                                            <div className="mt-1 text-[11px] text-slate-400 line-clamp-1">{[snap?.year, snap?.brand, snap?.set_name].filter(Boolean).join(" · ")}</div>
+                                            <div className="mt-1 text-xs font-semibold text-slate-100">{formatDealMoney(Number(it?.asking_price_at_offer ?? 0))}</div>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+
+                                  <div className="mt-3 text-xs text-slate-300">
+                                    Total asking price: {formatDealMoney(bundleTotalAsking)}
+                                  </div>
+                                </div>
+                              ) : null}
+
+                            </div>
 	                          ) : (
 	                            <div className="text-xs text-slate-300">Another offer is pending. Waiting…</div>
 	                          )
@@ -3136,15 +3278,47 @@ export default function MessagesPage() {
 	                            String(dealRecordForDisplay.status ?? "").toLowerCase()
 	                          ) ? (
 	                            <div className="space-y-3">
-	                              <div className="text-xs text-slate-300">
-	                                {dealCompleted
-	                                  ? "Deal completed."
-                                    : paymentConfirmed
-                                      ? "Seller marked payment as received."
-                                      : paymentRecorded
-                                        ? "Payment details recorded. Waiting for seller to mark payment as received."
-                                        : "Offer accepted. Add payment details to document this deal."}
+	                            <div className="text-xs text-slate-300">
+	                              {dealCompleted
+	                                ? "Deal completed."
+	                                  : paymentConfirmed
+	                                    ? "Seller marked payment as received."
+	                                      : paymentRecorded
+	                                        ? "Payment details recorded. Waiting for seller to mark payment as received."
+	                                        : "Offer accepted. Add payment details to document this deal."}
+	                            </div>
+
+	                            {isBundleDeal ? (
+	                              <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+	                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-200">Bundled cards</div>
+	                                <div className="mt-2 flex flex-col gap-2">
+	                                  {(bundleDealItems ?? []).map((it: any) => {
+	                                    const snap = it?.card_snapshot_json ?? {};
+	                                    return (
+	                                      <div key={String(it?.card_id)} className="flex items-center gap-3">
+	                                        <div className="h-10 w-10 overflow-hidden rounded-lg bg-slate-950 flex items-center justify-center border border-white/10">
+	                                          {snap?.image_url ? (
+	                                            <img
+	                                              alt={snap?.player_name}
+	                                              src={driveToImageSrc(snap.image_url, { variant: "grid" })}
+	                                              className="h-full w-full object-contain"
+	                                            />
+	                                          ) : null}
+	                                        </div>
+	                                        <div className="min-w-0">
+	                                          <div className="text-xs font-semibold text-white line-clamp-1">{snap?.player_name || "Card"}</div>
+	                                          <div className="mt-1 text-[11px] text-slate-400 line-clamp-1">{[snap?.year, snap?.brand, snap?.set_name].filter(Boolean).join(" · ")}</div>
+	                                          <div className="mt-1 text-xs font-semibold text-slate-100">{formatDealMoney(Number(it?.asking_price_at_offer ?? 0))}</div>
+	                                        </div>
+	                                      </div>
+	                                    );
+	                                  })}
+	                                </div>
+	                                <div className="mt-3 text-xs text-slate-300">
+	                                  Total asking price: {formatDealMoney(bundleTotalAsking)}
+	                                </div>
 	                              </div>
+	                            ) : null}
 
 	                              {!paymentConfirmed ? (
 	                                <div className="flex flex-wrap gap-2">

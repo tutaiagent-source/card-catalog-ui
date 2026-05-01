@@ -194,6 +194,44 @@ export default function SoldPage() {
               if (!dealsByCard.has(cid)) dealsByCard.set(cid, d);
             }
 
+            // Bundles: deal_records only reference a single context card_id.
+            // For bundle sales, map each sold card to its bundle deal via bundle_deal_items.
+            const missingCardIds = cardIds.filter((cid) => !dealsByCard.has(String(cid)));
+            if (missingCardIds.length > 0) {
+              const { data: bundleItemRows, error: bundleItemErr } = await supabase
+                .from("bundle_deal_items")
+                .select("card_id, deal_record_id")
+                .in("card_id", missingCardIds);
+
+              if (!bundleItemErr) {
+                const bundleDealRecordIds = Array.from(
+                  new Set((bundleItemRows ?? []).map((r: any) => String(r.deal_record_id)).filter(Boolean))
+                );
+
+                if (bundleDealRecordIds.length > 0) {
+                  const { data: bundleDealRows, error: bundleDealErr } = await supabase
+                    .from("deal_records")
+                    .select("id, buyer_user_id, conversation_id, agreed_price, status, updated_at, deal_type")
+                    .in("id", bundleDealRecordIds)
+                    .in("status", ["payment_confirmed", "completed"]);
+
+                  if (!bundleDealErr) {
+                    const dealById = new Map(
+                      ((bundleDealRows ?? []) as any[]).map((d: any) => [String(d.id), d])
+                    );
+
+                    for (const it of (bundleItemRows ?? []) as any[]) {
+                      const cid = it.card_id ? String(it.card_id) : null;
+                      const drid = it.deal_record_id ? String(it.deal_record_id) : null;
+                      if (!cid || !drid) continue;
+                      const dealRow = dealById.get(drid);
+                      if (dealRow && !dealsByCard.has(cid)) dealsByCard.set(cid, dealRow);
+                    }
+                  }
+                }
+              }
+            }
+
             const buyerIds = Array.from(
               new Set(
                 Array.from(dealsByCard.values())
@@ -514,8 +552,57 @@ export default function SoldPage() {
         })
         .join("\n");
 
-      const cardImageHtml = (card as any).image_url
-        ? `<img class="card-img" src="${escapeHtml(driveToImageSrc((card as any).image_url, { variant: "detail" }))}" alt="Card image" />`
+      const isBundleSale = String(deal.deal_type || "").toLowerCase() === "bundle_sale";
+
+      let receiptCard: any = card;
+      let bundleCardsListHtml = "";
+
+      if (isBundleSale) {
+        try {
+          const { data: bundleRows, error: bundleErr } = await supabase
+            .from("bundle_deal_items")
+            .select("card_id, asking_price_at_offer, card_snapshot_json")
+            .eq("deal_record_id", dealRecordId)
+            .order("created_at", { ascending: true });
+
+          if (!bundleErr) {
+            const bundleItems = (bundleRows ?? []) as any[];
+            const first = bundleItems[0] ?? null;
+            const snap = first?.card_snapshot_json ?? {};
+
+            receiptCard = {
+              ...card,
+              player_name: snap?.player_name ?? card.player_name,
+              year: snap?.year ?? card.year,
+              brand: snap?.brand ?? card.brand,
+              set_name: snap?.set_name ?? card.set_name,
+              parallel: snap?.parallel ?? card.parallel,
+              card_number: snap?.card_number ?? card.card_number,
+              image_url: snap?.image_url ?? (card as any).image_url,
+              asking_price: first?.asking_price_at_offer ?? (card as any).asking_price,
+            };
+
+            bundleCardsListHtml = bundleItems
+              .map((it: any) => {
+                const s = it?.card_snapshot_json ?? {};
+                const img = s?.image_url
+                  ? `<img class="card-img" src="${escapeHtml(driveToImageSrc(s.image_url, { variant: "detail" }))}" alt="Card image" />`
+                  : `<div class="card-img placeholder"></div>`;
+                const title = escapeHtml(s?.player_name ?? "Card");
+                const meta = escapeHtml([s?.year, s?.brand, s?.set_name].filter(Boolean).join(" ") || "—");
+                const asking = Number(it?.asking_price_at_offer ?? 0);
+                const askingText = asking > 0 && Number.isFinite(asking) ? escapeHtml(money(asking)) : "—";
+                return `<div style="display:flex; gap:14px; align-items:flex-start; margin-bottom:12px;">${img}<div><div style="font-size: 14px; font-weight: 900; color: var(--text);">${title}</div><div style="margin-top: 4px; color: var(--muted); font-size: 13px;">${meta}</div><div style="margin-top: 8px; font-weight: 900; color: var(--accent);">Asking at offer: ${askingText}</div></div></div>`;
+              })
+              .join("");
+          }
+        } catch {
+          // Receipt still downloads even if bundle items fail.
+        }
+      }
+
+      const cardImageHtml = (receiptCard as any).image_url
+        ? `<img class="card-img" src="${escapeHtml(driveToImageSrc((receiptCard as any).image_url, { variant: "detail" }))}" alt="Card image" />`
         : `<div class="card-img placeholder"></div>`;
 
       const shippingSectionHtml = shippingRecorded
@@ -600,7 +687,7 @@ export default function SoldPage() {
                 <div class="brand">
                   <img class="deal-logo" src="${escapeHtml(logoUrl)}" alt="CardCat" onerror="this.onerror=null;this.src='${escapeHtml(logoUrlFallback)}'" />
                   <div class="name">CardCat</div>
-                  <div class="sub">Deal Record</div>
+                  <div class="sub">${isBundleSale ? "Bundled sale" : "Deal Record"}</div>
                 </div>
                 <div class="meta">
                   <div><b>Deal ID</b>: ${escapeHtml(dealIdShort)}</div>
@@ -610,21 +697,25 @@ export default function SoldPage() {
               </div>
 
               <div class="section">
-                <h2>Card Information</h2>
+                <h2>${isBundleSale ? "Cards in bundle" : "Card Information"}</h2>
                 <div class="card-block">
                   ${cardImageHtml}
                   <div style="flex:1;">
-                    <div style="font-size: 18px; font-weight: 900;">${escapeHtml(card.player_name)}</div>
+                    <div style="font-size: 18px; font-weight: 900;">${escapeHtml(receiptCard.player_name)}</div>
                     <div style="color: var(--muted); margin-top: 4px;">${escapeHtml(
-                      [card.year, card.brand, card.set_name].filter(Boolean).join(" ") || "—"
+                      [receiptCard.year, receiptCard.brand, receiptCard.set_name].filter(Boolean).join(" ") || "—"
                     )}</div>
-                    <div style="color: var(--muted); margin-top: 4px;">Parallel: ${escapeHtml(card.parallel ?? "—")}</div>
-                    <div style="color: var(--muted); margin-top: 4px;">Card #: ${escapeHtml(card.card_number ?? "—")}</div>
+                    <div style="color: var(--muted); margin-top: 4px;">Parallel: ${escapeHtml(receiptCard.parallel ?? "—")}</div>
+                    <div style="color: var(--muted); margin-top: 4px;">Card #: ${escapeHtml(receiptCard.card_number ?? "—")}</div>
                     <div style="margin-top: 10px; font-weight: 900; color: var(--accent);">Asking price: ${escapeHtml(
-                      (card as any).asking_price != null ? money(Number((card as any).asking_price)) : card.sold_price != null ? money(Number(card.sold_price)) : "—"
+                      receiptCard.asking_price != null ? money(Number(receiptCard.asking_price)) : receiptCard.sold_price != null ? money(Number(receiptCard.sold_price)) : "—"
                     )}</div>
                   </div>
                 </div>
+
+                ${isBundleSale && bundleCardsListHtml
+                  ? `<div style="margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px;"><div style="font-size: 14px; font-weight: 900; margin-bottom: 10px;">All cards in this bundled sale</div>${bundleCardsListHtml}</div>`
+                  : ""}
               </div>
 
               <div class="section">
