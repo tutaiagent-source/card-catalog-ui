@@ -308,6 +308,7 @@ export default function ListingsSharedView({
                   >
                     {filteredCards.map((c) => {
                       const goHref = toUrl(c.sale_platform);
+                      const cardPublicNotes = c.notes ? parseSellerMeta(c.notes).publicNotes : "";
                       return (
                         <div
                           key={c.id}
@@ -353,6 +354,15 @@ export default function ListingsSharedView({
                                   <div className="mt-1 text-xs text-slate-400">
                                     {c.set_name} · {c.parallel}
                                   </div>
+
+                                  {c.serial_number_text ? (
+                                    <div className="mt-1 text-[11px] text-slate-400 truncate">
+                                      <span className="text-slate-500">Serial:</span> {c.serial_number_text}
+                                    </div>
+                                  ) : null}
+                                  {cardPublicNotes ? (
+                                    <div className="mt-1 text-[11px] text-amber-200 line-clamp-2">{cardPublicNotes}</div>
+                                  ) : null}
                                 </div>
 
                                 {goHref ? (
@@ -385,6 +395,7 @@ export default function ListingsSharedView({
                   >
                     {filteredCards.map((c) => {
                       const goHref = toUrl(c.sale_platform);
+                      const cardPublicNotes = c.notes ? parseSellerMeta(c.notes).publicNotes : "";
                       return (
                         <div
                           key={c.id}
@@ -419,6 +430,15 @@ export default function ListingsSharedView({
                             <div className="mt-1 text-xs text-slate-400">
                               {c.set_name} · {c.parallel}
                             </div>
+
+                            {c.serial_number_text ? (
+                              <div className="mt-1 text-[11px] text-slate-400 truncate">
+                                <span className="text-slate-500">Serial:</span> {c.serial_number_text}
+                              </div>
+                            ) : null}
+                            {cardPublicNotes ? (
+                              <div className="mt-1 text-[11px] text-amber-200 line-clamp-2">{cardPublicNotes}</div>
+                            ) : null}
 
                             {c.asking_price != null ? (
                               showPricing ? (

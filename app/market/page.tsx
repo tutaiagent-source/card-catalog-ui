@@ -481,12 +481,13 @@ export default function MarketPage() {
           <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-sm text-slate-300">No public listings match that search yet.</div>
         ) : (
                   <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {filteredCards.map((card) => {
-                const seller = sellerMap.get(card.user_id);
-                const sellerUsername = String(seller?.username || "").trim();
-                const isVerifiedShop = Boolean(seller?.is_shop) && Boolean(seller?.shop_name);
-                const sellerLabel = isVerifiedShop ? (seller?.shop_name ? String(seller.shop_name) : seller?.display_name) : seller?.display_name;
-                return (
+	              {filteredCards.map((card) => {
+	                const seller = sellerMap.get(card.user_id);
+	                const sellerUsername = String(seller?.username || "").trim();
+	                const isVerifiedShop = Boolean(seller?.is_shop) && Boolean(seller?.shop_name);
+	                const sellerLabel = isVerifiedShop ? (seller?.shop_name ? String(seller.shop_name) : seller?.display_name) : seller?.display_name;
+	                const cardPublicNotes = card.notes ? parseSellerMeta(card.notes).publicNotes : "";
+	                return (
 	                    <div
 	                      key={card.id}
 	                      role="button"
@@ -511,6 +512,14 @@ export default function MarketPage() {
 	                      </div>
 	                      <div className="mt-3 text-sm font-semibold text-white line-clamp-2">{card.player_name}</div>
 	                      <div className="mt-1 text-xs text-slate-400 line-clamp-2">{[card.year, card.brand, card.set_name].filter(Boolean).join(" · ")}</div>
+	                      {card.serial_number_text ? (
+	                        <div className="mt-1 text-[11px] text-slate-400 truncate">
+	                          <span className="text-slate-500">Serial:</span> {card.serial_number_text}
+	                        </div>
+	                      ) : null}
+	                      {cardPublicNotes ? (
+	                        <div className="mt-1 text-[11px] text-amber-200 line-clamp-2">{cardPublicNotes}</div>
+	                      ) : null}
 	                      {sellerUsername ? (
 	                        <div className="mt-1 flex items-center gap-2">
 	                          {seller?.avatar_url ? (

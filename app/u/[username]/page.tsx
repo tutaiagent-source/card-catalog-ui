@@ -722,6 +722,17 @@ export default function SellerProfilePage() {
                   <div className="mt-3 text-sm font-semibold text-white line-clamp-2">{card.player_name}</div>
                   <div className="mt-1 text-xs text-slate-400 line-clamp-2">{[card.year, card.brand, card.set_name].filter(Boolean).join(" · ")}</div>
 
+                  {card.serial_number_text ? (
+                    <div className="mt-1 text-[11px] text-slate-400 truncate">
+                      <span className="text-slate-500">Serial:</span> {card.serial_number_text}
+                    </div>
+                  ) : null}
+
+                  {(() => {
+                    const n = card.notes ? parseSellerMeta(card.notes).publicNotes : "";
+                    return n ? <div className="mt-1 text-[11px] text-amber-200 line-clamp-2">{n}</div> : null;
+                  })()}
+
                   {card.asking_price != null ? (
                     <div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(card.asking_price))}</div>
                   ) : null}
@@ -946,6 +957,12 @@ export default function SellerProfilePage() {
                   <div>{[activeCard.year, activeCard.brand, activeCard.set_name].filter(Boolean).join(" · ")}</div>
                   {(activeCard.team || activeCard.sport || activeCard.competition) ? <div>{[activeCard.team, activeCard.sport, activeCard.competition].filter(Boolean).join(" · ")}</div> : null}
                   {activeCard.parallel ? <div><span className="text-slate-400">Parallel:</span> <span className="text-white">{activeCard.parallel}</span></div> : null}
+
+                  {activeCard.serial_number_text ? (
+                    <div>
+                      <span className="text-slate-400">Serial:</span> <span className="text-white">{activeCard.serial_number_text}</span>
+                    </div>
+                  ) : null}
                   <div><span className="text-slate-400">Card:</span> <span className="text-white">#{activeCard.card_number}</span></div>
 
                   {activeCard.asking_price != null ? (

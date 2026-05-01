@@ -834,6 +834,7 @@ export default function ListedPage() {
                       (marketMode === "selected_cards" && Boolean(c.public_market_visible));
                     const isSelected = c.id ? bulkSelectedCardIds.includes(c.id) : false;
                     const isMoveSelected = c.id ? moveSelectedCardIds.includes(c.id) : false;
+	                      const publicNotes = c.notes ? parseSellerMeta(c.notes).publicNotes : "";
                     return (
                       <div
                         key={c.id}
@@ -897,6 +898,13 @@ export default function ListedPage() {
                             {c.set_name} · {c.parallel}
                           </div>
 
+	                          {c.serial_number_text ? (
+	                            <div className="mt-1 text-[11px] text-slate-400 truncate">
+	                              <span className="text-slate-500">Serial:</span> {c.serial_number_text}
+	                            </div>
+	                          ) : null}
+	                          {publicNotes ? <div className="mt-1 text-[11px] text-amber-200 line-clamp-2">{publicNotes}</div> : null}
+
                           {c.status === "Sold" && c.sold_price != null ? (
                             <div className="mt-2 text-xs font-semibold text-emerald-200">SOLD {formatMoney(Number(c.sold_price))}</div>
                           ) : c.asking_price != null ? (
@@ -939,6 +947,7 @@ export default function ListedPage() {
                         (marketMode === "selected_cards" && Boolean(c.public_market_visible));
                       const isSelected = c.id ? bulkSelectedCardIds.includes(c.id) : false;
                       const isMoveSelected = c.id ? moveSelectedCardIds.includes(c.id) : false;
+	                      const publicNotes = c.notes ? parseSellerMeta(c.notes).publicNotes : "";
                       return (
                         <div
                           key={c.id}
@@ -1015,6 +1024,15 @@ export default function ListedPage() {
                             <div className="mt-1 text-xs text-slate-400">
                               {c.set_name} · {c.parallel}
                             </div>
+
+	                            {c.serial_number_text ? (
+	                              <div className="mt-1 text-[11px] text-slate-400 truncate">
+	                                <span className="text-slate-500">Serial:</span> {c.serial_number_text}
+	                              </div>
+	                            ) : null}
+	                            {publicNotes ? (
+	                              <div className="mt-1 text-[11px] text-amber-200 line-clamp-2">{publicNotes}</div>
+	                            ) : null}
 
                             {c.status === "Sold" ? (
                               c.sold_price != null ? (
@@ -1141,6 +1159,20 @@ export default function ListedPage() {
                     {activeCard.parallel ? (
                       <div>
                         <span className="text-slate-400">Parallel:</span> <span className="text-white">{activeCard.parallel}</span>
+                      </div>
+                    ) : null}
+
+                    {activeCard.serial_number_text ? (
+                      <div>
+                        <span className="text-slate-400">Serial:</span>{" "}
+                        <span className="text-white">{activeCard.serial_number_text}</span>
+                      </div>
+                    ) : null}
+
+                    {activePublicNotesValue ? (
+                      <div className="pt-2">
+                        <span className="text-slate-400">Notes:</span>
+                        <div className="mt-1 line-clamp-2 text-slate-200">{activePublicNotesValue}</div>
                       </div>
                     ) : null}
 
