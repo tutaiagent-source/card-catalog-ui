@@ -67,6 +67,19 @@ function toUrl(value?: string | null) {
   return null;
 }
 
+function buildEbaySearchUrl(card: SellerCard) {
+  const serialRaw = String(card.serial_number_text ?? "").trim();
+  const slashIdx = serialRaw.indexOf("/");
+  const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
+
+  const parts = [card.player_name, card.year, card.brand, card.set_name, card.parallel, card.card_number, serialForEbay]
+    .map((part) => String(part ?? "").trim())
+    .filter(Boolean)
+    .filter((part) => part.toLowerCase() !== "n/a");
+
+  return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(parts.join(" "))}&LH_Sold=1&LH_Complete=1`;
+}
+
 export default function SellerProfilePage() {
   const params = useParams<{ username?: string }>();
   const routeUsername = String(params.username || "").trim();
@@ -1007,6 +1020,15 @@ export default function SellerProfilePage() {
                         Open listing ↗
                       </a>
                     ) : null}
+
+                    <a
+                      href={buildEbaySearchUrl(activeCard)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/15"
+                    >
+                      Comp check ↗
+                    </a>
 
                     {seller?.username && activeCard.user_id !== user.id ? (
                       <button
