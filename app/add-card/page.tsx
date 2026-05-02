@@ -113,9 +113,35 @@ const requiredFields = [
 
 function validate(card: Partial<Card>) {
   const missing: string[] = [];
-  for (const f of requiredFields) {
-    const v = (card as any)[f];
-    if (!v || String(v).trim() === "" || String(v).trim().toLowerCase() === "n/a") missing.push(f);
+  const isPokemonCard = (card.game ?? "sports") === "pokemon";
+
+  if (isPokemonCard) {
+    // For Pokémon we keep using the shared sports lifecycle fields,
+    // but we validate identity differently: set + collector number (+ title).
+    const setCode = String(card.brand || "").trim();
+    const setName = String(card.set_name || "").trim();
+    const year = String(card.year || "").trim();
+    const cardTitle = String(card.display_title || card.player_name || "").trim();
+    const collectorRaw = String(card.collector_number_raw || card.card_number || "").trim();
+
+    const hasReference = Boolean(card.pokemon_print_id);
+    const hasManualIdentity = Boolean(cardTitle) && Boolean(collectorRaw);
+
+    if (!setCode) missing.push("pokemon set");
+    if (!setName) missing.push("pokemon set name");
+    if (!year) missing.push("release year");
+    if (!hasReference && !hasManualIdentity) missing.push("pokemon card");
+
+    // These should be auto-set, but validate anyway so a missing mapping doesn't create bad rows.
+    if (!String(card.card_number || "").trim()) missing.push("collector number");
+    if (!String(card.team || "").trim()) missing.push("team");
+    if (!String(card.sport || "").trim()) missing.push("sport");
+
+  } else {
+    for (const f of requiredFields) {
+      const v = (card as any)[f];
+      if (!v || String(v).trim() === "" || String(v).trim().toLowerCase() === "n/a") missing.push(f);
+    }
   }
 
   const gradedYes = String(card.graded || "no") === "yes";
@@ -481,6 +507,42 @@ export default function AddCardPage() {
       competition: "",
     }));
   }, [card.game, card.pokemon_print_id, card.language, pokemonPrints, pokemonSets, selectedPokemonSetId]);
+
+  // Manual Pokémon identity: when there are no reference print options,
+  // still map set/release fields into the shared sports lifecycle.
+  useEffect(() => {
+    if ((card.game ?? "sports") !== "pokemon") return;
+    if (card.pokemon_print_id) return;
+    if (!selectedPokemonSetId) return;
+    const set = pokemonSets.find((s) => s.id === selectedPokemonSetId);
+    if (!set) return;
+
+    const lang = String(card.language || "en");
+    const setName = lang === "ja" ? String(set.set_name_ja || set.set_name_en) : set.set_name_en;
+    const year = set.release_date ? String(new Date(set.release_date).getFullYear()) : "";
+
+    const desiredTitle = String(card.display_title || card.player_name || "").trim();
+    const desiredCollector = String(card.collector_number_raw || card.card_number || "").trim();
+
+    setCard((prev) => {
+      const next: Partial<Card> = {};
+
+      if ((prev.game ?? "sports") !== "pokemon") next.game = "pokemon";
+      if (prev.brand !== set.set_code) next.brand = set.set_code;
+      if (prev.set_name !== setName) next.set_name = setName;
+      if (String(prev.year || "") !== year) next.year = year;
+
+      if (prev.team !== "Pokemon") next.team = "Pokemon";
+      if (prev.sport !== "Pokemon") next.sport = "Pokemon";
+      if (String(prev.competition || "") !== "") next.competition = "";
+
+      if (desiredTitle && String(prev.player_name || "").trim() !== desiredTitle) next.player_name = desiredTitle;
+      if (desiredCollector && String(prev.card_number || "").trim() !== desiredCollector) next.card_number = desiredCollector;
+      if (desiredCollector && String(prev.collector_number_raw || "").trim() !== desiredCollector) next.collector_number_raw = desiredCollector;
+
+      return Object.keys(next).length ? ({ ...prev, ...next } as any) : prev;
+    });
+  }, [card.game, card.pokemon_print_id, card.language, card.display_title, card.collector_number_raw, selectedPokemonSetId, pokemonSets]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1150,8 +1212,11 @@ export default function AddCardPage() {
                 e.preventDefault();
                 const isPokemon = (card.game ?? "sports") === "pokemon";
                 if (isPokemon) {
-                  if (!card.pokemon_print_id) {
-                    alert("Please select a Pokémon set and card.");
+                  const hasReference = Boolean(card.pokemon_print_id);
+                  const hasManualIdentity = Boolean(String(card.display_title || "").trim()) && Boolean(String(card.collector_number_raw || "").trim());
+
+                  if (!hasReference && !hasManualIdentity) {
+                    alert("Please select a Pokémon card, or enter a Pokémon card title + collector number.");
                     return;
                   }
                   setStep(2);
@@ -1242,27 +1307,75 @@ export default function AddCardPage() {
                       </select>
                     </label>
 
-                    <label className="block sm:col-span-2">
-                      <div className="mb-1 text-sm text-slate-300">Card *</div>
-                      <select
-                        className="w-full rounded bg-slate-950 px-3 py-2"
-                        value={String(card.pokemon_print_id || "")}
-                        onChange={(e) => {
-                          const v = e.target.value || null;
-                          setCard((prev) => ({ ...prev, pokemon_print_id: v }));
-                        }}
-                        disabled={!selectedPokemonSetId || pokemonPrintsLoading}
-                      >
-                        <option value="">Select a card…</option>
-                        {pokemonPrints
-                          .filter((p) => p.language === String(card.language || "en"))
-                          .map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.collector_number_raw} · {String(card.language || "en") === "ja" ? (p.card_name_ja || p.card_name_en) : p.card_name_en} · {p.rarity_class || p.variant_type || ""}
-                            </option>
-                          ))}
-                      </select>
-                    </label>
+                    {(() => {
+                      const lang = String(card.language || "en");
+                      const printsForLang = pokemonPrints.filter((p) => p.language === lang);
+                      const printsToShow = printsForLang.length ? printsForLang : pokemonPrints;
+
+                      if (!printsToShow.length) {
+                        return (
+                          <div className="block sm:col-span-2">
+                            <div className="mb-1 text-sm text-slate-300">Card title *</div>
+                            <input
+                              className="w-full rounded bg-slate-950 px-3 py-2"
+                              value={String(card.display_title || "")}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setCard((prev) => ({
+                                  ...prev,
+                                  pokemon_print_id: null,
+                                  display_title: v,
+                                  player_name: v,
+                                }));
+                              }}
+                              placeholder="e.g. Pikachu"
+                            />
+
+                            <div className="mt-3 mb-1 text-sm text-slate-300">Collector number raw *</div>
+                            <input
+                              className="w-full rounded bg-slate-950 px-3 py-2"
+                              value={String(card.collector_number_raw || "")}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setCard((prev) => ({
+                                  ...prev,
+                                  pokemon_print_id: null,
+                                  collector_number_raw: v,
+                                  card_number: v,
+                                }));
+                              }}
+                              placeholder="e.g. 12/185 or SV94"
+                            />
+
+                            <div className="mt-2 text-xs text-slate-500">
+                              No preloaded Pokémon options found for this set/language yet. Enter manually to add the card.
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <label className="block sm:col-span-2">
+                          <div className="mb-1 text-sm text-slate-300">Card *</div>
+                          <select
+                            className="w-full rounded bg-slate-950 px-3 py-2"
+                            value={String(card.pokemon_print_id || "")}
+                            onChange={(e) => {
+                              const v = e.target.value || null;
+                              setCard((prev) => ({ ...prev, pokemon_print_id: v }));
+                            }}
+                            disabled={!selectedPokemonSetId || pokemonPrintsLoading}
+                          >
+                            <option value="">Select a card…</option>
+                            {printsToShow.map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {p.collector_number_raw} · {lang === "ja" ? (p.card_name_ja || p.card_name_en) : p.card_name_en} · {p.rarity_class || p.variant_type || ""}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      );
+                    })()}
                   </div>
                 ) : null}
 
