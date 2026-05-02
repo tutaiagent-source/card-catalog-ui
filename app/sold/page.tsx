@@ -424,46 +424,83 @@ export default function SoldPage() {
     setReceiptDownloadingDealId(dealRecordId);
 
     const openReceiptAndPrint = (params: { html: string; filenameBase: string }) => {
-      const w = window.open("", "_blank", "noopener,noreferrer");
-      if (!w) {
-        alert("Could not open receipt window (popup blocked). Try allowing popups, then download again.");
-        return;
-      }
+      // Mobile browsers often block window popups for print/PDF.
+      // Instead, temporarily swap the page body and call window.print() in the same user gesture.
+      const oldTitle = document.title;
+      const oldBodyHtml = document.body.innerHTML;
+      const restoreStyleId = "cardcat-receipt-print-style";
 
-      w.document.open();
-      w.document.write(params.html);
-      w.document.close();
-
-      const tryPrint = () => {
+      const restored = { v: false };
+      const restore = () => {
+        if (restored.v) return;
+        restored.v = true;
         try {
-          w.document.title = params.filenameBase;
+          document.title = oldTitle;
         } catch {
           // ignore
         }
-        w.focus();
-        w.print();
+        try {
+          document.body.innerHTML = oldBodyHtml;
+        } catch {
+          // ignore
+        }
+        try {
+          const el = document.getElementById(restoreStyleId);
+          if (el) el.remove();
+        } catch {
+          // ignore
+        }
+        try {
+          window.removeEventListener("afterprint", restore);
+        } catch {
+          // ignore
+        }
       };
 
-      // Best-effort: wait for images to load so the print/PDF is complete.
-      try {
-        const imgs = Array.from(w.document.images || []);
-        if (imgs.length === 0) return setTimeout(tryPrint, 300);
+      const parsed = new DOMParser().parseFromString(params.html, "text/html");
+      const receiptBodyHtml = parsed.body?.innerHTML ?? "";
+      const receiptStyleText = parsed.head?.querySelector("style")?.textContent ?? "";
 
-        Promise.all(
-          imgs.map(
-            (img) =>
-              new Promise<void>((resolve) => {
-                if (img.complete) return resolve();
-                img.onload = () => resolve();
-                img.onerror = () => resolve();
-              })
-          )
-        )
-          .catch(() => void 0)
-          .finally(() => setTimeout(tryPrint, 250));
+      try {
+        document.title = params.filenameBase;
       } catch {
-        setTimeout(tryPrint, 400);
+        // ignore
       }
+
+      try {
+        const styleEl = document.getElementById(restoreStyleId) as HTMLStyleElement | null;
+        const nextStyleEl = styleEl ?? document.createElement("style");
+        nextStyleEl.id = restoreStyleId;
+        nextStyleEl.textContent = receiptStyleText;
+        if (!styleEl) document.head.appendChild(nextStyleEl);
+      } catch {
+        // ignore
+      }
+
+      try {
+        document.body.innerHTML = receiptBodyHtml;
+      } catch {
+        // If we can’t swap the body, fall back to downloading the HTML.
+        const blob = new Blob([params.html], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${params.filenameBase}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      window.addEventListener("afterprint", restore);
+      try {
+        window.focus();
+        window.print();
+      } catch {
+        // ignore
+      }
+
+      // Fallback restore if afterprint isn't supported.
+      setTimeout(() => restore(), 30000);
     };
 
     try {
