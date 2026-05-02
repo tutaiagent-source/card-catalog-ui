@@ -121,7 +121,7 @@ export default function Home() {
         {/* Hero */}
         <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-5 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.55)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(213,0,0,0.08),transparent_36%,transparent_64%,rgba(59,130,246,0.08))]" />
-          <BinderBackground>
+          <BinderBackground showGridLines={false}>
             <div className="relative grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
             <div>
               <div className="mb-5 hidden md:block">
