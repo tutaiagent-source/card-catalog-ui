@@ -183,7 +183,8 @@ export default function CardCatMobileNav() {
 
       {moreOpen ? (
         <div
-          className="fixed inset-x-0 bottom-[calc(64px+env(safe-area-inset-bottom))] z-50 mx-auto w-full max-w-md px-3"
+          className="fixed inset-x-0 z-50 mx-auto w-full max-w-md px-3"
+          style={{ bottom: "calc(64px + env(safe-area-inset-bottom))" }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-[0_30px_90px_rgba(0,0,0,0.55)]">
@@ -216,7 +217,10 @@ export default function CardCatMobileNav() {
         </div>
       ) : null}
 
-      <nav className="fixed inset-x-0 bottom-[env(safe-area-inset-bottom)] z-40 border-t border-white/10 bg-slate-950/95 backdrop-blur">
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-slate-950/95 backdrop-blur"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
         <div className="mx-auto grid max-w-md grid-cols-5 gap-1 px-1 py-1">
           {items.map((item) => {
             const active = (item as any).moreButton ? moreActive : item.active;
