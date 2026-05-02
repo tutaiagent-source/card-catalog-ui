@@ -1806,12 +1806,12 @@ export default function SoldPage() {
             </div>
 
             <div className="p-4">
-              <div className="rounded-2xl border border-white/10 bg-white overflow-hidden">
+              <div className="rounded-2xl border border-white/10 bg-white overflow-x-auto overflow-y-hidden">
                 <iframe
                   ref={receiptPreviewFrameRef}
                   title="Receipt preview"
                   srcDoc={receiptPreviewSrcDoc}
-                  className="h-[70vh] w-full bg-white"
+                  className="h-[70vh] w-[920px] bg-white"
                 />
               </div>
 
@@ -1848,12 +1848,24 @@ export default function SoldPage() {
                     try {
                       const safeName = String(receiptPreviewTitle || "deal_record").replace(/[^a-z0-9_\-]/gi, "_");
 
+                      const desiredWidth = 920;
+                      try {
+                        (node as HTMLElement).style.width = `${desiredWidth}px`;
+                        (node as HTMLElement).style.maxWidth = `${desiredWidth}px`;
+                        (iframeDoc.body as HTMLBodyElement).style.width = `${desiredWidth}px`;
+                        (iframeDoc.body as HTMLBodyElement).style.minWidth = `${desiredWidth}px`;
+                      } catch {
+                        // ignore
+                      }
+
+                      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
                       const nodeRect = node.getBoundingClientRect();
-                      const nodeWidth = Math.max(1, Math.ceil(nodeRect.width));
-                      const nodeScrollHeight = Math.max(0, (node as any).scrollHeight ?? Math.ceil(nodeRect.height));
+                      const nodeWidth = desiredWidth;
+                      const nodeScrollHeight = Math.max(0, Math.ceil((node as any).scrollHeight ?? nodeRect.height));
 
                       const canvas = await html2canvas(node, {
-                        scale: 2,
+                        scale: 1.5,
                         useCORS: true,
                         backgroundColor: "#ffffff",
                         x: 0,
