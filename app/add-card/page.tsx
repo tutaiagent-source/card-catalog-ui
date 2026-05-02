@@ -24,6 +24,12 @@ type CardStatus = "Collection" | "Listed" | "Sold";
 type Card = {
   id?: string;
 
+  game?: "sports" | "pokemon";
+  pokemon_print_id?: string | null;
+  language?: string;
+  display_title?: string;
+  collector_number_raw?: string;
+
   player_name: string;
   year: string;
   brand: string;
@@ -69,6 +75,30 @@ type Card = {
   platform_fee?: number | null;
   notes?: string;
   date_added?: string;
+};
+
+type PokemonSet = {
+  id: string;
+  set_code: string;
+  set_name_en: string;
+  set_name_ja?: string | null;
+  release_date?: string | null;
+};
+
+type PokemonPrint = {
+  id: string;
+  pokemon_set_id: string;
+  collector_number_raw: string;
+  collector_number_sort?: number | null;
+
+  card_name_en: string;
+  card_name_ja?: string | null;
+
+  rarity_class?: string | null;
+  variant_type?: string | null;
+  finish_type?: string | null;
+
+  language: string;
 };
 
 const requiredFields = [
@@ -221,6 +251,11 @@ export default function AddCardPage() {
   const [addToPC, setAddToPC] = useState(false);
 
   const [card, setCard] = useState<Partial<Card>>({
+    game: "sports",
+    language: "en",
+    display_title: "",
+    pokemon_print_id: null,
+    collector_number_raw: "",
     parallel: "n/a",
     competition: "",
     rookie: "no",
@@ -237,6 +272,12 @@ export default function AddCardPage() {
     status: "Collection",
     notes: "",
   });
+
+  const [pokemonSets, setPokemonSets] = useState<PokemonSet[]>([]);
+  const [pokemonPrints, setPokemonPrints] = useState<PokemonPrint[]>([]);
+  const [pokemonSetsLoading, setPokemonSetsLoading] = useState(false);
+  const [pokemonPrintsLoading, setPokemonPrintsLoading] = useState(false);
+  const [selectedPokemonSetId, setSelectedPokemonSetId] = useState<string>("");
 
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
@@ -346,6 +387,100 @@ export default function AddCardPage() {
   };
 
   useEffect(() => {
+    if ((card.game ?? "sports") !== "pokemon") return;
+    if (!supabaseConfigured || !supabase) return;
+
+    let cancelled = false;
+    (async () => {
+      setPokemonSetsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("pokemon_sets")
+          .select("id,set_code,set_name_en,set_name_ja,release_date")
+          .order("release_date", { ascending: true });
+        if (error) throw error;
+        if (!cancelled) setPokemonSets((data ?? []) as PokemonSet[]);
+      } catch (e) {
+        console.error("Failed to load pokemon_sets:", e);
+      } finally {
+        if (!cancelled) setPokemonSetsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [card.game]);
+
+  useEffect(() => {
+    if ((card.game ?? "sports") !== "pokemon") return;
+    if (!selectedPokemonSetId) {
+      setPokemonPrints([]);
+      return;
+    }
+    if (!supabaseConfigured || !supabase) return;
+
+    let cancelled = false;
+    (async () => {
+      setPokemonPrintsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("pokemon_prints")
+          .select(
+            "id,pokemon_set_id,collector_number_raw,collector_number_sort,card_name_en,card_name_ja,rarity_class,variant_type,finish_type,language"
+          )
+          .eq("pokemon_set_id", selectedPokemonSetId);
+        if (error) throw error;
+        if (!cancelled) setPokemonPrints((data ?? []) as PokemonPrint[]);
+      } catch (e) {
+        console.error("Failed to load pokemon_prints:", e);
+        if (!cancelled) setPokemonPrints([]);
+      } finally {
+        if (!cancelled) setPokemonPrintsLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [card.game, selectedPokemonSetId]);
+
+  useEffect(() => {
+    if ((card.game ?? "sports") !== "pokemon") return;
+    if (!card.pokemon_print_id) return;
+
+    const print = pokemonPrints.find((p) => p.id === card.pokemon_print_id);
+    const set = pokemonSets.find((s) => s.id === (print?.pokemon_set_id || selectedPokemonSetId));
+    if (!print || !set) return;
+
+    const lang = String(card.language || "en");
+    const cardName = lang === "ja" ? String(print.card_name_ja || print.card_name_en) : print.card_name_en;
+    const setName = lang === "ja" ? String(set.set_name_ja || set.set_name_en) : set.set_name_en;
+    const year = set.release_date ? String(new Date(set.release_date).getFullYear()) : "";
+
+    setCard((prev) => ({
+      ...prev,
+      // Pokémon-specific reference linkage
+      game: "pokemon",
+      pokemon_print_id: print.id,
+      language: lang,
+      display_title: cardName,
+      collector_number_raw: print.collector_number_raw,
+
+      // Map into existing sports fields so the shared lifecycle works everywhere.
+      player_name: cardName,
+      year,
+      brand: set.set_code,
+      set_name: setName,
+      parallel: String(print.rarity_class || print.variant_type || print.finish_type || "n/a"),
+      card_number: print.collector_number_raw,
+      team: "Pokemon",
+      sport: "Pokemon",
+      competition: "",
+    }));
+  }, [card.game, card.pokemon_print_id, card.language, pokemonPrints, pokemonSets, selectedPokemonSetId]);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setEditingId(params.get("edit"));
   }, []);
@@ -446,6 +581,12 @@ export default function AddCardPage() {
       const cleaned = normalizeCatalogTaxonomy({
         id: card.id ?? crypto.randomUUID(),
 
+        game: card.game,
+        pokemon_print_id: card.pokemon_print_id,
+        language: card.language,
+        display_title: card.display_title,
+        collector_number_raw: card.collector_number_raw,
+
         player_name: String(card.player_name || ""),
         year: String(card.year || ""),
         brand: normalizedBrandSet.brand,
@@ -499,6 +640,12 @@ export default function AddCardPage() {
 
       const row: Record<string, any> = {
         user_id: user.id,
+
+        game: cleaned.game ?? "sports",
+        pokemon_print_id: cleaned.pokemon_print_id ?? null,
+        language: cleaned.language ?? "en",
+        display_title: cleaned.display_title ?? "",
+        collector_number_raw: cleaned.collector_number_raw ?? String(cleaned.card_number || ""),
 
         player_name: cleaned.player_name,
         year: cleaned.year,
@@ -996,9 +1143,19 @@ export default function AddCardPage() {
 
         <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
           {step === 1 && (
-            <form
+                <form
               onSubmit={(e) => {
                 e.preventDefault();
+                const isPokemon = (card.game ?? "sports") === "pokemon";
+                if (isPokemon) {
+                  if (!card.pokemon_print_id) {
+                    alert("Please select a Pokémon set and card.");
+                    return;
+                  }
+                  setStep(2);
+                  return;
+                }
+
                 const ok =
                   String(card.player_name || "").trim() &&
                   String(card.year || "").trim() &&
@@ -1013,6 +1170,99 @@ export default function AddCardPage() {
             >
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold">Card Identity</h2>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCard((prev) => ({ ...prev, game: "sports" }));
+                      setSelectedPokemonSetId("");
+                      setPokemonPrints([]);
+                    }}
+                    className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+                      (card.game ?? "sports") === "sports" ? "bg-amber-500/15 text-amber-200" : "bg-slate-900 text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    Sports
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCard((prev) => ({ ...prev, game: "pokemon" }));
+                      setSelectedPokemonSetId("");
+                      setPokemonPrints([]);
+                    }}
+                    className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+                      (card.game ?? "sports") === "pokemon" ? "bg-amber-500/15 text-amber-200" : "bg-slate-900 text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    Pokémon
+                  </button>
+                </div>
+
+                {(card.game ?? "sports") === "pokemon" ? (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label className="block">
+                      <div className="mb-1 text-sm text-slate-300">Pokémon set *</div>
+                      <select
+                        className="w-full rounded bg-slate-950 px-3 py-2"
+                        value={selectedPokemonSetId}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setSelectedPokemonSetId(v);
+                          setCard((prev) => ({
+                            ...prev,
+                            pokemon_print_id: null,
+                            collector_number_raw: "",
+                            display_title: "",
+                          }));
+                        }}
+                        disabled={pokemonSetsLoading || pokemonPrintsLoading}
+                      >
+                        <option value="">Select a set…</option>
+                        {pokemonSets.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.set_code} · {s.set_name_en}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label className="block">
+                      <div className="mb-1 text-sm text-slate-300">Language (default EN)</div>
+                      <select
+                        className="w-full rounded bg-slate-950 px-3 py-2"
+                        value={String(card.language || "en")}
+                        onChange={(e) => setCard((prev) => ({ ...prev, language: e.target.value }))}
+                      >
+                        <option value="en">English</option>
+                        <option value="ja">日本語</option>
+                      </select>
+                    </label>
+
+                    <label className="block sm:col-span-2">
+                      <div className="mb-1 text-sm text-slate-300">Card *</div>
+                      <select
+                        className="w-full rounded bg-slate-950 px-3 py-2"
+                        value={String(card.pokemon_print_id || "")}
+                        onChange={(e) => {
+                          const v = e.target.value || null;
+                          setCard((prev) => ({ ...prev, pokemon_print_id: v }));
+                        }}
+                        disabled={!selectedPokemonSetId || pokemonPrintsLoading}
+                      >
+                        <option value="">Select a card…</option>
+                        {pokemonPrints
+                          .filter((p) => p.language === String(card.language || "en"))
+                          .map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.collector_number_raw} · {String(card.language || "en") === "ja" ? (p.card_name_ja || p.card_name_en) : p.card_name_en} · {p.rarity_class || p.variant_type || ""}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                  </div>
+                ) : null}
 
                 <label className="block">
                   <div className="mb-1 text-slate-300">Player name *</div>
