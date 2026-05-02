@@ -56,19 +56,12 @@ export default function CatalogFeaturePage() {
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-white">How it fits into the workflow</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
-              Catalog → Listings → Market → Sold
-            </p>
-          </div>
-
           <div className="flex flex-wrap items-center gap-3">
             <a
               href="/login"
               className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
             >
-              Start Your Collection
+              Start Cataloging
             </a>
             <a
               href="/pricing"

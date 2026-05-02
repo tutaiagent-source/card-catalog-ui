@@ -15,77 +15,87 @@ const serviceCards: Array<{
 }> = [
   {
     title: "Catalog",
-    sentence: "Add cards, images, values, notes, and quick comp links in one organized place.",
+    sentence: "Catalog cards with photos, values, and quick comps.",
     href: "/features/catalog",
     cta: "Learn about Catalog",
     status: "catalog",
     preview: {
       kicker: "Card + Comp",
-      lines: ["Search + quick actions", "Add photos + notes", "Keep estimates handy"],
+      lines: ["Search fast", "Photos + notes", "Keep estimates handy"],
     },
   },
   {
     title: "PC",
-    sentence: "Keep your favorite cards separate from what you may want to sell.",
+    sentence: "Star favorites and track your PC value.",
     href: "/features/pc",
     cta: "Learn about PC",
     status: "pc",
     preview: {
-      kicker: "Star favorites",
-      lines: ["★ PC view", "Card count + value", "Clean, collector-first"],
+      kicker: "PC ★",
+      lines: ["★ PC view", "Card count + value", "Collector-first"],
     },
   },
   {
     title: "Listings",
-    sentence: "Manage the cards you have for sale, add external links, and share available inventory.",
+    sentence: "Prep cards for sale with asking prices and links.",
     href: "/features/listings",
     cta: "Learn about Listings",
     status: "listings",
     preview: {
-      kicker: "Active for sale",
-      lines: ["Asking price", "Edit + share", "Link out to your marketplace"],
+      kicker: "Active",
+      lines: ["Asking price", "Edit + share", "Link out"],
     },
   },
   {
     title: "Market",
-    sentence: "List cards in a member marketplace where collectors can message and make offers.",
+    sentence: "A member marketplace to browse and message listings.",
     href: "/features/market",
-    cta: "Learn about the Market",
+    cta: "Learn about Market",
     status: "market",
     preview: {
-      kicker: "Offers",
-      lines: ["Offer ready", "Message + counter", "Move deals to Sold"],
+      kicker: "Message-ready",
+      lines: ["Offer ready", "Message sellers", "Counter + accept"],
+    },
+  },
+  {
+    title: "Messages & Offers",
+    sentence: "Message → Offer → Accept, then track the deal.",
+    href: "/features/market",
+    cta: "See offers",
+    status: "market",
+    preview: {
+      kicker: "Deal flow",
+      lines: ["Message", "Offer / counter", "Receipt → Sold"],
     },
   },
   {
     title: "Sold",
-    sentence: "Track sale price, platform, shipping cost, net profit, and ROI.",
+    sentence: "Track sold cards, profit, and ROI with receipts.",
     href: "/features/sold",
     cta: "Learn about Sold",
     status: "sold",
     preview: {
       kicker: "Receipt-style",
-      lines: ["Sold totals", "Net profit + ROI", "Download your receipt"],
-    },
-  },
-  {
-    title: "Import",
-    sentence: "Bring in your existing spreadsheet and export your data anytime.",
-    href: "/features/import",
-    cta: "Learn about Import",
-    status: "receipt",
-    preview: {
-      kicker: "CSV prep",
-      lines: ["Review rows", "Flag duplicates", "Import when ready"],
+      lines: ["Sold totals", "Net profit + ROI", "Download receipt"],
     },
   },
 ];
 
-const flowPanels: Array<{ status: "catalog" | "pc" | "market" | "sold"; title: string; line: string }> = [
-  { status: "catalog", title: "Catalog", line: "Add cards + quick comps" },
-  { status: "pc", title: "PC", line: "Star favorites (★)" },
-  { status: "market", title: "Market", line: "List + message offers" },
-  { status: "sold", title: "Sold", line: "Receipt + profit tracking" },
+const flowPanels: Array<{
+  status: "catalog" | "pc" | "market" | "sold";
+  title: string;
+  line: string;
+  meta: string;
+}> = [
+  { status: "catalog", title: "Catalog", line: "Search + quick comps", meta: "Tom Brady · 2020 Prizm #17" },
+  { status: "pc", title: "PC", line: "★ PC view", meta: "Est. value $1,240" },
+  {
+    status: "market",
+    title: "Market",
+    line: "Message → Offer → Accept",
+    meta: "Offer $120 · Counter ready",
+  },
+  { status: "sold", title: "Sold", line: "Receipt + profit record", meta: "Sold $140 · Net + ROI" },
 ];
 
 const iconByFlowStatus: Record<(typeof flowPanels)[number]["status"], string> = {
@@ -121,8 +131,11 @@ export default function Home() {
                 <CardCatLogo variant="vertical" size="md" priority />
               </div>
 
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">
-                Catalog · PC · Market · Sold
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusChip status="catalog" icon={iconByFlowStatus.catalog} />
+                <StatusChip status="pc" icon={iconByFlowStatus.pc} />
+                <StatusChip status="market" icon={iconByFlowStatus.market} />
+                <StatusChip status="sold" icon={iconByFlowStatus.sold} />
               </div>
 
               <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
@@ -175,6 +188,7 @@ export default function Home() {
                         <StatusChip status={p.status} icon={iconByFlowStatus[p.status]} />
                         <div className="mt-2 text-sm font-semibold text-white">{p.title}</div>
                         <div className="mt-1 text-xs text-slate-400">{p.line}</div>
+                        <div className="mt-2 text-[11px] text-slate-300">{p.meta}</div>
                       </div>
                     );
                   })}
@@ -189,6 +203,7 @@ export default function Home() {
                       <StatusChip status={p.status} icon={iconByFlowStatus[p.status]} />
                       <div className="mt-2 text-sm font-semibold text-white">{p.title}</div>
                       <div className="mt-1 text-xs text-slate-400">{p.line}</div>
+                      <div className="mt-2 text-[11px] text-slate-300">{p.meta}</div>
                     </div>
                   ))}
                 </div>
@@ -233,7 +248,7 @@ export default function Home() {
           <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {flowPanels.map((p) => (
               <div key={p.title} className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-4">
-                <StatusChip status={p.status} />
+                <StatusChip status={p.status} icon={iconByFlowStatus[p.status]} />
                 <div className="mt-3 text-sm font-semibold text-slate-100">{p.title}</div>
                 <div className="mt-1 text-sm text-slate-400">{p.line}</div>
               </div>

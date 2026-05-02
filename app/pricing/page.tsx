@@ -16,13 +16,13 @@ const plans = [
     accent: "bg-emerald-500/[0.06] border-emerald-500/20",
     priceMonthly: "$5 / month",
     priceAnnual: "$50 / year",
-    caps:
-      "Up to 250 catalog cards and 10 active CardCat Market listings.",
+    cardsCap: "250 catalog cards",
+    listingsCap: "10 active CardCat Market listings",
+    sellerFeeBadge: "No CardCat seller fees",
     features: [
       "Cleaner catalog browsing",
-      "Personal Collection (PC) view",
-      "Manual add/edit",
-      "Basic sold tracking + basic dashboard",
+      "PC view + ★ favorites",
+      "Sold tracking + basic dashboard",
     ],
   },
   {
@@ -31,13 +31,14 @@ const plans = [
     accent: "bg-amber-500/[0.06] border-amber-500/20",
     priceMonthly: "$10 / month",
     priceAnnual: "$100 / year",
-    caps:
-      "Up to 1,000 catalog cards and 50 active CardCat Market listings.",
+    cardsCap: "1,000 catalog cards",
+    listingsCap: "50 active CardCat Market listings",
+    sellerFeeBadge: "No CardCat seller fees",
+    tagline: "Most collectors start here",
     features: [
       "CSV import/export and bulk inventory tools",
-      "Profit/ROI metrics + deeper sold insights",
-      "Sales CSV export with analytics fields",
-      "Same collector workflow, with higher limits",
+      "Profit/ROI metrics",
+      "Export-ready sold receipts + insights",
     ],
   },
   {
@@ -46,13 +47,13 @@ const plans = [
     accent: "bg-orange-500/[0.06] border-orange-500/20",
     priceMonthly: "$25 / month",
     priceAnnual: "$250 / year",
-    caps:
-      "Up to 10,000 catalog cards and 250 active CardCat Market listings.",
+    cardsCap: "10,000 catalog cards",
+    listingsCap: "250 active CardCat Market listings",
+    sellerFeeBadge: "No CardCat seller fees",
     features: [
       "Higher catalog and active listing caps",
-      "Same Pro profit/ROI suite, scaled to volume",
-      "Bulk tools + CSV exports",
-      "Export-ready sold receipts and analytics",
+      "Same profit/ROI suite, scaled",
+      "Bulk tools + export-ready receipts",
     ],
   },
 ];
@@ -76,11 +77,15 @@ export default function PricingPage() {
               Seller increases your caps when you scale.
             </p>
 
-            <p className="mt-4 text-sm leading-6 text-slate-200">
-              No CardCat buyer fees. No CardCat seller fees. Third-party services
-              (payment, shipping, or external marketplaces) may charge their own fees.
-              CardCat documents deals, but does not process payments or provide escrow.
-            </p>
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="text-sm font-semibold text-white">
+                No CardCat buyer fees. No CardCat seller fees.
+              </div>
+              <div className="mt-1 text-xs leading-5 text-slate-200">
+                Third-party services (payment, shipping, or external marketplaces) may charge their own fees.
+                CardCat documents deals, but does not process payments or provide escrow.
+              </div>
+            </div>
           </div>
         </section>
 
@@ -116,12 +121,19 @@ export default function PricingPage() {
                     {p.tier}
                   </div>
 
-                  <div className="mt-4 text-sm text-slate-300">
+                  <div className="mt-3 text-xs font-semibold text-emerald-200">{p.sellerFeeBadge}</div>
+
+                  
+                  <div className="mt-3 text-sm text-slate-300">
                     {p.priceMonthly} <span className="text-slate-400">or</span> {p.priceAnnual}
                   </div>
 
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3 text-sm leading-6 text-slate-200">
-                    {p.caps}
+                  {p.tagline ? <div className="mt-2 text-xs text-amber-200 font-semibold">{p.tagline}</div> : null}
+
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Cap</div>
+                    <div className="mt-2 text-sm font-bold text-white">{p.cardsCap}</div>
+                    <div className="mt-1 text-sm text-slate-200">{p.listingsCap}</div>
                   </div>
                 </div>
 

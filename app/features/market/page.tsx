@@ -18,8 +18,14 @@ export default function MarketFeaturePage() {
                   <StatusChip status="market" icon="💬" />
                 </div>
               <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
-                List cards in a member marketplace with no CardCat seller fees.
+                Message, make offers, and track sold receipts.
               </h1>
+              <div className="mt-3 inline-flex flex-wrap items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-200">
+                <span>No CardCat buyer fees</span>
+                <span className="text-slate-500">•</span>
+                <span>No CardCat seller fees</span>
+              </div>
+              <div className="mt-2 text-xs leading-5 text-slate-400">Third-party services may still charge their own fees.</div>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
                 Publish cards to the CardCat Market so members can browse, message, and make offers.
               </p>
@@ -31,6 +37,23 @@ export default function MarketFeaturePage() {
             </div>
           </section>
         </BinderBackground>
+
+        <section className="mt-6">
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-6">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Message → Offer → Accept → Receipt → Sold</div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              {[
+                { label: "Message", status: "market" as const, icon: "💬" },
+                { label: "Offer", status: "market" as const, icon: "🏷️" },
+                { label: "Accept", status: "market" as const, icon: "✅" },
+                { label: "Receipt", status: "receipt" as const, icon: "🧾" },
+                { label: "Sold", status: "sold" as const, icon: "💰" },
+              ].map((s) => (
+                <StatusChip key={s.label} status={s.status} label={s.label} icon={s.icon} />
+              ))}
+            </div>
+          </div>
+        </section>
 
         <section className="mt-8 space-y-4 lg:space-y-6">
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-6">
@@ -46,11 +69,7 @@ export default function MarketFeaturePage() {
               </li>
               <li className="flex items-start gap-3">
                 <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                Receive offers and counters
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                Move completed deals into Sold
+                Receive offers and move completed deals into Sold
               </li>
             </ul>
           </div>
@@ -58,17 +77,12 @@ export default function MarketFeaturePage() {
           <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-6">
             <h2 className="text-lg font-bold text-white">Why it matters</h2>
             <p className="mt-3 text-sm leading-7 text-slate-300">
-              CardCat helps collectors make direct deals without CardCat taking a percentage of the sale.
+              Collectors keep more of the sale with No CardCat buyer fees and No CardCat seller fees.
             </p>
 
-            <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4 text-xs leading-5 text-slate-300">
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs leading-5 text-slate-300">
               CardCat does not process payments, hold funds, provide escrow, provide insurance, verify delivery, mediate disputes, or guarantee transaction outcomes.
             </div>
-          </div>
-
-          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-white">How it fits into the workflow</h2>
-            <p className="mt-3 text-sm leading-6 text-slate-300">Catalog → Listings → Market → Sold</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

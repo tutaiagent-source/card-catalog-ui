@@ -7,7 +7,7 @@ import BinderBackground from "@/components/BinderBackground";
 const serviceCards = [
   {
     title: "Catalog",
-    sentence: "Add cards, images, values, notes, and quick comp links in one organized place.",
+    sentence: "Catalog cards with photos, values, and quick comps.",
     href: "/features/catalog",
     cta: "Learn about Catalog",
     status: "catalog" as const,
@@ -18,7 +18,7 @@ const serviceCards = [
   },
   {
     title: "PC",
-    sentence: "Keep your favorite cards separate from what you may want to sell.",
+    sentence: "Star favorites and track your PC value.",
     href: "/features/pc",
     cta: "Learn about PC",
     status: "pc" as const,
@@ -29,7 +29,7 @@ const serviceCards = [
   },
   {
     title: "Listings",
-    sentence: "Manage the cards you have for sale, add external links, and share available inventory.",
+    sentence: "Prep sale inventory with asking prices + links.",
     href: "/features/listings",
     cta: "Learn about Listings",
     status: "listings" as const,
@@ -40,7 +40,7 @@ const serviceCards = [
   },
   {
     title: "Market",
-    sentence: "List cards in a member marketplace where collectors can message and make offers.",
+    sentence: "A member marketplace to browse, message, and make offers.",
     href: "/features/market",
     cta: "Learn about the Market",
     status: "market" as const,
@@ -50,8 +50,19 @@ const serviceCards = [
     },
   },
   {
+    title: "Messages & Offers",
+    sentence: "Message → Offer → Accept, then track the deal.",
+    href: "/features/market",
+    cta: "See offers",
+    status: "market" as const,
+    preview: {
+      kicker: "Deal flow",
+      lines: ["Message", "Offer / counter", "Receipt → Sold"],
+    },
+  },
+  {
     title: "Sold",
-    sentence: "Track sale price, platform, shipping cost, net profit, and ROI.",
+    sentence: "Track sold cards, profit, and ROI with receipts.",
     href: "/features/sold",
     cta: "Learn about Sold",
     status: "sold" as const,
@@ -61,10 +72,10 @@ const serviceCards = [
     },
   },
   {
-    title: "Import",
-    sentence: "Bring in your existing spreadsheet and export your data anytime.",
+    title: "Import / Export",
+    sentence: "Import your spreadsheet and export anytime.",
     href: "/features/import",
-    cta: "Learn about Import",
+    cta: "Learn about Import / Export",
     status: "receipt" as const,
     preview: {
       kicker: "CSV prep",
@@ -111,18 +122,18 @@ export default function FeaturesHubPage() {
           ))}
         </section>
 
-        {/* Secondary tool */}
-        <section className="mt-10 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
+        {/* Secondary */}
+        <section className="mt-10 rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-6">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Also included</div>
-              <div className="mt-3 text-2xl font-bold tracking-tight text-white">Card Posts for sharing individual cards.</div>
-              <div className="mt-2 text-sm leading-7 text-slate-300">Share a single card image from your saved inventory.</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">Secondary</div>
+              <div className="mt-2 text-xl font-bold tracking-tight text-white">Card Posts</div>
+              <div className="mt-1 text-sm leading-6 text-slate-300">Share a single saved card.</div>
             </div>
 
             <a
               href="/features/share-sheets"
-              className="mt-4 inline-flex items-center justify-center rounded-xl bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 border border-white/10 transition-colors hover:bg-white/[0.08] lg:mt-0"
+              className="mt-2 inline-flex items-center justify-center rounded-xl bg-white/[0.05] px-5 py-2.5 text-sm font-semibold text-slate-100 border border-white/10 transition-colors hover:bg-white/[0.08] lg:mt-0"
             >
               See Card Posts
             </a>
