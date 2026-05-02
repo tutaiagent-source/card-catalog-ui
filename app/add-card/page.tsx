@@ -365,6 +365,8 @@ export default function AddCardPage() {
 
   const missing = useMemo(() => validate(card), [card]);
 
+  const isPokemon = (card.game ?? "sports") === "pokemon";
+
   const playerNameValue = String(card.player_name || "");
 
   const filteredPlayerNameSuggestions = useMemo(() => {
@@ -1264,156 +1266,166 @@ export default function AddCardPage() {
                   </div>
                 ) : null}
 
-                <label className="block">
-                  <div className="mb-1 text-slate-300">Player name *</div>
-                  <div className="relative">
-                    <input
-                      ref={playerNameRef}
-                      className="w-full rounded bg-slate-950 px-3 py-2"
-                      value={playerNameValue}
-                      onChange={(e) => {
-                        set("player_name", e.target.value);
-                        setPlayerNameOpen(true);
-                        setPlayerNameActiveIndex(-1);
-                      }}
-                      onFocus={() => {
-                        if (filteredPlayerNameSuggestions.length) {
-                          setPlayerNameOpen(true);
-                          setPlayerNameActiveIndex(0);
-                        }
-                      }}
-                      onBlur={() => {
-                        window.setTimeout(() => setPlayerNameOpen(false), 120);
-                      }}
-                      onKeyDown={(e) => {
-                        if (!playerNameOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
-                          if (filteredPlayerNameSuggestions.length) {
+                {!isPokemon ? (
+                  <>
+                    <label className="block">
+                      <div className="mb-1 text-slate-300">Player name *</div>
+                      <div className="relative">
+                        <input
+                          ref={playerNameRef}
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={playerNameValue}
+                          onChange={(e) => {
+                            set("player_name", e.target.value);
                             setPlayerNameOpen(true);
-                            setPlayerNameActiveIndex(0);
-                          }
-                          return;
-                        }
+                            setPlayerNameActiveIndex(-1);
+                          }}
+                          onFocus={() => {
+                            if (filteredPlayerNameSuggestions.length) {
+                              setPlayerNameOpen(true);
+                              setPlayerNameActiveIndex(0);
+                            }
+                          }}
+                          onBlur={() => {
+                            window.setTimeout(() => setPlayerNameOpen(false), 120);
+                          }}
+                          onKeyDown={(e) => {
+                            if (!playerNameOpen && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+                              if (filteredPlayerNameSuggestions.length) {
+                                setPlayerNameOpen(true);
+                                setPlayerNameActiveIndex(0);
+                              }
+                              return;
+                            }
 
-                        if (e.key === "Escape") {
-                          setPlayerNameOpen(false);
-                          setPlayerNameActiveIndex(-1);
-                          return;
-                        }
+                            if (e.key === "Escape") {
+                              setPlayerNameOpen(false);
+                              setPlayerNameActiveIndex(-1);
+                              return;
+                            }
 
-                        if (e.key === "ArrowDown") {
-                          if (!filteredPlayerNameSuggestions.length) return;
-                          e.preventDefault();
-                          setPlayerNameOpen(true);
-                          setPlayerNameActiveIndex((prev) => Math.min(prev + 1, filteredPlayerNameSuggestions.length - 1));
-                          return;
-                        }
+                            if (e.key === "ArrowDown") {
+                              if (!filteredPlayerNameSuggestions.length) return;
+                              e.preventDefault();
+                              setPlayerNameOpen(true);
+                              setPlayerNameActiveIndex((prev) =>
+                                Math.min(prev + 1, filteredPlayerNameSuggestions.length - 1)
+                              );
+                              return;
+                            }
 
-                        if (e.key === "ArrowUp") {
-                          if (!filteredPlayerNameSuggestions.length) return;
-                          e.preventDefault();
-                          setPlayerNameOpen(true);
-                          setPlayerNameActiveIndex((prev) => Math.max(prev - 1, 0));
-                          return;
-                        }
+                            if (e.key === "ArrowUp") {
+                              if (!filteredPlayerNameSuggestions.length) return;
+                              e.preventDefault();
+                              setPlayerNameOpen(true);
+                              setPlayerNameActiveIndex((prev) => Math.max(prev - 1, 0));
+                              return;
+                            }
 
-                        if (e.key === "Enter") {
-                          if (!playerNameOpen) return;
-                          const chosen =
-                            playerNameActiveIndex >= 0
-                              ? filteredPlayerNameSuggestions[playerNameActiveIndex]
-                              : filteredPlayerNameSuggestions.length === 1
-                                ? filteredPlayerNameSuggestions[0]
-                                : null;
-                          if (!chosen) return;
-                          e.preventDefault();
-                          selectPlayerNameSuggestion(chosen);
-                          return;
-                        }
+                            if (e.key === "Enter") {
+                              if (!playerNameOpen) return;
+                              const chosen =
+                                playerNameActiveIndex >= 0
+                                  ? filteredPlayerNameSuggestions[playerNameActiveIndex]
+                                  : filteredPlayerNameSuggestions.length === 1
+                                    ? filteredPlayerNameSuggestions[0]
+                                    : null;
+                              if (!chosen) return;
+                              e.preventDefault();
+                              selectPlayerNameSuggestion(chosen);
+                              return;
+                            }
 
-                        // Tab acceptance makes it feel like predictive text.
-                        if (e.key === "Tab") {
-                          if (!playerNameOpen) return;
-                          if (!filteredPlayerNameSuggestions.length) return;
+                            // Tab acceptance makes it feel like predictive text.
+                            if (e.key === "Tab") {
+                              if (!playerNameOpen) return;
+                              if (!filteredPlayerNameSuggestions.length) return;
 
-                          const chosen =
-                            playerNameActiveIndex >= 0 ? filteredPlayerNameSuggestions[playerNameActiveIndex] : filteredPlayerNameSuggestions[0];
-                          if (!chosen) return;
-                          e.preventDefault();
-                          selectPlayerNameSuggestion(chosen);
-                        }
-                      }}
-                      aria-autocomplete="list"
-                      aria-expanded={playerNameOpen}
-                      aria-controls="player-name-suggestions"
-                    />
+                              const chosen =
+                                playerNameActiveIndex >= 0
+                                  ? filteredPlayerNameSuggestions[playerNameActiveIndex]
+                                  : filteredPlayerNameSuggestions[0];
+                              if (!chosen) return;
+                              e.preventDefault();
+                              selectPlayerNameSuggestion(chosen);
+                            }
+                          }}
+                          aria-autocomplete="list"
+                          aria-expanded={playerNameOpen}
+                          aria-controls="player-name-suggestions"
+                        />
 
-                    {playerNameOpen && filteredPlayerNameSuggestions.length > 0 ? (
-                      <div
-                        id="player-name-suggestions"
-                        className="absolute left-0 right-0 mt-2 z-30 max-h-56 overflow-auto rounded-2xl border border-white/10 bg-slate-950/95 p-1 shadow-[0_30px_120px_rgba(0,0,0,0.6)]"
-                        role="listbox"
-                        aria-label="Player name suggestions"
-                      >
-                        {filteredPlayerNameSuggestions.map((name, idx) => {
-                          const selected = idx === playerNameActiveIndex;
-                          return (
-                            <button
-                              key={name}
-                              type="button"
-                              className={`w-full rounded-xl px-3 py-2 text-left text-sm font-semibold ${selected ? "bg-amber-500/15 text-amber-200" : "text-slate-100 hover:bg-white/[0.06]"}`}
-                              role="option"
-                              aria-selected={selected}
-                              onMouseDown={(ev) => {
-                                ev.preventDefault();
-                                selectPlayerNameSuggestion(name);
-                              }}
-                              onMouseEnter={() => setPlayerNameActiveIndex(idx)}
-                            >
-                              {name}
-                            </button>
-                          );
-                        })}
+                        {playerNameOpen && filteredPlayerNameSuggestions.length > 0 ? (
+                          <div
+                            id="player-name-suggestions"
+                            className="absolute left-0 right-0 mt-2 z-30 max-h-56 overflow-auto rounded-2xl border border-white/10 bg-slate-950/95 p-1 shadow-[0_30px_120px_rgba(0,0,0,0.6)]"
+                            role="listbox"
+                            aria-label="Player name suggestions"
+                          >
+                            {filteredPlayerNameSuggestions.map((name, idx) => {
+                              const selected = idx === playerNameActiveIndex;
+                              return (
+                                <button
+                                  key={name}
+                                  type="button"
+                                  className={`w-full rounded-xl px-3 py-2 text-left text-sm font-semibold ${
+                                    selected ? "bg-amber-500/15 text-amber-200" : "text-slate-100 hover:bg-white/[0.06]"
+                                  }`}
+                                  role="option"
+                                  aria-selected={selected}
+                                  onMouseDown={(ev) => {
+                                    ev.preventDefault();
+                                    selectPlayerNameSuggestion(name);
+                                  }}
+                                  onMouseEnter={() => setPlayerNameActiveIndex(idx)}
+                                >
+                                  {name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
-                </label>
+                    </label>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <label className="block">
-                    <div className="mb-1 text-slate-300">Year *</div>
-                    <input
-                      className="w-full rounded bg-slate-950 px-3 py-2"
-                      value={String(card.year || "")}
-                      onChange={(e) => set("year", e.target.value)}
-                    />
-                  </label>
-                  <label className="block">
-                    <div className="mb-1 text-slate-300">Parallel/Insert</div>
-                    <input
-                      className="w-full rounded bg-slate-950 px-3 py-2"
-                      value={String(card.parallel || "")}
-                      onChange={(e) => set("parallel", e.target.value)}
-                    />
-                  </label>
-                </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="block">
+                        <div className="mb-1 text-slate-300">Year *</div>
+                        <input
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={String(card.year || "")}
+                          onChange={(e) => set("year", e.target.value)}
+                        />
+                      </label>
+                      <label className="block">
+                        <div className="mb-1 text-slate-300">Parallel/Insert</div>
+                        <input
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={String(card.parallel || "")}
+                          onChange={(e) => set("parallel", e.target.value)}
+                        />
+                      </label>
+                    </div>
 
-                <label className="block">
-                  <div className="mb-1 text-slate-300">Brand *</div>
-                  <input
-                    className="w-full rounded bg-slate-950 px-3 py-2"
-                    value={String(card.brand || "")}
-                    onChange={(e) => set("brand", e.target.value)}
-                  />
-                </label>
+                    <label className="block">
+                      <div className="mb-1 text-slate-300">Brand *</div>
+                      <input
+                        className="w-full rounded bg-slate-950 px-3 py-2"
+                        value={String(card.brand || "")}
+                        onChange={(e) => set("brand", e.target.value)}
+                      />
+                    </label>
 
-                <label className="block">
-                  <div className="mb-1 text-slate-300">Set name *</div>
-                  <input
-                    className="w-full rounded bg-slate-950 px-3 py-2"
-                    value={String(card.set_name || "")}
-                    onChange={(e) => set("set_name", e.target.value)}
-                  />
-                </label>
+                    <label className="block">
+                      <div className="mb-1 text-slate-300">Set name *</div>
+                      <input
+                        className="w-full rounded bg-slate-950 px-3 py-2"
+                        value={String(card.set_name || "")}
+                        onChange={(e) => set("set_name", e.target.value)}
+                      />
+                    </label>
+                  </>
+                ) : null}
 
                 <div className="flex justify-end">
                   <button
@@ -1431,6 +1443,11 @@ export default function AddCardPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                if (isPokemon) {
+                  setStep(3);
+                  return;
+                }
+
                 const ok =
                   String(card.card_number || "").trim() &&
                   String(card.team || "").trim() &&
@@ -1443,74 +1460,90 @@ export default function AddCardPage() {
               }}
             >
               <div className="space-y-4">
-                <h2 className="text-lg font-semibold">Numbers & Team</h2>
+                {isPokemon ? (
+                  <>
+                    <h2 className="text-lg font-semibold">Pokémon details</h2>
+                    <div className="rounded-2xl border border-white/10 bg-slate-900/30 p-4">
+                      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">Selected</div>
+                      <div className="mt-2 text-sm font-semibold text-slate-200">{String(card.display_title || "") || "Pokémon"}</div>
+                      <div className="mt-1 text-xs text-slate-400">
+                        {String(card.collector_number_raw || "") ? `#${card.collector_number_raw}` : ""}
+                      </div>
+                      <div className="mt-2 text-xs text-slate-500">Pulled from your selected Pokémon print.</div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-lg font-semibold">Numbers & Team</h2>
 
-                <label className="block">
-                  <div className="mb-1 text-slate-300">Card number (back “No.”) *</div>
-                  <input
-                    ref={cardNumberRef}
-                    className="w-full rounded bg-slate-950 px-3 py-2"
-                    value={String(card.card_number || "")}
-                    onChange={(e) => set("card_number", e.target.value)}
-                  />
-                </label>
+                    <label className="block">
+                      <div className="mb-1 text-slate-300">Card number (back “No.”) *</div>
+                      <input
+                        ref={cardNumberRef}
+                        className="w-full rounded bg-slate-950 px-3 py-2"
+                        value={String(card.card_number || "")}
+                        onChange={(e) => set("card_number", e.target.value)}
+                      />
+                    </label>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <label className="block">
-                    <div className="mb-1 text-slate-300">Team *</div>
-                    <input
-                      className="w-full rounded bg-slate-950 px-3 py-2"
-                      value={String(card.team || "")}
-                      onChange={(e) => set("team", e.target.value)}
-                    />
-                  </label>
-                  <label className="block">
-                    <div className="mb-1 text-slate-300">Sport *</div>
-                    <select
-                      className="w-full rounded bg-slate-950 px-3 py-2"
-                      value={String(card.sport || "")}
-                      onChange={(e) => {
-                        const nextSport = e.target.value;
-                        set("sport", nextSport);
-                        if (nextSport !== "Soccer") set("competition", "");
-                      }}
-                    >
-                      <option value="">Select sport</option>
-                      {SPORT_OPTIONS.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <label className="block">
+                        <div className="mb-1 text-slate-300">Team *</div>
+                        <input
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={String(card.team || "")}
+                          onChange={(e) => set("team", e.target.value)}
+                        />
+                      </label>
+                      <label className="block">
+                        <div className="mb-1 text-slate-300">Sport *</div>
+                        <select
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={String(card.sport || "")}
+                          onChange={(e) => {
+                            const nextSport = e.target.value;
+                            set("sport", nextSport);
+                            if (nextSport !== "Soccer") set("competition", "");
+                          }}
+                        >
+                          <option value="">Select sport</option>
+                          {SPORT_OPTIONS.map((option) => (
+                            <option key={option} value={option}>{option}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
 
-                {String(card.sport || "") === "Soccer" ? (
-                  <label className="block">
-                    <div className="mb-1 text-slate-300">Competition (optional)</div>
-                    <input
-                      className="w-full rounded bg-slate-950 px-3 py-2"
-                      list="soccer-competition-options"
-                      placeholder="Premier League, UEFA Champions League, World Cup..."
-                      value={String(card.competition || "")}
-                      onChange={(e) => set("competition", e.target.value)}
-                    />
-                    <datalist id="soccer-competition-options">
-                      {SOCCER_COMPETITION_OPTIONS.map((option) => (
-                        <option key={option} value={option} />
-                      ))}
-                    </datalist>
-                    <div className="mt-1 text-xs text-slate-500">Only shown for soccer, so it does not slow down the normal add flow.</div>
-                  </label>
-                ) : null}
+                    {String(card.sport || "") === "Soccer" ? (
+                      <label className="block">
+                        <div className="mb-1 text-slate-300">Competition (optional)</div>
+                        <input
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          list="soccer-competition-options"
+                          placeholder="Premier League, UEFA Champions League, World Cup..."
+                          value={String(card.competition || "")}
+                          onChange={(e) => set("competition", e.target.value)}
+                        />
+                        <datalist id="soccer-competition-options">
+                          {SOCCER_COMPETITION_OPTIONS.map((option) => (
+                            <option key={option} value={option} />
+                          ))}
+                        </datalist>
+                        <div className="mt-1 text-xs text-slate-500">Only shown for soccer, so it does not slow down the normal add flow.</div>
+                      </label>
+                    ) : null}
 
-                <label className="block">
-                  <div className="mb-1 text-slate-300">Serial number text (optional)</div>
-                  <input
-                    className="w-full rounded bg-slate-950 px-3 py-2"
-                    placeholder="e.g. 071/199 or /50 or n/a"
-                    value={String(card.serial_number_text || "")}
-                    onChange={(e) => set("serial_number_text", e.target.value)}
-                  />
-                </label>
+                    <label className="block">
+                      <div className="mb-1 text-slate-300">Serial number text (optional)</div>
+                      <input
+                        className="w-full rounded bg-slate-950 px-3 py-2"
+                        placeholder="e.g. 071/199 or /50 or n/a"
+                        value={String(card.serial_number_text || "")}
+                        onChange={(e) => set("serial_number_text", e.target.value)}
+                      />
+                    </label>
+                  </>
+                )}
 
                 <div className="flex justify-between">
                   <button
@@ -1541,44 +1574,46 @@ export default function AddCardPage() {
               <div className="space-y-4">
                 <h2 className="text-lg font-semibold">Flags & Quantity</h2>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <label className="block rounded border border-slate-800 p-3">
-                    <div className="text-slate-300">Rookie</div>
-                    <select
-                      ref={rookieSelectRef}
-                      className="mt-2 w-full rounded bg-slate-950 px-2 py-2"
-                      value={String(card.rookie || "no")}
-                      onChange={(e) => set("rookie", e.target.value)}
-                    >
-                      <option value="no">no</option>
-                      <option value="yes">yes</option>
-                    </select>
-                  </label>
+                {!isPokemon ? (
+                  <div className="grid grid-cols-3 gap-3">
+                    <label className="block rounded border border-slate-800 p-3">
+                      <div className="text-slate-300">Rookie</div>
+                      <select
+                        ref={rookieSelectRef}
+                        className="mt-2 w-full rounded bg-slate-950 px-2 py-2"
+                        value={String(card.rookie || "no")}
+                        onChange={(e) => set("rookie", e.target.value)}
+                      >
+                        <option value="no">no</option>
+                        <option value="yes">yes</option>
+                      </select>
+                    </label>
 
-                  <label className="block rounded border border-slate-800 p-3">
-                    <div className="text-slate-300">Autograph</div>
-                    <select
-                      className="mt-2 w-full rounded bg-slate-950 px-2 py-2"
-                      value={String(card.is_autograph || "no")}
-                      onChange={(e) => set("is_autograph", e.target.value)}
-                    >
-                      <option value="no">no</option>
-                      <option value="yes">yes</option>
-                    </select>
-                  </label>
+                    <label className="block rounded border border-slate-800 p-3">
+                      <div className="text-slate-300">Autograph</div>
+                      <select
+                        className="mt-2 w-full rounded bg-slate-950 px-2 py-2"
+                        value={String(card.is_autograph || "no")}
+                        onChange={(e) => set("is_autograph", e.target.value)}
+                      >
+                        <option value="no">no</option>
+                        <option value="yes">yes</option>
+                      </select>
+                    </label>
 
-                  <label className="block rounded border border-slate-800 p-3">
-                    <div className="text-slate-300">Memorabilia</div>
-                    <select
-                      className="mt-2 w-full rounded bg-slate-950 px-2 py-2"
-                      value={String(card.has_memorabilia || "no")}
-                      onChange={(e) => set("has_memorabilia", e.target.value)}
-                    >
-                      <option value="no">no</option>
-                      <option value="yes">yes</option>
-                    </select>
-                  </label>
-                </div>
+                    <label className="block rounded border border-slate-800 p-3">
+                      <div className="text-slate-300">Memorabilia</div>
+                      <select
+                        className="mt-2 w-full rounded bg-slate-950 px-2 py-2"
+                        value={String(card.has_memorabilia || "no")}
+                        onChange={(e) => set("has_memorabilia", e.target.value)}
+                      >
+                        <option value="no">no</option>
+                        <option value="yes">yes</option>
+                      </select>
+                    </label>
+                  </div>
+                ) : null}
 
                 <div className="rounded border border-slate-800 p-3">
                   <div className="text-slate-300">Graded?</div>
