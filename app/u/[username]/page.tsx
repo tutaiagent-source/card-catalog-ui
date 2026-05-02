@@ -237,7 +237,13 @@ export default function SellerProfilePage() {
           setCards((cardRows ?? []) as SellerCard[]);
         }
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Could not load seller profile.");
+        const msg =
+          e instanceof Error
+            ? e.message
+            : e && typeof (e as any).message === "string"
+              ? String((e as any).message)
+              : "Could not load seller profile.";
+        setError(msg);
       } finally {
         setLoadingCards(false);
       }
