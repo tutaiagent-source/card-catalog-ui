@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { buildSellerNotes, computeSaleMetrics, parseSellerMeta } from "@/lib/cardSellerMeta";
@@ -145,6 +145,11 @@ export default function SoldPage() {
   const [graphsRaised, setGraphsRaised] = useState(false);
 
   const [receiptDownloadingDealId, setReceiptDownloadingDealId] = useState<string | null>(null);
+
+  const [receiptPreviewOpen, setReceiptPreviewOpen] = useState(false);
+  const [receiptPreviewSrcDoc, setReceiptPreviewSrcDoc] = useState<string | null>(null);
+  const [receiptPreviewTitle, setReceiptPreviewTitle] = useState<string>("Receipt");
+  const receiptPreviewFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const [saleEditOpen, setSaleEditOpen] = useState(false);
   const [saleEditCard, setSaleEditCard] = useState<SoldCard | null>(null);
@@ -423,84 +428,10 @@ export default function SoldPage() {
 
     setReceiptDownloadingDealId(dealRecordId);
 
-    const openReceiptAndPrint = (params: { html: string; filenameBase: string }) => {
-      // Mobile browsers often block window popups for print/PDF.
-      // Instead, temporarily swap the page body and call window.print() in the same user gesture.
-      const oldTitle = document.title;
-      const oldBodyHtml = document.body.innerHTML;
-      const restoreStyleId = "cardcat-receipt-print-style";
-
-      const restored = { v: false };
-      const restore = () => {
-        if (restored.v) return;
-        restored.v = true;
-        try {
-          document.title = oldTitle;
-        } catch {
-          // ignore
-        }
-        try {
-          document.body.innerHTML = oldBodyHtml;
-        } catch {
-          // ignore
-        }
-        try {
-          const el = document.getElementById(restoreStyleId);
-          if (el) el.remove();
-        } catch {
-          // ignore
-        }
-        try {
-          window.removeEventListener("afterprint", restore);
-        } catch {
-          // ignore
-        }
-      };
-
-      const parsed = new DOMParser().parseFromString(params.html, "text/html");
-      const receiptBodyHtml = parsed.body?.innerHTML ?? "";
-      const receiptStyleText = parsed.head?.querySelector("style")?.textContent ?? "";
-
-      try {
-        document.title = params.filenameBase;
-      } catch {
-        // ignore
-      }
-
-      try {
-        const styleEl = document.getElementById(restoreStyleId) as HTMLStyleElement | null;
-        const nextStyleEl = styleEl ?? document.createElement("style");
-        nextStyleEl.id = restoreStyleId;
-        nextStyleEl.textContent = receiptStyleText;
-        if (!styleEl) document.head.appendChild(nextStyleEl);
-      } catch {
-        // ignore
-      }
-
-      try {
-        document.body.innerHTML = receiptBodyHtml;
-      } catch {
-        // If we can’t swap the body, fall back to downloading the HTML.
-        const blob = new Blob([params.html], { type: "text/html" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${params.filenameBase}.html`;
-        a.click();
-        URL.revokeObjectURL(url);
-        return;
-      }
-
-      window.addEventListener("afterprint", restore);
-      try {
-        window.focus();
-        window.print();
-      } catch {
-        // ignore
-      }
-
-      // Fallback restore if afterprint isn't supported.
-      setTimeout(() => restore(), 30000);
+    const openReceiptPreview = (params: { html: string; filenameBase: string }) => {
+      setReceiptPreviewTitle(params.filenameBase);
+      setReceiptPreviewSrcDoc(params.html);
+      setReceiptPreviewOpen(true);
     };
 
     try {
@@ -820,7 +751,7 @@ export default function SoldPage() {
         </html>
       `;
 
-      openReceiptAndPrint({ html, filenameBase: `deal_record_${dealRecordId}` });
+      openReceiptPreview({ html, filenameBase: `deal_record_${dealRecordId}` });
     } catch (err: any) {
       alert(err?.message || "Could not download receipt.");
     } finally {
@@ -1819,6 +1750,82 @@ export default function SoldPage() {
                   className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60"
                 >
                   {saleEditSaving ? "Saving…" : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {receiptPreviewOpen && receiptPreviewSrcDoc ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 sm:p-4"
+          onClick={() => {
+            setReceiptPreviewOpen(false);
+            setReceiptPreviewSrcDoc(null);
+            setReceiptPreviewTitle("Receipt");
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Receipt preview"
+        >
+          <div
+            className="w-full max-w-3xl overflow-hidden rounded-[28px] border border-white/10 bg-slate-950 shadow-2xl [-webkit-overflow-scrolling:touch]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Receipt</div>
+                <div className="mt-2 text-lg font-bold text-white">{receiptPreviewTitle}</div>
+                <div className="mt-1 text-sm text-slate-300">Use “Print” (then “Save as PDF”).</div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setReceiptPreviewOpen(false);
+                  setReceiptPreviewSrcDoc(null);
+                  setReceiptPreviewTitle("Receipt");
+                }}
+                className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm font-semibold text-slate-200 hover:bg-white/[0.08]"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4">
+              <div className="rounded-2xl border border-white/10 bg-white overflow-hidden">
+                <iframe
+                  ref={receiptPreviewFrameRef}
+                  title="Receipt preview"
+                  srcDoc={receiptPreviewSrcDoc}
+                  className="h-[70vh] w-full bg-white"
+                />
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const w = receiptPreviewFrameRef.current?.contentWindow;
+                    if (w) {
+                      try {
+                        w.focus();
+                      } catch {
+                        // ignore
+                      }
+                      try {
+                        w.print();
+                      } catch {
+                        window.print();
+                      }
+                    } else {
+                      window.print();
+                    }
+                  }}
+                  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
+                >
+                  Print / Save PDF
                 </button>
               </div>
             </div>
