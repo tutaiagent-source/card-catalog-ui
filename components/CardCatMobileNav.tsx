@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { CardCatMark } from "@/components/CardCatLogo";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 
@@ -47,6 +48,8 @@ export default function CardCatMobileNav() {
   const moreActive = useMemo(() => {
     return moreItems.some((i) => i.href === pathname);
   }, [pathname]);
+
+  const portalTarget = typeof document !== "undefined" ? document.body : null;
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -163,7 +166,7 @@ export default function CardCatMobileNav() {
     },
   ] as const;
 
-  return (
+  const content = (
     <>
       {moreOpen ? (
         <div
@@ -250,4 +253,7 @@ export default function CardCatMobileNav() {
       </nav>
     </>
   );
+
+  if (portalTarget) return createPortal(content, portalTarget);
+  return content;
 }
