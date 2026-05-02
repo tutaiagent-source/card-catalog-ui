@@ -1,52 +1,91 @@
 import MarketingNav from "@/components/MarketingNav";
 import CardCatLogo from "@/components/CardCatLogo";
 
-const serviceCards = [
+import BinderBackground from "@/components/BinderBackground";
+import SportsCardTile from "@/components/SportsCardTile";
+import StatusChip from "@/components/StatusChip";
+
+const serviceCards: Array<{
+  title: string;
+  sentence: string;
+  href: string;
+  cta: string;
+  status: "catalog" | "pc" | "listings" | "market" | "sold" | "receipt";
+  preview: { kicker?: string; lines: string[] };
+}> = [
   {
     title: "Catalog",
     sentence: "Add cards, images, values, notes, and quick comp links in one organized place.",
     href: "/features/catalog",
     cta: "Learn about Catalog",
+    status: "catalog",
+    preview: {
+      kicker: "Card + Comp",
+      lines: ["Search + quick actions", "Add photos + notes", "Keep estimates handy"],
+    },
   },
   {
     title: "PC",
     sentence: "Keep your favorite cards separate from what you may want to sell.",
     href: "/features/pc",
     cta: "Learn about PC",
+    status: "pc",
+    preview: {
+      kicker: "Star favorites",
+      lines: ["★ PC view", "Card count + value", "Clean, collector-first"],
+    },
   },
   {
     title: "Listings",
     sentence: "Manage the cards you have for sale, add external links, and share available inventory.",
     href: "/features/listings",
     cta: "Learn about Listings",
+    status: "listings",
+    preview: {
+      kicker: "Active for sale",
+      lines: ["Asking price", "Edit + share", "Link out to your marketplace"],
+    },
   },
   {
     title: "Market",
     sentence: "List cards in a member marketplace where collectors can message and make offers.",
     href: "/features/market",
     cta: "Learn about the Market",
+    status: "market",
+    preview: {
+      kicker: "Offers",
+      lines: ["Offer ready", "Message + counter", "Move deals to Sold"],
+    },
   },
   {
     title: "Sold",
     sentence: "Track sale price, platform, shipping cost, net profit, and ROI.",
     href: "/features/sold",
     cta: "Learn about Sold",
+    status: "sold",
+    preview: {
+      kicker: "Receipt-style",
+      lines: ["Sold totals", "Net profit + ROI", "Download your receipt"],
+    },
   },
   {
     title: "Import",
     sentence: "Bring in your existing spreadsheet and export your data anytime.",
     href: "/features/import",
     cta: "Learn about Import",
+    status: "receipt",
+    preview: {
+      kicker: "CSV prep",
+      lines: ["Review rows", "Flag duplicates", "Import when ready"],
+    },
   },
 ];
 
-const flowSteps = [
-  "Add cards to your Catalog",
-  "Save favorites to PC",
-  "Move cards into Listings",
-  "Publish to the Market",
-  "Message and accept offers",
-  "Track the sale in Sold",
+const flowPanels: Array<{ status: "catalog" | "pc" | "market" | "sold"; title: string; line: string }> = [
+  { status: "catalog", title: "Catalog", line: "Add cards + quick comps" },
+  { status: "pc", title: "PC", line: "Star favorites (★)" },
+  { status: "market", title: "Market", line: "List + message offers" },
+  { status: "sold", title: "Sold", line: "Receipt + profit tracking" },
 ];
 
 export default function Home() {
@@ -58,7 +97,8 @@ export default function Home() {
         {/* Hero */}
         <section className="relative overflow-hidden rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-5 py-8 shadow-[0_35px_120px_rgba(2,6,23,0.55)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(213,0,0,0.08),transparent_36%,transparent_64%,rgba(59,130,246,0.08))]" />
-          <div className="relative grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
+          <BinderBackground>
+            <div className="relative grid gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
             <div>
               <div className="mb-5 hidden md:block">
                 <CardCatLogo variant="vertical" size="lg" priority />
@@ -104,17 +144,45 @@ export default function Home() {
             </div>
 
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-              <img
-                src="/home-cardcat-signin.png"
-                alt="CardCat mobile preview"
-                draggable={false}
-                className="w-full rounded-2xl border border-white/10 object-cover"
-              />
-              <div className="mt-3 text-sm leading-6 text-slate-300">
-                Catalog, list, make deals, then track sold cards and profit in one workflow.
+              <div className="mx-auto max-w-[420px]">
+                <div className="hidden sm:block relative h-[360px]">
+                  {flowPanels.map((p, idx) => {
+                    const top = idx * 78;
+                    const z = 30 - idx * 3;
+                    const rotate = idx % 2 === 0 ? -1.2 : 1.2;
+                    const translate = idx % 2 === 0 ? -3 : 3;
+
+                    return (
+                      <div
+                        key={p.title}
+                        className="absolute left-1/2 w-[92%] -translate-x-1/2 rounded-2xl border border-white/10 bg-slate-950/40 p-4"
+                        style={{ top, zIndex: z, transform: `translateX(-50%) translateY(0px) rotate(${rotate}deg) translateX(${translate}px)` }}
+                      >
+                        <StatusChip status={p.status} />
+                        <div className="mt-2 text-sm font-semibold text-white">{p.title}</div>
+                        <div className="mt-1 text-xs text-slate-400">{p.line}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="sm:hidden space-y-3">
+                  {flowPanels.map((p) => (
+                    <div key={p.title} className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+                      <StatusChip status={p.status} />
+                      <div className="mt-2 text-sm font-semibold text-white">{p.title}</div>
+                      <div className="mt-1 text-xs text-slate-400">{p.line}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-6 text-slate-300">
+                Catalog → PC → Market → Sold
               </div>
             </div>
           </div>
+          </BinderBackground>
         </section>
 
         {/* Service cards */}
@@ -125,18 +193,15 @@ export default function Home() {
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {serviceCards.map((c) => (
-              <a
+              <SportsCardTile
                 key={c.title}
                 href={c.href}
-                className="group rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] transition-colors hover:bg-white/[0.06]"
-              >
-                <div className="text-lg font-semibold text-white">{c.title}</div>
-                <div className="mt-2 text-sm leading-6 text-slate-300">{c.sentence}</div>
-                <div className="mt-5 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-amber-200 group-hover:underline">{c.cta}</span>
-                  <span aria-hidden="true" className="text-slate-400">→</span>
-                </div>
-              </a>
+                status={c.status}
+                title={c.title}
+                sentence={c.sentence}
+                cta={c.cta}
+                preview={c.preview}
+              />
             ))}
           </div>
         </section>
@@ -148,15 +213,12 @@ export default function Home() {
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-white">From collection to sale, all in one place.</h2>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {flowSteps.map((s, idx) => (
-              <div key={s} className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 rounded-full bg-emerald-500/15 px-2 py-1 text-xs font-semibold text-emerald-200 ring-1 ring-emerald-400/20">
-                    {idx + 1}
-                  </div>
-                  <div className="text-sm font-semibold text-slate-100">{s}</div>
-                </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {flowPanels.map((p) => (
+              <div key={p.title} className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-4">
+                <StatusChip status={p.status} />
+                <div className="mt-3 text-sm font-semibold text-slate-100">{p.title}</div>
+                <div className="mt-1 text-sm text-slate-400">{p.line}</div>
               </div>
             ))}
           </div>

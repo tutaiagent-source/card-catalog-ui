@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import MarketingNav from "@/components/MarketingNav";
+import BinderBackground from "@/components/BinderBackground";
 
 export const metadata: Metadata = {
   title: "Pricing | CardCat",
@@ -83,7 +84,8 @@ export default function PricingPage() {
           </div>
         </section>
 
-        <section className="mt-10">
+        <BinderBackground>
+          <section className="mt-10">
           <div className="grid gap-4 lg:gap-6">
             <div className="grid grid-cols-1 gap-4 border border-white/10 rounded-[32px] bg-white/[0.04] p-6 lg:grid-cols-[0.95fr_1.4fr_0.7fr] lg:items-start">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
@@ -100,10 +102,11 @@ export default function PricingPage() {
             {plans.map((p) => (
               <div
                 key={p.tier}
-                className={`grid grid-cols-1 gap-4 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 lg:grid-cols-[0.95fr_1.4fr_0.7fr] lg:items-start ${
+                className={`relative grid grid-cols-1 gap-4 rounded-[32px] border border-white/10 bg-white/[0.04] p-6 lg:grid-cols-[0.95fr_1.4fr_0.7fr] lg:items-start ${
                   p.highlight ? "shadow-[0_30px_90px_rgba(245,158,11,0.08)]" : ""
                 }`}
               >
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 rounded-[32px] border border-white/10 bg-white/[0.02] translate-y-1 opacity-40" />
                 <div>
                   <div
                     className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
@@ -112,9 +115,13 @@ export default function PricingPage() {
                   >
                     {p.tier}
                   </div>
-                  <div className="mt-4 text-2xl font-bold text-white">{p.caps}</div>
+
                   <div className="mt-4 text-sm text-slate-300">
                     {p.priceMonthly} <span className="text-slate-400">or</span> {p.priceAnnual}
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/30 px-4 py-3 text-sm leading-6 text-slate-200">
+                    {p.caps}
                   </div>
                 </div>
 
@@ -150,8 +157,8 @@ export default function PricingPage() {
             ))}
           </div>
         </section>
+        </BinderBackground>
       </div>
     </main>
   );
 }
-
