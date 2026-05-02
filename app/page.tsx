@@ -172,41 +172,12 @@ export default function Home() {
 
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
               <div className="mx-auto max-w-[420px] overflow-hidden">
-                <div className="hidden sm:block relative h-[360px] overflow-hidden">
-                  {flowPanels.map((p, idx) => {
-                    const top = idx * 68;
-                    const z = 30 - idx * 4;
-                    const rotate = idx % 2 === 0 ? -0.9 : 0.9;
-                    const translate = idx % 2 === 0 ? -2 : 2;
-
-                    return (
-                      <div
-                        key={p.title}
-                        className={`absolute left-1/2 w-[92%] -translate-x-1/2 rounded-2xl border ${accentCardByFlowStatus[p.status]} bg-white/[0.03] p-4 shadow-[0_20px_60px_rgba(2,6,23,0.35)]`}
-                        style={{ top, zIndex: z, transform: `rotate(${rotate}deg) translateX(${translate}px)` }}
-                      >
-                        <StatusChip status={p.status} icon={iconByFlowStatus[p.status]} />
-                        <div className="mt-2 text-sm font-semibold text-white">{p.title}</div>
-                        <div className="mt-1 text-xs text-slate-400">{p.line}</div>
-                        <div className="mt-2 text-[11px] text-slate-300">{p.meta}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="sm:hidden space-y-3">
-                  {flowPanels.map((p) => (
-                    <div
-                      key={p.title}
-                      className={`rounded-2xl border ${accentCardByFlowStatus[p.status]} bg-slate-950/30 p-4`}
-                    >
-                      <StatusChip status={p.status} icon={iconByFlowStatus[p.status]} />
-                      <div className="mt-2 text-sm font-semibold text-white">{p.title}</div>
-                      <div className="mt-1 text-xs text-slate-400">{p.line}</div>
-                      <div className="mt-2 text-[11px] text-slate-300">{p.meta}</div>
-                    </div>
-                  ))}
-                </div>
+                <img
+                  src="/home-cardcat-signin.png"
+                  alt="CardCat mobile preview"
+                  draggable={false}
+                  className="w-full rounded-2xl border border-white/10 object-cover"
+                />
               </div>
 
               <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm leading-6 text-slate-300">
