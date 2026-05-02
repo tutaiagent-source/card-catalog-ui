@@ -1857,20 +1857,23 @@ export default function SoldPage() {
                       const rawPageHeight = nodeWidth * 1.35;
                       const pageHeight = Math.min(1900, Math.max(900, Math.round(rawPageHeight)));
 
-                      const scrollYBase = nodeRect.top + (iframeDoc.defaultView?.scrollY ?? 0);
                       const pageCount = Math.max(1, Math.ceil(nodeScrollHeight / pageHeight));
 
                       const maxPages = 10;
                       const actualPages = Math.min(pageCount, maxPages);
 
                       for (let i = 0; i < actualPages; i++) {
-                        const scrollY = scrollYBase + i * pageHeight;
+                        const sliceY = i * pageHeight;
                         const canvas = await html2canvas(node, {
                           scale: 2,
                           useCORS: true,
                           backgroundColor: "#ffffff",
+                          x: 0,
+                          y: sliceY,
+                          width: nodeWidth,
+                          height: pageHeight,
                           scrollX: 0,
-                          scrollY,
+                          scrollY: 0,
                           windowWidth: nodeWidth,
                           windowHeight: pageHeight,
                         });
