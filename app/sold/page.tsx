@@ -423,14 +423,47 @@ export default function SoldPage() {
 
     setReceiptDownloadingDealId(dealRecordId);
 
-    const downloadHtmlFile = (params: { html: string; filename: string }) => {
-      const blob = new Blob([params.html], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = params.filename;
-      a.click();
-      URL.revokeObjectURL(url);
+    const openReceiptAndPrint = (params: { html: string; filenameBase: string }) => {
+      const w = window.open("", "_blank", "noopener,noreferrer");
+      if (!w) {
+        alert("Could not open receipt window (popup blocked). Try allowing popups, then download again.");
+        return;
+      }
+
+      w.document.open();
+      w.document.write(params.html);
+      w.document.close();
+
+      const tryPrint = () => {
+        try {
+          w.document.title = params.filenameBase;
+        } catch {
+          // ignore
+        }
+        w.focus();
+        w.print();
+      };
+
+      // Best-effort: wait for images to load so the print/PDF is complete.
+      try {
+        const imgs = Array.from(w.document.images || []);
+        if (imgs.length === 0) return setTimeout(tryPrint, 300);
+
+        Promise.all(
+          imgs.map(
+            (img) =>
+              new Promise<void>((resolve) => {
+                if (img.complete) return resolve();
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+              })
+          )
+        )
+          .catch(() => void 0)
+          .finally(() => setTimeout(tryPrint, 250));
+      } catch {
+        setTimeout(tryPrint, 400);
+      }
     };
 
     try {
@@ -750,7 +783,7 @@ export default function SoldPage() {
         </html>
       `;
 
-      downloadHtmlFile({ html, filename: `deal_record_${dealRecordId}.html` });
+      openReceiptAndPrint({ html, filenameBase: `deal_record_${dealRecordId}` });
     } catch (err: any) {
       alert(err?.message || "Could not download receipt.");
     } finally {
@@ -1386,7 +1419,7 @@ export default function SoldPage() {
 	                            onClick={() => void onDownloadReceipt(card)}
 	                            className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60 disabled:cursor-not-allowed"
 	                          >
-	                            {receiptDownloadingDealId === String(card.deal_record_id) ? "Downloading…" : "Download Receipt"}
+	                            {receiptDownloadingDealId === String(card.deal_record_id) ? "Preparing…" : "Save Receipt (PDF)"}
 	                          </button>
 	                        ) : (
 	                          <div className="mt-2 text-[12px] text-slate-500">No receipt available</div>
@@ -1475,7 +1508,7 @@ export default function SoldPage() {
 	                        onClick={() => void onDownloadReceipt(card)}
 	                        className="mt-1 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60 disabled:cursor-not-allowed"
 	                      >
-	                        {receiptDownloadingDealId === String(card.deal_record_id) ? "Downloading…" : "Download Receipt"}
+	                        {receiptDownloadingDealId === String(card.deal_record_id) ? "Preparing…" : "Save Receipt (PDF)"}
 	                      </button>
 	                    ) : null}
 	                    <button
@@ -1543,7 +1576,7 @@ export default function SoldPage() {
 	                              onClick={() => void onDownloadReceipt(card)}
 	                              className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60 disabled:cursor-not-allowed"
 	                            >
-	                              {receiptDownloadingDealId === String(card.deal_record_id) ? "Downloading…" : "Download Receipt"}
+	                              {receiptDownloadingDealId === String(card.deal_record_id) ? "Preparing…" : "Save Receipt (PDF)"}
 	                            </button>
 	                          ) : (
 	                            <div className="mt-2 text-[12px] text-slate-500">No receipt available</div>
