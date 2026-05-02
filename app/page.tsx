@@ -171,19 +171,19 @@ export default function Home() {
             </div>
 
             <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
-              <div className="mx-auto max-w-[420px]">
-                <div className="hidden sm:block relative h-[360px]">
+              <div className="mx-auto max-w-[420px] overflow-hidden">
+                <div className="hidden sm:block relative h-[360px] overflow-hidden">
                   {flowPanels.map((p, idx) => {
-                    const top = idx * 78;
-                    const z = 30 - idx * 3;
-                    const rotate = idx % 2 === 0 ? -1.2 : 1.2;
-                    const translate = idx % 2 === 0 ? -3 : 3;
+                    const top = idx * 68;
+                    const z = 30 - idx * 4;
+                    const rotate = idx % 2 === 0 ? -0.9 : 0.9;
+                    const translate = idx % 2 === 0 ? -2 : 2;
 
                     return (
                       <div
                         key={p.title}
                         className={`absolute left-1/2 w-[92%] -translate-x-1/2 rounded-2xl border ${accentCardByFlowStatus[p.status]} bg-white/[0.03] p-4 shadow-[0_20px_60px_rgba(2,6,23,0.35)]`}
-                        style={{ top, zIndex: z, transform: `translateX(-50%) translateY(0px) rotate(${rotate}deg) translateX(${translate}px)` }}
+                        style={{ top, zIndex: z, transform: `rotate(${rotate}deg) translateX(${translate}px)` }}
                       >
                         <StatusChip status={p.status} icon={iconByFlowStatus[p.status]} />
                         <div className="mt-2 text-sm font-semibold text-white">{p.title}</div>
