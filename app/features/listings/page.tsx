@@ -1,6 +1,5 @@
 import MarketingNav from "@/components/MarketingNav";
-import ListingsFeaturePreview from "@/components/ListingsFeaturePreview";
-import PlanTierCaps from "@/components/PlanTierCaps";
+import PhoneFeatureMockup from "@/components/PhoneFeatureMockup";
 
 export default function ListingsFeaturePage() {
   return (
@@ -17,105 +16,74 @@ export default function ListingsFeaturePage() {
               <h1 className="mt-6 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
                 Manage the cards you have for sale.
               </h1>
-              <p className="mt-5 text-base leading-7 text-slate-300">
-                Listings is where you keep track of what you’re actively selling, with asking prices, sale links, and notes.
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+                Listings keeps your active sale inventory organized, whether you sell on CardCat, eBay, at shows, or privately.
               </p>
-
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4 sm:col-span-1">
-                  <h2 className="text-lg font-bold text-white">What</h2>
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
-                    A single place for your active sale inventory.
-                  </p>
-                </div>
-                <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4 sm:col-span-1">
-                  <h2 className="text-lg font-bold text-white">How</h2>
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
-                    Move cards from Catalog or PC into Listings.
-                  </p>
-                </div>
-                <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-4 sm:col-span-1">
-                  <h2 className="text-lg font-bold text-white">Why</h2>
-                  <p className="mt-3 text-sm leading-6 text-slate-300">
-                    Keep everything together instead of juggling spreadsheets and screenshots.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-8 rounded-[32px] border border-white/10 bg-slate-950/40 p-6">
-                <h3 className="text-lg font-bold text-white">Listings bullets</h3>
-                <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-300">
-                  <li className="flex items-start gap-3">
-                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                    Track cards for sale
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                    Add external listing links
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                    Share your available inventory
-                  </li>
-                </ul>
-              </div>
-
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <a
-                  href="/login"
-                  className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
-                >
-                  Manage Listings
-                </a>
-                <a
-                  href="/pro"
-                  className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
-                >
-                  View Plans
-                </a>
-              </div>
             </div>
 
             <div>
-              <ListingsFeaturePreview />
+              <PhoneFeatureMockup variant="listings" />
             </div>
           </div>
         </section>
 
-        <section className="mt-8 rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
-            <div className="flex flex-col items-start gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-xl">
-              <h2 className="text-2xl font-bold text-white">Share your inventory from your phone</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                Listings is built so your asking price and sale link stay attached to the exact card record.
-              </p>
-              <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-300">
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                  Quick edits to price + link
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                  Clean cards to share in one link
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
-                  Everything stays tied to the card
-                </li>
-              </ul>
-            </div>
-            <div className="relative w-[280px] max-w-full">
-              <img
-                src="/features-listings-phone.png"
-                alt="Listings on your phone"
-                draggable={false}
-                className="w-full h-auto rounded-[38px] border border-white/10 bg-slate-950/40 shadow-[0_40px_120px_rgba(2,6,23,0.6)]"
-              />
-            </div>
+        <section className="mt-8 space-y-4 lg:space-y-6">
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-6">
+            <h2 className="text-lg font-bold text-white">What it does</h2>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                Move cards from Catalog or PC into Listings
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                Add asking prices and external sale links
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                Share available inventory with a link
+              </li>
+            </ul>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-6">
+            <h2 className="text-lg font-bold text-white">Why it matters</h2>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-300">
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                Stop tracking sale inventory across spreadsheets and photos
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                Keep asking info tied to the exact card record
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-emerald-300" />
+                Prep cards for shows or private buyers
+              </li>
+            </ul>
+          </div>
+
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5 sm:p-6">
+            <h2 className="text-lg font-bold text-white">How it fits into the workflow</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">Catalog → Listings → Market → Sold</p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href="/login"
+              className="rounded-xl bg-[#d50000] px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(213,0,0,0.28)] transition-colors hover:bg-[#b80000]"
+            >
+              Start Your Collection
+            </a>
+            <a
+              href="/pricing"
+              className="rounded-xl border border-white/10 bg-white/[0.05] px-5 py-3 text-sm font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
+            >
+              View Plans
+            </a>
           </div>
         </section>
-
-        <PlanTierCaps className="mt-8" />
       </div>
     </main>
   );

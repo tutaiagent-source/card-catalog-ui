@@ -18,8 +18,7 @@ export default function TermsAndConditionsPage() {
           <p className="mt-3 text-sm leading-6 text-slate-300">
             Effective date: <span className="font-semibold">2026-04-21</span>
             <br />
-            Please note: this is a template. You should review it with legal counsel and
-            update placeholders before publishing.
+            CardCat provides tools for cataloging and connecting members. Transactions between users are the users’ responsibility.
           </p>
 
           <div className="mt-6 space-y-6 text-sm leading-7 text-slate-200">
@@ -50,7 +49,7 @@ export default function TermsAndConditionsPage() {
             <div>
               <h2 className="text-base font-bold text-white">4. Subscriptions & billing</h2>
               <p className="mt-2">
-                CardCat may offer subscription plans (e.g., Collector and Pro). Billing is
+                CardCat may offer subscription plans (Collector, Pro, and Seller). Billing is
                 processed through Stripe. Plans may renew automatically unless canceled.
               </p>
               <p className="mt-2">
