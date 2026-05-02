@@ -141,6 +141,8 @@ export default function ListedPage() {
   const [moveSelectingCards, setMoveSelectingCards] = useState(false);
   const [moveSelectedCardIds, setMoveSelectedCardIds] = useState<string[]>([]);
 
+  const [listView, setListView] = useState<"grid" | "vertical">("grid");
+
   const sortedCards = useMemo(() => {
     return cards
       .slice()
@@ -650,8 +652,8 @@ export default function ListedPage() {
               >
                 {isRefreshing ? "Refreshing…" : "Refresh"}
               </button>
-            </div>
-          </div>
+	                  </div>
+	                </div>
         </div>
 
         <section className="mt-4 rounded-3xl border border-emerald-500/20 bg-emerald-500/[0.06] p-4">
@@ -943,8 +945,153 @@ export default function ListedPage() {
             <section className="hidden lg:block mt-8">
               <div className="rounded-[28px] bg-white/[0.03] p-5">
                 <div className="rounded-[20px] bg-slate-900/30 p-4">
-                  <div className="text-sm font-semibold text-slate-200">Display</div>
-                  <div className="mt-4 grid grid-cols-6 gap-4">
+	              			<div className="flex items-center justify-between gap-3">
+	              				<div className="text-sm font-semibold text-slate-200">Display</div>
+	              				<div className="flex rounded-full border border-white/10 bg-white/[0.03] p-1">
+	              					<button
+	              						type="button"
+	              						onClick={() => setListView("grid")}
+	              						className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${listView === "grid" ? "bg-white/[0.08] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+	              					>
+	              						Grid
+	              					</button>
+	              					<button
+	              						type="button"
+	              						onClick={() => setListView("vertical")}
+	              						className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${listView === "vertical" ? "bg-white/[0.08] text-white" : "text-slate-300 hover:bg-white/[0.05]"}`}
+	              					>
+	              						Vertical
+	              					</button>
+	              				</div>
+	              			</div>
+	              			{listView === "vertical" ? (
+	              				<div className="mt-4 space-y-3" role="list" aria-label="Listed cards">
+	              					{sortedCards.map((c) => {
+	              						const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "grid" }) : "";
+	              						const goHref = toUrl(c.sale_platform);
+	              						const marketMode = profile?.market_visibility_mode || "none";
+	              						const isOnMarket =
+	              							marketMode === "whole_collection" ||
+	              							(marketMode === "all_listed" && c.status === "Listed") ||
+	              							(marketMode === "selected_cards" && Boolean(c.public_market_visible));
+	              						const isSelected = c.id ? bulkSelectedCardIds.includes(c.id) : false;
+	              						const isMoveSelected = c.id ? moveSelectedCardIds.includes(c.id) : false;
+	              						const publicNotes = c.notes ? parseSellerMeta(c.notes).publicNotes : "";
+	              						return (
+	              							<div
+	              								key={c.id}
+	              								role="button"
+	              								tabIndex={0}
+	              								onClick={() => {
+	              									if (moveSelectingCards && c.id) {
+	              										toggleMoveSelection(c.id as string);
+	              										return;
+	              									}
+	              									if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
+	              										void toggleMarketVisibility(c.id as string, !isOnMarket);
+	              										return;
+	              									}
+	              									setActiveCard(c);
+	              								}}
+	              								className={`relative rounded-2xl border p-4 ${isOnMarket ? "border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/15" : "border-red-500/20 bg-red-500/10 hover:bg-red-500/15"}`}
+	              								aria-label={`View ${c.player_name}`}
+	              								onKeyDown={(e) => {
+	              									if (!(e.key === "Enter" || e.key === " ")) return;
+	              									if (moveSelectingCards && c.id) {
+	              										toggleMoveSelection(c.id as string);
+	              										return;
+	              									}
+	              									if (marketMode === "selected_cards" && bulkSelectingCards && c.id) {
+	              										void toggleMarketVisibility(c.id as string, !isOnMarket);
+	              										return;
+	              									}
+	              									setActiveCard(c);
+	              								}}
+	              							>
+	              								{moveSelectingCards && c.id && isMoveSelected ? (
+	              									<div
+	              										aria-hidden="true"
+	              										className="absolute left-3 top-3 z-40 flex h-7 w-7 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-500/15 text-xs font-bold text-emerald-200"
+	              									>
+	              										✓
+	              									</div>
+	              								) : null}
+
+	              								{marketMode === "selected_cards" && bulkSelectingCards && c.id && isSelected ? (
+	              									<div
+	              										aria-hidden="true"
+	              										className={`absolute right-3 top-3 z-40 flex h-7 w-7 items-center justify-center rounded-full border text-xs font-bold ${
+	              											isSelected
+	              												? "border-emerald-500/40 bg-emerald-500/15 text-emerald-200"
+	              												: "border-white/10 bg-slate-950/60 text-slate-200"
+	              										}`}
+	              									>
+	              										✓
+	              									</div>
+	              								) : null}
+
+	              								{goHref ? (
+	              									<a
+	              										href={goHref}
+	              										target="_blank"
+	              										rel="noreferrer"
+	              										onClick={(e) => e.stopPropagation()}
+	              										className="absolute right-3 top-3 z-10 rounded-full border border-white/10 bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-950/90"
+	              									>
+	              										Go ↗
+	              									</a>
+	              								) : null}
+
+	              								<div className="flex gap-3">
+	              									<div
+	              										className={`relative h-20 w-14 overflow-hidden rounded-xl bg-slate-950 flex items-center justify-center border ${
+	              											isOnMarket ? "border-emerald-500/80" : "border-red-500/80"
+	              										}`}
+	              									>
+	              										{c.image_url ? (
+	              											<img
+	              												alt="front"
+	              												src={src}
+	              												className="max-h-full max-w-full object-contain"
+	              												loading="lazy"
+	              												decoding="async"
+	              											/>
+	              										) : (
+	              											<div className="h-full w-full" />
+	              										)}
+	              									</div>
+
+	              									<div className="min-w-0 flex-1">
+	              										<div className="line-clamp-1 text-sm font-semibold text-white">{c.player_name}</div>
+	              										<div className="mt-1 text-xs text-slate-300">{c.year} · {c.brand}</div>
+	              										<div className="mt-1 text-xs text-slate-400">{c.set_name} · {c.parallel}</div>
+	              										{c.serial_number_text ? (
+	              											<div className="mt-1 text-[11px] text-slate-400 truncate">
+	              												<span className="text-slate-500">Serial:</span> {c.serial_number_text}
+	              											</div>
+	              										) : null}
+	              										{publicNotes ? <div className="mt-1 text-[11px] text-amber-200 line-clamp-2">{publicNotes}</div> : null}
+	              										{c.status === "Sold" ? (
+	              											c.sold_price != null ? (
+	              												<div className="mt-2 text-sm font-semibold text-emerald-200">SOLD {formatMoney(Number(c.sold_price))}</div>
+	              											) : (
+	              												<div className="mt-2 text-sm font-semibold text-slate-500">Sold</div>
+	              											)
+	              										) : c.asking_price != null ? (
+	              											<div className="mt-2 text-sm font-semibold text-slate-100">{formatMoney(Number(c.asking_price))}</div>
+	              										) : (
+	              											<div className="mt-2 text-sm font-semibold text-slate-500">No price</div>
+	              										)}
+	                  </div>
+	                </div>
+	              </div>
+	              						);
+	              					})}
+	              				</div>
+	              			) : null}
+
+	              		{listView === "grid" ? (
+	              			<div className="mt-4 grid grid-cols-6 gap-4">
                     {sortedCards.map((c) => {
 	                      				const src = c.image_url ? driveToImageSrc(c.image_url, { variant: "grid" }) : "";
                       const goHref = toUrl(c.sale_platform);
@@ -1057,10 +1204,11 @@ export default function ListedPage() {
                         </div>
                       );
                     })}
-                  </div>
-                </div>
-              </div>
-            </section>
+	                  </div>
+	                ) : null}
+	                </div>
+	              </div>
+	            </section>
           </>
         )}
 
