@@ -1437,11 +1437,15 @@ export default function AddCardPage() {
                         const slashIdx = serialRaw.indexOf("/");
                         const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
 
+                        const autoPart = String(card.is_autograph ?? "").toLowerCase() === "yes" ? "auto" : "";
+
                         const parts = [
                           card.player_name,
+                          card.year,
                           card.brand,
                           card.set_name,
                           card.card_number,
+                          autoPart,
                           serialForEbay,
                         ]
                           .map((p) => String(p ?? "").trim())

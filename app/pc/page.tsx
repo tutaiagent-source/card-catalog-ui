@@ -48,11 +48,15 @@ function buildEbaySearchUrl(card: Card) {
   const slashIdx = serialRaw.indexOf("/");
   const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
 
+  const autoPart = card.is_autograph === "yes" ? "auto" : "";
+
   const parts: string[] = [
     card.player_name,
+    card.year,
     card.brand,
     card.set_name,
     card.parallel,
+    autoPart,
     card.card_number,
     serialForEbay,
   ]

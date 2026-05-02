@@ -66,7 +66,9 @@ function buildEbaySearchUrl(card: MarketCard) {
   const slashIdx = serialRaw.indexOf("/");
   const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
 
-  const parts = [card.player_name, card.brand, card.set_name, card.parallel, card.card_number, serialForEbay]
+  const autoPart = yes(card.is_autograph) ? "auto" : "";
+
+  const parts = [card.player_name, card.year, card.brand, card.set_name, card.parallel, autoPart, card.card_number, serialForEbay]
     .map((part) => String(part ?? "").trim())
     .filter(Boolean)
     .filter((part) => part.toLowerCase() !== "n/a");

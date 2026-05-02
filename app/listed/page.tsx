@@ -15,6 +15,8 @@ import { mapPlanLimitErrorMessage } from "@/lib/planLimitError";
 
 type CardStatus = "Collection" | "Listed" | "Sold";
 
+type YesNo = "yes" | "no";
+
 type ListedCard = {
   id?: string;
 
@@ -23,6 +25,8 @@ type ListedCard = {
   brand: string;
   set_name: string;
   parallel: string;
+
+  is_autograph?: YesNo | string | null;
 
   serial_number_text: string;
 
@@ -57,11 +61,15 @@ function buildEbayCompsUrl(card: ListedCard) {
   const slashIdx = serialRaw.indexOf("/");
   const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
 
+  const autoPart = String(card.is_autograph ?? "").toLowerCase() === "yes" ? "auto" : "";
+
   const parts: string[] = [
     card.player_name,
+    card.year,
     card.brand,
     card.set_name,
     card.parallel,
+    autoPart,
     serialForEbay,
   ]
     .map((p) => String(p ?? "").trim())
@@ -155,7 +163,7 @@ export default function ListedPage() {
     try {
       const { data, error } = await supabase
         .from("cards")
-        .select("id, player_name, year, brand, set_name, parallel, serial_number_text, image_url, back_image_url, status, asking_price, listed_at, sale_platform, sold_price, sold_at, public_market_visible, notes")
+        .select("id, player_name, year, brand, set_name, parallel, serial_number_text, is_autograph, image_url, back_image_url, status, asking_price, listed_at, sale_platform, sold_price, sold_at, public_market_visible, notes")
         .eq("user_id", user.id)
         .eq("status", "Listed");
 

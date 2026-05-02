@@ -205,11 +205,15 @@ function buildEbaySearchUrl(card: Card) {
   // eBay serial patterns like "3/20" should become "/20" (drop the prefix).
   const serialForEbay = slashIdx >= 0 ? serialRaw.slice(slashIdx) : serialRaw;
 
+  const autoPart = card.is_autograph === "yes" ? "auto" : "";
+
   const parts: string[] = [
     card.player_name,
+    card.year,
     card.brand,
     card.set_name,
     card.parallel,
+    autoPart,
     card.card_number,
     serialForEbay,
   ]
