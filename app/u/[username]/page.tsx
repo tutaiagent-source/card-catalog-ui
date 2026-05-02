@@ -70,7 +70,7 @@ function toUrl(value?: string | null) {
 
 export default function SellerProfilePage() {
   const params = useParams<{ username?: string }>();
-  const routeUsername = String(params.username || "").trim().toLowerCase();
+  const routeUsername = String(params.username || "").trim();
 
   const { user, loading } = useSupabaseUser();
   const emailConfirmedAt = (user as unknown as { email_confirmed_at?: string | null } | null)?.email_confirmed_at;
@@ -172,24 +172,24 @@ export default function SellerProfilePage() {
       setLoadingCards(true);
       try {
           const { data: profileRow, error: profileErr } = await supabase
-          .from("profiles_public")
-          .select(
-            "id, username, display_name, avatar_url, banner_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
-          )
-          .eq("username", routeUsername)
-          .maybeSingle();
+            .from("profiles_public")
+            .select(
+              "id, username, display_name, avatar_url, banner_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
+            )
+            .ilike("username", routeUsername)
+            .maybeSingle();
 
 	        let effectiveSeller: SellerProfile | null = null;
 	        if (profileErr) {
 	          const msg = String(profileErr.message || "").toLowerCase();
 	          if (msg.includes("profiles_public") || msg.includes("does not exist")) {
-	            const { data: fallbackProfileRow, error: fallbackProfileErr } = await supabase
-	              .from("profiles")
-	              .select(
- 	                "id, username, display_name, avatar_url, banner_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
-	              )
-	              .eq("username", routeUsername)
-	              .maybeSingle();
+              const { data: fallbackProfileRow, error: fallbackProfileErr } = await supabase
+                .from("profiles")
+                .select(
+                  "id, username, display_name, avatar_url, banner_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
+                )
+                .ilike("username", routeUsername)
+                .maybeSingle();
 
 	            if (fallbackProfileErr) throw fallbackProfileErr;
 	            if (!fallbackProfileRow) {
@@ -237,13 +237,22 @@ export default function SellerProfilePage() {
           setCards((cardRows ?? []) as SellerCard[]);
         }
       } catch (e) {
-        const msg =
-          e instanceof Error
-            ? e.message
-            : e && typeof (e as any).message === "string"
-              ? String((e as any).message)
-              : "Could not load seller profile.";
-        setError(msg);
+        const msg = (() => {
+          if (e instanceof Error) return e.message;
+          if (typeof e === "string") return e;
+          if (e && typeof e === "object") {
+            const anyE = e as any;
+            if (typeof anyE.message === "string") return anyE.message;
+            if (typeof anyE.error === "string") return anyE.error;
+            try {
+              return JSON.stringify(anyE);
+            } catch {
+              return String(anyE);
+            }
+          }
+          return "Could not load seller profile.";
+        })();
+        setError(String(msg || "Could not load seller profile."));
       } finally {
         setLoadingCards(false);
       }
