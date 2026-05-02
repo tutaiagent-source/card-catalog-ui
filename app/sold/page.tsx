@@ -1789,7 +1789,7 @@ export default function SoldPage() {
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Receipt</div>
                 <div className="mt-2 text-lg font-bold text-white">{receiptPreviewTitle}</div>
-                <div className="mt-1 text-sm text-slate-300">Tap “Download JPG pages” to save the receipt as one JPG per page (fits on mobile).</div>
+                <div className="mt-1 text-sm text-slate-300">Tap “Download JPG” to save the receipt as a single JPG image.</div>
               </div>
 
               <button
@@ -1852,49 +1852,32 @@ export default function SoldPage() {
                       const nodeWidth = Math.max(1, Math.ceil(nodeRect.width));
                       const nodeScrollHeight = Math.max(0, (node as any).scrollHeight ?? Math.ceil(nodeRect.height));
 
-                      // Approximate “one printed page” height for a portrait capture.
-                      // (A4 ratio height ~= width * 1.414, but we bias slightly to include padding.)
-                      const rawPageHeight = nodeWidth * 1.35;
-                      const pageHeight = Math.min(1900, Math.max(900, Math.round(rawPageHeight)));
+                      const canvas = await html2canvas(node, {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: "#ffffff",
+                        x: 0,
+                        y: 0,
+                        width: nodeWidth,
+                        height: nodeScrollHeight,
+                        windowWidth: nodeWidth,
+                        windowHeight: Math.min(2400, Math.max(800, nodeScrollHeight)),
+                        scrollX: 0,
+                        scrollY: 0,
+                      });
 
-                      const pageCount = Math.max(1, Math.ceil(nodeScrollHeight / pageHeight));
+                      const blob = await new Promise<Blob | null>((resolve) => {
+                        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92);
+                      });
 
-                      const maxPages = 10;
-                      const actualPages = Math.min(pageCount, maxPages);
+                      if (!blob) throw new Error("Could not generate JPG.");
 
-                      for (let i = 0; i < actualPages; i++) {
-                        const sliceY = i * pageHeight;
-                        const canvas = await html2canvas(node, {
-                          scale: 2,
-                          useCORS: true,
-                          backgroundColor: "#ffffff",
-                          x: 0,
-                          y: sliceY,
-                          width: nodeWidth,
-                          height: pageHeight,
-                          scrollX: 0,
-                          scrollY: 0,
-                          windowWidth: nodeWidth,
-                          windowHeight: pageHeight,
-                        });
-
-                        const blob = await new Promise<Blob | null>((resolve) => {
-                          canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92);
-                        });
-
-                        if (!blob) throw new Error("Could not generate JPG.");
-
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = pageCount === 1 ? `${safeName}.jpg` : `${safeName}-p${i + 1}.jpg`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-                      }
-
-                      if (pageCount > maxPages) {
-                        alert(`Receipt is long (${pageCount} pages). Downloaded the first ${maxPages} pages as JPG. Please try again if you need the rest.`);
-                      }
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `${safeName}.jpg`;
+                      a.click();
+                      URL.revokeObjectURL(url);
                     } catch (e: any) {
                       alert(e?.message || "Could not download receipt JPG.");
                     } finally {
@@ -1903,7 +1886,7 @@ export default function SoldPage() {
                   }}
                   className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {receiptJpgDownloading ? "Rendering…" : "Download JPG pages"}
+                  {receiptJpgDownloading ? "Rendering…" : "Download JPG"}
                 </button>
               </div>
             </div>
