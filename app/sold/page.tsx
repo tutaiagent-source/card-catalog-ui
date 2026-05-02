@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import html2canvas from "html2canvas";
 import { supabase, supabaseConfigured } from "@/lib/supabaseClient";
 import { useSupabaseUser } from "@/lib/useSupabaseUser";
 import { buildSellerNotes, computeSaleMetrics, parseSellerMeta } from "@/lib/cardSellerMeta";
@@ -149,6 +150,7 @@ export default function SoldPage() {
   const [receiptPreviewOpen, setReceiptPreviewOpen] = useState(false);
   const [receiptPreviewSrcDoc, setReceiptPreviewSrcDoc] = useState<string | null>(null);
   const [receiptPreviewTitle, setReceiptPreviewTitle] = useState<string>("Receipt");
+  const [receiptJpgDownloading, setReceiptJpgDownloading] = useState(false);
   const receiptPreviewFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const [saleEditOpen, setSaleEditOpen] = useState(false);
@@ -586,8 +588,13 @@ export default function SoldPage() {
             bundleCardsListHtml = bundleItems
               .map((it: any) => {
                 const s = it?.card_snapshot_json ?? {};
-                const img = s?.image_url
-                  ? `<img class="card-img" src="${escapeHtml(driveToImageSrc(s.image_url, { variant: "detail" }))}" alt="Card image" />`
+                const imgSrc = s?.image_url ? driveToImageSrc(s.image_url, { variant: "detail" }) : null;
+                const proxiedImgSrc = imgSrc
+                  ? `/api/image-proxy?src=${encodeURIComponent(imgSrc)}`
+                  : null;
+
+                const img = proxiedImgSrc
+                  ? `<img class="card-img" src="${escapeHtml(proxiedImgSrc)}" alt="Card image" />`
                   : `<div class="card-img placeholder"></div>`;
                 const title = escapeHtml(s?.player_name ?? "Card");
                 const meta = escapeHtml([s?.year, s?.brand, s?.set_name].filter(Boolean).join(" ") || "—");
@@ -602,8 +609,13 @@ export default function SoldPage() {
         }
       }
 
-      const cardImageHtml = (receiptCard as any).image_url
-        ? `<img class="card-img" src="${escapeHtml(driveToImageSrc((receiptCard as any).image_url, { variant: "detail" }))}" alt="Card image" />`
+      const cardImgSrc = (receiptCard as any).image_url
+        ? driveToImageSrc((receiptCard as any).image_url, { variant: "detail" })
+        : null;
+      const cardProxiedImgSrc = cardImgSrc ? `/api/image-proxy?src=${encodeURIComponent(cardImgSrc)}` : null;
+
+      const cardImageHtml = cardProxiedImgSrc
+        ? `<img class="card-img" src="${escapeHtml(cardProxiedImgSrc)}" alt="Card image" />`
         : `<div class="card-img placeholder"></div>`;
 
       const shippingSectionHtml = shippingRecorded
@@ -1387,7 +1399,7 @@ export default function SoldPage() {
 	                            onClick={() => void onDownloadReceipt(card)}
 	                            className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60 disabled:cursor-not-allowed"
 	                          >
-	                            {receiptDownloadingDealId === String(card.deal_record_id) ? "Preparing…" : "Save Receipt (PDF)"}
+	                            {receiptDownloadingDealId === String(card.deal_record_id) ? "Preparing…" : "Download Receipt (JPG)"}
 	                          </button>
 	                        ) : (
 	                          <div className="mt-2 text-[12px] text-slate-500">No receipt available</div>
@@ -1476,7 +1488,7 @@ export default function SoldPage() {
 	                        onClick={() => void onDownloadReceipt(card)}
 	                        className="mt-1 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60 disabled:cursor-not-allowed"
 	                      >
-	                        {receiptDownloadingDealId === String(card.deal_record_id) ? "Preparing…" : "Save Receipt (PDF)"}
+	                        {receiptDownloadingDealId === String(card.deal_record_id) ? "Preparing…" : "Download Receipt (JPG)"}
 	                      </button>
 	                    ) : null}
 	                    <button
@@ -1544,7 +1556,7 @@ export default function SoldPage() {
 	                              onClick={() => void onDownloadReceipt(card)}
 	                              className="mt-2 inline-flex rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[12px] font-semibold text-slate-200 hover:bg-white/[0.08] disabled:opacity-60 disabled:cursor-not-allowed"
 	                            >
-	                              {receiptDownloadingDealId === String(card.deal_record_id) ? "Preparing…" : "Save Receipt (PDF)"}
+	                              {receiptDownloadingDealId === String(card.deal_record_id) ? "Preparing…" : "Download Receipt (JPG)"}
 	                            </button>
 	                          ) : (
 	                            <div className="mt-2 text-[12px] text-slate-500">No receipt available</div>
@@ -1777,7 +1789,7 @@ export default function SoldPage() {
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Receipt</div>
                 <div className="mt-2 text-lg font-bold text-white">{receiptPreviewTitle}</div>
-                <div className="mt-1 text-sm text-slate-300">Use “Print” (then “Save as PDF”).</div>
+                <div className="mt-1 text-sm text-slate-300">Tap “Download JPG” to save a viewable receipt image on your phone.</div>
               </div>
 
               <button
@@ -1806,26 +1818,62 @@ export default function SoldPage() {
               <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => {
-                    const w = receiptPreviewFrameRef.current?.contentWindow;
-                    if (w) {
-                      try {
-                        w.focus();
-                      } catch {
-                        // ignore
-                      }
-                      try {
-                        w.print();
-                      } catch {
-                        window.print();
-                      }
-                    } else {
-                      window.print();
+                  disabled={receiptJpgDownloading || !receiptPreviewSrcDoc}
+                  onClick={async () => {
+                    const iframeDoc = receiptPreviewFrameRef.current?.contentDocument;
+                    if (!iframeDoc) {
+                      alert("Receipt preview is not ready yet. Try again.");
+                      return;
+                    }
+
+                    const imgs = Array.from(iframeDoc.images || []);
+                    await Promise.all(
+                      imgs.map(
+                        (img) =>
+                          new Promise<void>((resolve) => {
+                            if (img.complete) return resolve();
+                            img.onload = () => resolve();
+                            img.onerror = () => resolve();
+                          })
+                      )
+                    );
+
+                    const node = (iframeDoc.querySelector(".wrap") as HTMLElement | null) ?? iframeDoc.body;
+                    if (!node) {
+                      alert("Could not render receipt image on this device.");
+                      return;
+                    }
+
+                    setReceiptJpgDownloading(true);
+                    try {
+                      const canvas = await html2canvas(node, {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: "#ffffff",
+                      });
+
+                      const blob = await new Promise<Blob | null>((resolve) => {
+                        canvas.toBlob((b) => resolve(b), "image/jpeg", 0.92);
+                      });
+
+                      if (!blob) throw new Error("Could not generate JPG.");
+
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      const safeName = String(receiptPreviewTitle || "deal_record").replace(/[^a-z0-9_\-]/gi, "_");
+                      a.download = `${safeName}.jpg`;
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    } catch (e: any) {
+                      alert(e?.message || "Could not download receipt JPG.");
+                    } finally {
+                      setReceiptJpgDownloading(false);
                     }
                   }}
-                  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
+                  className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Print / Save PDF
+                  {receiptJpgDownloading ? "Rendering…" : "Download JPG"}
                 </button>
               </div>
             </div>
