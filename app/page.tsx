@@ -88,6 +88,20 @@ const flowPanels: Array<{ status: "catalog" | "pc" | "market" | "sold"; title: s
   { status: "sold", title: "Sold", line: "Receipt + profit tracking" },
 ];
 
+const iconByFlowStatus: Record<(typeof flowPanels)[number]["status"], string> = {
+  catalog: "📚",
+  pc: "★",
+  market: "💬",
+  sold: "💰",
+};
+
+const accentCardByFlowStatus: Record<(typeof flowPanels)[number]["status"], string> = {
+  catalog: "border-amber-500/25 bg-amber-500/5",
+  pc: "border-blue-500/25 bg-blue-500/5",
+  market: "border-emerald-500/25 bg-emerald-500/5",
+  sold: "border-emerald-400/25 bg-emerald-400/5",
+};
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -155,10 +169,10 @@ export default function Home() {
                     return (
                       <div
                         key={p.title}
-                        className="absolute left-1/2 w-[92%] -translate-x-1/2 rounded-2xl border border-white/10 bg-slate-950/40 p-4"
+                        className={`absolute left-1/2 w-[92%] -translate-x-1/2 rounded-2xl border ${accentCardByFlowStatus[p.status]} bg-white/[0.03] p-4 shadow-[0_20px_60px_rgba(2,6,23,0.35)]`}
                         style={{ top, zIndex: z, transform: `translateX(-50%) translateY(0px) rotate(${rotate}deg) translateX(${translate}px)` }}
                       >
-                        <StatusChip status={p.status} />
+                        <StatusChip status={p.status} icon={iconByFlowStatus[p.status]} />
                         <div className="mt-2 text-sm font-semibold text-white">{p.title}</div>
                         <div className="mt-1 text-xs text-slate-400">{p.line}</div>
                       </div>
@@ -168,8 +182,11 @@ export default function Home() {
 
                 <div className="sm:hidden space-y-3">
                   {flowPanels.map((p) => (
-                    <div key={p.title} className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
-                      <StatusChip status={p.status} />
+                    <div
+                      key={p.title}
+                      className={`rounded-2xl border ${accentCardByFlowStatus[p.status]} bg-slate-950/30 p-4`}
+                    >
+                      <StatusChip status={p.status} icon={iconByFlowStatus[p.status]} />
                       <div className="mt-2 text-sm font-semibold text-white">{p.title}</div>
                       <div className="mt-1 text-xs text-slate-400">{p.line}</div>
                     </div>
