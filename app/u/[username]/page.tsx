@@ -18,7 +18,6 @@ type SellerProfile = {
   username: string;
   display_name?: string;
   avatar_url?: string;
-  banner_url?: string;
   bio?: string;
   market_visibility_mode?: string;
 
@@ -94,7 +93,6 @@ export default function SellerProfilePage() {
   const [displayNameDraft, setDisplayNameDraft] = useState("");
   const [bioDraft, setBioDraft] = useState("");
   const [avatarUploading, setAvatarUploading] = useState(false);
-  const [bannerUploading, setBannerUploading] = useState(false);
 
   const [activeCard, setActiveCard] = useState<SellerCard | null>(null);
   const [showBack, setShowBack] = useState(false);
@@ -174,7 +172,7 @@ export default function SellerProfilePage() {
           const { data: profileRow, error: profileErr } = await supabase
             .from("profiles_public")
             .select(
-              "id, username, display_name, avatar_url, banner_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
+              "id, username, display_name, avatar_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
             )
             .ilike("username", routeUsername)
             .maybeSingle();
@@ -186,7 +184,7 @@ export default function SellerProfilePage() {
               const { data: fallbackProfileRow, error: fallbackProfileErr } = await supabase
                 .from("profiles")
                 .select(
-                  "id, username, display_name, avatar_url, banner_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
+                  "id, username, display_name, avatar_url, bio, market_visibility_mode, is_shop, shop_name, shop_address, shop_phone, shop_website, shop_show_address, shop_show_phone, shop_show_website, shop_verification_status"
                 )
                 .ilike("username", routeUsername)
                 .maybeSingle();
@@ -367,101 +365,6 @@ export default function SellerProfilePage() {
     }
   }
 
-  async function uploadBanner(file: File) {
-    if (!isOwnProfile) return;
-    if (!supabaseConfigured || !supabase || !user?.id) return;
-    setError("");
-
-    setBannerUploading(true);
-    try {
-      const allowedMimes = new Set(["image/png", "image/jpeg", "image/webp"]);
-      const MAX_BYTES = 8 * 1024 * 1024;
-      if (!allowedMimes.has(file.type)) throw new Error("Banner must be a PNG, JPG, or WebP image.");
-      if (file.size > MAX_BYTES) throw new Error("Banner is too large (max 8MB). Please use a smaller file.");
-
-      const loadImage = (f: File) =>
-        new Promise<HTMLImageElement>((resolve, reject) => {
-          const url = URL.createObjectURL(f);
-          const img = new Image();
-          img.onload = () => {
-            URL.revokeObjectURL(url);
-            resolve(img);
-          };
-          img.onerror = () => {
-            URL.revokeObjectURL(url);
-            reject(new Error("Could not read that image file."));
-          };
-          img.src = url;
-        });
-
-      const img = await loadImage(file);
-      const MAX_DIM = 1400;
-      const scale = Math.min(1, MAX_DIM / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
-      const targetW = Math.max(1, Math.round((img.naturalWidth || 1) * scale));
-      const targetH = Math.max(1, Math.round((img.naturalHeight || 1) * scale));
-
-      const canvas = document.createElement("canvas");
-      canvas.width = targetW;
-      canvas.height = targetH;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Could not process that image file.");
-      ctx.drawImage(img, 0, 0, targetW, targetH);
-
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (b) => {
-            if (!b) reject(new Error("Could not process that image file."));
-            else resolve(b);
-          },
-          "image/webp",
-          0.82
-        );
-      });
-
-      const bannerUuid = crypto.randomUUID();
-      const bucket = "card-images";
-      const folder = `banners/${bannerUuid}`;
-      const mainPath = `${folder}/main.webp`;
-      const mainFile = new File([blob], "main.webp", { type: "image/webp" });
-
-      const { error: uploadErr } = await supabase.storage.from(bucket).upload(mainPath, mainFile, {
-        upsert: false,
-        contentType: "image/webp",
-      });
-      if (uploadErr) throw uploadErr;
-
-      const { data: pub } = await supabase.storage.from(bucket).getPublicUrl(mainPath);
-      const publicUrl = pub.publicUrl;
-      if (!publicUrl) throw new Error("Could not get banner URL after upload.");
-
-      const { error: upErr } = await supabase.from("profiles").update({ banner_url: publicUrl }).eq("id", user.id);
-      if (upErr) throw upErr;
-
-      setSeller((prev) => (prev ? { ...prev, banner_url: publicUrl } : prev));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Banner upload failed.");
-    } finally {
-      setBannerUploading(false);
-    }
-  }
-
-  async function clearBanner() {
-    if (!isOwnProfile) return;
-    if (!supabaseConfigured || !supabase || !user?.id) return;
-    setError("");
-
-    setBannerUploading(true);
-    try {
-      const { error: upErr } = await supabase.from("profiles").update({ banner_url: "" }).eq("id", user.id);
-      if (upErr) throw upErr;
-      setSeller((prev) => (prev ? { ...prev, banner_url: "" } : prev));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not remove banner.");
-    } finally {
-      setBannerUploading(false);
-    }
-  }
-
   async function handleMessageSeller(card: SellerCard) {
     if (!seller?.username) return;
     if (!user?.id) return;
@@ -580,15 +483,6 @@ export default function SellerProfilePage() {
               {isVerifiedShop && seller?.shop_name ? seller.shop_name : `@${routeUsername}`}
             </h1>
 
-            {seller?.banner_url ? (
-              <img
-                src={driveToImageSrc(seller.banner_url, { variant: "detail" })}
-                alt={`${routeUsername} banner`}
-                className="mt-3 h-28 w-full rounded-2xl border border-white/10 bg-slate-950 object-cover"
-                draggable={false}
-              />
-            ) : null}
-
             {seller?.is_shop ? (
               <div className="mt-2">
                 <span
@@ -660,44 +554,6 @@ export default function SellerProfilePage() {
               <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 {editMode ? (
                   <div className="space-y-4">
-                    <div>
-                      <div className="text-sm font-semibold text-white">Profile banner</div>
-                      <div className="mt-2">
-                        {seller?.banner_url ? (
-                          <img
-                            src={driveToImageSrc(seller.banner_url, { variant: "detail" })}
-                            alt="Current banner"
-                            className="mb-3 h-24 w-full rounded-2xl border border-white/10 bg-slate-950 object-cover"
-                            draggable={false}
-                          />
-                        ) : (
-                          <div className="mb-3 text-sm text-slate-400">No banner yet.</div>
-                        )}
-
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={bannerUploading}
-                          onChange={(e) => {
-                            const f = e.target.files?.[0];
-                            if (!f) return;
-                            void uploadBanner(f);
-                          }}
-                          className="block w-full text-sm text-slate-300"
-                        />
-                      </div>
-                      {bannerUploading ? <div className="mt-2 text-xs text-slate-400">Uploading banner…</div> : null}
-
-                      <button
-                        type="button"
-                        className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-white/[0.08] disabled:opacity-60"
-                        onClick={() => void clearBanner()}
-                        disabled={bannerUploading || !seller?.banner_url}
-                      >
-                        Remove banner
-                      </button>
-                    </div>
-
                     <div>
                       <div className="text-sm font-semibold text-white">Avatar</div>
                       <div className="mt-2">
