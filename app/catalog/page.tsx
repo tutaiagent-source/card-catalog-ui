@@ -506,10 +506,14 @@ export default function CatalogPage() {
     () => Array.from(new Set(activeCards.map((c) => String(c.year || "").trim()).filter(Boolean))).sort((a, b) => Number(b) - Number(a) || b.localeCompare(a)),
     [activeCards]
   );
-  const brandOptions = useMemo(
-    () => Array.from(new Set(activeCards.map((c) => String(c.brand || "").trim()).filter(Boolean))).sort(),
-    [activeCards]
-  );
+  const brandOptions = useMemo(() => {
+    const inScope = activeCards.filter((c) => filterSport === "all" || String(c.sport || "") === filterSport);
+    const getValue = (c: (typeof activeCards)[number]) => {
+      if (filterSport === "Pokemon") return String(c.set_name || "").trim();
+      return String(c.brand || "").trim();
+    };
+    return Array.from(new Set(inScope.map((c) => getValue(c)).filter(Boolean))).sort();
+  }, [activeCards, filterSport]);
   const statusOptions = useMemo(
     () => Array.from(new Set(activeCards.map((c) => normalizeStatusValue(c.status)))).sort(),
     [activeCards]
@@ -541,7 +545,9 @@ export default function CatalogPage() {
       const matchesSport = filterSport === "all" || String(c.sport || "") === filterSport;
       const matchesCompetition = filterCompetition === "all" || String(c.competition || "") === filterCompetition;
       const matchesYear = filterYear === "all" || String(c.year || "") === filterYear;
-      const matchesBrand = filterBrand === "all" || String(c.brand || "") === filterBrand;
+      const matchesBrand =
+        filterBrand === "all" ||
+        (filterSport === "Pokemon" ? String(c.set_name || "") === filterBrand : String(c.brand || "") === filterBrand);
       const matchesStatus = filterStatus === "all" || normalizeStatusValue(c.status) === filterStatus;
       const matchesGraded = filterGraded === "all" || (c.graded || "no") === filterGraded;
 
@@ -1735,7 +1741,7 @@ export default function CatalogPage() {
             setFilterSport(e.target.value);
             setFilterCompetition("all");
           }}>
-            <option value="all">All sports</option>
+            <option value="all">All categories</option>
             {sportOptions.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
@@ -1755,7 +1761,7 @@ export default function CatalogPage() {
             ))}
           </select>
           <select className="rounded bg-slate-900 px-3 py-2 text-sm" value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)}>
-            <option value="all">All brands</option>
+            <option value="all">{filterSport === "Pokemon" ? "All sets" : "All brands"}</option>
             {brandOptions.map((option) => (
               <option key={option} value={option}>{option}</option>
             ))}
@@ -1781,10 +1787,12 @@ export default function CatalogPage() {
 
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-300">
             {q ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Search: {q}</span> : null}
-            {filterSport !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Sport: {filterSport}</span> : null}
+            {filterSport !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Category: {filterSport}</span> : null}
             {filterCompetition !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Competition: {filterCompetition}</span> : null}
             {filterYear !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Year: {filterYear}</span> : null}
-            {filterBrand !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Brand: {filterBrand}</span> : null}
+            {filterBrand !== "all" ? (
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">{filterSport === "Pokemon" ? "Set: " : "Brand: "}{filterBrand}</span>
+            ) : null}
             {filterStatus !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Status: {filterStatus}</span> : null}
             {filterGraded !== "all" ? <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1">Graded: {filterGraded}</span> : null}
           </div>
