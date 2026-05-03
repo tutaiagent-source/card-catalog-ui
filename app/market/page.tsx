@@ -88,6 +88,12 @@ function yes(value?: string | null) {
   return String(value || "").toLowerCase() === "yes";
 }
 
+function isPokemonCard(card: MarketCard) {
+  const sport = String(card.sport || "").toLowerCase();
+  const team = String(card.team || "").toLowerCase();
+  return sport === "pokemon" || team === "pokemon";
+}
+
 export default function MarketPage() {
   const { user, loading } = useSupabaseUser();
   const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
@@ -96,6 +102,7 @@ export default function MarketPage() {
   const [profiles, setProfiles] = useState<SellerProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sellerFilter, setSellerFilter] = useState("");
+  const [marketCategory, setMarketCategory] = useState<"all" | "sports" | "pokemon">("all");
   const [listedRecency, setListedRecency] = useState<"any" | "24h" | "7d" | "30d" | "90d">("any");
   const [priceMin, setPriceMin] = useState<string>("");
   const [priceMax, setPriceMax] = useState<string>("");
@@ -213,6 +220,12 @@ export default function MarketPage() {
       const visibleInMarket = marketMode === "all_listed" || marketMode === "whole_collection" || (marketMode === "selected_cards" && Boolean(card.public_market_visible));
       if (!visibleInMarket) return false;
 
+      if (marketCategory !== "all") {
+        const pokemon = isPokemonCard(card);
+        if (marketCategory === "pokemon" && !pokemon) return false;
+        if (marketCategory === "sports" && pokemon) return false;
+      }
+
       const matchesSeller = !sellerQ || sellerUsername === sellerQ;
       if (!matchesSeller) return false;
 
@@ -241,6 +254,8 @@ export default function MarketPage() {
         card.brand,
         card.set_name,
         card.parallel,
+        card.card_number,
+        card.serial_number_text,
         card.team,
         card.sport,
         card.competition,
@@ -352,11 +367,22 @@ export default function MarketPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm font-semibold text-slate-200">Active Market Listings</div>
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <select
+                value={marketCategory}
+                onChange={(e) => setMarketCategory(e.target.value as any)}
+                className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none sm:w-40"
+                aria-label="Category"
+              >
+                <option value="all">All</option>
+                <option value="sports">Sports</option>
+                <option value="pokemon">Pokémon</option>
+              </select>
+
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search player, brand, team, seller"
+                placeholder={marketCategory === "pokemon" ? "Search Pokémon (set, title, #), seller" : "Search player, set/brand, card #, seller"}
                 className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none sm:w-80"
               />
               {sellerFilter ? (
@@ -433,13 +459,15 @@ export default function MarketPage() {
                   >
                     Graded
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setOnlyRookie((v) => !v)}
-                    className={`rounded-xl border px-3 py-2 text-sm font-semibold ${onlyRookie ? "border-amber-400/30 bg-amber-500/15 text-amber-200" : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.06]"}`}
-                  >
-                    Rookie
-                  </button>
+                  {marketCategory !== "pokemon" ? (
+                    <button
+                      type="button"
+                      onClick={() => setOnlyRookie((v) => !v)}
+                      className={`rounded-xl border px-3 py-2 text-sm font-semibold ${onlyRookie ? "border-amber-400/30 bg-amber-500/15 text-amber-200" : "border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.06]"}`}
+                    >
+                      Rookie
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => setOnlyMemorabilia((v) => !v)}
@@ -650,7 +678,7 @@ export default function MarketPage() {
                   <div className="mt-4 space-y-2 text-sm text-slate-300">
                     <div className="text-base font-semibold text-white">{activeCard.player_name}</div>
                     <div>{[activeCard.year, activeCard.brand, activeCard.set_name].filter(Boolean).join(" · ")}</div>
-                    {(activeCard.team || activeCard.sport || activeCard.competition) ? <div>{[activeCard.team, activeCard.sport, activeCard.competition].filter(Boolean).join(" · ")}</div> : null}
+                    {isPokemonCard(activeCard) ? <div>Pokémon</div> : (activeCard.team || activeCard.sport || activeCard.competition) ? <div>{[activeCard.team, activeCard.sport, activeCard.competition].filter(Boolean).join(" · ")}</div> : null}
                     {activeCard.parallel ? <div><span className="text-slate-400">Parallel:</span> <span className="text-white">{activeCard.parallel}</span></div> : null}
                     <div><span className="text-slate-400">Card:</span> <span className="text-white">#{activeCard.card_number}</span></div>
                     {activeCard.serial_number_text ? <div><span className="text-slate-400">Serial:</span> <span className="text-white">{activeCard.serial_number_text}</span></div> : null}
