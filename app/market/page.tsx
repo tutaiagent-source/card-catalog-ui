@@ -330,15 +330,53 @@ export default function MarketPage() {
   }
 
   async function handlePostToEbay(card: MarketCard) {
-    const text = buildEbaySellPrefillText(card);
+    if (!card.id) return;
+    if (!supabaseConfigured || !supabase) return;
 
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
+
+    // If we can’t authenticate to CardCat, fall back to the manual flow.
+    if (!accessToken) {
+      const text = buildEbaySellPrefillText(card);
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        // ignore
+      }
+      window.open("https://www.ebay.com/sl/sell", "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    const res = await fetch("/api/ebay/listings/draft", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        cardId: card.id,
+        listingType: "auction",
+        auctionDurationDays: 7,
+      }),
+    });
+
+    const json: any = await res.json().catch(() => null);
+
+    // Not connected yet.
+    if (json && json.connected === false && json.connectUrl) {
+      window.open(json.connectUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    // Fallback: copy a sell-ready text block and open eBay.
+    const text = json?.prefillText || buildEbaySellPrefillText(card);
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      // Clipboard might be blocked on some browsers; opening eBay is still the primary action.
+      // ignore
     }
-
-    window.open("https://www.ebay.com/sl/sell", "_blank", "noopener,noreferrer");
+    window.open(json?.fallbackSellUrl || "https://www.ebay.com/sl/sell", "_blank", "noopener,noreferrer");
   }
 
   if (loading) {
@@ -794,13 +832,15 @@ export default function MarketPage() {
                         Comp check ↗
                       </a>
 
-                      <button
-                        type="button"
-                        onClick={() => void handlePostToEbay(activeCard)}
-                        className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/15"
-                      >
-                        Post to eBay ↗
-                      </button>
+                      {activeCard.user_id === user.id ? (
+                        <button
+                          type="button"
+                          onClick={() => void handlePostToEbay(activeCard)}
+                          className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/15"
+                        >
+                          Post to eBay ↗
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 </div>

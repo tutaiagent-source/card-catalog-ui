@@ -22,6 +22,7 @@ type CardSummary = {
 export default function AccountPage() {
   const { user, loading } = useSupabaseUser();
   const needsEmailVerification = !!user && !(user as any)?.email_confirmed_at;
+  const [ebayJustConnected, setEbayJustConnected] = useState(false);
   const { planPreview, setPlanPreview, isCollectorPreview } = usePlanPreview();
   const [cards, setCards] = useState<CardSummary[]>([]);
   const [realTier, setRealTier] = useState<"collector" | "pro" | "seller" | null>(null);
@@ -55,6 +56,17 @@ export default function AccountPage() {
   const [shopSavingVisibility, setShopSavingVisibility] = useState(false);
   const [shopVerificationStatusUi, setShopVerificationStatusUi] = useState<string>("unsubmitted");
   const [editingVerifiedShop, setEditingVerifiedShop] = useState(false);
+
+  const [ebayConnected, setEbayConnected] = useState(false);
+  const [ebayDisplayName, setEbayDisplayName] = useState<string | null>(null);
+  const [ebayChecking, setEbayChecking] = useState(false);
+  const [ebayConnecting, setEbayConnecting] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    setEbayJustConnected(sp.get("ebay") === "connected");
+  }, []);
 
   const shopInputsDisabled =
     shopVerificationStatusUi === "pending_review" ||
@@ -152,6 +164,34 @@ export default function AccountPage() {
     })();
   }, [user?.id, supabaseConfigured, supabase]);
 
+  useEffect(() => {
+    if (!user?.id || !supabaseConfigured || !supabase) return;
+
+    (async () => {
+      try {
+        setEbayChecking(true);
+        setEbayConnected(false);
+        setEbayDisplayName(null);
+
+        const { data: sessionData } = await supabase.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        if (!accessToken) return;
+
+        const res = await fetch("/api/ebay/status", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
+        const json: any = await res.json().catch(() => null);
+        setEbayConnected(Boolean(json?.connected));
+        setEbayDisplayName(json?.displayName ?? null);
+      } catch {
+        // ignore
+      } finally {
+        setEbayChecking(false);
+      }
+    })();
+  }, [user?.id, supabaseConfigured, supabase]);
+
   const catalogCardsCount = useMemo(
     () =>
       cards
@@ -245,6 +285,36 @@ export default function AccountPage() {
       window.location.href = payload.url;
     } catch (e: any) {
       setError(e?.message || "Checkout error");
+    }
+  };
+
+  const startEbayConnect = async () => {
+    if (!supabaseConfigured || !supabase || !user?.id) return;
+
+    setError("");
+    setMessage("");
+    setEbayConnecting(true);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Missing session token. Try signing out and back in.");
+
+      const res = await fetch("/api/ebay/oauth/start", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      const json: any = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || "Could not start eBay connect");
+
+      const redirectUrl = json?.redirectUrl;
+      if (!redirectUrl) throw new Error("eBay OAuth redirectUrl missing");
+
+      window.open(redirectUrl, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      setError(e?.message || "eBay connect error");
+    } finally {
+      setEbayConnecting(false);
     }
   };
 
@@ -1155,6 +1225,38 @@ export default function AccountPage() {
             <a href="/sold" className="rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-slate-900">
               Review sold cards
             </a>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
+          <h2 className="text-lg font-semibold">eBay integration</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Connect your eBay account to create auction/fixed-price drafts from your CardCat listings.
+          </p>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              {ebayChecking ? (
+                <div className="text-sm text-slate-300">Checking eBay connection…</div>
+              ) : ebayConnected ? (
+                <div className="text-sm text-emerald-200">
+                  Connected{ebayDisplayName ? ` to ${ebayDisplayName}` : ""}
+                </div>
+              ) : ebayJustConnected ? (
+                <div className="text-sm text-emerald-200">Connected to eBay (refreshing…) </div>
+              ) : (
+                <div className="text-sm text-slate-300">Not connected yet</div>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void startEbayConnect()}
+              disabled={ebayConnecting || ebayConnected}
+              className="rounded-xl border border-white/10 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {ebayConnecting ? "Connecting…" : ebayConnected ? "eBay connected" : "Connect eBay"}
+            </button>
           </div>
         </section>
 
