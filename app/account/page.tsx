@@ -36,6 +36,7 @@ export default function AccountPage() {
   const [resettingSales, setResettingSales] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [ebayError, setEbayError] = useState("");
   const [usernameDraft, setUsernameDraft] = useState("");
   const [allowMessages, setAllowMessages] = useState(true);
   const [marketVisibilityMode, setMarketVisibilityMode] = useState<"none" | "selected_cards" | "all_listed" | "whole_collection">("none");
@@ -293,6 +294,7 @@ export default function AccountPage() {
 
     setError("");
     setMessage("");
+    setEbayError("");
     setEbayConnecting(true);
 
     try {
@@ -310,9 +312,10 @@ export default function AccountPage() {
       const redirectUrl = json?.redirectUrl;
       if (!redirectUrl) throw new Error("eBay OAuth redirectUrl missing");
 
-      window.open(redirectUrl, "_blank", "noopener,noreferrer");
+      const w = window.open(redirectUrl, "_blank", "noopener,noreferrer");
+      if (!w) window.location.href = redirectUrl;
     } catch (e: any) {
-      setError(e?.message || "eBay connect error");
+      setEbayError(e?.message || "eBay connect error");
     } finally {
       setEbayConnecting(false);
     }
@@ -1258,6 +1261,12 @@ export default function AccountPage() {
               {ebayConnecting ? "Connecting…" : ebayConnected ? "eBay connected" : "Connect eBay"}
             </button>
           </div>
+
+          {ebayError ? (
+            <div className="mt-3 rounded-2xl border border-red-500/25 bg-red-500/[0.08] px-3 py-2 text-sm text-red-100">
+              {ebayError}
+            </div>
+          ) : null}
         </section>
 
         <section className="mt-6 rounded-2xl border border-red-500/20 bg-red-500/[0.05] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]">
