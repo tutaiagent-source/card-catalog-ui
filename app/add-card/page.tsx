@@ -1281,7 +1281,7 @@ export default function AddCardPage() {
                 {(card.game ?? "sports") === "pokemon" ? (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {!pokemonManualSetMode ? (
-                      <label className="block">
+                      <div className="block">
                         <div className="mb-1 text-sm text-slate-300">Pokémon set *</div>
                         <select
                           className="w-full rounded bg-slate-950 px-3 py-2"
@@ -1322,7 +1322,9 @@ export default function AddCardPage() {
 
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               setPokemonManualSetMode(true);
                               setSelectedPokemonSetId("");
                               setPokemonPrints([]);
@@ -1338,7 +1340,7 @@ export default function AddCardPage() {
                             Use manual set entry instead
                           </button>
                         </div>
-                      </label>
+                      </div>
                     ) : (
                       <div className="sm:col-span-2">
                         <div className="flex items-center justify-between gap-2">
