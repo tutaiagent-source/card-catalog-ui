@@ -132,10 +132,9 @@ function validate(card: Partial<Card>) {
     if (!year) missing.push("release year");
     if (!hasReference && !hasManualIdentity) missing.push("pokemon card");
 
-    // These should be auto-set, but validate anyway so a missing mapping doesn't create bad rows.
-    if (!String(card.card_number || "").trim()) missing.push("collector number");
-    if (!String(card.team || "").trim()) missing.push("team");
-    if (!String(card.sport || "").trim()) missing.push("sport");
+    // For Pokémon manual mode, team/sport may not be explicitly set by the user;
+    // they get normalized on save.
+    if (!String(card.card_number || "").trim() && !String(card.collector_number_raw || "").trim()) missing.push("collector number");
 
   } else {
     for (const f of requiredFields) {
@@ -675,6 +674,20 @@ export default function AddCardPage() {
       const autoGradeFinal = gradedYes ? (card.auto_grade == null || card.auto_grade === ("" as any) ? null : Number(card.auto_grade)) : null;
       const gradingCertNumberFinal = gradedYes ? String(card.grading_cert_number_text || "").trim() : "";
 
+      const isPokemon = (card.game ?? "sports") === "pokemon";
+
+      const playerNameForSave = isPokemon
+        ? String(card.display_title || card.player_name || "").trim()
+        : String(card.player_name || "").trim();
+
+      const cardNumberForSave = isPokemon
+        ? String(card.collector_number_raw || card.card_number || "").trim()
+        : String(card.card_number || "").trim();
+
+      const teamForSave = isPokemon ? "Pokemon" : String(card.team || "");
+      const sportForSave = isPokemon ? "Pokemon" : String(card.sport || "");
+      const competitionForSave = isPokemon ? "" : String(card.competition || "");
+
       const cleaned = normalizeCatalogTaxonomy({
         id: card.id ?? crypto.randomUUID(),
 
@@ -684,16 +697,16 @@ export default function AddCardPage() {
         display_title: card.display_title,
         collector_number_raw: card.collector_number_raw,
 
-        player_name: String(card.player_name || ""),
+        player_name: playerNameForSave,
         year: String(card.year || ""),
         brand: normalizedBrandSet.brand,
         set_name: normalizedBrandSet.set_name,
         parallel: normalizeParallelLabel(String(card.parallel || "n/a")),
 
-        card_number: String(card.card_number || ""),
-        team: String(card.team || ""),
-        sport: String(card.sport || ""),
-        competition: String(card.competition || ""),
+        card_number: cardNumberForSave,
+        team: teamForSave,
+        sport: sportForSave,
+        competition: competitionForSave,
 
         rookie: (card.rookie as YesNo) || "no",
         is_autograph: (card.is_autograph as YesNo) || "no",
