@@ -16,7 +16,8 @@ function buildEbaySellPrefillText(card: any) {
     .map((p: any) => String(p ?? "").trim())
     .filter(Boolean);
 
-  const price = card.asking_price != null ? formatMoney(Number(card.asking_price)) : "";
+  const startPriceRaw = card.asking_price ?? card.estimated_price;
+  const price = startPriceRaw != null ? formatMoney(Number(startPriceRaw)) : "";
 
   const lines: string[] = [];
   lines.push(`Title: ${titleParts.join(" ")}`);
@@ -35,6 +36,18 @@ function buildEbaySellPrefillText(card: any) {
   }
 
   return lines.join("\n");
+}
+
+function buildStagedSummary(card: any, listingType: string, auctionDurationDays: number) {
+  const startPriceRaw = card.asking_price ?? card.estimated_price;
+  const startPrice = startPriceRaw != null && Number.isFinite(Number(startPriceRaw)) ? Number(startPriceRaw) : null;
+
+  return {
+    listingType,
+    auctionDurationDays: listingType === "auction" ? auctionDurationDays : null,
+    startPrice,
+    currency: "USD",
+  };
 }
 
 export async function POST(req: Request) {
@@ -64,29 +77,13 @@ export async function POST(req: Request) {
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (!account) {
-      // Provide a connect URL if OAuth is not done yet.
-      const startRes = await fetch(`${process.env.NEXT_PUBLIC_APP_ORIGIN || ""}/api/ebay/oauth/start`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).catch(() => null);
-
-      if (startRes?.ok) {
-        const startJson: any = await startRes.json();
-        return NextResponse.json({
-          connected: false,
-          connectUrl: startJson?.redirectUrl,
-          reason: "not_connected",
-        });
-      }
-
-      return NextResponse.json({ connected: false, reason: "not_connected" });
-    }
+    const connected = Boolean(account);
 
     // Load the card so we can build a draft payload.
     const { data: card, error: cardErr } = await supabaseAdmin
       .from("cards")
       .select(
-        "id, user_id, player_name, year, brand, set_name, parallel, card_number, serial_number_text, team, sport, competition, rookie, is_autograph, has_memorabilia, graded, grade, grading_company, image_url, back_image_url, asking_price, notes"
+        "id, user_id, player_name, year, brand, set_name, parallel, card_number, serial_number_text, team, sport, competition, rookie, is_autograph, has_memorabilia, graded, grade, grading_company, image_url, back_image_url, asking_price, estimated_price, notes"
       )
       .eq("id", cardId)
       .eq("user_id", userId)
@@ -96,27 +93,64 @@ export async function POST(req: Request) {
     if (!card) return NextResponse.json({ error: "Card not found or not owned" }, { status: 404 });
 
     const prefillText = buildEbaySellPrefillText(card);
+    const stagedSummary = buildStagedSummary(card, listingType, auctionDurationDays);
 
-    // eBay draft creation is the next step and requires careful Selling API mapping.
-    // For now, we return a fallback so the user can still quickly list.
-    const ebayConfigured = Boolean(process.env.EBAY_OAUTH_CLIENT_ID && process.env.EBAY_OAUTH_CLIENT_SECRET);
-
-    // Record an audit row.
-    await supabaseAdmin.from("ebay_listing_drafts").insert({
+    const { data: stagedDraft, error: draftErr } = await supabaseAdmin
+      .from("ebay_listing_drafts")
+      .insert({
       user_id: userId,
       card_id: cardId,
       listing_type: listingType,
       auction_duration_days: listingType === "auction" ? auctionDurationDays : null,
-      start_price: card.asking_price != null ? Number(card.asking_price) : null,
-      status: "error",
+      start_price: stagedSummary.startPrice,
+      status: "staged",
       draft_url: null,
-      card_snapshot: { card },
-      error_message: ebayConfigured ? "EBAY_DRAFT_NOT_IMPLEMENTED" : "EBAY_NOT_CONFIGURED",
-    });
+      card_snapshot: {
+        card,
+        prefillText,
+        stagedSummary,
+        imageUrls: [card.image_url, card.back_image_url].filter(Boolean),
+      },
+    })
+      .select("id")
+      .maybeSingle();
+
+    if (draftErr) {
+      // Still allow the user to proceed even if staging persistence fails.
+      return NextResponse.json({
+        connected,
+        connectedRequired: false,
+        stagedDraftId: null,
+        stagedSummary,
+        prefillText,
+        fallbackSellUrl: "https://www.ebay.com/sl/sell",
+        stagingError: draftErr.message,
+      });
+    }
+
+    // Optionally provide a connect URL if OAuth is configured.
+    let connectUrl: string | null = null;
+    const canOAuth = Boolean(process.env.EBAY_OAUTH_CLIENT_ID && process.env.EBAY_OAUTH_CLIENT_SECRET && process.env.EBAY_OAUTH_SCOPES);
+    if (!connected && canOAuth && process.env.NEXT_PUBLIC_APP_ORIGIN) {
+      try {
+        const startRes = await fetch(`${process.env.NEXT_PUBLIC_APP_ORIGIN}/api/ebay/oauth/start`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (startRes.ok) {
+          const startJson: any = await startRes.json();
+          connectUrl = startJson?.redirectUrl || null;
+        }
+      } catch {
+        connectUrl = null;
+      }
+    }
 
     return NextResponse.json({
-      ok: false,
-      code: ebayConfigured ? "EBAY_DRAFT_NOT_IMPLEMENTED" : "EBAY_NOT_CONFIGURED",
+      ok: true,
+      connected,
+      connectUrl,
+      stagedDraftId: stagedDraft?.id || null,
+      stagedSummary,
       prefillText,
       fallbackSellUrl: "https://www.ebay.com/sl/sell",
     });

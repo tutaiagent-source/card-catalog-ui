@@ -154,9 +154,11 @@ export default function MarketPage() {
   const [loadingCards, setLoadingCards] = useState(false);
   const [messageStarting, setMessageStarting] = useState(false);
   const [error, setError] = useState("");
+  const [ebayStageNotice, setEbayStageNotice] = useState<string | null>(null);
 
   useEffect(() => {
     setShowBack(false);
+    setEbayStageNotice(null);
   }, [activeCard?.id]);
 
   useEffect(() => {
@@ -363,13 +365,28 @@ export default function MarketPage() {
 
     const json: any = await res.json().catch(() => null);
 
-    // Not connected yet.
+    if (json?.stagedDraftId && json?.stagedSummary) {
+      const summary = json.stagedSummary;
+      const durationPart =
+        summary.listingType === "auction" && summary.auctionDurationDays
+          ? `Auction · ${summary.auctionDurationDays} days`
+          : summary.listingType === "fixed"
+            ? "Fixed price"
+            : "";
+      const pricePart =
+        summary.startPrice != null && Number.isFinite(Number(summary.startPrice))
+          ? ` · ${formatMoney(Number(summary.startPrice))}`
+          : "";
+      setEbayStageNotice(`${durationPart}${pricePart}`.trim());
+    }
+
+    // If not connected, optionally jump to OAuth (only if backend provided a connect URL).
     if (json && json.connected === false && json.connectUrl) {
       window.open(json.connectUrl, "_blank", "noopener,noreferrer");
       return;
     }
 
-    // Fallback: copy a sell-ready text block and open eBay.
+    // Copy a sell-ready text block and open eBay.
     const text = json?.prefillText || buildEbaySellPrefillText(card);
     try {
       await navigator.clipboard.writeText(text);
@@ -842,6 +859,10 @@ export default function MarketPage() {
                         </button>
                       ) : null}
                     </div>
+
+                    {ebayStageNotice ? (
+                      <div className="mt-2 text-xs text-emerald-200">eBay draft staged: {ebayStageNotice}</div>
+                    ) : null}
                   </div>
                 </div>
               </div>

@@ -123,6 +123,7 @@ export default function SellerProfilePage() {
   const [cards, setCards] = useState<SellerCard[]>([]);
   const [loadingCards, setLoadingCards] = useState(false);
   const [error, setError] = useState("");
+  const [ebayStageNotice, setEbayStageNotice] = useState<string | null>(null);
 
   // Bundled offer selection (buyer -> this seller)
   const [bundleMode, setBundleMode] = useState(false);
@@ -147,6 +148,7 @@ export default function SellerProfilePage() {
 
   useEffect(() => {
     setShowBack(false);
+    setEbayStageNotice(null);
   }, [activeCard?.id]);
 
   const isOwnProfile = Boolean(seller?.id && user?.id && seller.id === user.id);
@@ -462,6 +464,21 @@ export default function SellerProfilePage() {
     });
 
     const json: any = await res.json().catch(() => null);
+
+    if (json?.stagedDraftId && json?.stagedSummary) {
+      const summary = json.stagedSummary;
+      const durationPart =
+        summary.listingType === "auction" && summary.auctionDurationDays
+          ? `Auction · ${summary.auctionDurationDays} days`
+          : summary.listingType === "fixed"
+            ? "Fixed price"
+            : "";
+      const pricePart =
+        summary.startPrice != null && Number.isFinite(Number(summary.startPrice))
+          ? ` · ${formatMoney(Number(summary.startPrice))}`
+          : "";
+      setEbayStageNotice(`${durationPart}${pricePart}`.trim());
+    }
 
     if (json && json.connected === false && json.connectUrl) {
       window.open(json.connectUrl, "_blank", "noopener,noreferrer");
@@ -1129,6 +1146,10 @@ export default function SellerProfilePage() {
                       </button>
                     ) : null}
                   </div>
+
+                  {ebayStageNotice ? (
+                    <div className="mt-2 text-xs text-emerald-200">eBay draft staged: {ebayStageNotice}</div>
+                  ) : null}
                 </div>
               </div>
             </div>
