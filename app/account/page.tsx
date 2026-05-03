@@ -62,6 +62,7 @@ export default function AccountPage() {
   const [ebayDisplayName, setEbayDisplayName] = useState<string | null>(null);
   const [ebayChecking, setEbayChecking] = useState(false);
   const [ebayConnecting, setEbayConnecting] = useState(false);
+  const [ebayDebugAuthUrl, setEbayDebugAuthUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -295,6 +296,7 @@ export default function AccountPage() {
     setError("");
     setMessage("");
     setEbayError("");
+    setEbayDebugAuthUrl(null);
     setEbayConnecting(true);
 
     try {
@@ -311,6 +313,8 @@ export default function AccountPage() {
 
       const redirectUrl = json?.redirectUrl;
       if (!redirectUrl) throw new Error("eBay OAuth redirectUrl missing");
+
+      setEbayDebugAuthUrl(redirectUrl);
 
       const w = window.open(redirectUrl, "_blank", "noopener,noreferrer");
       if (!w) window.location.href = redirectUrl;
@@ -1265,6 +1269,17 @@ export default function AccountPage() {
           {ebayError ? (
             <div className="mt-3 rounded-2xl border border-red-500/25 bg-red-500/[0.08] px-3 py-2 text-sm text-red-100">
               {ebayError}
+            </div>
+          ) : null}
+
+          {ebayDebugAuthUrl ? (
+            <div className="mt-3 rounded-2xl border border-white/10 bg-slate-950/30 p-3">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">eBay OAuth URL (debug)</div>
+              <textarea
+                readOnly
+                value={ebayDebugAuthUrl}
+                className="mt-2 w-full resize-none rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-[12px] text-slate-200 outline-none"
+              />
             </div>
           ) : null}
         </section>
