@@ -305,6 +305,8 @@ export default function AddCardPage() {
   const [pokemonPrintsLoading, setPokemonPrintsLoading] = useState(false);
   const [selectedPokemonSetId, setSelectedPokemonSetId] = useState<string>("");
   const [pokemonManualSetMode, setPokemonManualSetMode] = useState(false);
+  const [pokemonSetsError, setPokemonSetsError] = useState<string>("");
+  const [pokemonPrintsError, setPokemonPrintsError] = useState<string>("");
 
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
@@ -422,6 +424,7 @@ export default function AddCardPage() {
     let cancelled = false;
     (async () => {
       setPokemonSetsLoading(true);
+      setPokemonSetsError("");
       try {
         const { data, error } = await supabase
           .from("pokemon_sets")
@@ -431,6 +434,7 @@ export default function AddCardPage() {
         if (!cancelled) setPokemonSets((data ?? []) as PokemonSet[]);
       } catch (e) {
         console.error("Failed to load pokemon_sets:", e);
+        if (!cancelled) setPokemonSetsError(e instanceof Error ? e.message : "Failed to load Pokémon sets.");
       } finally {
         if (!cancelled) setPokemonSetsLoading(false);
       }
@@ -452,6 +456,7 @@ export default function AddCardPage() {
     let cancelled = false;
     (async () => {
       setPokemonPrintsLoading(true);
+      setPokemonPrintsError("");
       try {
         const { data, error } = await supabase
           .from("pokemon_prints")
@@ -463,7 +468,10 @@ export default function AddCardPage() {
         if (!cancelled) setPokemonPrints((data ?? []) as PokemonPrint[]);
       } catch (e) {
         console.error("Failed to load pokemon_prints:", e);
-        if (!cancelled) setPokemonPrints([]);
+        if (!cancelled) {
+          setPokemonPrintsError(e instanceof Error ? e.message : "Failed to load Pokémon cards.");
+          setPokemonPrints([]);
+        }
       } finally {
         if (!cancelled) setPokemonPrintsLoading(false);
       }
@@ -1307,7 +1315,11 @@ export default function AddCardPage() {
                           ))}
                         </select>
 
-                        {pokemonSets.length ? (
+                        <div className="mt-2">
+                          {pokemonSetsError ? (
+                            <div className="text-xs text-red-300">{pokemonSetsError}</div>
+                          ) : null}
+
                           <button
                             type="button"
                             onClick={() => {
@@ -1321,11 +1333,11 @@ export default function AddCardPage() {
                                 display_title: "",
                               }));
                             }}
-                            className="mt-2 text-xs text-amber-200 hover:underline"
+                            className="mt-1 text-xs text-amber-200 hover:underline"
                           >
                             Use manual set entry instead
                           </button>
-                        ) : null}
+                        </div>
                       </label>
                     ) : (
                       <div className="sm:col-span-2">
