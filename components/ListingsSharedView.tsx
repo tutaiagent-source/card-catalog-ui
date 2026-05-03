@@ -94,8 +94,59 @@ export default function ListingsSharedView({
     return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(parts.join(" "))}&LH_Sold=1&LH_Complete=1`;
   }
 
+  function buildEbaySellPrefillText(card: SharedCard) {
+    const titleParts = [card.year, card.player_name, card.brand, card.set_name, card.parallel]
+      .map((p) => String(p ?? "").trim())
+      .filter(Boolean);
+
+    const conditionParts: string[] = [];
+    if (yes(card.is_autograph)) conditionParts.push("Auto");
+    if (yes(card.has_memorabilia)) conditionParts.push("Mem");
+    if (yes(card.graded) && card.grade != null) {
+      const company = card.grading_company ? ` (${card.grading_company})` : "";
+      conditionParts.push(`Graded ${card.grade}${company}`);
+    }
+
+    const price = card.asking_price != null ? formatMoney(Number(card.asking_price)) : "";
+
+    const lines: string[] = [];
+    lines.push(`Title: ${titleParts.join(" ")}`);
+    if (price) lines.push(`Price (starting): ${price}`);
+    if (conditionParts.length) lines.push(`Condition/Tags: ${conditionParts.join(", ")}`);
+    if (card.card_number) lines.push(`Card #: ${card.card_number}`);
+    if (card.serial_number_text) lines.push(`Serial: ${card.serial_number_text}`);
+    if (card.competition) lines.push(`Competition: ${card.competition}`);
+    if (card.team) lines.push(`Team: ${card.team}`);
+    if (card.sport) lines.push(`Sport/Category: ${card.sport}`);
+    if (card.parallel) lines.push(`Parallel: ${card.parallel}`);
+
+    if (card.image_url || card.back_image_url) {
+      lines.push("Image URLs:");
+      if (card.image_url) lines.push(`- ${card.image_url}`);
+      if (card.back_image_url) lines.push(`- ${card.back_image_url}`);
+    }
+
+    if (card.notes) {
+      const meta = parseSellerMeta(card.notes).publicNotes;
+      if (meta) lines.push(`Notes: ${meta}`);
+    }
+
+    return lines.join("\n");
+  }
+
   function yes(value?: string | null) {
     return String(value || "").toLowerCase() === "yes";
+  }
+
+  async function handlePostToEbay(card: SharedCard) {
+    const text = buildEbaySellPrefillText(card);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // ignore
+    }
+
+    window.open("https://www.ebay.com/sl/sell", "_blank", "noopener,noreferrer");
   }
 
   const sortedCards = useMemo(() => {
@@ -661,7 +712,6 @@ export default function ListingsSharedView({
 
                       {(() => {
                         const href = toUrl(activeCard.sale_platform);
-                        if (!href && !showCompCheck) return null;
                         return (
                           <div className="flex flex-wrap gap-2 pt-2">
                             {href ? (
@@ -674,6 +724,14 @@ export default function ListingsSharedView({
                                 Open listing ↗
                               </a>
                             ) : null}
+
+                            <button
+                              type="button"
+                              onClick={() => void handlePostToEbay(activeCard)}
+                              className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/15"
+                            >
+                              Post to eBay ↗
+                            </button>
 
                             {showCompCheck ? (
                               <a

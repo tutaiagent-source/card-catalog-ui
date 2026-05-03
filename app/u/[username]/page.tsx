@@ -80,6 +80,37 @@ function buildEbaySearchUrl(card: SellerCard) {
   return `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(parts.join(" "))}&LH_Sold=1&LH_Complete=1`;
 }
 
+function buildEbaySellPrefillText(card: SellerCard) {
+  const titleParts = [card.year, card.player_name, card.brand, card.set_name, card.parallel]
+    .map((p) => String(p ?? "").trim())
+    .filter(Boolean);
+
+  const price = card.asking_price != null ? formatMoney(Number(card.asking_price)) : "";
+  const lines: string[] = [];
+  lines.push(`Title: ${titleParts.join(" ")}`);
+  if (price) lines.push(`Price (starting): ${price}`);
+  // Seller-profile preview doesn’t include full grading/auto/mem fields, so we only prefill identity + price.
+  if (card.card_number) lines.push(`Card #: ${card.card_number}`);
+  if (card.serial_number_text) lines.push(`Serial: ${card.serial_number_text}`);
+  if (card.competition) lines.push(`Competition: ${card.competition}`);
+  if (card.team) lines.push(`Team: ${card.team}`);
+  if (card.sport) lines.push(`Sport/Category: ${card.sport}`);
+  if (card.parallel) lines.push(`Parallel: ${card.parallel}`);
+
+  if (card.image_url || card.back_image_url) {
+    lines.push("Image URLs:");
+    if (card.image_url) lines.push(`- ${card.image_url}`);
+    if (card.back_image_url) lines.push(`- ${card.back_image_url}`);
+  }
+
+  if (card.notes) {
+    const meta = parseSellerMeta(card.notes).publicNotes;
+    if (meta) lines.push(`Notes: ${meta}`);
+  }
+
+  return lines.join("\n");
+}
+
 export default function SellerProfilePage() {
   const params = useParams<{ username?: string }>();
   const routeUsername = String(params.username || "").trim();
@@ -397,6 +428,17 @@ export default function SellerProfilePage() {
     } finally {
       setMessageStarting(false);
     }
+  }
+
+  async function handlePostToEbay(card: SellerCard) {
+    const text = buildEbaySellPrefillText(card);
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Clipboard might be blocked; still open eBay.
+    }
+
+    window.open("https://www.ebay.com/sl/sell", "_blank", "noopener,noreferrer");
   }
 
   async function submitBundledOffer() {
@@ -1029,6 +1071,14 @@ export default function SellerProfilePage() {
                     >
                       Comp check ↗
                     </a>
+
+                    <button
+                      type="button"
+                      onClick={() => void handlePostToEbay(activeCard)}
+                      className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/15"
+                    >
+                      Post to eBay ↗
+                    </button>
 
                     {seller?.username && activeCard.user_id !== user.id ? (
                       <button
