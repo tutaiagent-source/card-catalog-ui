@@ -329,11 +329,12 @@ export default function AddCardPage() {
   const [playerNameActiveIndex, setPlayerNameActiveIndex] = useState(-1);
 
   useEffect(() => {
-    if (step === 1) playerNameRef.current?.focus();
+    const isPokemonCard = (card.game ?? "sports") === "pokemon";
+    if (step === 1 && !isPokemonCard) playerNameRef.current?.focus();
     else if (step === 2) cardNumberRef.current?.focus();
     else if (step === 3) rookieSelectRef.current?.focus();
     else if (step === 4) frontFileRef.current?.focus();
-  }, [step]);
+  }, [step, card.game]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -444,6 +445,29 @@ export default function AddCardPage() {
       cancelled = true;
     };
   }, [card.game]);
+
+  // If no sets are loaded (common right after switching to Pokémon),
+  // force manual set entry so the user can still complete the identity section.
+  useEffect(() => {
+    if ((card.game ?? "sports") !== "pokemon") return;
+    if (pokemonSetsLoading) return;
+    if (pokemonSets.length > 0) {
+      // Only switch away from manual if the user never opted in.
+      return;
+    }
+
+    // When sets are empty, show manual by default.
+    setPokemonManualSetMode(true);
+
+    // Also ensure the dropdown state doesn't block manual mapping.
+    setSelectedPokemonSetId("");
+    setCard((prev) => ({
+      ...prev,
+      pokemon_print_id: null,
+      collector_number_raw: prev.collector_number_raw ?? "",
+      display_title: prev.display_title ?? "",
+    }));
+  }, [card.game, pokemonSetsLoading, pokemonSets.length]);
 
   useEffect(() => {
     if ((card.game ?? "sports") !== "pokemon") return;
@@ -1305,7 +1329,7 @@ export default function AddCardPage() {
                               year,
                             }));
                           }}
-                          disabled={pokemonSetsLoading || pokemonPrintsLoading || !pokemonSets.length}
+                          disabled={pokemonSetsLoading || pokemonPrintsLoading}
                         >
                           <option value="">{pokemonSets.length ? "Select a set…" : "No sets loaded"}</option>
                           {pokemonSets.map((s) => (
