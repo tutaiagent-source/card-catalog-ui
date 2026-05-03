@@ -266,7 +266,7 @@ export default function MarketPage() {
 
       return haystack.includes(q);
     });
-  }, [cards, searchQuery, sellerFilter, sellerMap, profiles, listedRecency, priceMin, priceMax, onlyAutos, onlyGraded, onlyRookie, onlyMemorabilia]);
+  }, [cards, searchQuery, sellerFilter, sellerMap, profiles, listedRecency, priceMin, priceMax, onlyAutos, onlyGraded, onlyRookie, onlyMemorabilia, marketCategory]);
 
   async function handleMessageSeller(card: MarketCard) {
     const sellerUsername = String(sellerMap.get(card.user_id)?.username || "").trim();
