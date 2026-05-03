@@ -304,6 +304,7 @@ export default function AddCardPage() {
   const [pokemonSetsLoading, setPokemonSetsLoading] = useState(false);
   const [pokemonPrintsLoading, setPokemonPrintsLoading] = useState(false);
   const [selectedPokemonSetId, setSelectedPokemonSetId] = useState<string>("");
+  const [pokemonManualSetMode, setPokemonManualSetMode] = useState(false);
 
   const [frontFile, setFrontFile] = useState<File | null>(null);
   const [backFile, setBackFile] = useState<File | null>(null);
@@ -1245,6 +1246,7 @@ export default function AddCardPage() {
                       setCard((prev) => ({ ...prev, game: "sports" }));
                       setSelectedPokemonSetId("");
                       setPokemonPrints([]);
+                      setPokemonManualSetMode(false);
                     }}
                     className={`rounded-xl px-4 py-2 text-sm font-semibold ${
                       (card.game ?? "sports") === "sports" ? "bg-amber-500/15 text-amber-200" : "bg-slate-900 text-slate-400 hover:bg-slate-800"
@@ -1258,6 +1260,7 @@ export default function AddCardPage() {
                       setCard((prev) => ({ ...prev, game: "pokemon" }));
                       setSelectedPokemonSetId("");
                       setPokemonPrints([]);
+                      setPokemonManualSetMode(false);
                     }}
                     className={`rounded-xl px-4 py-2 text-sm font-semibold ${
                       (card.game ?? "sports") === "pokemon" ? "bg-amber-500/15 text-amber-200" : "bg-slate-900 text-slate-400 hover:bg-slate-800"
@@ -1269,31 +1272,116 @@ export default function AddCardPage() {
 
                 {(card.game ?? "sports") === "pokemon" ? (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <label className="block">
-                      <div className="mb-1 text-sm text-slate-300">Pokémon set *</div>
-                      <select
-                        className="w-full rounded bg-slate-950 px-3 py-2"
-                        value={selectedPokemonSetId}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setSelectedPokemonSetId(v);
-                          setCard((prev) => ({
-                            ...prev,
-                            pokemon_print_id: null,
-                            collector_number_raw: "",
-                            display_title: "",
-                          }));
-                        }}
-                        disabled={pokemonSetsLoading || pokemonPrintsLoading}
-                      >
-                        <option value="">Select a set…</option>
-                        {pokemonSets.map((s) => (
-                          <option key={s.id} value={s.id}>
-                            {s.set_code} · {s.set_name_en}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    {!pokemonManualSetMode ? (
+                      <label className="block">
+                        <div className="mb-1 text-sm text-slate-300">Pokémon set *</div>
+                        <select
+                          className="w-full rounded bg-slate-950 px-3 py-2"
+                          value={selectedPokemonSetId}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setSelectedPokemonSetId(v);
+
+                            const picked = pokemonSets.find((s) => s.id === v);
+                            const lang = String(card.language || "en");
+                            const setName = lang === "ja" ? String(picked?.set_name_ja || picked?.set_name_en || "") : String(picked?.set_name_en || "");
+                            const year = picked?.release_date ? String(new Date(picked.release_date).getFullYear()) : "";
+
+                            setCard((prev) => ({
+                              ...prev,
+                              pokemon_print_id: null,
+                              collector_number_raw: "",
+                              display_title: "",
+                              brand: picked?.set_code || "",
+                              set_name: setName,
+                              year,
+                            }));
+                          }}
+                          disabled={pokemonSetsLoading || pokemonPrintsLoading || !pokemonSets.length}
+                        >
+                          <option value="">{pokemonSets.length ? "Select a set…" : "No sets loaded"}</option>
+                          {pokemonSets.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.set_code} · {s.set_name_en}
+                            </option>
+                          ))}
+                        </select>
+
+                        {pokemonSets.length ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPokemonManualSetMode(true);
+                              setSelectedPokemonSetId("");
+                              setPokemonPrints([]);
+                              setCard((prev) => ({
+                                ...prev,
+                                pokemon_print_id: null,
+                                collector_number_raw: "",
+                                display_title: "",
+                              }));
+                            }}
+                            className="mt-2 text-xs text-amber-200 hover:underline"
+                          >
+                            Use manual set entry instead
+                          </button>
+                        ) : null}
+                      </label>
+                    ) : (
+                      <div className="sm:col-span-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="mb-1 text-sm text-slate-300">Manual Pokémon set *</div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPokemonManualSetMode(false);
+                            }}
+                            className="text-xs text-amber-200 hover:underline"
+                          >
+                            Back to dropdown
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <label className="block">
+                            <div className="mb-1 text-sm text-slate-300">Set code (brand) *</div>
+                            <input
+                              className="w-full rounded bg-slate-950 px-3 py-2"
+                              value={String(card.brand || "")}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setCard((prev) => ({ ...prev, brand: v }));
+                              }}
+                              placeholder="e.g. SVI"
+                            />
+                          </label>
+                          <label className="block">
+                            <div className="mb-1 text-sm text-slate-300">Release year (year) *</div>
+                            <input
+                              className="w-full rounded bg-slate-950 px-3 py-2"
+                              value={String(card.year || "")}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setCard((prev) => ({ ...prev, year: v }));
+                              }}
+                              placeholder="e.g. 2023"
+                            />
+                          </label>
+                          <label className="block sm:col-span-2">
+                            <div className="mb-1 text-sm text-slate-300">Set name (set_name) *</div>
+                            <input
+                              className="w-full rounded bg-slate-950 px-3 py-2"
+                              value={String(card.set_name || "")}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setCard((prev) => ({ ...prev, set_name: v }));
+                              }}
+                              placeholder="e.g. Scarlet & Violet"
+                            />
+                          </label>
+                        </div>
+                      </div>
+                    )}
 
                     <label className="block">
                       <div className="mb-1 text-sm text-slate-300">Language (default EN)</div>
