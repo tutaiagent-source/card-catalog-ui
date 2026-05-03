@@ -111,7 +111,7 @@ export async function POST(req: Request) {
         stagedSummary,
         imageUrls: [card.image_url, card.back_image_url].filter(Boolean),
       },
-    })
+      })
       .select("id")
       .maybeSingle();
 
@@ -126,6 +126,62 @@ export async function POST(req: Request) {
         fallbackSellUrl: "https://www.ebay.com/sl/sell",
         stagingError: draftErr.message,
       });
+    }
+
+    // Messaging integration (while OAuth is pending):
+    // If there’s an existing direct conversation for this card where the seller is a participant,
+    // drop a system-like update message so the buyer sees it in Messages.
+    const stagedDraftId = stagedDraft?.id ? String(stagedDraft.id) : null;
+    if (stagedDraftId) {
+      const existing = await supabaseAdmin
+        .from("messages")
+        .select("id")
+        .eq("sender_user_id", userId)
+        .ilike("body", `%${stagedDraftId}%`)
+        .limit(1);
+
+      const alreadySent = Boolean(existing?.data?.length);
+
+      if (!alreadySent) {
+        const { data: cpRows } = await supabaseAdmin
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("user_id", userId);
+
+        const conversationIds = Array.from(new Set((cpRows ?? []).map((r: any) => String(r.conversation_id || "")).filter(Boolean)));
+
+        if (conversationIds.length) {
+          const { data: convRows } = await supabaseAdmin
+            .from("conversations")
+            .select("id")
+            .in("id", conversationIds)
+            .eq("conversation_type", "direct")
+            .eq("context_card_id", cardId);
+
+          const directConversationIds = Array.from(new Set((convRows ?? []).map((r: any) => String(r.id || "")).filter(Boolean)));
+
+          if (directConversationIds.length) {
+            const durationPart =
+              stagedSummary.listingType === "auction" && stagedSummary.auctionDurationDays
+                ? `Auction · ${stagedSummary.auctionDurationDays} days`
+                : stagedSummary.listingType === "fixed"
+                  ? "Fixed price"
+                  : "";
+            const pricePart = stagedSummary.startPrice != null ? ` · ${formatMoney(Number(stagedSummary.startPrice))}` : "";
+            const body = `eBay draft staged (id: ${stagedDraftId}): ${durationPart}${pricePart}`.trim();
+
+            if (body.length <= 5000) {
+              await supabaseAdmin.from("messages").insert(
+                directConversationIds.map((cid: string) => ({
+                  conversation_id: cid,
+                  sender_user_id: userId,
+                  body,
+                }))
+              );
+            }
+          }
+        }
+      }
     }
 
     // Optionally provide a connect URL if OAuth is configured.
