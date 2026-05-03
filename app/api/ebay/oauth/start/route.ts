@@ -37,12 +37,20 @@ export async function GET(req: Request) {
 
     const userId = authUser.user.id;
 
-    const clientId = process.env.EBAY_OAUTH_CLIENT_ID;
-    const clientSecret = process.env.EBAY_OAUTH_CLIENT_SECRET;
-    const authorizeUrl = process.env.EBAY_OAUTH_AUTHORIZE_URL || "https://signin.ebay.com/oauth2/authorize";
-    const redirectPath = process.env.EBAY_OAUTH_REDIRECT_PATH || "/api/ebay/oauth/callback";
-    const scopes = process.env.EBAY_OAUTH_SCOPES;
-    const stateSecret = process.env.EBAY_OAUTH_STATE_SECRET || clientSecret;
+    const cleanEnv = (v: string | undefined) => {
+      const t = String(v ?? "").trim();
+      if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
+        return t.slice(1, -1);
+      }
+      return t;
+    };
+
+    const clientId = cleanEnv(process.env.EBAY_OAUTH_CLIENT_ID);
+    const clientSecret = cleanEnv(process.env.EBAY_OAUTH_CLIENT_SECRET);
+    const authorizeUrl = cleanEnv(process.env.EBAY_OAUTH_AUTHORIZE_URL) || "https://signin.ebay.com/oauth2/authorize";
+    const redirectPath = cleanEnv(process.env.EBAY_OAUTH_REDIRECT_PATH) || "/api/ebay/oauth/callback";
+    const scopes = cleanEnv(process.env.EBAY_OAUTH_SCOPES);
+    const stateSecret = cleanEnv(process.env.EBAY_OAUTH_STATE_SECRET) || clientSecret;
 
     if (!clientId || !clientSecret || !scopes || !stateSecret) {
       return NextResponse.json(

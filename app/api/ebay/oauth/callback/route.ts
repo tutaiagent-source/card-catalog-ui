@@ -30,11 +30,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing code or state" }, { status: 400 });
     }
 
-    const clientId = process.env.EBAY_OAUTH_CLIENT_ID;
-    const clientSecret = process.env.EBAY_OAUTH_CLIENT_SECRET;
-    const tokenUrl = process.env.EBAY_OAUTH_TOKEN_URL || "https://api.ebay.com/identity/v1/oauth2/token";
-    const redirectPath = process.env.EBAY_OAUTH_REDIRECT_PATH || "/api/ebay/oauth/callback";
-    const stateSecret = process.env.EBAY_OAUTH_STATE_SECRET || clientSecret;
+    const cleanEnv = (v: string | undefined) => {
+      const t = String(v ?? "").trim();
+      if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
+        return t.slice(1, -1);
+      }
+      return t;
+    };
+
+    const clientId = cleanEnv(process.env.EBAY_OAUTH_CLIENT_ID);
+    const clientSecret = cleanEnv(process.env.EBAY_OAUTH_CLIENT_SECRET);
+    const tokenUrl = cleanEnv(process.env.EBAY_OAUTH_TOKEN_URL) || "https://api.ebay.com/identity/v1/oauth2/token";
+    const redirectPath = cleanEnv(process.env.EBAY_OAUTH_REDIRECT_PATH) || "/api/ebay/oauth/callback";
+    const stateSecret = cleanEnv(process.env.EBAY_OAUTH_STATE_SECRET) || clientSecret;
 
     if (!clientId || !clientSecret || !stateSecret) {
       return NextResponse.json({ error: "eBay OAuth not configured" }, { status: 500 });
