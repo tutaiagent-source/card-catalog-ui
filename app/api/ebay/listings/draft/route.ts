@@ -326,14 +326,27 @@ async function createEbayDraftFromCard({
   // Explicitly set to avoid ambiguity.
   ebayHeaders1.set("Accept-Language", "en-US");
   // Ensure no other language-related variants are present.
-  ebayHeaders1.delete("accept-language");
   ebayHeaders1.delete("language");
 
   const actualHeaders1 = Object.fromEntries(ebayHeaders1.entries());
   const safeActualHeaders1: Record<string, any> = {};
   for (const [k, v] of Object.entries(actualHeaders1)) {
-    safeActualHeaders1[k] = k.toLowerCase() === "authorization" ? "Bearer REDACTED" : v;
+    const lk = k.toLowerCase();
+    safeActualHeaders1[lk] = lk === "authorization" ? "Bearer REDACTED" : v;
   }
+  // Ensure exact expected keys exist (at least for debug).
+  if (!('accept-language' in safeActualHeaders1)) {
+    safeActualHeaders1['accept-language'] = 'MISSING';
+  }
+  if (!('accept' in safeActualHeaders1)) {
+    safeActualHeaders1['accept'] = 'MISSING';
+  }
+
+  // Make sure debug reflects the actual value set on the Headers object.
+  const alValue = ebayHeaders1.get('accept-language') || ebayHeaders1.get('Accept-Language');
+  if (alValue) safeActualHeaders1['accept-language'] = alValue;
+  const acceptValue = ebayHeaders1.get('accept');
+  if (acceptValue) safeActualHeaders1['accept'] = acceptValue;
   requestSnapshot.actualHeadersInventoryItem = safeActualHeaders1;
 
   const itemRes = await fetch(inventoryItemUrl, {
@@ -408,14 +421,18 @@ async function createEbayDraftFromCard({
   ebayHeaders2.set("Accept", "application/json");
   // Explicitly set to avoid ambiguity.
   ebayHeaders2.set("Accept-Language", "en-US");
-  ebayHeaders2.delete("accept-language");
   ebayHeaders2.delete("language");
 
   const actualHeaders2 = Object.fromEntries(ebayHeaders2.entries());
   const safeActualHeaders2: Record<string, any> = {};
   for (const [k, v] of Object.entries(actualHeaders2)) {
-    safeActualHeaders2[k] = k.toLowerCase() === "authorization" ? "Bearer REDACTED" : v;
+    const lk = k.toLowerCase();
+    safeActualHeaders2[lk] = lk === "authorization" ? "Bearer REDACTED" : v;
   }
+  const alValue2 = ebayHeaders2.get('accept-language') || ebayHeaders2.get('Accept-Language');
+  if (alValue2) safeActualHeaders2['accept-language'] = alValue2;
+  const acceptValue2 = ebayHeaders2.get('accept');
+  if (acceptValue2) safeActualHeaders2['accept'] = acceptValue2;
   requestSnapshot.actualHeadersOffer = safeActualHeaders2;
 
   const offerRes = await fetch(offerUrl, {
