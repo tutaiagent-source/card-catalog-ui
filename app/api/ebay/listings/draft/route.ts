@@ -153,7 +153,12 @@ async function createEbayDraftFromCard({
 }) {
   const tokenUrl = cleanEnv(process.env.EBAY_OAUTH_TOKEN_URL);
   const apiOrigin = tokenUrl ? new URL(tokenUrl).origin : "https://api.ebay.com";
-  const draftsUrl = `${apiOrigin}/sell/inventory/v1/drafts`;
+  const draftPaths = [
+    cleanEnv(process.env.EBAY_SELL_INVENTORY_DRAFTS_PATH) || "/sell/inventory/v1/drafts",
+    "/sell/inventory/v1/draft",
+  ].filter(Boolean);
+
+  const draftedAttemptUrls: string[] = [];
 
   const marketplaceId = cleanEnv(process.env.EBAY_SELL_MARKETPLACE_ID) || "EBAY_US";
   const categoryId = cleanEnv(process.env.EBAY_SELL_CATEGORY_ID) || "183454";
@@ -196,33 +201,54 @@ async function createEbayDraftFromCard({
     payload.listingDuration = `P${Number(auctionDurationDays)}D`;
   }
 
-  const draftRes = await fetch(draftsUrl, {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${ebayAccessToken}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  for (const draftPath of draftPaths) {
+    const draftsUrl = `${apiOrigin}${draftPath}`;
+    draftedAttemptUrls.push(draftsUrl);
 
-  const draftJson: any = await draftRes.json().catch(() => null);
-  if (!draftRes.ok) {
+    const draftRes = await fetch(draftsUrl, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${ebayAccessToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const draftJson: any = await draftRes.json().catch(() => null);
+
+    if (draftRes.ok) {
+      const draftId = draftJson?.draftId || draftJson?.inventoryItemId || draftJson?.id || null;
+      const draftUrl = draftId
+        ? `https://www.ebay.com/lstng?draftId=${encodeURIComponent(String(draftId))}&mode=AddItem`
+        : null;
+
+      return { draftUrl, draftId, error: null };
+    }
+
+    // Try alternate endpoint if it's clearly a 404.
+    if (draftRes.status === 404) continue;
+
     return {
       draftUrl: null as string | null,
       draftId: null as string | null,
       error: {
         status: draftRes.status,
         response: draftJson,
+        attemptedUrls: draftedAttemptUrls,
       },
     };
   }
 
-  const draftId = draftJson?.draftId || draftJson?.inventoryItemId || draftJson?.id || null;
-  const draftUrl = draftId
-    ? `https://www.ebay.com/lstng?draftId=${encodeURIComponent(String(draftId))}&mode=AddItem`
-    : null;
+  return {
+    draftUrl: null as string | null,
+    draftId: null as string | null,
+    error: {
+      status: 404,
+      response: { message: "Resource not found" },
+      attemptedUrls: draftedAttemptUrls,
+    },
+  };
 
-  return { draftUrl, draftId, error: null };
 }
 
 export async function POST(req: Request) {
