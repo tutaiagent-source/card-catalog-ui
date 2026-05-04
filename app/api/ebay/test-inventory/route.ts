@@ -456,6 +456,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
+      publishDebugMarker: "PUBLISH_STEP_ENABLED",
       env,
       tokenScopes: scopes,
       hasSellInventoryScope,
