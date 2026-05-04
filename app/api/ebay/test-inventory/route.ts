@@ -386,27 +386,54 @@ export async function POST(req: Request) {
           {
             url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publish`,
             method: "POST",
-            body: { item: { country: publishCountry }, merchantLocation: { country: publishCountry } },
+            body: {
+              item: { country: publishCountry, Country: publishCountry },
+              Item: { Country: publishCountry },
+              merchantLocation: { country: publishCountry },
+              country: publishCountry,
+            },
           },
           {
             url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publishOffer`,
             method: "POST",
-            body: { item: { country: publishCountry }, merchantLocation: { country: publishCountry } },
+            body: {
+              item: { country: publishCountry, Country: publishCountry },
+              Item: { Country: publishCountry },
+              merchantLocation: { country: publishCountry },
+              country: publishCountry,
+            },
           },
           {
             url: `${apiOrigin}/sell/inventory/v1/publishOffer`,
             method: "POST",
-            body: { offerId: String(offerId), item: { country: publishCountry }, merchantLocation: { country: publishCountry } },
+            body: {
+              offerId: String(offerId),
+              item: { country: publishCountry, Country: publishCountry },
+              Item: { Country: publishCountry },
+              merchantLocation: { country: publishCountry },
+              country: publishCountry,
+            },
           },
           {
             url: `${apiOrigin}/sell/inventory/v1/publish_offer`,
             method: "POST",
-            body: { offerId: String(offerId), item: { country: publishCountry }, merchantLocation: { country: publishCountry } },
+            body: {
+              offerId: String(offerId),
+              item: { country: publishCountry, Country: publishCountry },
+              Item: { Country: publishCountry },
+              merchantLocation: { country: publishCountry },
+              country: publishCountry,
+            },
           },
           {
             url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publish`,
             method: "PUT",
-            body: { item: { country: publishCountry }, merchantLocation: { country: publishCountry } },
+            body: {
+              item: { country: publishCountry, Country: publishCountry },
+              Item: { Country: publishCountry },
+              merchantLocation: { country: publishCountry },
+              country: publishCountry,
+            },
           },
         ];
 
