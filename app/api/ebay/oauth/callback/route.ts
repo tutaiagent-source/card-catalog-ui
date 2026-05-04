@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { cookies } from "next/headers";
 
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 
@@ -24,7 +25,13 @@ export async function GET(req: Request) {
 
     const url = new URL(req.url);
     const code = url.searchParams.get("code");
-    const state = url.searchParams.get("state");
+
+    // eBay is not consistently echoing back the `state` param.
+    // Recover it from the HttpOnly cookie set during /oauth/start.
+    const cookieStore = await cookies();
+    const stateCookie = cookieStore.get("ebay_oauth_state")?.value;
+    const stateFromQuery = url.searchParams.get("state");
+    const state = stateFromQuery || stateCookie || null;
 
     if (!code || !state) {
       return NextResponse.json({ error: "Missing code or state" }, { status: 400 });
@@ -114,8 +121,17 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Failed to store eBay tokens", details: upsert.error.message }, { status: 500 });
     }
 
-    // Basic redirect back to account.
-    return NextResponse.redirect(`${origin}/account?ebay=connected`);
+    // Basic redirect back to account, and clear the state cookie.
+    const res = NextResponse.redirect(`${origin}/account?ebay=connected`);
+    const secure = origin.startsWith("https://");
+    res.cookies.set("ebay_oauth_state", "", {
+      httpOnly: true,
+      secure,
+      sameSite: "lax",
+      path: "/api/ebay/oauth/callback",
+      maxAge: 0,
+    });
+    return res;
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Unknown error" }, { status: 500 });
   }

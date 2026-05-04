@@ -78,7 +78,21 @@ export async function GET(req: Request) {
     url.searchParams.set("scope", scopes);
     url.searchParams.set("state", state);
 
-    return NextResponse.json({ redirectUrl: url.toString() });
+    const res = NextResponse.json({ redirectUrl: url.toString() });
+
+    // eBay is not consistently echoing back the `state` param.
+    // Store it in a short-lived, HttpOnly cookie so we can recover it
+    // on the callback even when the querystring omits `state`.
+    const secure = origin.startsWith("https://");
+    res.cookies.set("ebay_oauth_state", state, {
+      httpOnly: true,
+      secure,
+      sameSite: "lax",
+      path: "/api/ebay/oauth/callback",
+      maxAge: 60 * 10, // 10 minutes
+    });
+
+    return res;
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Unknown error" }, { status: 500 });
   }
