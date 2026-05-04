@@ -207,7 +207,14 @@ async function createEbayDraftFromCard({
 
   const draftJson: any = await draftRes.json().catch(() => null);
   if (!draftRes.ok) {
-    return { draftUrl: null as string | null, draftId: null as string | null, error: draftJson };
+    return {
+      draftUrl: null as string | null,
+      draftId: null as string | null,
+      error: {
+        status: draftRes.status,
+        response: draftJson,
+      },
+    };
   }
 
   const draftId = draftJson?.draftId || draftJson?.inventoryItemId || draftJson?.id || null;
@@ -358,6 +365,7 @@ export async function POST(req: Request) {
 
     // If connected, attempt to create an actual eBay listing draft and return its URL.
     let fallbackSellUrl: string = "https://www.ebay.com/sl/sell";
+    let draftCreateError: any = null;
     if (connected && canOAuth && process.env.NEXT_PUBLIC_APP_ORIGIN) {
       try {
         const { accessToken } = await ensureEbayAccessToken({ supabaseAdmin, userId });
@@ -387,6 +395,7 @@ export async function POST(req: Request) {
                 .eq("id", stagedDraft.id);
             }
           } else if (error && stagedDraft?.id) {
+            draftCreateError = error;
             await supabaseAdmin
               .from("ebay_listing_drafts")
               .update({
@@ -394,6 +403,8 @@ export async function POST(req: Request) {
                 error_message: typeof error === "string" ? error : JSON.stringify(error).slice(0, 4000),
               })
               .eq("id", stagedDraft.id);
+          } else if (error) {
+            draftCreateError = error;
           }
         }
       } catch (e: any) {
@@ -423,6 +434,7 @@ export async function POST(req: Request) {
       stagedSummary,
       prefillText,
       fallbackSellUrl,
+      draftCreateError,
     });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Unknown error" }, { status: 500 });
