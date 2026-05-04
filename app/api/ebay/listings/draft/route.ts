@@ -168,14 +168,24 @@ async function createEbayDraftFromCard({
   const draftedAttemptUrls: string[] = [];
 
   const marketplaceId = cleanEnv(process.env.EBAY_SELL_MARKETPLACE_ID) || "EBAY_US";
-  const categoryId = cleanEnv(process.env.EBAY_SELL_CATEGORY_ID) || "183454";
-  const conditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID) || "3000";
+  // MVP taxonomy mapping (sports singles on eBay US)
+  // Default: Sports Trading Cards → Single Cards (CCG Individual Cards leaf)
+  const categoryId = cleanEnv(process.env.EBAY_SELL_CATEGORY_ID) || "261328";
+
+  // eBay condition mapping for trading cards
+  const gradedConditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_GRADED) || "2750";
+  const ungradedConditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_UNGRADED) || "4000";
+
+  const legacyConditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID);
+  const isGraded = Boolean(card?.graded) || Boolean(card?.grade) || Boolean(card?.grading_company);
+  const conditionId = legacyConditionId || (isGraded ? gradedConditionId : ungradedConditionId);
+
+  // For MVP, prefer the exact mapped conditionId. Only expand to candidates
+  // if explicitly configured.
   const conditionCandidatesEnv = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_CANDIDATES);
   const conditionCandidates = Array.from(
     new Set(
-      (conditionCandidatesEnv ? conditionCandidatesEnv.split(/\s+/).filter(Boolean) : [])
-        .concat([conditionId, "4000", "1000", "5000"])
-        .map(String)
+      (conditionCandidatesEnv ? conditionCandidatesEnv.split(/\s+/).filter(Boolean) : [conditionId]).map(String)
     )
   );
 
