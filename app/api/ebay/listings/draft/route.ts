@@ -153,6 +153,7 @@ async function createEbayDraftFromCard({
 }) {
   const tokenUrl = cleanEnv(process.env.EBAY_OAUTH_TOKEN_URL);
   const apiOrigin = tokenUrl ? new URL(tokenUrl).origin : "https://api.ebay.com";
+
   const defaultPaths = [
     "/sell/inventory/v1/drafts",
     "/sell/inventory/v1/inventory_item/drafts",
@@ -173,24 +174,29 @@ async function createEbayDraftFromCard({
   const title = buildCardTitle(card);
   const description = buildEbaySellPrefillText(card);
 
-  // eBay schema for draft creation can be strict, but we start with a minimal
-  // payload. If the API responds with missing required fields, we’ll capture
-  // the error and fall back to the manual flow.
+  const requestSnapshot = {
+    marketplaceId,
+    format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
+    categoryId,
+    conditionId,
+    startPrice,
+    availableQuantity: Number(card.quantity || 1),
+    listingDuration: listingType === "auction" ? `P${Number(auctionDurationDays)}D` : null,
+  };
+
+  // Start with a minimal draft payload.
+  // If eBay responds with validation errors, we’ll adjust.
   const payload: any = {
     sku: String(card.id || Date.now()),
     marketplaceId,
     format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
-    availableQuantity: {
-      value: Number(card.quantity || 1),
-    },
+    availableQuantity: { value: Number(card.quantity || 1) },
     listingDescription: {
       title,
       description,
     },
     categoryId,
-    condition: {
-      conditionId,
-    },
+    condition: { conditionId },
     imageUrls: [card.image_url, card.back_image_url].filter(Boolean),
   };
 
@@ -204,8 +210,6 @@ async function createEbayDraftFromCard({
   }
 
   if (listingType === "auction" && auctionDurationDays) {
-    // Draft payloads commonly accept ISO8601 durations (e.g. P7D). If eBay
-    // rejects it, we’ll capture the error and fall back.
     payload.listingDuration = `P${Number(auctionDurationDays)}D`;
   }
 
@@ -229,11 +233,9 @@ async function createEbayDraftFromCard({
       const draftUrl = draftId
         ? `https://www.ebay.com/lstng?draftId=${encodeURIComponent(String(draftId))}&mode=AddItem`
         : null;
+      return { draftUrl, draftId, error: null };
+    }
 
-  return { draftUrl, draftId, error: null };
-}
-
-    // Try alternate endpoint if it's clearly a 404.
     if (draftRes.status === 404) continue;
 
     return {
@@ -243,6 +245,7 @@ async function createEbayDraftFromCard({
         status: draftRes.status,
         response: draftJson,
         attemptedUrls: draftedAttemptUrls,
+        requestSnapshot,
       },
     };
   }
@@ -254,9 +257,9 @@ async function createEbayDraftFromCard({
       status: 404,
       response: { message: "Resource not found" },
       attemptedUrls: draftedAttemptUrls,
+      requestSnapshot,
     },
   };
-
 }
 
 export async function POST(req: Request) {

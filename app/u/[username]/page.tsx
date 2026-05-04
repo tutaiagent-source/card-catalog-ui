@@ -1177,6 +1177,18 @@ export default function SellerProfilePage() {
                           Tried: {String(ebayDraftError.response.attemptedUrls[0])}
                         </div>
                       ) : null}
+
+                      {Array.isArray(ebayDraftError?.attemptedUrls) && ebayDraftError.attemptedUrls.length ? (
+                        <div className="mt-1 text-[11px] text-red-200/90">
+                          Tried: {String(ebayDraftError.attemptedUrls[0])}
+                        </div>
+                      ) : null}
+
+                      {ebayDraftError?.requestSnapshot ? (
+                        <div className="mt-1 text-[11px] text-red-200/90">
+                          Snapshot: {JSON.stringify(ebayDraftError.requestSnapshot)}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
