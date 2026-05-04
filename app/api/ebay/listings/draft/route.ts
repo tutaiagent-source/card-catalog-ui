@@ -573,12 +573,20 @@ async function createEbayDraftFromCard({
         })();
 
         const firstErr = pubJson?.errors?.[0];
-        const errMsg = firstErr?.message || pubJson?.message || pubJson?.error || null;
+        const errMsg =
+          firstErr?.message ||
+          firstErr?.longMessage ||
+          firstErr?.errorDescription ||
+          pubJson?.message ||
+          pubJson?.error ||
+          pubJson?.errors?.[0]?.message ||
+          null;
+        const fallbackErrText = !errMsg ? JSON.stringify(pubJson).slice(0, 800) : null;
         publishAttempts.push({
           url: cand.url,
           method: cand.method,
           status: publishRes.status,
-          errorMessage: errMsg ? String(errMsg).slice(0, 300) : null,
+          errorMessage: String(errMsg || fallbackErrText || "")?.slice(0, 300) || null,
         });
         if (!publishErrorMessage && !publishRes.ok) publishErrorMessage = publishAttempts[publishAttempts.length - 1].errorMessage;
 
