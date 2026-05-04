@@ -478,7 +478,7 @@ export default function SellerProfilePage() {
     if (json?.unpublishedOfferCreated && json?.unpublishedOffer) {
       const offer = json.unpublishedOffer;
       setEbayStageNotice(
-        `Unpublished eBay offer created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: unpublished_offer_created`
+        `Unpublished eBay offer created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: unpublished_offer_created · PUT inventory_item: ${offer.putInventorySucceeded ? "Yes" : "No"} · POST offer: ${offer.postOfferSucceeded ? "Yes" : "No"}`
       );
       return;
     }

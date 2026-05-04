@@ -480,7 +480,13 @@ async function createEbayDraftFromCard({
     // eBay returns errorId=25002 when an offer already exists for the same SKU.
     // In that case, we can safely reuse the existing offerId.
     if (errId === 25002 && offerIdFromParams) {
-      return { draftUrl: null as string | null, draftId: String(offerIdFromParams), error: null };
+      return {
+        draftUrl: null as string | null,
+        draftId: String(offerIdFromParams),
+        error: null,
+        putInventorySucceeded: true,
+        postOfferSucceeded: false,
+      };
     }
 
     return {
@@ -497,7 +503,13 @@ async function createEbayDraftFromCard({
   }
 
   const offerId = offerJson?.offerId || offerJson?.id || null;
-  return { draftUrl: null as string | null, draftId: offerId, error: null };
+  return {
+    draftUrl: null as string | null,
+    draftId: offerId,
+    error: null,
+    putInventorySucceeded: true,
+    postOfferSucceeded: true,
+  };
 }
 
 export async function POST(req: Request) {
@@ -641,7 +653,15 @@ export async function POST(req: Request) {
     // If connected, attempt to create an unpublished eBay offer via Inventory API.
     // Do NOT redirect to eBay listing UI from this flow.
     let fallbackSellUrl: string | null = "https://www.ebay.com/sl/sell";
-    let unpublishedOffer: { sku: string; offerId: string; status: string } | null = null;
+    let unpublishedOffer:
+      | {
+          sku: string;
+          offerId: string;
+          status: string;
+          putInventorySucceeded?: boolean;
+          postOfferSucceeded?: boolean;
+        }
+      | null = null;
     let draftCreateError: any = null;
   if (connected && canOAuth && process.env.NEXT_PUBLIC_APP_ORIGIN) {
       try {
@@ -656,7 +676,7 @@ export async function POST(req: Request) {
         draftCreateError = { status: 400, response: { errors: [{ message: "Missing start price (asking_price/estimated_price)" }] } };
       } else {
 
-          const { draftId, error } = await createEbayDraftFromCard({
+          const { draftId, error, putInventorySucceeded, postOfferSucceeded } = await createEbayDraftFromCard({
             ebayAccessToken: accessToken,
             tokenScopes,
             listingType,
@@ -671,6 +691,8 @@ export async function POST(req: Request) {
               sku: String(card.id || ""),
               offerId: offerIdStr,
               status: "unpublished_offer_created",
+              putInventorySucceeded: Boolean(putInventorySucceeded),
+              postOfferSucceeded: Boolean(postOfferSucceeded),
             };
 
             // Connected + successful Inventory API flow: stay in CardCat.
