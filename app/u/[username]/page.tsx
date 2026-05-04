@@ -1186,13 +1186,12 @@ export default function SellerProfilePage() {
                         <div>SKU: {String(ebayOfferCreated.sku || "")}</div>
                         <div>Offer ID: {String(ebayOfferCreated.offerId || "")}</div>
                         <div>Status: Unpublished</div>
-                        {ebayOfferCreated.verifiedCategoryId ? <div>Category ID: {String(ebayOfferCreated.verifiedCategoryId)}</div> : null}
-                        {ebayOfferCreated.verifiedMarketplaceId ? <div>Marketplace: {String(ebayOfferCreated.verifiedMarketplaceId)}</div> : null}
-                        {ebayOfferCreated.verifiedPriceValue != null ? (
-                          <div>
-                            Price: {String(ebayOfferCreated.verifiedPriceValue)} {String(ebayOfferCreated.verifiedPriceCurrency || "")}
-                          </div>
-                        ) : null}
+                        <div>Category ID: {String(ebayOfferCreated.verifiedCategoryId || "Not verified")}</div>
+                        <div>Marketplace: {String(ebayOfferCreated.verifiedMarketplaceId || "Not verified")}</div>
+                        <div>
+                          Price: {ebayOfferCreated.verifiedPriceValue != null ? String(ebayOfferCreated.verifiedPriceValue) : "Not verified"}
+                          {ebayOfferCreated.verifiedPriceCurrency ? ` ${String(ebayOfferCreated.verifiedPriceCurrency)}` : ""}
+                        </div>
                       </div>
 
                       <div className="mt-3 flex gap-2">
