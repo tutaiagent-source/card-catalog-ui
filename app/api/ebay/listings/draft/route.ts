@@ -165,9 +165,8 @@ async function createEbayDraftFromCard({
   const gradedConditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_GRADED) || "2750";
   const ungradedConditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_UNGRADED) || "4000";
 
-  const legacyConditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID);
-  const isGraded = Boolean(card?.graded) || Boolean(card?.grade) || Boolean(card?.grading_company);
-  const conditionId = legacyConditionId || (isGraded ? gradedConditionId : ungradedConditionId);
+  const isGraded = card?.graded === true;
+  const conditionId = isGraded ? gradedConditionId : ungradedConditionId;
 
   const listingDuration = listingType === "auction" ? `DAYS_${Number(auctionDurationDays)}` : "GTC";
 
@@ -215,7 +214,7 @@ async function createEbayDraftFromCard({
     // Graded: professional grader + grade (cert number optional)
     const grader = String(card?.grading_company || "").trim();
     const grade = card?.grade != null ? String(card.grade).trim() : "";
-    const cert = String(card?.grading_cert_number_text || card?.serial_number_text || "").trim();
+    const cert = String(card?.grading_cert_number_text || "").trim();
 
     if (grader) conditionDescriptors.push({ descriptorName: "Professional Grader", descriptorValue: grader });
     if (grade) conditionDescriptors.push({ descriptorName: "Grade", descriptorValue: grade });
@@ -306,6 +305,9 @@ async function createEbayDraftFromCard({
     headers: {
       authorization: `Bearer ${ebayAccessToken}`,
       "content-type": "application/json",
+      "content-language": "en-US",
+      accept: "application/json",
+      "accept-language": "en-US",
     },
     body: JSON.stringify(inventoryItemPayload),
   });
@@ -374,6 +376,9 @@ async function createEbayDraftFromCard({
     headers: {
       authorization: `Bearer ${ebayAccessToken}`,
       "content-type": "application/json",
+      "content-language": "en-US",
+      accept: "application/json",
+      "accept-language": "en-US",
     },
     body: JSON.stringify(offerPayload),
   });
