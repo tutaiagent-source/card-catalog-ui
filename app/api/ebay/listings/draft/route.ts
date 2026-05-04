@@ -323,15 +323,18 @@ async function createEbayDraftFromCard({
   ebayHeaders1.set("Content-Type", "application/json");
   ebayHeaders1.set("Content-Language", "en-US");
   ebayHeaders1.set("Accept", "application/json");
-  ebayHeaders1.delete("Accept-Language");
+  // Explicitly set to avoid ambiguity.
+  ebayHeaders1.set("Accept-Language", "en-US");
+  // Ensure no other language-related variants are present.
   ebayHeaders1.delete("accept-language");
   ebayHeaders1.delete("language");
 
   const actualHeaders1 = Object.fromEntries(ebayHeaders1.entries());
-  requestSnapshot.actualHeadersInventoryItem = {
-    ...actualHeaders1,
-    Authorization: "Bearer REDACTED",
-  };
+  const safeActualHeaders1: Record<string, any> = {};
+  for (const [k, v] of Object.entries(actualHeaders1)) {
+    safeActualHeaders1[k] = k.toLowerCase() === "authorization" ? "Bearer REDACTED" : v;
+  }
+  requestSnapshot.actualHeadersInventoryItem = safeActualHeaders1;
 
   const itemRes = await fetch(inventoryItemUrl, {
     method: "PUT",
@@ -403,15 +406,17 @@ async function createEbayDraftFromCard({
   ebayHeaders2.set("Content-Type", "application/json");
   ebayHeaders2.set("Content-Language", "en-US");
   ebayHeaders2.set("Accept", "application/json");
-  ebayHeaders2.delete("Accept-Language");
+  // Explicitly set to avoid ambiguity.
+  ebayHeaders2.set("Accept-Language", "en-US");
   ebayHeaders2.delete("accept-language");
   ebayHeaders2.delete("language");
 
   const actualHeaders2 = Object.fromEntries(ebayHeaders2.entries());
-  requestSnapshot.actualHeadersOffer = {
-    ...actualHeaders2,
-    Authorization: "Bearer REDACTED",
-  };
+  const safeActualHeaders2: Record<string, any> = {};
+  for (const [k, v] of Object.entries(actualHeaders2)) {
+    safeActualHeaders2[k] = k.toLowerCase() === "authorization" ? "Bearer REDACTED" : v;
+  }
+  requestSnapshot.actualHeadersOffer = safeActualHeaders2;
 
   const offerRes = await fetch(offerUrl, {
     method: "POST",
