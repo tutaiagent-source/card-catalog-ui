@@ -382,10 +382,8 @@ async function createEbayDraftFromCard({
     format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
     availableQuantity: availableQty,
     categoryId,
-    listingDescription: {
-      title,
-      description,
-    },
+    // eBay Inventory API expects listingDescription as a string, not an object.
+    listingDescription: description,
     listingDuration,
     pricingSummary:
       listingType === "auction"
