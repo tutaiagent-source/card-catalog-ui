@@ -371,6 +371,37 @@ async function createEbayDraftFromCard({
 
   const inventoryItemId = itemJson?.inventoryItemId || itemJson?.id || null;
 
+  let categoryProductItemId: string | null = null;
+  let inventoryItemDetails: any = null;
+  let inventoryItemDetailsStatus: number | null = null;
+
+  // Best-effort: fetch inventory item details so we can build the correct
+  // eBay lstng URL (it needs categoryProductItemId).
+  try {
+    const detailsRes = await fetch(inventoryItemUrl, {
+      method: "GET",
+      headers: ebayHeaders1,
+    });
+    inventoryItemDetailsStatus = detailsRes.status;
+    const detailsText = await detailsRes.text();
+    try {
+      inventoryItemDetails = JSON.parse(detailsText);
+    } catch {
+      inventoryItemDetails = { raw: detailsText };
+    }
+
+    categoryProductItemId =
+      inventoryItemDetails?.categoryProductItemId ||
+      inventoryItemDetails?.category_product_item_id ||
+      inventoryItemDetails?.categoryProduct?.categoryProductItemId ||
+      null;
+  } catch {
+    // ignore
+  }
+
+  requestSnapshot.categoryProductItemId = categoryProductItemId;
+  requestSnapshot.inventoryItemDetailsStatus = inventoryItemDetailsStatus;
+
   // 2) Create offer (unpublished)
   const offerUrl = `${apiOrigin}/sell/inventory/v1/offer`;
 
@@ -449,7 +480,10 @@ async function createEbayDraftFromCard({
     // eBay returns errorId=25002 when an offer already exists for the same SKU.
     // In that case, we can safely reuse the existing offerId.
     if (errId === 25002 && offerIdFromParams) {
-      const draftUrl = `https://www.ebay.com/lstng?offerId=${encodeURIComponent(String(offerIdFromParams))}&mode=AddItem`;
+      const cp = categoryProductItemId
+        ? `&categoryProductItemId=${encodeURIComponent(String(categoryProductItemId))}`
+        : "";
+      const draftUrl = `https://www.ebay.com/lstng?offerId=${encodeURIComponent(String(offerIdFromParams))}&mode=AddItem${cp}`;
       return { draftUrl, draftId: String(offerIdFromParams), error: null };
     }
 
@@ -468,7 +502,7 @@ async function createEbayDraftFromCard({
 
   const offerId = offerJson?.offerId || offerJson?.id || null;
   const draftUrl = offerId
-    ? `https://www.ebay.com/lstng?offerId=${encodeURIComponent(String(offerId))}&mode=AddItem`
+    ? `https://www.ebay.com/lstng?offerId=${encodeURIComponent(String(offerId))}&mode=AddItem${categoryProductItemId ? `&categoryProductItemId=${encodeURIComponent(String(categoryProductItemId))}` : ""}`
     : null;
 
   return { draftUrl, draftId: offerId, error: null };
