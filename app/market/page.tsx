@@ -157,6 +157,8 @@ export default function MarketPage() {
   const [ebayStageNotice, setEbayStageNotice] = useState<string | null>(null);
   const [ebayDraftError, setEbayDraftError] = useState<any>(null);
   const [ebayOfferCreated, setEbayOfferCreated] = useState<any>(null);
+  const [ebayPublishLoading, setEbayPublishLoading] = useState(false);
+  const [ebayPublishError, setEbayPublishError] = useState<string | null>(null);
   const [ebayOfferCreating, setEbayOfferCreating] = useState(false);
 
   useEffect(() => {
@@ -165,7 +167,55 @@ export default function MarketPage() {
     setEbayDraftError(null);
     setEbayOfferCreated(null);
     setEbayOfferCreating(false);
+    setEbayPublishLoading(false);
+    setEbayPublishError(null);
   }, [activeCard?.id]);
+
+  async function handlePublishEbayOffer(card: MarketCard) {
+    if (!card.id) return;
+    if (!supabaseConfigured || !supabase) return;
+
+    setEbayPublishLoading(true);
+    setEbayPublishError(null);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error("Missing session token. Please sign out and back in.");
+
+      const res = await fetch("/api/ebay/publish-offer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ cardId: card.id }),
+      });
+
+      const json: any = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(json?.error || "Publish failed.");
+      }
+
+      if (json?.listingUrl) {
+        window.open(json.listingUrl, "_blank", "noopener,noreferrer");
+      }
+
+      setEbayOfferCreated((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              status: "published",
+              listingUrl: json?.listingUrl || null,
+            }
+          : prev
+      );
+    } catch (e: any) {
+      setEbayPublishError(e?.message || "Publish failed.");
+    } finally {
+      setEbayPublishLoading(false);
+    }
+  }
 
   useEffect(() => {
     if (!user?.id || !supabaseConfigured || !supabase) return;
@@ -917,7 +967,27 @@ export default function MarketPage() {
                         >
                           Back to CardCat listing
                         </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Explicit approval requested by user.
+                            const ok = window.confirm(
+                              "Publish this eBay offer now? This will make it live on eBay."
+                            );
+                            if (!ok) return;
+                            return void handlePublishEbayOffer(activeCard as any);
+                          }}
+                          disabled={ebayPublishLoading}
+                          className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs font-semibold text-emerald-200 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {ebayPublishLoading ? "Publishing…" : "Publish eBay Offer"}
+                        </button>
                       </div>
+
+                      {ebayPublishError ? (
+                        <div className="mt-2 text-[12px] text-red-200">{ebayPublishError}</div>
+                      ) : null}
                     </div>
                   ) : null}
 
