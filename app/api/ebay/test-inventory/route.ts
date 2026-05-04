@@ -195,11 +195,11 @@ export async function POST(req: Request) {
       Team: cardSafe.team,
       "Card Number": cardSafe.card_number || cardSafe.serial_number_text,
       "Parallel/Variety": cardSafe.parallel,
-      Country: cardSafe.country_code || cardSafe.country || process.env.EBAY_DEFAULT_COUNTRY || "US",
-      "Item.Country": cardSafe.country_code || cardSafe.country || process.env.EBAY_DEFAULT_COUNTRY || "US",
+      Country: cardSafe.country_code || cardSafe.country || process.env.EBAY_DEFAULT_COUNTRY || "United States",
+      "Item.Country": cardSafe.country_code || cardSafe.country || process.env.EBAY_DEFAULT_COUNTRY || "United States",
     };
 
-    const publishCountry = cardSafe.country_code || cardSafe.country || process.env.EBAY_DEFAULT_COUNTRY || "US";
+    const publishCountry = cardSafe.country_code || cardSafe.country || process.env.EBAY_DEFAULT_COUNTRY || "United States";
 
     let aspects = cleanEbayAspects(rawAspects);
     const rawAspectsEmpty = !aspects || Object.keys(aspects).length === 0;

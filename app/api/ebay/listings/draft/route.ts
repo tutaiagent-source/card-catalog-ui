@@ -197,11 +197,11 @@ async function createEbayDraftFromCard({
     "Card Number": card.card_number || card.serial_number_text,
     "Parallel/Variety": card.parallel,
     // Required for publishing the offer.
-    Country: (card.country_code || card.country || process.env.EBAY_DEFAULT_COUNTRY || "US"),
-    "Item.Country": (card.country_code || card.country || process.env.EBAY_DEFAULT_COUNTRY || "US"),
+    Country: (card.country_code || card.country || process.env.EBAY_DEFAULT_COUNTRY || "United States"),
+    "Item.Country": (card.country_code || card.country || process.env.EBAY_DEFAULT_COUNTRY || "United States"),
   };
 
-  const publishCountry = card.country_code || card.country || process.env.EBAY_DEFAULT_COUNTRY || "US";
+  const publishCountry = card.country_code || card.country || process.env.EBAY_DEFAULT_COUNTRY || "United States";
 
   const cleanEbayAspects = (raw: Record<string, any>) => {
     const cleaned: Record<string, string[]> = {};
