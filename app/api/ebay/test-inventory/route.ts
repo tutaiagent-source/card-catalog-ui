@@ -529,7 +529,7 @@ export async function POST(req: Request) {
       categoryProductItemId,
 
       inventoryItemDetailsProductAspects: inventoryItemDetails?.product?.aspects || null,
-      inventoryItemDetailsRawSample: inventoryItemDetails ? JSON.stringify(inventoryItemDetails).slice(0, 5000) : null,
+      inventoryItemDetailsRawSample: inventoryItemDetails ? JSON.stringify(inventoryItemDetails).slice(0, 20000) : null,
 
       didOfferRun,
       didOfferSucceed,
