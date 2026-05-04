@@ -870,7 +870,16 @@ export default function MarketPage() {
 
                   {ebayDraftError ? (
                     <div className="mt-1 text-xs text-red-200">
-                      eBay draft failed{typeof ebayDraftError?.status !== "undefined" ? ` (HTTP ${ebayDraftError?.status})` : ""}
+                      eBay draft failed
+                      {typeof ebayDraftError?.status !== "undefined" ? ` (HTTP ${ebayDraftError?.status})` : ""}:
+                      {" "}
+                      {String(
+                        ebayDraftError?.response?.errors?.[0]?.message ||
+                          ebayDraftError?.response?.error_description ||
+                          ebayDraftError?.response?.message ||
+                          ebayDraftError?.response?.error ||
+                          ""
+                      ).slice(0, 140)}
                     </div>
                   ) : null}
                 </div>
