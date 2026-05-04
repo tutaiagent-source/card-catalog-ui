@@ -77,26 +77,26 @@ async function ensureEbayAccessToken({
   const clientId = cleanEnv(process.env.EBAY_OAUTH_CLIENT_ID);
   const clientSecret = cleanEnv(process.env.EBAY_OAUTH_CLIENT_SECRET);
 
-  if (!clientId || !clientSecret) return { accessToken: null as string | null };
+  if (!clientId || !clientSecret) return { accessToken: null as string | null, scopes: null as string | null };
 
   const { data: account, error } = await supabaseAdmin
     .from("ebay_accounts")
-    .select("refresh_token, access_token, token_expires_at")
+    .select("refresh_token, access_token, token_expires_at, scopes")
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (error || !account) return { accessToken: null as string | null };
+  if (error || !account) return { accessToken: null as string | null, scopes: null as string | null };
 
   const expiresAt = account.token_expires_at ? new Date(account.token_expires_at).getTime() : null;
   const hasFreshAccess =
     account.access_token && expiresAt != null && expiresAt - Date.now() > 60 * 1000;
 
   if (hasFreshAccess) {
-    return { accessToken: String(account.access_token) };
+    return { accessToken: String(account.access_token), scopes: account.scopes ? String(account.scopes) : null };
   }
 
   const refreshToken = account.refresh_token;
-  if (!refreshToken) return { accessToken: null as string | null };
+  if (!refreshToken) return { accessToken: null as string | null, scopes: account.scopes ? String(account.scopes) : null };
 
   const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
   const body = new URLSearchParams({
@@ -115,7 +115,7 @@ async function ensureEbayAccessToken({
 
   const tokenJson: any = await tokenRes.json().catch(() => null);
   if (!tokenRes.ok || !tokenJson?.access_token) {
-    return { accessToken: null as string | null, error: tokenJson };
+    return { accessToken: null as string | null, scopes: account.scopes ? String(account.scopes) : null, error: tokenJson };
   }
 
   const newRefresh = tokenJson?.refresh_token || refreshToken;
@@ -135,17 +135,19 @@ async function ensureEbayAccessToken({
     // even if update fails, we can still attempt to create the draft
   }
 
-  return { accessToken: String(tokenJson.access_token) };
+  return { accessToken: String(tokenJson.access_token), scopes: tokenJson?.scope ? String(tokenJson.scope) : (account.scopes ? String(account.scopes) : null) };
 }
 
 async function createEbayDraftFromCard({
   ebayAccessToken,
+  tokenScopes,
   listingType,
   auctionDurationDays,
   startPrice,
   card,
 }: {
   ebayAccessToken: string;
+  tokenScopes?: string | null;
   listingType: string;
   auctionDurationDays: number;
   startPrice: number | null;
@@ -167,13 +169,13 @@ async function createEbayDraftFromCard({
   const isGraded = Boolean(card?.graded) || Boolean(card?.grade) || Boolean(card?.grading_company);
   const conditionId = legacyConditionId || (isGraded ? gradedConditionId : ungradedConditionId);
 
-  const listingDuration = listingType === "auction" ? `DAYS_${Number(auctionDurationDays)}` : null;
+  const listingDuration = listingType === "auction" ? `DAYS_${Number(auctionDurationDays)}` : "GTC";
 
   const title = buildCardTitle(card);
   const description = buildEbaySellPrefillText(card);
   const images = [card.image_url, card.back_image_url].filter(Boolean);
 
-  const conditionType = isGraded ? "LIKE_NEW" : "USED_VERY_GOOD";
+  const conditionEnum = isGraded ? "LIKE_NEW" : "USED_VERY_GOOD";
 
   const conditionDescriptors: any[] = [];
   if (isGraded) {
@@ -190,16 +192,27 @@ async function createEbayDraftFromCard({
     conditionDescriptors.push({ descriptorName: "Card Condition", descriptorValue: "Near Mint or better" });
   }
 
-  const requestSnapshot = {
+  const env = tokenUrl?.includes("sandbox") ? "sandbox" : "production";
+
+  // Debug snapshot (no secrets/tokens)
+  const requestSnapshot: any = {
     marketplaceId,
     format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
     categoryId,
-    conditionId,
-    conditionType,
+    conditionEnum,
+    // Keep conceptual mapping for our UI even though the API wants enums.
+    legacyConditionId: conditionId,
     startPrice,
     availableQuantity: Number(card.quantity || 1),
     listingDuration,
     listingType,
+    env,
+    tokenScopes: tokenScopes ? String(tokenScopes).slice(0, 500) : null,
+    hasSellInventoryScope: Boolean(
+      tokenScopes && String(tokenScopes).includes("/sell.inventory")
+    ),
+    endpoints: null,
+    methods: null,
   };
 
   if (startPrice == null) {
@@ -213,35 +226,54 @@ async function createEbayDraftFromCard({
   const sku = String(card.id || Date.now());
   const availableQty = Number(card.quantity || 1);
 
-  // 1) Create inventory item
+  // 1) Create inventory item (PUT inventory_item/{sku})
   const inventoryItemUrl = `${apiOrigin}/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`;
+
+  requestSnapshot.endpoints = {
+    inventoryItem: inventoryItemUrl,
+    offer: null,
+  };
+  requestSnapshot.methods = {
+    inventoryItem: "PUT",
+    offer: "POST",
+  };
+
   const inventoryItemPayload: any = {
     sku,
-    marketplaceId,
-    format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
-    categoryId,
-    condition: {
-      conditionId,
-      conditionType,
-      conditionDescriptors,
+    condition: conditionEnum,
+    conditionDescriptors,
+    availability: {
+      shipToLocationAvailability: {
+        quantity: availableQty,
+      },
     },
-    availableQuantity: { value: availableQty },
-    listingDescription: {
+    product: {
       title,
       description,
+      imageUrls: images,
+      aspects: [
+        { aspectName: "Brand", aspectValues: [String(card.brand || "")] },
+        { aspectName: "Player", aspectValues: [String(card.player_name || "")] },
+        { aspectName: "Set", aspectValues: [String(card.set_name || "")] },
+        { aspectName: "Year", aspectValues: [String(card.year || "")] },
+        { aspectName: "Team", aspectValues: [String(card.team || "")] },
+        { aspectName: "Sport", aspectValues: [String(card.sport || "")] },
+        { aspectName: "Card Number", aspectValues: [String(card.card_number || card.serial_number_text || "")] },
+        { aspectName: "Parallel", aspectValues: [String(card.parallel || "")] },
+      ].filter((a: any) => a.aspectValues?.[0]?.trim?.()),
     },
-    imageUrls: images,
-    // Best-effort item specifics (aspects)
-    aspects: [
-      { aspectName: "Brand", aspectValues: [String(card.brand || "")] },
-      { aspectName: "Player", aspectValues: [String(card.player_name || "")] },
-      { aspectName: "Set", aspectValues: [String(card.set_name || "")] },
-      { aspectName: "Year", aspectValues: [String(card.year || "")] },
-      { aspectName: "Team", aspectValues: [String(card.team || "")] },
-      { aspectName: "Sport", aspectValues: [String(card.sport || "")] },
-      { aspectName: "Card Number", aspectValues: [String(card.card_number || card.serial_number_text || "")] },
-      { aspectName: "Parallel", aspectValues: [String(card.parallel || "")] },
-    ].filter((a: any) => a.aspectValues?.[0]?.trim?.()),
+  };
+
+  requestSnapshot.inventoryItemPayload = {
+    sku,
+    condition: inventoryItemPayload.condition,
+    conditionDescriptors: conditionDescriptors?.slice?.(0, 5) || conditionDescriptors,
+    availabilityQuantity: inventoryItemPayload.availability?.shipToLocationAvailability?.quantity,
+    product: {
+      title,
+      descriptionLength: String(description || "").length,
+      imageUrlsCount: images.length,
+    },
   };
 
   const itemRes = await fetch(inventoryItemUrl, {
@@ -271,19 +303,45 @@ async function createEbayDraftFromCard({
 
   // 2) Create offer (unpublished)
   const offerUrl = `${apiOrigin}/sell/inventory/v1/offer`;
+
+  requestSnapshot.endpoints.offer = offerUrl;
+
   const offerPayload: any = {
     sku,
     marketplaceId,
     format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
-    pricingSummary: {
-      price: {
-        value: String(startPrice),
-        currency: "USD",
-      },
+    availableQuantity: availableQty,
+    categoryId,
+    listingDescription: {
+      title,
+      description,
     },
-    availableQuantity: { value: availableQty },
-    listingDuration: listingDuration,
-    inventoryItemId: inventoryItemId || undefined,
+    listingDuration,
+    pricingSummary:
+      listingType === "auction"
+        ? {
+            auctionStartPrice: {
+              value: String(startPrice),
+              currency: "USD",
+            },
+          }
+        : {
+            price: {
+              value: String(startPrice),
+              currency: "USD",
+            },
+          },
+  };
+
+  requestSnapshot.offerPayload = {
+    sku,
+    marketplaceId,
+    format: offerPayload.format,
+    categoryId,
+    listingDuration: offerPayload.listingDuration,
+    pricingSummary: offerPayload.pricingSummary,
+    availableQuantity: offerPayload.availableQuantity,
+    listingDescriptionLength: String(description || "").length,
   };
 
   const offerRes = await fetch(offerUrl, {
@@ -305,7 +363,7 @@ async function createEbayDraftFromCard({
         response: offerJson,
         requestSnapshot,
         attemptedUrls: [offerUrl],
-        inventoryItemId,
+        // inventoryItemId is optional; endpoint may link by sku.
       },
     };
   }
@@ -459,9 +517,9 @@ export async function POST(req: Request) {
     // If connected, attempt to create an actual eBay listing draft and return its URL.
     let fallbackSellUrl: string = "https://www.ebay.com/sl/sell";
     let draftCreateError: any = null;
-    if (connected && canOAuth && process.env.NEXT_PUBLIC_APP_ORIGIN) {
+  if (connected && canOAuth && process.env.NEXT_PUBLIC_APP_ORIGIN) {
       try {
-    const { accessToken } = await ensureEbayAccessToken({ supabaseAdmin, userId });
+    const { accessToken, scopes: tokenScopes } = await ensureEbayAccessToken({ supabaseAdmin, userId });
     if (accessToken) {
       const startPriceRaw = card.asking_price ?? card.estimated_price;
       const startPrice = startPriceRaw != null && Number.isFinite(Number(startPriceRaw)) ? Number(startPriceRaw) : null;
@@ -474,6 +532,7 @@ export async function POST(req: Request) {
 
           const { draftUrl, draftId, error } = await createEbayDraftFromCard({
             ebayAccessToken: accessToken,
+            tokenScopes,
             listingType,
             auctionDurationDays,
             startPrice,
