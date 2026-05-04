@@ -597,8 +597,8 @@ async function createEbayDraftFromCard({
 
         if (publishRes.ok) {
           didPublishSucceed = true;
-          publishedListingUrl =
-            pubJson?.listingUrl || pubJson?.listing_url || pubJson?.url || pubJson?.itemUrl || null;
+
+          publishedListingUrl = pubJson?.listingUrl || pubJson?.listing_url || pubJson?.url || pubJson?.itemUrl || null;
           publishedListingId =
             pubJson?.listingId ||
             pubJson?.listing_id ||
@@ -608,9 +608,56 @@ async function createEbayDraftFromCard({
             pubJson?.item_id ||
             null;
 
+          // Best-effort: re-fetch offer details in case publish response omits listing URL.
+          const offerDetailEndpoints = [
+            `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}`,
+            `${apiOrigin}/sell/inventory/v1/offers/${encodeURIComponent(String(offerId))}`,
+          ];
+
+          for (const du of offerDetailEndpoints) {
+            try {
+              const offerDetailsRes = await fetch(du, {
+                method: "GET",
+                headers: ebayHeaders2,
+              });
+              if (!offerDetailsRes.ok) continue;
+              const odTxt = await offerDetailsRes.text();
+              let odJson: any = null;
+              try {
+                odJson = JSON.parse(odTxt);
+              } catch {
+                odJson = { raw: odTxt };
+              }
+
+              publishedListingUrl =
+                odJson?.listingUrl ||
+                odJson?.listing_url ||
+                odJson?.url ||
+                odJson?.itemUrl ||
+                publishedListingUrl;
+              publishedListingId =
+                odJson?.listingId ||
+                odJson?.listing_id ||
+                odJson?.inventoryListingId ||
+                odJson?.inventory_listing_id ||
+                odJson?.itemId ||
+                odJson?.item_id ||
+                publishedListingId;
+              break;
+            } catch {
+              // ignore
+            }
+          }
+
           if (!publishedListingUrl && publishedListingId) {
             publishedListingUrl = `https://www.ebay.com/itm/${encodeURIComponent(String(publishedListingId))}`;
           }
+
+          if (!publishedListingUrl) {
+            didPublishSucceed = false;
+            publishErrorMessage = `Publish succeeded but listing URL was not returned.`;
+          }
+
           break;
         }
       } catch {
