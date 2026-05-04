@@ -343,6 +343,8 @@ export async function POST(req: Request) {
             currency: "USD",
           },
         },
+        item: { country: publishCountry, Country: publishCountry },
+        Item: { Country: publishCountry },
       };
 
       const offerRes = await fetch(offerUrl, {

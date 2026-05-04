@@ -440,6 +440,8 @@ async function createEbayDraftFromCard({
               currency: "USD",
             },
           },
+    item: { country: publishCountry, Country: publishCountry },
+    Item: { Country: publishCountry },
   };
 
   requestSnapshot.offerPayload = {
