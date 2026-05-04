@@ -176,8 +176,8 @@ export async function POST(req: Request) {
     const inventoryItemUrl = `${apiOrigin}/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`;
     const offerUrl = `${apiOrigin}/sell/inventory/v1/offer`;
 
-    const title = buildCardTitle(cardSafe);
-    const description = buildEbaySellPrefillText(cardSafe);
+    let title = buildCardTitle(cardSafe);
+    let description = buildEbaySellPrefillText(cardSafe);
     const images = [cardSafe.image_url, cardSafe.back_image_url].filter(Boolean);
 
     const rawAspects: Record<string, any> = {
@@ -191,7 +191,24 @@ export async function POST(req: Request) {
       "Parallel/Variety": cardSafe.parallel,
     };
 
-    const aspects = cleanEbayAspects(rawAspects);
+    let aspects = cleanEbayAspects(rawAspects);
+
+    // Fallbacks so the isolated test always sends a minimally valid payload.
+    // (If there are no cards in Supabase for this account, we must not send an empty title.)
+    if (!title) title = "2025 Ashton Jeanty Panini Select Tie-Dye /25";
+    if (!description) description = "2025 Ashton Jeanty Panini Select Tie-Dye sports trading card.";
+    if (!aspects || Object.keys(aspects).length === 0) {
+      aspects = {
+        Sport: ["Football"],
+        "Player/Athlete": ["Ashton Jeanty"],
+        Manufacturer: ["Panini"],
+        Set: ["Select"],
+        Season: ["2025"],
+        Team: ["Raiders"],
+        "Card Number": ["204"],
+        "Parallel/Variety": ["Tie-Dye"],
+      };
+    }
 
     // Test 1: ungraded fixed-price
     const condition = "USED_VERY_GOOD";
