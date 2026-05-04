@@ -235,6 +235,7 @@ export async function POST(req: Request) {
       availability: {
         shipToLocationAvailability: {
           quantity: availabilityQuantity,
+          shipToLocations: [{ country: publishCountry }],
         },
       },
       item: {

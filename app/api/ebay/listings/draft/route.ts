@@ -300,6 +300,7 @@ async function createEbayDraftFromCard({
     availability: {
       shipToLocationAvailability: {
         quantity: availableQty,
+        shipToLocations: [{ country: publishCountry }],
       },
     },
     item: {
