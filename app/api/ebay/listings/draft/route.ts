@@ -485,7 +485,8 @@ async function createEbayDraftFromCard({
         draftId: String(offerIdFromParams),
         error: null,
         putInventorySucceeded: true,
-        postOfferSucceeded: false,
+        postOfferSucceeded: true,
+        postOfferReusedExisting: true,
       };
     }
 
@@ -509,6 +510,7 @@ async function createEbayDraftFromCard({
     error: null,
     putInventorySucceeded: true,
     postOfferSucceeded: true,
+    postOfferReusedExisting: false,
   };
 }
 
@@ -660,6 +662,7 @@ export async function POST(req: Request) {
           status: string;
           putInventorySucceeded?: boolean;
           postOfferSucceeded?: boolean;
+          postOfferReusedExisting?: boolean;
         }
       | null = null;
     let draftCreateError: any = null;
@@ -676,7 +679,7 @@ export async function POST(req: Request) {
         draftCreateError = { status: 400, response: { errors: [{ message: "Missing start price (asking_price/estimated_price)" }] } };
       } else {
 
-          const { draftId, error, putInventorySucceeded, postOfferSucceeded } = await createEbayDraftFromCard({
+          const { draftId, error, putInventorySucceeded, postOfferSucceeded, postOfferReusedExisting } = await createEbayDraftFromCard({
             ebayAccessToken: accessToken,
             tokenScopes,
             listingType,
@@ -693,6 +696,7 @@ export async function POST(req: Request) {
               status: "unpublished_offer_created",
               putInventorySucceeded: Boolean(putInventorySucceeded),
               postOfferSucceeded: Boolean(postOfferSucceeded),
+              postOfferReusedExisting: Boolean(postOfferReusedExisting),
             };
 
             // Connected + successful Inventory API flow: stay in CardCat.

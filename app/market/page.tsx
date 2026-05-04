@@ -379,7 +379,7 @@ export default function MarketPage() {
     if (json?.unpublishedOfferCreated && json?.unpublishedOffer) {
       const offer = json.unpublishedOffer;
       setEbayStageNotice(
-        `Unpublished eBay offer created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: unpublished_offer_created · PUT inventory_item: ${offer.putInventorySucceeded ? "Yes" : "No"} · POST offer: ${offer.postOfferSucceeded ? "Yes" : "No"}`
+        `Unpublished eBay offer created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: unpublished_offer_created · PUT inventory_item: ${offer.putInventorySucceeded ? "Yes" : "No"} · POST offer: ${offer.postOfferReusedExisting ? "Reused existing" : offer.postOfferSucceeded ? "Yes" : "No"}`
       );
       setEbayOfferCreating(false);
       return;
