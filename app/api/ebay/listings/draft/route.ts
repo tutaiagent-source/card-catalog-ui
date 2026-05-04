@@ -480,11 +480,7 @@ async function createEbayDraftFromCard({
     // eBay returns errorId=25002 when an offer already exists for the same SKU.
     // In that case, we can safely reuse the existing offerId.
     if (errId === 25002 && offerIdFromParams) {
-      const cp = categoryProductItemId
-        ? `&categoryProductItemId=${encodeURIComponent(String(categoryProductItemId))}`
-        : "";
-      const draftUrl = `https://www.ebay.com/lstng?offerId=${encodeURIComponent(String(offerIdFromParams))}&mode=AddItem${cp}`;
-      return { draftUrl, draftId: String(offerIdFromParams), error: null };
+      return { draftUrl: null as string | null, draftId: String(offerIdFromParams), error: null };
     }
 
     return {
@@ -501,11 +497,7 @@ async function createEbayDraftFromCard({
   }
 
   const offerId = offerJson?.offerId || offerJson?.id || null;
-  const draftUrl = offerId
-    ? `https://www.ebay.com/lstng?offerId=${encodeURIComponent(String(offerId))}&mode=AddItem${categoryProductItemId ? `&categoryProductItemId=${encodeURIComponent(String(categoryProductItemId))}` : ""}`
-    : null;
-
-  return { draftUrl, draftId: offerId, error: null };
+  return { draftUrl: null as string | null, draftId: offerId, error: null };
 }
 
 export async function POST(req: Request) {
@@ -646,8 +638,10 @@ export async function POST(req: Request) {
     let connectUrl: string | null = null;
     const canOAuth = Boolean(process.env.EBAY_OAUTH_CLIENT_ID && process.env.EBAY_OAUTH_CLIENT_SECRET && process.env.EBAY_OAUTH_SCOPES);
 
-    // If connected, attempt to create an actual eBay listing draft and return its URL.
-    let fallbackSellUrl: string = "https://www.ebay.com/sl/sell";
+    // If connected, attempt to create an unpublished eBay offer via Inventory API.
+    // Do NOT redirect to eBay listing UI from this flow.
+    let fallbackSellUrl: string | null = "https://www.ebay.com/sl/sell";
+    let unpublishedOffer: { sku: string; offerId: string; status: string } | null = null;
     let draftCreateError: any = null;
   if (connected && canOAuth && process.env.NEXT_PUBLIC_APP_ORIGIN) {
       try {
@@ -662,7 +656,7 @@ export async function POST(req: Request) {
         draftCreateError = { status: 400, response: { errors: [{ message: "Missing start price (asking_price/estimated_price)" }] } };
       } else {
 
-          const { draftUrl, draftId, error } = await createEbayDraftFromCard({
+          const { draftId, error } = await createEbayDraftFromCard({
             ebayAccessToken: accessToken,
             tokenScopes,
             listingType,
@@ -671,15 +665,24 @@ export async function POST(req: Request) {
             card,
           });
 
-          if (draftUrl && draftId) {
-            fallbackSellUrl = draftUrl;
+          if (draftId) {
+            const offerIdStr = String(draftId);
+            unpublishedOffer = {
+              sku: String(card.id || ""),
+              offerId: offerIdStr,
+              status: "unpublished_offer_created",
+            };
+
+            // Connected + successful Inventory API flow: stay in CardCat.
+            fallbackSellUrl = null;
+
             if (stagedDraft?.id) {
               await supabaseAdmin
                 .from("ebay_listing_drafts")
                 .update({
-                  status: "submitted",
-                  ebay_draft_id: String(draftId),
-                  draft_url: draftUrl,
+                  status: "unpublished_offer_created",
+                  ebay_draft_id: offerIdStr,
+                  draft_url: null,
                   error_message: null,
                 })
                 .eq("id", stagedDraft.id);
@@ -725,6 +728,8 @@ export async function POST(req: Request) {
       stagedSummary,
       prefillText,
       fallbackSellUrl,
+      unpublishedOffer,
+      unpublishedOfferCreated: Boolean(unpublishedOffer),
       draftCreateError,
     });
   } catch (e: any) {

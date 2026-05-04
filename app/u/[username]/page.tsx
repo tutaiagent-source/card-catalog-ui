@@ -125,6 +125,7 @@ export default function SellerProfilePage() {
   const [error, setError] = useState("");
   const [ebayStageNotice, setEbayStageNotice] = useState<string | null>(null);
   const [ebayDraftError, setEbayDraftError] = useState<any>(null);
+  const [ebayOfferCreating, setEbayOfferCreating] = useState(false);
 
   // Bundled offer selection (buyer -> this seller)
   const [bundleMode, setBundleMode] = useState(false);
@@ -151,6 +152,7 @@ export default function SellerProfilePage() {
     setShowBack(false);
     setEbayStageNotice(null);
     setEbayDraftError(null);
+    setEbayOfferCreating(false);
   }, [activeCard?.id]);
 
   const isOwnProfile = Boolean(seller?.id && user?.id && seller.id === user.id);
@@ -438,6 +440,10 @@ export default function SellerProfilePage() {
     if (!card.id) return;
     if (!supabaseConfigured || !supabase) return;
 
+    setEbayOfferCreating(true);
+
+    try {
+
     const { data: sessionData } = await supabase.auth.getSession();
     const accessToken = sessionData.session?.access_token;
 
@@ -469,6 +475,14 @@ export default function SellerProfilePage() {
 
     setEbayDraftError(json?.draftCreateError || null);
 
+    if (json?.unpublishedOfferCreated && json?.unpublishedOffer) {
+      const offer = json.unpublishedOffer;
+      setEbayStageNotice(
+        `Unpublished eBay offer created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: unpublished_offer_created`
+      );
+      return;
+    }
+
     if (json?.stagedDraftId && json?.stagedSummary) {
       const summary = json.stagedSummary;
       const durationPart =
@@ -496,6 +510,9 @@ export default function SellerProfilePage() {
       // ignore
     }
     window.open(json?.fallbackSellUrl || "https://www.ebay.com/sl/sell", "_blank", "noopener,noreferrer");
+    } finally {
+      setEbayOfferCreating(false);
+    }
   }
 
   async function submitBundledOffer() {
@@ -1133,9 +1150,10 @@ export default function SellerProfilePage() {
                       <button
                         type="button"
                         onClick={() => void handlePostToEbay(activeCard)}
-                        className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/15"
+                        disabled={ebayOfferCreating}
+                        className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        Post to eBay ↗
+                        {ebayOfferCreating ? "Create Unpublished eBay Offer…" : "Post to eBay ↗"}
                       </button>
                     ) : null}
 
@@ -1152,7 +1170,7 @@ export default function SellerProfilePage() {
                   </div>
 
                   {ebayStageNotice ? (
-                    <div className="mt-2 text-xs text-emerald-200">eBay draft staged: {ebayStageNotice}</div>
+                    <div className="mt-2 whitespace-pre-wrap text-xs text-emerald-200">{ebayStageNotice}</div>
                   ) : null}
 
                   {ebayDraftError ? (
