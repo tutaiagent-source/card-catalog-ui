@@ -285,23 +285,8 @@ async function createEbayDraftFromCard({
     offer: "POST",
   };
 
-  const sentHeadersKeys = {
-    inventoryItem: [
-      "Authorization",
-      "Content-Type",
-      "Content-Language",
-      "Accept",
-    ],
-    offer: ["Authorization", "Content-Type", "Content-Language", "Accept"],
-  };
-
-  requestSnapshot.safeHeaders = {
-    "Content-Type": "application/json",
-    "Content-Language": "en-US",
-    Accept: "application/json",
-    "Accept-Language": "OMITTED",
-    Authorization: "Bearer REDACTED",
-  };
+  // We'll attach the ACTUAL headers passed to fetch into requestSnapshot
+  // at the point of the request.
 
   const inventoryItemPayload: any = {
     sku,
@@ -333,20 +318,24 @@ async function createEbayDraftFromCard({
     },
   };
 
+  const ebayHeaders1 = new Headers();
+  ebayHeaders1.set("Authorization", `Bearer ${ebayAccessToken}`);
+  ebayHeaders1.set("Content-Type", "application/json");
+  ebayHeaders1.set("Content-Language", "en-US");
+  ebayHeaders1.set("Accept", "application/json");
+  ebayHeaders1.delete("Accept-Language");
+  ebayHeaders1.delete("accept-language");
+  ebayHeaders1.delete("language");
+
+  const actualHeaders1 = Object.fromEntries(ebayHeaders1.entries());
+  requestSnapshot.actualHeadersInventoryItem = {
+    ...actualHeaders1,
+    Authorization: "Bearer REDACTED",
+  };
+
   const itemRes = await fetch(inventoryItemUrl, {
     method: "PUT",
-    headers: (() => {
-      const headers: Record<string, string> = {
-        authorization: `Bearer ${ebayAccessToken}`,
-        "content-type": "application/json",
-        "content-language": "en-US",
-        accept: "application/json",
-      };
-      delete (headers as any)["Accept-Language"];
-      delete (headers as any)["accept-language"];
-      delete (headers as any)["language"];
-      return headers;
-    })(),
+    headers: ebayHeaders1,
     body: JSON.stringify(inventoryItemPayload),
   });
 
@@ -409,20 +398,24 @@ async function createEbayDraftFromCard({
     listingDescriptionLength: String(description || "").length,
   };
 
+  const ebayHeaders2 = new Headers();
+  ebayHeaders2.set("Authorization", `Bearer ${ebayAccessToken}`);
+  ebayHeaders2.set("Content-Type", "application/json");
+  ebayHeaders2.set("Content-Language", "en-US");
+  ebayHeaders2.set("Accept", "application/json");
+  ebayHeaders2.delete("Accept-Language");
+  ebayHeaders2.delete("accept-language");
+  ebayHeaders2.delete("language");
+
+  const actualHeaders2 = Object.fromEntries(ebayHeaders2.entries());
+  requestSnapshot.actualHeadersOffer = {
+    ...actualHeaders2,
+    Authorization: "Bearer REDACTED",
+  };
+
   const offerRes = await fetch(offerUrl, {
     method: "POST",
-    headers: (() => {
-      const headers: Record<string, string> = {
-        authorization: `Bearer ${ebayAccessToken}`,
-        "content-type": "application/json",
-        "content-language": "en-US",
-        accept: "application/json",
-      };
-      delete (headers as any)["Accept-Language"];
-      delete (headers as any)["accept-language"];
-      delete (headers as any)["language"];
-      return headers;
-    })(),
+    headers: ebayHeaders2,
     body: JSON.stringify(offerPayload),
   });
 
