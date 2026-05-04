@@ -16,7 +16,7 @@ export default function PrivacyPolicyPage() {
         <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_30px_90px_rgba(2,6,23,0.35)] sm:p-8">
           <h1 className="text-3xl font-black tracking-[-0.03em]">Privacy Policy</h1>
           <p className="mt-3 text-sm leading-6 text-slate-300">
-            Last updated: <span className="font-semibold">2026-04-21</span>
+            Last updated: <span className="font-semibold">2026-05-03</span>
             <br />
             Questions? Email <span className="font-semibold">support@cardcat.io</span>.
           </p>
@@ -50,6 +50,11 @@ export default function PrivacyPolicyPage() {
                   <span className="font-semibold">Technical data:</span> basic usage and device
                   data (e.g., pages visited, timestamps) logged by our systems.
                 </li>
+                <li>
+                  <span className="font-semibold">Third-party integrations (eBay):</span> if you connect eBay,
+                  we store your authorization details (such as access/refresh tokens) and use them
+                  to create listing drafts and related eBay actions.
+                </li>
               </ul>
             </div>
 
@@ -73,6 +78,11 @@ export default function PrivacyPolicyPage() {
               <p className="mt-2">
                 <span className="font-semibold">Stripe:</span> Stripe processes payments and
                 related billing events. See Stripe’s privacy practices.
+              </p>
+              <p className="mt-2">
+                <span className="font-semibold">eBay:</span> when you connect your eBay account, we share
+                the minimum information needed (for example, authorization tokens) to access eBay APIs
+                for listing draft creation.
               </p>
             </div>
 
