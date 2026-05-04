@@ -901,6 +901,11 @@ export default function MarketPage() {
                         <div>SKU: {String(ebayOfferCreated.sku || "")}</div>
                         <div>Offer ID: {String(ebayOfferCreated.offerId || "")}</div>
                         <div>Status: Unpublished</div>
+                        {ebayOfferCreated.verifiedOffer?.categoryId ? <div>Category ID: {String(ebayOfferCreated.verifiedOffer.categoryId)}</div> : null}
+                        {ebayOfferCreated.verifiedOffer?.marketplaceId ? <div>Marketplace: {String(ebayOfferCreated.verifiedOffer.marketplaceId)}</div> : null}
+                        {ebayOfferCreated.verifiedOffer?.pricingSummary?.price?.value ? (
+                          <div>Price: {String(ebayOfferCreated.verifiedOffer.pricingSummary.price.value)} {String(ebayOfferCreated.verifiedOffer.pricingSummary.price.currency || "")}</div>
+                        ) : null}
                       </div>
 
                       <div className="mt-3 flex gap-2">
