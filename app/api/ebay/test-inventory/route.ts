@@ -199,6 +199,8 @@ export async function POST(req: Request) {
       "Item.Country": cardSafe.country_code || cardSafe.country || process.env.EBAY_DEFAULT_COUNTRY || "US",
     };
 
+    const publishCountry = cardSafe.country_code || cardSafe.country || process.env.EBAY_DEFAULT_COUNTRY || "US";
+
     let aspects = cleanEbayAspects(rawAspects);
     const rawAspectsEmpty = !aspects || Object.keys(aspects).length === 0;
 
@@ -384,27 +386,27 @@ export async function POST(req: Request) {
           {
             url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publish`,
             method: "POST",
-            body: {},
+            body: { item: { country: publishCountry }, merchantLocation: { country: publishCountry } },
           },
           {
             url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publishOffer`,
             method: "POST",
-            body: {},
+            body: { item: { country: publishCountry }, merchantLocation: { country: publishCountry } },
           },
           {
             url: `${apiOrigin}/sell/inventory/v1/publishOffer`,
             method: "POST",
-            body: { offerId: String(offerId) },
+            body: { offerId: String(offerId), item: { country: publishCountry }, merchantLocation: { country: publishCountry } },
           },
           {
             url: `${apiOrigin}/sell/inventory/v1/publish_offer`,
             method: "POST",
-            body: { offerId: String(offerId) },
+            body: { offerId: String(offerId), item: { country: publishCountry }, merchantLocation: { country: publishCountry } },
           },
           {
             url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publish`,
             method: "PUT",
-            body: {},
+            body: { item: { country: publishCountry }, merchantLocation: { country: publishCountry } },
           },
         ];
 
