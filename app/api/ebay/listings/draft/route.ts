@@ -365,7 +365,7 @@ export async function POST(req: Request) {
           const startPriceRaw = card.asking_price ?? card.estimated_price;
           const startPrice = startPriceRaw != null && Number.isFinite(Number(startPriceRaw)) ? Number(startPriceRaw) : null;
 
-          const { draftUrl } = await createEbayDraftFromCard({
+          const { draftUrl, draftId, error } = await createEbayDraftFromCard({
             ebayAccessToken: accessToken,
             listingType,
             auctionDurationDays,
@@ -373,7 +373,28 @@ export async function POST(req: Request) {
             card,
           });
 
-          if (draftUrl) fallbackSellUrl = draftUrl;
+          if (draftUrl && draftId) {
+            fallbackSellUrl = draftUrl;
+            if (stagedDraft?.id) {
+              await supabaseAdmin
+                .from("ebay_listing_drafts")
+                .update({
+                  status: "submitted",
+                  ebay_draft_id: String(draftId),
+                  draft_url: draftUrl,
+                  error_message: null,
+                })
+                .eq("id", stagedDraft.id);
+            }
+          } else if (error && stagedDraft?.id) {
+            await supabaseAdmin
+              .from("ebay_listing_drafts")
+              .update({
+                status: "error",
+                error_message: typeof error === "string" ? error : JSON.stringify(error).slice(0, 4000),
+              })
+              .eq("id", stagedDraft.id);
+          }
         }
       } catch (e: any) {
         // Keep manual flow if draft creation fails.
