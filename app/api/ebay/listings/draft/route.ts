@@ -151,28 +151,15 @@ async function createEbayDraftFromCard({
   startPrice: number | null;
   card: any;
 }) {
+  // IMPORTANT: Inventory API flow (unpublished offer / draft-like object)
+  // Do NOT call /sell/inventory/v1/drafts (not a valid endpoint in our setup).
+
   const tokenUrl = cleanEnv(process.env.EBAY_OAUTH_TOKEN_URL);
   const apiOrigin = tokenUrl ? new URL(tokenUrl).origin : "https://api.ebay.com";
 
-  const defaultPaths = [
-    "/sell/inventory/v1/drafts",
-    "/sell/inventory/v1/inventory_item/drafts",
-    "/sell/inventory/v1/inventory_items/drafts",
-    "/sell/inventory/v1/draft",
-    "/sell/inventory/v1/inventory_item/draft",
-  ];
-
-  const configured = cleanEnv(process.env.EBAY_SELL_INVENTORY_DRAFTS_PATH);
-  const draftPaths = (configured ? [configured] : []).concat(defaultPaths).filter(Boolean);
-
-  const draftedAttemptUrls: string[] = [];
-
   const marketplaceId = cleanEnv(process.env.EBAY_SELL_MARKETPLACE_ID) || "EBAY_US";
-  // MVP taxonomy mapping (sports singles on eBay US)
-  // Default: Sports Trading Cards → Single Cards (CCG Individual Cards leaf)
   const categoryId = cleanEnv(process.env.EBAY_SELL_CATEGORY_ID) || "261328";
 
-  // eBay condition mapping for trading cards
   const gradedConditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_GRADED) || "2750";
   const ungradedConditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_UNGRADED) || "4000";
 
@@ -180,114 +167,155 @@ async function createEbayDraftFromCard({
   const isGraded = Boolean(card?.graded) || Boolean(card?.grade) || Boolean(card?.grading_company);
   const conditionId = legacyConditionId || (isGraded ? gradedConditionId : ungradedConditionId);
 
-  // For MVP, prefer the exact mapped conditionId. Only expand to candidates
-  // if explicitly configured.
-  const conditionCandidatesEnv = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_CANDIDATES);
-  const conditionCandidates = Array.from(
-    new Set(
-      (conditionCandidatesEnv ? conditionCandidatesEnv.split(/\s+/).filter(Boolean) : [conditionId]).map(String)
-    )
-  );
+  const listingDuration = listingType === "auction" ? `DAYS_${Number(auctionDurationDays)}` : null;
 
   const title = buildCardTitle(card);
   const description = buildEbaySellPrefillText(card);
+  const images = [card.image_url, card.back_image_url].filter(Boolean);
+
+  const conditionType = isGraded ? "LIKE_NEW" : "USED_VERY_GOOD";
+
+  const conditionDescriptors: any[] = [];
+  if (isGraded) {
+    // Graded: professional grader + grade (cert number optional)
+    const grader = String(card?.grading_company || "").trim();
+    const grade = card?.grade != null ? String(card.grade).trim() : "";
+    const cert = String(card?.grading_cert_number_text || card?.serial_number_text || "").trim();
+
+    if (grader) conditionDescriptors.push({ descriptorName: "Professional Grader", descriptorValue: grader });
+    if (grade) conditionDescriptors.push({ descriptorName: "Grade", descriptorValue: grade });
+    if (cert) conditionDescriptors.push({ descriptorName: "Certification Number", descriptorValue: cert });
+  } else {
+    // Ungraded: card condition required
+    conditionDescriptors.push({ descriptorName: "Card Condition", descriptorValue: "Near Mint or better" });
+  }
 
   const requestSnapshot = {
     marketplaceId,
     format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
     categoryId,
     conditionId,
-    conditionCandidates,
+    conditionType,
     startPrice,
     availableQuantity: Number(card.quantity || 1),
-    listingDuration: listingType === "auction" ? `P${Number(auctionDurationDays)}D` : null,
+    listingDuration,
+    listingType,
   };
 
-  // Start with a minimal draft payload.
-  // If eBay responds with validation errors, we’ll adjust.
-  const payloadBase: any = {
-    sku: String(card.id || Date.now()),
+  if (startPrice == null) {
+    return {
+      draftUrl: null as string | null,
+      draftId: null as string | null,
+      error: { status: 400, response: { errors: [{ message: "Missing start price" }] }, requestSnapshot },
+    };
+  }
+
+  const sku = String(card.id || Date.now());
+  const availableQty = Number(card.quantity || 1);
+
+  // 1) Create inventory item
+  const inventoryItemUrl = `${apiOrigin}/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`;
+  const inventoryItemPayload: any = {
+    sku,
     marketplaceId,
     format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
-    availableQuantity: { value: Number(card.quantity || 1) },
+    categoryId,
+    condition: {
+      conditionId,
+      conditionType,
+      conditionDescriptors,
+    },
+    availableQuantity: { value: availableQty },
     listingDescription: {
       title,
       description,
     },
-    categoryId,
-    condition: { conditionId },
-    imageUrls: [card.image_url, card.back_image_url].filter(Boolean),
+    imageUrls: images,
+    // Best-effort item specifics (aspects)
+    aspects: [
+      { aspectName: "Brand", aspectValues: [String(card.brand || "")] },
+      { aspectName: "Player", aspectValues: [String(card.player_name || "")] },
+      { aspectName: "Set", aspectValues: [String(card.set_name || "")] },
+      { aspectName: "Year", aspectValues: [String(card.year || "")] },
+      { aspectName: "Team", aspectValues: [String(card.team || "")] },
+      { aspectName: "Sport", aspectValues: [String(card.sport || "")] },
+      { aspectName: "Card Number", aspectValues: [String(card.card_number || card.serial_number_text || "")] },
+      { aspectName: "Parallel", aspectValues: [String(card.parallel || "")] },
+    ].filter((a: any) => a.aspectValues?.[0]?.trim?.()),
   };
 
-  if (startPrice != null) {
-    payloadBase.pricingSummary = {
-      price: {
-        value: String(startPrice),
-        currency: "USD",
+  const itemRes = await fetch(inventoryItemUrl, {
+    method: "PUT",
+    headers: {
+      authorization: `Bearer ${ebayAccessToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(inventoryItemPayload),
+  });
+
+  const itemJson: any = await itemRes.json().catch(() => null);
+  if (!itemRes.ok) {
+    return {
+      draftUrl: null as string | null,
+      draftId: null as string | null,
+      error: {
+        status: itemRes.status,
+        response: itemJson,
+        requestSnapshot,
+        attemptedUrls: [inventoryItemUrl],
       },
     };
   }
 
-  if (listingType === "auction" && auctionDurationDays) {
-    payloadBase.listingDuration = `P${Number(auctionDurationDays)}D`;
-  }
+  const inventoryItemId = itemJson?.inventoryItemId || itemJson?.id || null;
 
-  for (const draftPath of draftPaths) {
-    const draftsUrl = `${apiOrigin}${draftPath}`;
-    draftedAttemptUrls.push(draftsUrl);
-
-    for (const candidateConditionId of conditionCandidates) {
-      const payload: any = {
-        ...payloadBase,
-        condition: { conditionId: candidateConditionId },
-      };
-
-      const draftRes = await fetch(draftsUrl, {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${ebayAccessToken}`,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const draftJson: any = await draftRes.json().catch(() => null);
-
-      if (draftRes.ok) {
-        const draftId = draftJson?.draftId || draftJson?.inventoryItemId || draftJson?.id || null;
-        const draftUrl = draftId
-          ? `https://www.ebay.com/lstng?draftId=${encodeURIComponent(String(draftId))}&mode=AddItem`
-          : null;
-        return { draftUrl, draftId, error: null };
-      }
-
-      if (draftRes.status === 404) continue;
-
-      // Keep the first non-404 error (we don't want to spam retries too much).
-      return {
-        draftUrl: null as string | null,
-        draftId: null as string | null,
-        error: {
-          status: draftRes.status,
-          response: draftJson,
-          attemptedUrls: draftedAttemptUrls,
-          requestSnapshot,
-          triedConditionId: candidateConditionId,
-        },
-      };
-    }
-  }
-
-  return {
-    draftUrl: null as string | null,
-    draftId: null as string | null,
-    error: {
-      status: 404,
-      response: { message: "Resource not found" },
-      attemptedUrls: draftedAttemptUrls,
-      requestSnapshot,
+  // 2) Create offer (unpublished)
+  const offerUrl = `${apiOrigin}/sell/inventory/v1/offer`;
+  const offerPayload: any = {
+    sku,
+    marketplaceId,
+    format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
+    pricingSummary: {
+      price: {
+        value: String(startPrice),
+        currency: "USD",
+      },
     },
+    availableQuantity: { value: availableQty },
+    listingDuration: listingDuration,
+    inventoryItemId: inventoryItemId || undefined,
   };
+
+  const offerRes = await fetch(offerUrl, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${ebayAccessToken}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(offerPayload),
+  });
+
+  const offerJson: any = await offerRes.json().catch(() => null);
+  if (!offerRes.ok) {
+    return {
+      draftUrl: null as string | null,
+      draftId: null as string | null,
+      error: {
+        status: offerRes.status,
+        response: offerJson,
+        requestSnapshot,
+        attemptedUrls: [offerUrl],
+        inventoryItemId,
+      },
+    };
+  }
+
+  const offerId = offerJson?.offerId || offerJson?.id || null;
+  const draftUrl = offerId
+    ? `https://www.ebay.com/lstng?offerId=${encodeURIComponent(String(offerId))}&mode=AddItem`
+    : null;
+
+  return { draftUrl, draftId: offerId, error: null };
 }
 
 export async function POST(req: Request) {
