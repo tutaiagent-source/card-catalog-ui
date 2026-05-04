@@ -441,6 +441,18 @@ async function createEbayDraftFromCard({
 
   const offerJson: any = await offerRes.json().catch(() => null);
   if (!offerRes.ok) {
+    const firstErr = offerJson?.errors?.[0];
+    const errId = firstErr?.errorId;
+    const params = Array.isArray(firstErr?.parameters) ? firstErr.parameters : [];
+    const offerIdFromParams = params.find((p: any) => p?.name === "offerId")?.value;
+
+    // eBay returns errorId=25002 when an offer already exists for the same SKU.
+    // In that case, we can safely reuse the existing offerId.
+    if (errId === 25002 && offerIdFromParams) {
+      const draftUrl = `https://www.ebay.com/lstng?offerId=${encodeURIComponent(String(offerIdFromParams))}&mode=AddItem`;
+      return { draftUrl, draftId: String(offerIdFromParams), error: null };
+    }
+
     return {
       draftUrl: null as string | null,
       draftId: null as string | null,
