@@ -180,7 +180,11 @@ export async function POST(req: Request) {
     const rawDescription = buildEbaySellPrefillText(cardSafe);
     let title = rawTitle;
     let description = rawDescription;
+    const fallbackImageUrl = "https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg";
     const images = [cardSafe.image_url, cardSafe.back_image_url].filter(Boolean);
+    if (!images.length) {
+      images.push(fallbackImageUrl);
+    }
 
     const rawAspects: Record<string, any> = {
       Sport: cardSafe.sport,
