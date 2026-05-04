@@ -477,9 +477,19 @@ export default function SellerProfilePage() {
 
     if (json?.unpublishedOfferCreated && json?.unpublishedOffer) {
       const offer = json.unpublishedOffer;
-      setEbayStageNotice(
-        `Unpublished eBay offer created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: unpublished_offer_created · PUT inventory_item: ${offer.putInventorySucceeded ? "Yes" : "No"} · POST offer: ${offer.postOfferReusedExisting ? "Reused existing" : offer.postOfferSucceeded ? "Yes" : "No"}`
-      );
+      const publishedUrl = offer.publishedListingUrl;
+
+      if (publishedUrl) {
+        setEbayStageNotice(
+          `Published eBay listing created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: published_offer_created · Listing URL: ${publishedUrl}`
+        );
+        window.open(publishedUrl, "_blank", "noopener,noreferrer");
+      } else {
+        setEbayStageNotice(
+          `Unpublished eBay offer created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: unpublished_offer_created · PUT inventory_item: ${offer.putInventorySucceeded ? "Yes" : "No"} · POST offer: ${offer.postOfferReusedExisting ? "Reused existing" : offer.postOfferSucceeded ? "Yes" : "No"}`
+        );
+      }
+
       return;
     }
 

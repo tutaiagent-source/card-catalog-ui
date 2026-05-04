@@ -471,46 +471,127 @@ async function createEbayDraftFromCard({
   });
 
   const offerJson: any = await offerRes.json().catch(() => null);
-  if (!offerRes.ok) {
+
+  let offerId: string | null = null;
+  let postOfferSucceeded = false;
+  let postOfferReusedExisting = false;
+
+  if (offerRes.ok) {
+    offerId = offerJson?.offerId || offerJson?.id || null;
+    postOfferSucceeded = Boolean(offerId);
+    postOfferReusedExisting = false;
+  } else {
     const firstErr = offerJson?.errors?.[0];
     const errId = firstErr?.errorId;
     const params = Array.isArray(firstErr?.parameters) ? firstErr.parameters : [];
     const offerIdFromParams = params.find((p: any) => p?.name === "offerId")?.value;
 
     // eBay returns errorId=25002 when an offer already exists for the same SKU.
-    // In that case, we can safely reuse the existing offerId.
+    // In that case, we can safely reuse the existing offerId and publish it.
     if (errId === 25002 && offerIdFromParams) {
+      offerId = String(offerIdFromParams);
+      postOfferSucceeded = true;
+      postOfferReusedExisting = true;
+    } else {
       return {
         draftUrl: null as string | null,
-        draftId: String(offerIdFromParams),
-        error: null,
-        putInventorySucceeded: true,
-        postOfferSucceeded: true,
-        postOfferReusedExisting: true,
+        draftId: null as string | null,
+        error: {
+          status: offerRes.status,
+          response: offerJson,
+          requestSnapshot,
+          attemptedUrls: [offerUrl],
+          // inventoryItemId is optional; endpoint may link by sku.
+        },
       };
     }
-
-    return {
-      draftUrl: null as string | null,
-      draftId: null as string | null,
-      error: {
-        status: offerRes.status,
-        response: offerJson,
-        requestSnapshot,
-        attemptedUrls: [offerUrl],
-        // inventoryItemId is optional; endpoint may link by sku.
-      },
-    };
   }
 
-  const offerId = offerJson?.offerId || offerJson?.id || null;
+  // 3) Publish the offer (best-effort) so we can open a real listing page.
+  let didPublishSucceed = false;
+  let publishedListingUrl: string | null = null;
+  let publishedListingId: string | null = null;
+
+  if (offerId && postOfferSucceeded) {
+    const publishCandidates: Array<{ url: string; method: string; body?: any }> = [
+      {
+        url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publish`,
+        method: "POST",
+        body: {},
+      },
+      {
+        url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publishOffer`,
+        method: "POST",
+        body: {},
+      },
+      {
+        url: `${apiOrigin}/sell/inventory/v1/publishOffer`,
+        method: "POST",
+        body: { offerId: String(offerId) },
+      },
+      {
+        url: `${apiOrigin}/sell/inventory/v1/publish_offer`,
+        method: "POST",
+        body: { offerId: String(offerId) },
+      },
+      {
+        url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publish`,
+        method: "PUT",
+        body: {},
+      },
+    ];
+
+    for (const cand of publishCandidates) {
+      try {
+        const publishRes = await fetch(cand.url, {
+          method: cand.method,
+          headers: ebayHeaders2,
+          body: cand.body ? JSON.stringify(cand.body) : undefined,
+        });
+
+        const txt = await publishRes.text();
+        const pubJson: any = await (async () => {
+          try {
+            return JSON.parse(txt);
+          } catch {
+            return { raw: txt };
+          }
+        })();
+
+        if (publishRes.ok) {
+          didPublishSucceed = true;
+          publishedListingUrl =
+            pubJson?.listingUrl || pubJson?.listing_url || pubJson?.url || pubJson?.itemUrl || null;
+          publishedListingId =
+            pubJson?.listingId ||
+            pubJson?.listing_id ||
+            pubJson?.inventoryListingId ||
+            pubJson?.inventory_listing_id ||
+            pubJson?.itemId ||
+            pubJson?.item_id ||
+            null;
+
+          if (!publishedListingUrl && publishedListingId) {
+            publishedListingUrl = `https://www.ebay.com/itm/${encodeURIComponent(String(publishedListingId))}`;
+          }
+          break;
+        }
+      } catch {
+        // ignore and try next candidate
+      }
+    }
+  }
+
   return {
     draftUrl: null as string | null,
     draftId: offerId,
     error: null,
     putInventorySucceeded: true,
-    postOfferSucceeded: true,
-    postOfferReusedExisting: false,
+    postOfferSucceeded: postOfferSucceeded,
+    postOfferReusedExisting: postOfferReusedExisting,
+    didPublishSucceed,
+    publishedListingId,
+    publishedListingUrl,
   };
 }
 
@@ -663,6 +744,9 @@ export async function POST(req: Request) {
           putInventorySucceeded?: boolean;
           postOfferSucceeded?: boolean;
           postOfferReusedExisting?: boolean;
+          didPublishSucceed?: boolean;
+          publishedListingId?: string | null;
+          publishedListingUrl?: string | null;
         }
       | null = null;
     let draftCreateError: any = null;
@@ -679,25 +763,38 @@ export async function POST(req: Request) {
         draftCreateError = { status: 400, response: { errors: [{ message: "Missing start price (asking_price/estimated_price)" }] } };
       } else {
 
-          const { draftId, error, putInventorySucceeded, postOfferSucceeded, postOfferReusedExisting } = await createEbayDraftFromCard({
-            ebayAccessToken: accessToken,
-            tokenScopes,
-            listingType,
-            auctionDurationDays,
-            startPrice,
-            card,
-          });
+	          const {
+	            draftId,
+	            error,
+	            putInventorySucceeded,
+	            postOfferSucceeded,
+	            postOfferReusedExisting,
+	            didPublishSucceed,
+	            publishedListingUrl,
+	            publishedListingId,
+	          } = await createEbayDraftFromCard({
+	            ebayAccessToken: accessToken,
+	            tokenScopes,
+	            listingType,
+	            auctionDurationDays,
+	            startPrice,
+	            card,
+	          });
 
           if (draftId) {
             const offerIdStr = String(draftId);
-            unpublishedOffer = {
-              sku: String(card.id || ""),
-              offerId: offerIdStr,
-              status: "unpublished_offer_created",
-              putInventorySucceeded: Boolean(putInventorySucceeded),
-              postOfferSucceeded: Boolean(postOfferSucceeded),
-              postOfferReusedExisting: Boolean(postOfferReusedExisting),
-            };
+	            const published = Boolean(didPublishSucceed && publishedListingUrl);
+	            unpublishedOffer = {
+	              sku: String(card.id || ""),
+	              offerId: offerIdStr,
+	              status: published ? "published_offer_created" : "unpublished_offer_created",
+	              putInventorySucceeded: Boolean(putInventorySucceeded),
+	              postOfferSucceeded: Boolean(postOfferSucceeded),
+	              postOfferReusedExisting: Boolean(postOfferReusedExisting),
+	              didPublishSucceed: Boolean(didPublishSucceed),
+	              publishedListingId: publishedListingId || null,
+	              publishedListingUrl: publishedListingUrl || null,
+	            };
 
             // Connected + successful Inventory API flow: stay in CardCat.
             fallbackSellUrl = null;
@@ -706,12 +803,12 @@ export async function POST(req: Request) {
               await supabaseAdmin
                 .from("ebay_listing_drafts")
                 .update({
-                  status: "unpublished_offer_created",
-                  ebay_draft_id: offerIdStr,
-                  draft_url: null,
-                  error_message: null,
-                })
-                .eq("id", stagedDraft.id);
+	                  status: published ? "published_offer_created" : "unpublished_offer_created",
+	                  ebay_draft_id: offerIdStr,
+	                  draft_url: published ? publishedListingUrl : null,
+	                  error_message: null,
+	                })
+	                .eq("id", stagedDraft.id);
             }
           } else if (error && stagedDraft?.id) {
             draftCreateError = error;
