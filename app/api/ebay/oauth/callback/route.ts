@@ -77,18 +77,21 @@ export async function GET(req: Request) {
     const redirectUri = `${origin}${redirectPath}`;
 
     // Exchange code for tokens.
+    // eBay's token endpoint expects client authentication. Some configurations
+    // accept credentials in the body; others require HTTP Basic auth.
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+
     const body = new URLSearchParams({
       grant_type: "authorization_code",
       code,
       redirect_uri: redirectUri,
-      client_id: clientId,
-      client_secret: clientSecret,
     });
 
     const tokenRes = await fetch(tokenUrl, {
       method: "POST",
       headers: {
         "content-type": "application/x-www-form-urlencoded",
+        authorization: `Basic ${basicAuth}`,
       },
       body,
     });
