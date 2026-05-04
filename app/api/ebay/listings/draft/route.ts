@@ -153,10 +153,16 @@ async function createEbayDraftFromCard({
 }) {
   const tokenUrl = cleanEnv(process.env.EBAY_OAUTH_TOKEN_URL);
   const apiOrigin = tokenUrl ? new URL(tokenUrl).origin : "https://api.ebay.com";
-  const draftPaths = [
-    cleanEnv(process.env.EBAY_SELL_INVENTORY_DRAFTS_PATH) || "/sell/inventory/v1/drafts",
+  const defaultPaths = [
+    "/sell/inventory/v1/drafts",
+    "/sell/inventory/v1/inventory_item/drafts",
+    "/sell/inventory/v1/inventory_items/drafts",
     "/sell/inventory/v1/draft",
-  ].filter(Boolean);
+    "/sell/inventory/v1/inventory_item/draft",
+  ];
+
+  const configured = cleanEnv(process.env.EBAY_SELL_INVENTORY_DRAFTS_PATH);
+  const draftPaths = (configured ? [configured] : []).concat(defaultPaths).filter(Boolean);
 
   const draftedAttemptUrls: string[] = [];
 

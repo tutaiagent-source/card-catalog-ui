@@ -880,6 +880,11 @@ export default function MarketPage() {
                           ebayDraftError?.response?.error ||
                           ""
                       ).slice(0, 140)}
+                      {Array.isArray(ebayDraftError?.response?.attemptedUrls) && ebayDraftError.response.attemptedUrls.length ? (
+                        <div className="mt-1 text-[11px] text-red-200/90">
+                          Tried: {String(ebayDraftError.response.attemptedUrls[0])}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                 </div>
