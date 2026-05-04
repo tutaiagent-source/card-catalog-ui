@@ -141,6 +141,14 @@ async function ensureEbayAccessTokenForLatestAccount() {
 
 export async function POST(req: Request) {
   try {
+    const testSecret = cleanEnv(process.env.EBAY_TEST_SECRET);
+    if (testSecret) {
+      const headerSecret = String(req.headers.get("x-ebay-test-secret") || "").trim();
+      if (headerSecret !== testSecret) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     const body = await req.json().catch(() => ({}));
     const cardId: string | null = body?.cardId ? String(body.cardId) : null;
     const skuPrefix = body?.skuPrefix ? String(body.skuPrefix) : `cardcat-test-${Date.now()}`;
