@@ -1259,10 +1259,10 @@ export default function AccountPage() {
             <button
               type="button"
               onClick={() => void startEbayConnect()}
-              disabled={ebayConnecting || ebayConnected}
+              disabled={ebayConnecting}
               className="rounded-xl border border-white/10 bg-slate-950 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {ebayConnecting ? "Connecting…" : ebayConnected ? "eBay connected" : "Connect eBay"}
+              {ebayConnecting ? "Connecting…" : ebayConnected ? "Reconnect eBay" : "Connect eBay"}
             </button>
           </div>
 
