@@ -486,7 +486,7 @@ export default function SellerProfilePage() {
         window.open(publishedUrl, "_blank", "noopener,noreferrer");
       } else {
         setEbayStageNotice(
-          `Unpublished eBay offer created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: unpublished_offer_created · PUT inventory_item: ${offer.putInventorySucceeded ? "Yes" : "No"} · POST offer: ${offer.postOfferReusedExisting ? "Reused existing" : offer.postOfferSucceeded ? "Yes" : "No"}`
+          `Unpublished eBay offer created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: unpublished_offer_created · PUT inventory_item: ${offer.putInventorySucceeded ? "Yes" : "No"} · POST offer: ${offer.postOfferReusedExisting ? "Reused existing" : offer.postOfferSucceeded ? "Yes" : "No"}${offer.publishErrorMessage ? ` · Publish failed: ${String(offer.publishErrorMessage).slice(0,120)}` : ""}`
         );
       }
 

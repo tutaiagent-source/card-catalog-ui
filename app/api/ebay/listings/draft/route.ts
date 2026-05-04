@@ -523,6 +523,8 @@ async function createEbayDraftFromCard({
   let didPublishSucceed = false;
   let publishedListingUrl: string | null = null;
   let publishedListingId: string | null = null;
+  let publishErrorMessage: string | null = null;
+  let publishAttempts: Array<{ url: string; method: string; status: number; errorMessage: string | null }> = [];
 
   if (offerId && postOfferSucceeded) {
     const publishCandidates: Array<{ url: string; method: string; body?: any }> = [
@@ -570,6 +572,16 @@ async function createEbayDraftFromCard({
           }
         })();
 
+        const firstErr = pubJson?.errors?.[0];
+        const errMsg = firstErr?.message || pubJson?.message || pubJson?.error || null;
+        publishAttempts.push({
+          url: cand.url,
+          method: cand.method,
+          status: publishRes.status,
+          errorMessage: errMsg ? String(errMsg).slice(0, 300) : null,
+        });
+        if (!publishErrorMessage && !publishRes.ok) publishErrorMessage = publishAttempts[publishAttempts.length - 1].errorMessage;
+
         if (publishRes.ok) {
           didPublishSucceed = true;
           publishedListingUrl =
@@ -604,6 +616,8 @@ async function createEbayDraftFromCard({
     didPublishSucceed,
     publishedListingId,
     publishedListingUrl,
+    publishErrorMessage,
+    publishAttempts,
   };
 }
 
@@ -759,6 +773,7 @@ export async function POST(req: Request) {
           didPublishSucceed?: boolean;
           publishedListingId?: string | null;
           publishedListingUrl?: string | null;
+          publishErrorMessage?: string | null;
         }
       | null = null;
     let draftCreateError: any = null;
@@ -775,16 +790,17 @@ export async function POST(req: Request) {
         draftCreateError = { status: 400, response: { errors: [{ message: "Missing start price (asking_price/estimated_price)" }] } };
       } else {
 
-	          const {
-	            draftId,
-	            error,
-	            putInventorySucceeded,
-	            postOfferSucceeded,
-	            postOfferReusedExisting,
-	            didPublishSucceed,
-	            publishedListingUrl,
-	            publishedListingId,
-	          } = await createEbayDraftFromCard({
+		          const {
+		            draftId,
+		            error,
+		            putInventorySucceeded,
+		            postOfferSucceeded,
+		            postOfferReusedExisting,
+		            didPublishSucceed,
+		            publishedListingUrl,
+		            publishedListingId,
+		            publishErrorMessage,
+		          } = await createEbayDraftFromCard({
 	            ebayAccessToken: accessToken,
 	            tokenScopes,
 	            listingType,
@@ -796,17 +812,18 @@ export async function POST(req: Request) {
           if (draftId) {
             const offerIdStr = String(draftId);
 	            const published = Boolean(didPublishSucceed && publishedListingUrl);
-	            unpublishedOffer = {
-	              sku: String(card.id || ""),
-	              offerId: offerIdStr,
-	              status: published ? "published_offer_created" : "unpublished_offer_created",
-	              putInventorySucceeded: Boolean(putInventorySucceeded),
-	              postOfferSucceeded: Boolean(postOfferSucceeded),
-	              postOfferReusedExisting: Boolean(postOfferReusedExisting),
-	              didPublishSucceed: Boolean(didPublishSucceed),
-	              publishedListingId: publishedListingId || null,
-	              publishedListingUrl: publishedListingUrl || null,
-	            };
+		            unpublishedOffer = {
+		              sku: String(card.id || ""),
+		              offerId: offerIdStr,
+		              status: published ? "published_offer_created" : "unpublished_offer_created",
+		              putInventorySucceeded: Boolean(putInventorySucceeded),
+		              postOfferSucceeded: Boolean(postOfferSucceeded),
+		              postOfferReusedExisting: Boolean(postOfferReusedExisting),
+		              didPublishSucceed: Boolean(didPublishSucceed),
+		              publishedListingId: publishedListingId || null,
+		              publishedListingUrl: publishedListingUrl || null,
+		              publishErrorMessage: publishErrorMessage || null,
+		            };
 
             // Connected + successful Inventory API flow: stay in CardCat.
             fallbackSellUrl = null;
