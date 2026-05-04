@@ -180,7 +180,9 @@ async function createEbayDraftFromCard({
     sku: String(card.id || Date.now()),
     marketplaceId,
     format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
-    quantity: Number(card.quantity || 1),
+    availableQuantity: {
+      value: Number(card.quantity || 1),
+    },
     listingDescription: {
       title,
       description,
@@ -228,8 +230,8 @@ async function createEbayDraftFromCard({
         ? `https://www.ebay.com/lstng?draftId=${encodeURIComponent(String(draftId))}&mode=AddItem`
         : null;
 
-      return { draftUrl, draftId, error: null };
-    }
+  return { draftUrl, draftId, error: null };
+}
 
     // Try alternate endpoint if it's clearly a 404.
     if (draftRes.status === 404) continue;
@@ -400,10 +402,16 @@ export async function POST(req: Request) {
     let draftCreateError: any = null;
     if (connected && canOAuth && process.env.NEXT_PUBLIC_APP_ORIGIN) {
       try {
-        const { accessToken } = await ensureEbayAccessToken({ supabaseAdmin, userId });
-        if (accessToken) {
-          const startPriceRaw = card.asking_price ?? card.estimated_price;
-          const startPrice = startPriceRaw != null && Number.isFinite(Number(startPriceRaw)) ? Number(startPriceRaw) : null;
+    const { accessToken } = await ensureEbayAccessToken({ supabaseAdmin, userId });
+    if (accessToken) {
+      const startPriceRaw = card.asking_price ?? card.estimated_price;
+      const startPrice = startPriceRaw != null && Number.isFinite(Number(startPriceRaw)) ? Number(startPriceRaw) : null;
+
+      // eBay Sell Inventory draft creation typically requires a price.
+      // If we don't have one, fall back to the manual flow.
+      if (startPrice == null) {
+        draftCreateError = { status: 400, response: { errors: [{ message: "Missing start price (asking_price/estimated_price)" }] } };
+      } else {
 
           const { draftUrl, draftId, error } = await createEbayDraftFromCard({
             ebayAccessToken: accessToken,
@@ -438,6 +446,7 @@ export async function POST(req: Request) {
           } else if (error) {
             draftCreateError = error;
           }
+      }
         }
       } catch (e: any) {
         // Keep manual flow if draft creation fails.
