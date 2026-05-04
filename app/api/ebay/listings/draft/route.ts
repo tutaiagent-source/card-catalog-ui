@@ -145,6 +145,7 @@ async function createEbayDraftFromCard({
   auctionDurationDays,
   startPrice,
   card,
+  existingOfferId,
 }: {
   ebayAccessToken: string;
   tokenScopes?: string | null;
@@ -152,6 +153,7 @@ async function createEbayDraftFromCard({
   auctionDurationDays: number;
   startPrice: number | null;
   card: any;
+  existingOfferId?: string | null;
 }) {
   // IMPORTANT: Inventory API flow (unpublished offer / draft-like object)
   // Do NOT call /sell/inventory/v1/drafts (not a valid endpoint in our setup).
@@ -476,57 +478,146 @@ async function createEbayDraftFromCard({
   if (acceptValue2) safeActualHeaders2['accept'] = acceptValue2;
   requestSnapshot.actualHeadersOffer = safeActualHeaders2;
 
-  const offerRes = await fetch(offerUrl, {
-    method: "POST",
-    headers: ebayHeaders2,
-    body: JSON.stringify(offerPayload),
-  });
-
-  const offerJson: any = await offerRes.json().catch(() => null);
-
   let offerId: string | null = null;
   let postOfferSucceeded = false;
   let postOfferReusedExisting = false;
 
-  if (offerRes.ok) {
-    offerId = offerJson?.offerId || offerJson?.id || null;
-    postOfferSucceeded = Boolean(offerId);
-    postOfferReusedExisting = false;
+  if (existingOfferId) {
+    offerId = String(existingOfferId);
+    postOfferSucceeded = true;
+    postOfferReusedExisting = true;
   } else {
-    const firstErr = offerJson?.errors?.[0];
-    const errId = firstErr?.errorId;
-    const params = Array.isArray(firstErr?.parameters) ? firstErr.parameters : [];
-    const offerIdFromParams = params.find((p: any) => p?.name === "offerId")?.value;
+    const offerRes = await fetch(offerUrl, {
+      method: "POST",
+      headers: ebayHeaders2,
+      body: JSON.stringify(offerPayload),
+    });
 
-    // eBay returns errorId=25002 when an offer already exists for the same SKU.
-    // In that case, we can safely reuse the existing offerId and publish it.
-    if (errId === 25002 && offerIdFromParams) {
-      offerId = String(offerIdFromParams);
-      postOfferSucceeded = true;
-      postOfferReusedExisting = true;
+    const offerJson: any = await offerRes.json().catch(() => null);
+
+    if (offerRes.ok) {
+      offerId = offerJson?.offerId || offerJson?.id || null;
+      postOfferSucceeded = Boolean(offerId);
+      postOfferReusedExisting = false;
     } else {
-      return {
-        draftUrl: null as string | null,
-        draftId: null as string | null,
-        error: {
-          status: offerRes.status,
-          response: offerJson,
-          requestSnapshot,
-          attemptedUrls: [offerUrl],
-          // inventoryItemId is optional; endpoint may link by sku.
-        },
-      };
+      const firstErr = offerJson?.errors?.[0];
+      const errId = firstErr?.errorId;
+      const params = Array.isArray(firstErr?.parameters) ? firstErr.parameters : [];
+      const offerIdFromParams = params.find((p: any) => p?.name === "offerId")?.value;
+
+      // eBay returns errorId=25002 when an offer already exists for the same SKU.
+      // In that case, we can safely reuse the existing offerId.
+      if (errId === 25002 && offerIdFromParams) {
+        offerId = String(offerIdFromParams);
+        postOfferSucceeded = true;
+        postOfferReusedExisting = true;
+      } else {
+        return {
+          draftUrl: null as string | null,
+          draftId: null as string | null,
+          error: {
+            status: offerRes.status,
+            response: offerJson,
+            requestSnapshot,
+            attemptedUrls: [offerUrl],
+            // inventoryItemId is optional; endpoint may link by sku.
+          },
+        };
+      }
     }
   }
 
-  // 3) Publish the offer (best-effort) so we can open a real listing page.
+  // 2b) Verification: GET /sell/inventory/v1/offer/{offerId}
+  let verifiedOffer: any = null;
+  let offerVerificationOk = false;
+  let offerVerificationIssues: string[] = [];
+
+  const offerReusedExistingFromStore = Boolean(existingOfferId);
+
+  if (offerId) {
+    const offerDetailsUrl = `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}`;
+    const offerDetailsUrl2 = `${apiOrigin}/sell/inventory/v1/offers/${encodeURIComponent(String(offerId))}`;
+
+    let detailsRes = await fetch(offerDetailsUrl, {
+      method: "GET",
+      headers: ebayHeaders2,
+    });
+    let detailsText = await detailsRes.text();
+    if (!detailsRes.ok) {
+      detailsRes = await fetch(offerDetailsUrl2, {
+        method: "GET",
+        headers: ebayHeaders2,
+      });
+      detailsText = await detailsRes.text();
+    }
+
+    try {
+      verifiedOffer = JSON.parse(detailsText);
+    } catch {
+      verifiedOffer = { raw: detailsText };
+    }
+
+    const returnedSku = verifiedOffer?.sku || verifiedOffer?.offer?.sku;
+    const returnedOfferId = verifiedOffer?.offerId || verifiedOffer?.id;
+    const returnedMarketplaceId = verifiedOffer?.marketplaceId;
+    const returnedCategoryId = verifiedOffer?.categoryId;
+    const returnedStatus = verifiedOffer?.status;
+    const returnedPriceValue = verifiedOffer?.pricingSummary?.price?.value;
+
+    if (!detailsRes.ok) {
+      offerVerificationIssues.push(`GET offer failed (HTTP ${detailsRes.status})`);
+    }
+    if (String(returnedOfferId || "") !== String(offerId)) {
+      offerVerificationIssues.push(`offerId mismatch (got ${String(returnedOfferId || "")})`);
+    }
+    if (returnedSku != null && String(returnedSku) !== String(sku)) {
+      offerVerificationIssues.push(`SKU mismatch (got ${String(returnedSku)})`);
+    }
+    if (returnedMarketplaceId && String(returnedMarketplaceId) !== String(marketplaceId)) {
+      offerVerificationIssues.push(`marketplaceId mismatch (got ${String(returnedMarketplaceId)})`);
+    }
+    if (returnedCategoryId && String(returnedCategoryId) !== String(categoryId)) {
+      offerVerificationIssues.push(`categoryId mismatch (got ${String(returnedCategoryId)})`);
+    }
+
+    if (returnedStatus && String(returnedStatus).toLowerCase() !== "unpublished") {
+      offerVerificationIssues.push(`status is ${String(returnedStatus)}`);
+    }
+
+    if (startPrice != null && returnedPriceValue != null) {
+      const expected = Number(startPrice);
+      const got = Number(returnedPriceValue);
+      if (Number.isFinite(expected) && Number.isFinite(got) && Math.abs(expected - got) > 0.01) {
+        offerVerificationIssues.push(`price mismatch (expected ${expected}, got ${got})`);
+      }
+    }
+
+    offerVerificationOk = detailsRes.ok && verifiedOffer != null;
+  }
+
+  if (!offerId || !offerVerificationOk) {
+    return {
+      draftUrl: null as string | null,
+      draftId: null as string | null,
+      error: {
+        status: 502,
+        response: { verifiedOffer, offerVerificationIssues },
+        requestSnapshot,
+        attemptedUrls: [offerUrl],
+      },
+    };
+  }
+
+  const enablePublish = String(process.env.EBAY_ENABLE_PUBLISH || "").toLowerCase() === "true";
+
+  // 3) Publish the offer (best-effort). Disabled by default (requires explicit approval via EBAY_ENABLE_PUBLISH).
   let didPublishSucceed = false;
   let publishedListingUrl: string | null = null;
   let publishedListingId: string | null = null;
   let publishErrorMessage: string | null = null;
   let publishAttempts: Array<{ url: string; method: string; status: number; errorMessage: string | null }> = [];
 
-  if (offerId && postOfferSucceeded) {
+  if (enablePublish && offerId && postOfferSucceeded) {
     const publishCandidates: Array<{ url: string; method: string; body?: any }> = [
       {
         url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publish`,
@@ -673,6 +764,10 @@ async function createEbayDraftFromCard({
     putInventorySucceeded: true,
     postOfferSucceeded: postOfferSucceeded,
     postOfferReusedExisting: postOfferReusedExisting,
+    offerReusedExistingFromStore,
+    verifiedOffer,
+    offerVerificationOk,
+    offerVerificationIssues,
     didPublishSucceed,
     publishedListingId,
     publishedListingUrl,
@@ -726,6 +821,19 @@ export async function POST(req: Request) {
     const prefillText = buildEbaySellPrefillText(card);
     const stagedSummary = buildStagedSummary(card, listingType, auctionDurationDays);
 
+    // If we already created an unpublished offer for this card, reuse it to avoid duplicates.
+    const existingOfferDraft = await supabaseAdmin
+      .from("ebay_listing_drafts")
+      .select("card_snapshot")
+      .eq("user_id", userId)
+      .eq("card_id", cardId)
+      .eq("status", "unpublished_offer_created")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const existingOfferId = String(existingOfferDraft?.data?.card_snapshot?.ebay_offer_id || "").trim() || null;
+
     const { data: stagedDraft, error: draftErr } = await supabaseAdmin
       .from("ebay_listing_drafts")
       .insert({
@@ -743,7 +851,7 @@ export async function POST(req: Request) {
         imageUrls: [card.image_url, card.back_image_url].filter(Boolean),
       },
       })
-      .select("id")
+      .select("id, card_snapshot")
       .maybeSingle();
 
     if (draftErr) {
@@ -830,10 +938,11 @@ export async function POST(req: Request) {
           putInventorySucceeded?: boolean;
           postOfferSucceeded?: boolean;
           postOfferReusedExisting?: boolean;
-          didPublishSucceed?: boolean;
-          publishedListingId?: string | null;
-          publishedListingUrl?: string | null;
-          publishErrorMessage?: string | null;
+          offerReusedExistingFromStore?: boolean;
+          reusedExisting?: boolean;
+          verifiedOffer?: any;
+          offerVerificationOk?: boolean;
+          offerVerificationIssues?: string[];
         }
       | null = null;
     let draftCreateError: any = null;
@@ -856,50 +965,65 @@ export async function POST(req: Request) {
 		            putInventorySucceeded,
 		            postOfferSucceeded,
 		            postOfferReusedExisting,
-		            didPublishSucceed,
-		            publishedListingUrl,
-		            publishedListingId,
-		            publishErrorMessage,
+		            offerReusedExistingFromStore,
+		            verifiedOffer,
+		            offerVerificationOk,
+		            offerVerificationIssues,
 		          } = await createEbayDraftFromCard({
-	            ebayAccessToken: accessToken,
-	            tokenScopes,
-	            listingType,
-	            auctionDurationDays,
-	            startPrice,
-	            card,
-	          });
+		            ebayAccessToken: accessToken,
+		            tokenScopes,
+		            listingType,
+		            auctionDurationDays,
+		            startPrice,
+		            card,
+		            existingOfferId,
+		          });
 
-          if (draftId) {
-            const offerIdStr = String(draftId);
-	            const published = Boolean(didPublishSucceed && publishedListingUrl);
+		          if (draftId) {
+		            const offerIdStr = String(draftId);
+		            const reusedExisting = Boolean(offerReusedExistingFromStore || postOfferReusedExisting);
+
 		            unpublishedOffer = {
-		              sku: String(card.id || ""),
+		              sku: String(verifiedOffer?.sku || card.id || ""),
 		              offerId: offerIdStr,
-		              status: published ? "published_offer_created" : "unpublished_offer_created",
+		              status: "unpublished_offer_created",
 		              putInventorySucceeded: Boolean(putInventorySucceeded),
 		              postOfferSucceeded: Boolean(postOfferSucceeded),
 		              postOfferReusedExisting: Boolean(postOfferReusedExisting),
-		              didPublishSucceed: Boolean(didPublishSucceed),
-		              publishedListingId: publishedListingId || null,
-		              publishedListingUrl: publishedListingUrl || null,
-		              publishErrorMessage: publishErrorMessage || null,
+		              offerReusedExistingFromStore: Boolean(offerReusedExistingFromStore),
+		              reusedExisting,
+		              verifiedOffer,
+		              offerVerificationOk: Boolean(offerVerificationOk),
+		              offerVerificationIssues: offerVerificationIssues || [],
 		            };
 
-            // Connected + successful Inventory API flow: stay in CardCat.
-            fallbackSellUrl = null;
+		            // Connected + successful Inventory API flow: stay in CardCat.
+		            fallbackSellUrl = null;
 
-            if (stagedDraft?.id) {
-              await supabaseAdmin
-                .from("ebay_listing_drafts")
-                .update({
-	                  status: published ? "published_offer_created" : "unpublished_offer_created",
-	                  ebay_draft_id: offerIdStr,
-	                  draft_url: published ? publishedListingUrl : null,
-	                  error_message: null,
-	                })
-	                .eq("id", stagedDraft.id);
-            }
-          } else if (error && stagedDraft?.id) {
+		            if (stagedDraft?.id) {
+		              const priorSnapshot = stagedDraft.card_snapshot || {};
+		              await supabaseAdmin
+		                .from("ebay_listing_drafts")
+		                .update({
+		                  status: "unpublished_offer_created",
+		                  ebay_draft_id: offerIdStr,
+		                  draft_url: null,
+		                  error_message: null,
+		                  card_snapshot: {
+		                    ...priorSnapshot,
+		                    ebay_sku: unpublishedOffer.sku,
+		                    ebay_offer_id: offerIdStr,
+		                    ebay_offer_status: "unpublished_offer_created",
+		                    ebay_last_sync_at: new Date().toISOString(),
+		                    ebay_listing_url: null,
+		                    ebay_listing_id: null,
+		                    ebay_offer_verification_ok: Boolean(offerVerificationOk),
+		                    ebay_offer_verification_issues: offerVerificationIssues || [],
+		                  },
+		                })
+		                .eq("id", stagedDraft.id);
+		            }
+		          } else if (error && stagedDraft?.id) {
             draftCreateError = error;
             await supabaseAdmin
               .from("ebay_listing_drafts")

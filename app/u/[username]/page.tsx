@@ -126,6 +126,7 @@ export default function SellerProfilePage() {
   const [ebayStageNotice, setEbayStageNotice] = useState<string | null>(null);
   const [ebayDraftError, setEbayDraftError] = useState<any>(null);
   const [ebayOfferCreating, setEbayOfferCreating] = useState(false);
+  const [ebayOfferCreated, setEbayOfferCreated] = useState<any>(null);
 
   // Bundled offer selection (buyer -> this seller)
   const [bundleMode, setBundleMode] = useState(false);
@@ -153,6 +154,7 @@ export default function SellerProfilePage() {
     setEbayStageNotice(null);
     setEbayDraftError(null);
     setEbayOfferCreating(false);
+    setEbayOfferCreated(null);
   }, [activeCard?.id]);
 
   const isOwnProfile = Boolean(seller?.id && user?.id && seller.id === user.id);
@@ -477,19 +479,11 @@ export default function SellerProfilePage() {
 
     if (json?.unpublishedOfferCreated && json?.unpublishedOffer) {
       const offer = json.unpublishedOffer;
-      const publishedUrl = offer.publishedListingUrl;
 
-      if (publishedUrl) {
-        setEbayStageNotice(
-          `Published eBay listing created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: published_offer_created · Listing URL: ${publishedUrl}`
-        );
-        window.open(publishedUrl, "_blank", "noopener,noreferrer");
-      } else {
-        setEbayStageNotice(
-          `Unpublished eBay offer created. SKU: ${offer.sku} · offerId: ${offer.offerId} · status: unpublished_offer_created · PUT inventory_item: ${offer.putInventorySucceeded ? "Yes" : "No"} · POST offer: ${offer.postOfferReusedExisting ? "Reused existing" : offer.postOfferSucceeded ? "Yes" : "No"}${offer.publishErrorMessage ? ` · Publish failed: ${String(offer.publishErrorMessage).slice(0,120)}` : ""}`
-        );
-      }
-
+      setEbayOfferCreated(offer);
+      setEbayDraftError(null);
+      setEbayStageNotice(null);
+      setEbayOfferCreating(false);
       return;
     }
 
@@ -1163,7 +1157,7 @@ export default function SellerProfilePage() {
                         disabled={ebayOfferCreating}
                         className="inline-flex items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {ebayOfferCreating ? "Publishing & opening eBay listing…" : "Post to eBay ↗"}
+                        {ebayOfferCreating ? "Creating eBay offer…" : "Create eBay Offer"}
                       </button>
                     ) : null}
 
@@ -1179,8 +1173,31 @@ export default function SellerProfilePage() {
                     ) : null}
                   </div>
 
-                  {ebayStageNotice ? (
-                    <div className="mt-2 whitespace-pre-wrap text-xs text-emerald-200">{ebayStageNotice}</div>
+                  {ebayOfferCreated ? (
+                    <div className="mt-2 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] p-3">
+                      <div className="text-xs font-semibold text-emerald-200">eBay offer created</div>
+                      <div className="mt-1 whitespace-pre-wrap text-xs text-emerald-100/90">
+                        {ebayOfferCreated?.reusedExisting
+                          ? "An existing unpublished eBay offer was reused for this card."
+                          : "An unpublished eBay offer was created for this card."} It is saved in eBay through the Inventory API, but it is not live on eBay yet.
+                      </div>
+
+                      <div className="mt-2 text-[12px] text-emerald-100/90">
+                        <div>SKU: {String(ebayOfferCreated.sku || "")}</div>
+                        <div>Offer ID: {String(ebayOfferCreated.offerId || "")}</div>
+                        <div>Status: Unpublished</div>
+                      </div>
+
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEbayOfferCreated(null)}
+                          className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900"
+                        >
+                          Back to CardCat listing
+                        </button>
+                      </div>
+                    </div>
                   ) : null}
 
                   {ebayDraftError ? (
