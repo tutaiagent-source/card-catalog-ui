@@ -124,6 +124,7 @@ export default function SellerProfilePage() {
   const [loadingCards, setLoadingCards] = useState(false);
   const [error, setError] = useState("");
   const [ebayStageNotice, setEbayStageNotice] = useState<string | null>(null);
+  const [ebayDraftError, setEbayDraftError] = useState<any>(null);
 
   // Bundled offer selection (buyer -> this seller)
   const [bundleMode, setBundleMode] = useState(false);
@@ -149,6 +150,7 @@ export default function SellerProfilePage() {
   useEffect(() => {
     setShowBack(false);
     setEbayStageNotice(null);
+    setEbayDraftError(null);
   }, [activeCard?.id]);
 
   const isOwnProfile = Boolean(seller?.id && user?.id && seller.id === user.id);
@@ -464,6 +466,8 @@ export default function SellerProfilePage() {
     });
 
     const json: any = await res.json().catch(() => null);
+
+    setEbayDraftError(json?.draftCreateError || null);
 
     if (json?.stagedDraftId && json?.stagedSummary) {
       const summary = json.stagedSummary;
@@ -1149,6 +1153,12 @@ export default function SellerProfilePage() {
 
                   {ebayStageNotice ? (
                     <div className="mt-2 text-xs text-emerald-200">eBay draft staged: {ebayStageNotice}</div>
+                  ) : null}
+
+                  {ebayDraftError ? (
+                    <div className="mt-1 text-xs text-red-200">
+                      eBay draft failed{typeof ebayDraftError?.status !== "undefined" ? ` (HTTP ${ebayDraftError?.status})` : ""}
+                    </div>
                   ) : null}
                 </div>
               </div>

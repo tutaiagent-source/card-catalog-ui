@@ -155,10 +155,12 @@ export default function MarketPage() {
   const [messageStarting, setMessageStarting] = useState(false);
   const [error, setError] = useState("");
   const [ebayStageNotice, setEbayStageNotice] = useState<string | null>(null);
+  const [ebayDraftError, setEbayDraftError] = useState<any>(null);
 
   useEffect(() => {
     setShowBack(false);
     setEbayStageNotice(null);
+    setEbayDraftError(null);
   }, [activeCard?.id]);
 
   useEffect(() => {
@@ -364,6 +366,8 @@ export default function MarketPage() {
     });
 
     const json: any = await res.json().catch(() => null);
+
+    setEbayDraftError(json?.draftCreateError || null);
 
     if (json?.stagedDraftId && json?.stagedSummary) {
       const summary = json.stagedSummary;
@@ -860,12 +864,18 @@ export default function MarketPage() {
                       ) : null}
                     </div>
 
-                    {ebayStageNotice ? (
-                      <div className="mt-2 text-xs text-emerald-200">eBay draft staged: {ebayStageNotice}</div>
-                    ) : null}
-                  </div>
+                  {ebayStageNotice ? (
+                    <div className="mt-2 text-xs text-emerald-200">eBay draft staged: {ebayStageNotice}</div>
+                  ) : null}
+
+                  {ebayDraftError ? (
+                    <div className="mt-1 text-xs text-red-200">
+                      eBay draft failed{typeof ebayDraftError?.status !== "undefined" ? ` (HTTP ${ebayDraftError?.status})` : ""}
+                    </div>
+                  ) : null}
                 </div>
               </div>
+            </div>
             </div>
           </div>
         ) : null}
