@@ -176,8 +176,10 @@ export async function POST(req: Request) {
     const inventoryItemUrl = `${apiOrigin}/sell/inventory/v1/inventory_item/${encodeURIComponent(sku)}`;
     const offerUrl = `${apiOrigin}/sell/inventory/v1/offer`;
 
-    let title = buildCardTitle(cardSafe);
-    let description = buildEbaySellPrefillText(cardSafe);
+    const rawTitle = buildCardTitle(cardSafe);
+    const rawDescription = buildEbaySellPrefillText(cardSafe);
+    let title = rawTitle;
+    let description = rawDescription;
     const images = [cardSafe.image_url, cardSafe.back_image_url].filter(Boolean);
 
     const rawAspects: Record<string, any> = {
@@ -192,11 +194,15 @@ export async function POST(req: Request) {
     };
 
     let aspects = cleanEbayAspects(rawAspects);
+    const rawAspectsEmpty = !aspects || Object.keys(aspects).length === 0;
 
     // Fallbacks so the isolated test always sends a minimally valid payload.
     // (If there are no cards in Supabase for this account, we must not send an empty title.)
+    const usedFallbackTitle = !title;
+    const usedFallbackDescription = !description;
     if (!title) title = "2025 Ashton Jeanty Panini Select Tie-Dye /25";
     if (!description) description = "2025 Ashton Jeanty Panini Select Tie-Dye sports trading card.";
+    const usedFallbackAspects = rawAspectsEmpty;
     if (!aspects || Object.keys(aspects).length === 0) {
       aspects = {
         Sport: ["Football"],
@@ -315,6 +321,14 @@ export async function POST(req: Request) {
       wereConditionDescriptorsIncluded: true,
       wereImageUrlsIncluded: images.length > 0,
       usedAspects: aspects,
+
+      debugFallback: {
+        usedFallbackTitle,
+        usedFallbackDescription,
+        usedFallbackAspects,
+        titleLen: title ? String(title).length : 0,
+        descriptionLen: description ? String(description).length : 0,
+      },
 
       didPutInventorySucceed,
       putInventoryStatus: invRes.status,
