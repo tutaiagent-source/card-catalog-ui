@@ -274,6 +274,10 @@ export async function POST(req: Request) {
     let rawOfferResponse: any = null;
     let offerStatus: number | null = null;
 
+    let offerId: string | null = null;
+    let offerDetails: any = null;
+    let offerDetailsAttempted: string[] = [];
+
     let offerPayload: any = null;
     if (didPutInventorySucceed) {
       didOfferRun = true;
@@ -306,7 +310,34 @@ export async function POST(req: Request) {
       } catch {
         rawOfferResponse = { raw: offerText };
       }
+      offerId = rawOfferResponse?.offerId || rawOfferResponse?.id || null;
       didOfferSucceed = offerRes.ok;
+
+      // Best-effort: fetch offer details to find categoryProductItemId.
+      if (didOfferSucceed && offerId) {
+        const endpoints = [
+          `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}`,
+          `${apiOrigin}/sell/inventory/v1/offers/${encodeURIComponent(String(offerId))}`,
+        ];
+        for (const u of endpoints) {
+          offerDetailsAttempted.push(u);
+          const detailsRes = await fetch(u, {
+            method: "GET",
+            headers: ebayHeaders,
+          });
+          const detailsText = await detailsRes.text();
+          let detailsJson: any = null;
+          try {
+            detailsJson = JSON.parse(detailsText);
+          } catch {
+            detailsJson = { raw: detailsText };
+          }
+          if (detailsRes.ok) {
+            offerDetails = detailsJson;
+            break;
+          }
+        }
+      }
     }
 
     return NextResponse.json({
@@ -342,6 +373,9 @@ export async function POST(req: Request) {
       didOfferSucceed,
       offerStatus,
       rawOfferResponse,
+      offerId,
+      offerDetails,
+      offerDetailsAttempted,
       offerPayload,
     });
   } catch (e: any) {
