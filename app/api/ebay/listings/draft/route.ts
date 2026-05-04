@@ -127,7 +127,7 @@ async function ensureEbayAccessToken({
       token_expires_at: tokenJson?.expires_in
         ? new Date(Date.now() + Number(tokenJson.expires_in) * 1000).toISOString()
         : null,
-      scopes: tokenJson?.scope || null,
+      scopes: tokenJson?.scope || account.scopes || null,
     })
     .eq("user_id", userId);
 
@@ -173,6 +173,39 @@ async function createEbayDraftFromCard({
 
   const title = buildCardTitle(card);
   const description = buildEbaySellPrefillText(card);
+
+  const rawAspects: Record<string, any> = {
+    Sport: card.sport,
+    "Player/Athlete": card.player_name,
+    Manufacturer: card.brand,
+    Set: card.set_name,
+    Season: card.year,
+    Team: card.team,
+    "Card Number": card.card_number || card.serial_number_text,
+    "Parallel/Variety": card.parallel,
+  };
+
+  const cleanEbayAspects = (raw: Record<string, any>) => {
+    const cleaned: Record<string, string[]> = {};
+    for (const [k, v] of Object.entries(raw || {})) {
+      if (!k) continue;
+      if (v === null || v === undefined) continue;
+
+      const values = Array.isArray(v) ? v : [v];
+      const stringValues = values
+        .map((x) => {
+          if (x === null || x === undefined) return "";
+          if (typeof x === "object") return "";
+          return String(x).trim();
+        })
+        .filter(Boolean);
+
+      if (stringValues.length) cleaned[k] = stringValues;
+    }
+    return cleaned;
+  };
+
+  const cleanedAspects = cleanEbayAspects(rawAspects);
   const images = [card.image_url, card.back_image_url].filter(Boolean);
 
   const conditionEnum = isGraded ? "LIKE_NEW" : "USED_VERY_GOOD";
@@ -251,16 +284,7 @@ async function createEbayDraftFromCard({
       title,
       description,
       imageUrls: images,
-      aspects: [
-        { aspectName: "Brand", aspectValues: [String(card.brand || "")] },
-        { aspectName: "Player", aspectValues: [String(card.player_name || "")] },
-        { aspectName: "Set", aspectValues: [String(card.set_name || "")] },
-        { aspectName: "Year", aspectValues: [String(card.year || "")] },
-        { aspectName: "Team", aspectValues: [String(card.team || "")] },
-        { aspectName: "Sport", aspectValues: [String(card.sport || "")] },
-        { aspectName: "Card Number", aspectValues: [String(card.card_number || card.serial_number_text || "")] },
-        { aspectName: "Parallel", aspectValues: [String(card.parallel || "")] },
-      ].filter((a: any) => a.aspectValues?.[0]?.trim?.()),
+      aspects: cleanedAspects,
     },
   };
 
@@ -273,6 +297,7 @@ async function createEbayDraftFromCard({
       title,
       descriptionLength: String(description || "").length,
       imageUrlsCount: images.length,
+      aspects: cleanedAspects,
     },
   };
 
