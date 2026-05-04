@@ -196,6 +196,7 @@ export async function POST(req: Request) {
       "Card Number": cardSafe.card_number || cardSafe.serial_number_text,
       "Parallel/Variety": cardSafe.parallel,
       Country: cardSafe.country_code || cardSafe.country || process.env.EBAY_DEFAULT_COUNTRY || "US",
+      "Item.Country": cardSafe.country_code || cardSafe.country || process.env.EBAY_DEFAULT_COUNTRY || "US",
     };
 
     let aspects = cleanEbayAspects(rawAspects);

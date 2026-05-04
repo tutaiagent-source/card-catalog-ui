@@ -198,6 +198,7 @@ async function createEbayDraftFromCard({
     "Parallel/Variety": card.parallel,
     // Required for publishing the offer.
     Country: (card.country_code || card.country || process.env.EBAY_DEFAULT_COUNTRY || "US"),
+    "Item.Country": (card.country_code || card.country || process.env.EBAY_DEFAULT_COUNTRY || "US"),
   };
 
   const cleanEbayAspects = (raw: Record<string, any>) => {
