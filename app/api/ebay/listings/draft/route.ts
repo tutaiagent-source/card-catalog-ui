@@ -285,6 +285,24 @@ async function createEbayDraftFromCard({
     offer: "POST",
   };
 
+  const sentHeadersKeys = {
+    inventoryItem: [
+      "Authorization",
+      "Content-Type",
+      "Content-Language",
+      "Accept",
+    ],
+    offer: ["Authorization", "Content-Type", "Content-Language", "Accept"],
+  };
+
+  requestSnapshot.safeHeaders = {
+    "Content-Type": "application/json",
+    "Content-Language": "en-US",
+    Accept: "application/json",
+    "Accept-Language": "OMITTED",
+    Authorization: "Bearer REDACTED",
+  };
+
   const inventoryItemPayload: any = {
     sku,
     condition: conditionEnum,
@@ -317,12 +335,18 @@ async function createEbayDraftFromCard({
 
   const itemRes = await fetch(inventoryItemUrl, {
     method: "PUT",
-    headers: {
-      authorization: `Bearer ${ebayAccessToken}`,
-      "content-type": "application/json",
-      "content-language": "en-US",
-      accept: "application/json",
-    },
+    headers: (() => {
+      const headers: Record<string, string> = {
+        authorization: `Bearer ${ebayAccessToken}`,
+        "content-type": "application/json",
+        "content-language": "en-US",
+        accept: "application/json",
+      };
+      delete (headers as any)["Accept-Language"];
+      delete (headers as any)["accept-language"];
+      delete (headers as any)["language"];
+      return headers;
+    })(),
     body: JSON.stringify(inventoryItemPayload),
   });
 
@@ -387,12 +411,18 @@ async function createEbayDraftFromCard({
 
   const offerRes = await fetch(offerUrl, {
     method: "POST",
-    headers: {
-      authorization: `Bearer ${ebayAccessToken}`,
-      "content-type": "application/json",
-      "content-language": "en-US",
-      accept: "application/json",
-    },
+    headers: (() => {
+      const headers: Record<string, string> = {
+        authorization: `Bearer ${ebayAccessToken}`,
+        "content-type": "application/json",
+        "content-language": "en-US",
+        accept: "application/json",
+      };
+      delete (headers as any)["Accept-Language"];
+      delete (headers as any)["accept-language"];
+      delete (headers as any)["language"];
+      return headers;
+    })(),
     body: JSON.stringify(offerPayload),
   });
 
