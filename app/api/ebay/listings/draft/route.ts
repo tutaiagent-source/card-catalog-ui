@@ -534,6 +534,12 @@ async function createEbayDraftFromCard({
 
   const offerReusedExistingFromStore = Boolean(existingOfferId);
 
+  // Normalized values extracted from the GET /offer verification.
+  let returnedMarketplaceId: any = null;
+  let returnedCategoryId: any = null;
+  let returnedStatus: any = null;
+  let returnedPriceValue: any = null;
+
   if (offerId) {
     const offerDetailsUrl = `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}`;
     const offerDetailsUrl2 = `${apiOrigin}/sell/inventory/v1/offers/${encodeURIComponent(String(offerId))}`;
@@ -559,10 +565,10 @@ async function createEbayDraftFromCard({
 
     const returnedSku = verifiedOffer?.sku || verifiedOffer?.offer?.sku;
     const returnedOfferId = verifiedOffer?.offerId || verifiedOffer?.id;
-    const returnedMarketplaceId = verifiedOffer?.marketplaceId;
-    const returnedCategoryId = verifiedOffer?.categoryId;
-    const returnedStatus = verifiedOffer?.status;
-    const returnedPriceValue = verifiedOffer?.pricingSummary?.price?.value;
+    returnedMarketplaceId = verifiedOffer?.marketplaceId;
+    returnedCategoryId = verifiedOffer?.categoryId;
+    returnedStatus = verifiedOffer?.status;
+    returnedPriceValue = verifiedOffer?.pricingSummary?.price?.value;
 
     if (!detailsRes.ok) {
       offerVerificationIssues.push(`GET offer failed (HTTP ${detailsRes.status})`);
@@ -607,6 +613,18 @@ async function createEbayDraftFromCard({
       },
     };
   }
+
+  const verifiedMarketplaceIdFinal =
+    returnedMarketplaceId ?? marketplaceId;
+  const verifiedCategoryIdFinal =
+    returnedCategoryId ?? categoryId;
+  const verifiedStatusFinal = returnedStatus ?? (String(verifiedOffer?.status || "UNPUBLISHED"));
+  const verifiedPriceValueFinal =
+    returnedPriceValue != null ? returnedPriceValue : startPrice;
+  const verifiedPriceCurrencyFinal =
+    verifiedOffer?.pricingSummary?.price?.currency ||
+    verifiedOffer?.offer?.pricingSummary?.price?.currency ||
+    "USD";
 
   const enablePublish = String(process.env.EBAY_ENABLE_PUBLISH || "").toLowerCase() === "true";
 
@@ -768,6 +786,11 @@ async function createEbayDraftFromCard({
     verifiedOffer,
     offerVerificationOk,
     offerVerificationIssues,
+    verifiedMarketplaceId: verifiedMarketplaceIdFinal,
+    verifiedCategoryId: verifiedCategoryIdFinal,
+    verifiedStatus: verifiedStatusFinal,
+    verifiedPriceValue: verifiedPriceValueFinal,
+    verifiedPriceCurrency: verifiedPriceCurrencyFinal,
     didPublishSucceed,
     publishedListingId,
     publishedListingUrl,
@@ -943,6 +966,11 @@ export async function POST(req: Request) {
           verifiedOffer?: any;
           offerVerificationOk?: boolean;
           offerVerificationIssues?: string[];
+
+          verifiedCategoryId?: string;
+          verifiedMarketplaceId?: string;
+          verifiedPriceValue?: any;
+          verifiedPriceCurrency?: string;
         }
       | null = null;
     let draftCreateError: any = null;
@@ -969,6 +997,10 @@ export async function POST(req: Request) {
 		            verifiedOffer,
 		            offerVerificationOk,
 		            offerVerificationIssues,
+		            verifiedCategoryId,
+		            verifiedMarketplaceId,
+		            verifiedPriceValue,
+		            verifiedPriceCurrency,
 		          } = await createEbayDraftFromCard({
 		            ebayAccessToken: accessToken,
 		            tokenScopes,
@@ -995,6 +1027,10 @@ export async function POST(req: Request) {
 		              verifiedOffer,
 		              offerVerificationOk: Boolean(offerVerificationOk),
 		              offerVerificationIssues: offerVerificationIssues || [],
+		              verifiedCategoryId: verifiedCategoryId || undefined,
+		              verifiedMarketplaceId: verifiedMarketplaceId || undefined,
+		              verifiedPriceValue: verifiedPriceValue || undefined,
+		              verifiedPriceCurrency: verifiedPriceCurrency || undefined,
 		            };
 
 		            // Connected + successful Inventory API flow: stay in CardCat.
