@@ -269,6 +269,36 @@ export async function POST(req: Request) {
 
     const didPutInventorySucceed = invRes.ok;
 
+    let categoryProductItemId: string | null = null;
+    let inventoryItemDetails: any = null;
+    let inventoryItemDetailsStatus: number | null = null;
+
+    // Best-effort: fetch inventory item details so we can see if eBay returns
+    // categoryProductItemId.
+    try {
+      if (didPutInventorySucceed) {
+        const detailsRes = await fetch(inventoryItemUrl, {
+          method: "GET",
+          headers: ebayHeaders,
+        });
+        inventoryItemDetailsStatus = detailsRes.status;
+        const detailsText = await detailsRes.text();
+        try {
+          inventoryItemDetails = JSON.parse(detailsText);
+        } catch {
+          inventoryItemDetails = { raw: detailsText };
+        }
+
+        categoryProductItemId =
+          inventoryItemDetails?.categoryProductItemId ||
+          inventoryItemDetails?.category_product_item_id ||
+          inventoryItemDetails?.categoryProduct?.categoryProductItemId ||
+          null;
+      }
+    } catch {
+      // ignore
+    }
+
     let didOfferRun = false;
     let didOfferSucceed = false;
     let rawOfferResponse: any = null;
@@ -368,6 +398,9 @@ export async function POST(req: Request) {
       didPutInventorySucceed,
       putInventoryStatus: invRes.status,
       rawPutInventoryResponse: invJson || { raw: invText },
+
+      inventoryItemDetailsStatus,
+      categoryProductItemId,
 
       didOfferRun,
       didOfferSucceed,
