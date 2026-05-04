@@ -201,6 +201,8 @@ async function createEbayDraftFromCard({
     "Item.Country": (card.country_code || card.country || process.env.EBAY_DEFAULT_COUNTRY || "US"),
   };
 
+  const publishCountry = card.country_code || card.country || process.env.EBAY_DEFAULT_COUNTRY || "US";
+
   const cleanEbayAspects = (raw: Record<string, any>) => {
     const cleaned: Record<string, string[]> = {};
     for (const [k, v] of Object.entries(raw || {})) {
@@ -299,6 +301,10 @@ async function createEbayDraftFromCard({
       shipToLocationAvailability: {
         quantity: availableQty,
       },
+    },
+    item: {
+      country: publishCountry,
+      Country: publishCountry,
     },
     product: {
       title,

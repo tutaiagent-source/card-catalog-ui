@@ -237,6 +237,10 @@ export async function POST(req: Request) {
           quantity: availabilityQuantity,
         },
       },
+      item: {
+        country: publishCountry,
+        Country: publishCountry,
+      },
       product: {
         title,
         description,
@@ -244,6 +248,8 @@ export async function POST(req: Request) {
         aspects,
       },
     };
+
+    // Also reflect the same item fields in the safe inventoryItemPayload (debug only).
 
     const ebayHeaders = new Headers();
     ebayHeaders.set("Authorization", `Bearer ${accessToken}`);
