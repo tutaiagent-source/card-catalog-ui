@@ -489,6 +489,9 @@ export async function POST(req: Request) {
       inventoryItemDetailsStatus,
       categoryProductItemId,
 
+      inventoryItemDetailsProductAspects: inventoryItemDetails?.product?.aspects || null,
+      inventoryItemDetailsRawSample: inventoryItemDetails ? JSON.stringify(inventoryItemDetails).slice(0, 5000) : null,
+
       didOfferRun,
       didOfferSucceed,
       offerStatus,
