@@ -1167,6 +1167,11 @@ export default function SellerProfilePage() {
                           ebayDraftError?.response?.error ||
                           ""
                       ).slice(0, 140)}
+                      {ebayDraftError?.response ? (
+                        <div className="mt-1 text-[11px] text-red-200/80">
+                          Raw: {String(JSON.stringify(ebayDraftError.response)).slice(0, 220)}
+                        </div>
+                      ) : null}
                       {Array.isArray(ebayDraftError?.response?.attemptedUrls) && ebayDraftError.response.attemptedUrls.length ? (
                         <div className="mt-1 text-[11px] text-red-200/90">
                           Tried: {String(ebayDraftError.response.attemptedUrls[0])}
