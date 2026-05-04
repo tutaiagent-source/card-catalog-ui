@@ -579,16 +579,21 @@ async function createEbayDraftFromCard({
           firstErr?.errorDescription ||
           pubJson?.message ||
           pubJson?.error ||
-          pubJson?.errors?.[0]?.message ||
           null;
+
         const fallbackErrText = !errMsg ? JSON.stringify(pubJson).slice(0, 800) : null;
+        const finalErrMsg =
+          String(errMsg || fallbackErrText || `Publish failed (HTTP ${publishRes.status})`).slice(0, 300) ||
+          `Publish failed (HTTP ${publishRes.status})`;
+
         publishAttempts.push({
           url: cand.url,
           method: cand.method,
           status: publishRes.status,
-          errorMessage: String(errMsg || fallbackErrText || "")?.slice(0, 300) || null,
+          errorMessage: finalErrMsg,
         });
-        if (!publishErrorMessage && !publishRes.ok) publishErrorMessage = publishAttempts[publishAttempts.length - 1].errorMessage;
+
+        if (!publishErrorMessage && !publishRes.ok) publishErrorMessage = finalErrMsg;
 
         if (publishRes.ok) {
           didPublishSucceed = true;
