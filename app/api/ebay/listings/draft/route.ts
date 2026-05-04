@@ -170,6 +170,14 @@ async function createEbayDraftFromCard({
   const marketplaceId = cleanEnv(process.env.EBAY_SELL_MARKETPLACE_ID) || "EBAY_US";
   const categoryId = cleanEnv(process.env.EBAY_SELL_CATEGORY_ID) || "183454";
   const conditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID) || "3000";
+  const conditionCandidatesEnv = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_CANDIDATES);
+  const conditionCandidates = Array.from(
+    new Set(
+      (conditionCandidatesEnv ? conditionCandidatesEnv.split(/\s+/).filter(Boolean) : [])
+        .concat([conditionId, "4000", "1000", "5000"])
+        .map(String)
+    )
+  );
 
   const title = buildCardTitle(card);
   const description = buildEbaySellPrefillText(card);
@@ -179,6 +187,7 @@ async function createEbayDraftFromCard({
     format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
     categoryId,
     conditionId,
+    conditionCandidates,
     startPrice,
     availableQuantity: Number(card.quantity || 1),
     listingDuration: listingType === "auction" ? `P${Number(auctionDurationDays)}D` : null,
@@ -186,7 +195,7 @@ async function createEbayDraftFromCard({
 
   // Start with a minimal draft payload.
   // If eBay responds with validation errors, we’ll adjust.
-  const payload: any = {
+  const payloadBase: any = {
     sku: String(card.id || Date.now()),
     marketplaceId,
     format: listingType === "auction" ? "AUCTION" : "FIXED_PRICE",
@@ -201,7 +210,7 @@ async function createEbayDraftFromCard({
   };
 
   if (startPrice != null) {
-    payload.pricingSummary = {
+    payloadBase.pricingSummary = {
       price: {
         value: String(startPrice),
         currency: "USD",
@@ -210,44 +219,53 @@ async function createEbayDraftFromCard({
   }
 
   if (listingType === "auction" && auctionDurationDays) {
-    payload.listingDuration = `P${Number(auctionDurationDays)}D`;
+    payloadBase.listingDuration = `P${Number(auctionDurationDays)}D`;
   }
 
   for (const draftPath of draftPaths) {
     const draftsUrl = `${apiOrigin}${draftPath}`;
     draftedAttemptUrls.push(draftsUrl);
 
-    const draftRes = await fetch(draftsUrl, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${ebayAccessToken}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    for (const candidateConditionId of conditionCandidates) {
+      const payload: any = {
+        ...payloadBase,
+        condition: { conditionId: candidateConditionId },
+      };
 
-    const draftJson: any = await draftRes.json().catch(() => null);
+      const draftRes = await fetch(draftsUrl, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${ebayAccessToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    if (draftRes.ok) {
-      const draftId = draftJson?.draftId || draftJson?.inventoryItemId || draftJson?.id || null;
-      const draftUrl = draftId
-        ? `https://www.ebay.com/lstng?draftId=${encodeURIComponent(String(draftId))}&mode=AddItem`
-        : null;
-      return { draftUrl, draftId, error: null };
+      const draftJson: any = await draftRes.json().catch(() => null);
+
+      if (draftRes.ok) {
+        const draftId = draftJson?.draftId || draftJson?.inventoryItemId || draftJson?.id || null;
+        const draftUrl = draftId
+          ? `https://www.ebay.com/lstng?draftId=${encodeURIComponent(String(draftId))}&mode=AddItem`
+          : null;
+        return { draftUrl, draftId, error: null };
+      }
+
+      if (draftRes.status === 404) continue;
+
+      // Keep the first non-404 error (we don't want to spam retries too much).
+      return {
+        draftUrl: null as string | null,
+        draftId: null as string | null,
+        error: {
+          status: draftRes.status,
+          response: draftJson,
+          attemptedUrls: draftedAttemptUrls,
+          requestSnapshot,
+          triedConditionId: candidateConditionId,
+        },
+      };
     }
-
-    if (draftRes.status === 404) continue;
-
-    return {
-      draftUrl: null as string | null,
-      draftId: null as string | null,
-      error: {
-        status: draftRes.status,
-        response: draftJson,
-        attemptedUrls: draftedAttemptUrls,
-        requestSnapshot,
-      },
-    };
   }
 
   return {
