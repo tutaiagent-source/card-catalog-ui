@@ -107,6 +107,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing refresh_token in eBay response" }, { status: 400 });
     }
 
+    const requestedScopes = cleanEnv(process.env.EBAY_OAUTH_SCOPES);
+
     const upsert = await supabaseAdmin
       .from("ebay_accounts")
       .upsert(
@@ -115,7 +117,7 @@ export async function GET(req: Request) {
           refresh_token: refreshToken,
           access_token: tokenJson?.access_token,
           token_expires_at: tokenJson?.expires_in ? new Date(Date.now() + Number(tokenJson.expires_in) * 1000).toISOString() : null,
-          scopes: tokenJson?.scope || null,
+          scopes: tokenJson?.scope || requestedScopes || null,
         },
         { onConflict: "user_id" }
       );

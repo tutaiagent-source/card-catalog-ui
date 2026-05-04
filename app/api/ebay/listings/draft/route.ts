@@ -165,6 +165,20 @@ async function createEbayDraftFromCard({
   const gradedConditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_GRADED) || "2750";
   const ungradedConditionId = cleanEnv(process.env.EBAY_SELL_CONDITION_ID_UNGRADED) || "4000";
 
+  // eBay Inventory API conditionDescriptors IDs for ungraded sports singles (MVP)
+  // 40001 = Card Condition, 400010 = Near Mint or Better
+  const ungradedConditionDescriptorName =
+    cleanEnv(process.env.EBAY_SELL_CONDITION_DESCRIPTOR_UNGRADED_NAME) || "40001";
+  const ungradedConditionDescriptorValue =
+    cleanEnv(process.env.EBAY_SELL_CONDITION_DESCRIPTOR_UNGRADED_VALUE) || "400010";
+
+  // eBay Inventory API conditionDescriptors IDs for graded PSA 10 (example)
+  const gradedProGraderName = cleanEnv(process.env.EBAY_SELL_CONDITION_DESCRIPTOR_GRADED_PRO_GRADER_NAME) || "27501";
+  const gradedProGraderValue = cleanEnv(process.env.EBAY_SELL_CONDITION_DESCRIPTOR_GRADED_PRO_GRADER_VALUE) || "275010";
+  const gradedGradeName = cleanEnv(process.env.EBAY_SELL_CONDITION_DESCRIPTOR_GRADED_GRADE_NAME) || "27502";
+  const gradedGradeValue = cleanEnv(process.env.EBAY_SELL_CONDITION_DESCRIPTOR_GRADED_GRADE_VALUE) || "275020";
+  const gradedCertNumberName = cleanEnv(process.env.EBAY_SELL_CONDITION_DESCRIPTOR_GRADED_CERT_NUMBER_NAME) || "27503";
+
   const isGraded = card?.graded === true;
   const conditionId = isGraded ? gradedConditionId : ungradedConditionId;
 
@@ -211,17 +225,18 @@ async function createEbayDraftFromCard({
 
   const conditionDescriptors: any[] = [];
   if (isGraded) {
-    // Graded: professional grader + grade (cert number optional)
-    const grader = String(card?.grading_company || "").trim();
-    const grade = card?.grade != null ? String(card.grade).trim() : "";
-    const cert = String(card?.grading_cert_number_text || "").trim();
+    // MVP graded: send numeric descriptor IDs in the shape eBay expects.
+    // (Full mapping from grade/company to descriptor values will be added later.)
+    conditionDescriptors.push({ name: gradedProGraderName, values: [gradedProGraderValue] });
+    conditionDescriptors.push({ name: gradedGradeName, values: [gradedGradeValue] });
 
-    if (grader) conditionDescriptors.push({ descriptorName: "Professional Grader", descriptorValue: grader });
-    if (grade) conditionDescriptors.push({ descriptorName: "Grade", descriptorValue: grade });
-    if (cert) conditionDescriptors.push({ descriptorName: "Certification Number", descriptorValue: cert });
+    const cert = String(card?.grading_cert_number_text || "").trim();
+    if (cert) {
+      conditionDescriptors.push({ name: gradedCertNumberName, additionalInfo: cert });
+    }
   } else {
-    // Ungraded: card condition required
-    conditionDescriptors.push({ descriptorName: "Card Condition", descriptorValue: "Near Mint or better" });
+    // Ungraded MVP: Card Condition = Near Mint or Better
+    conditionDescriptors.push({ name: ungradedConditionDescriptorName, values: [ungradedConditionDescriptorValue] });
   }
 
   const env = tokenUrl?.includes("sandbox") ? "sandbox" : "production";
@@ -307,7 +322,6 @@ async function createEbayDraftFromCard({
       "content-type": "application/json",
       "content-language": "en-US",
       accept: "application/json",
-      "accept-language": "en-US",
     },
     body: JSON.stringify(inventoryItemPayload),
   });
@@ -378,7 +392,6 @@ async function createEbayDraftFromCard({
       "content-type": "application/json",
       "content-language": "en-US",
       accept: "application/json",
-      "accept-language": "en-US",
     },
     body: JSON.stringify(offerPayload),
   });
