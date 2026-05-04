@@ -308,6 +308,13 @@ export async function POST(req: Request) {
     let offerDetails: any = null;
     let offerDetailsAttempted: string[] = [];
 
+    let publishAttempts: any[] = [];
+    let didPublishSucceed = false;
+    let publishStatus: number | null = null;
+    let rawPublishResponse: any = null;
+    let publishedListingUrl: string | null = null;
+    let publishedListingId: string | null = null;
+
     let offerPayload: any = null;
     if (didPutInventorySucceed) {
       didOfferRun = true;
@@ -368,6 +375,84 @@ export async function POST(req: Request) {
           }
         }
       }
+
+      // Best-effort: attempt to publish the offer so we can open a real listing page.
+      if (didOfferSucceed && offerId) {
+        const publishCandidates: Array<{ url: string; method: string; body?: any }> = [
+          {
+            url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publish`,
+            method: "POST",
+            body: {},
+          },
+          {
+            url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publishOffer`,
+            method: "POST",
+            body: {},
+          },
+          {
+            url: `${apiOrigin}/sell/inventory/v1/publishOffer`,
+            method: "POST",
+            body: { offerId: String(offerId) },
+          },
+          {
+            url: `${apiOrigin}/sell/inventory/v1/publish_offer`,
+            method: "POST",
+            body: { offerId: String(offerId) },
+          },
+          {
+            url: `${apiOrigin}/sell/inventory/v1/offer/${encodeURIComponent(String(offerId))}/publish`,
+            method: "PUT",
+            body: {},
+          },
+        ];
+
+        for (const cand of publishCandidates) {
+          const attempt: any = { url: cand.url, method: cand.method };
+          const details = await fetch(cand.url, {
+            method: cand.method,
+            headers: ebayHeaders,
+            body: cand.body ? JSON.stringify(cand.body) : undefined,
+          });
+          attempt.status = details.status;
+          const txt = await details.text();
+          try {
+            attempt.response = JSON.parse(txt);
+          } catch {
+            attempt.response = { raw: txt };
+          }
+          publishAttempts.push(attempt);
+
+          if (details.ok) {
+            didPublishSucceed = true;
+            publishStatus = details.status;
+            rawPublishResponse = attempt.response;
+
+            publishedListingId =
+              String(
+                attempt.response?.listingId ||
+                  attempt.response?.listing_id ||
+                  attempt.response?.inventoryListingId ||
+                  attempt.response?.inventory_listing_id ||
+                  attempt.response?.itemId ||
+                  attempt.response?.item_id ||
+                  attempt.response?.itemId
+              ) || null;
+
+            publishedListingUrl =
+              attempt.response?.listingUrl ||
+              attempt.response?.listing_url ||
+              attempt.response?.url ||
+              attempt.response?.itemUrl ||
+              null;
+
+            if (!publishedListingUrl && publishedListingId) {
+              // Fallback best-effort URL pattern.
+              publishedListingUrl = `https://www.ebay.com/itm/${encodeURIComponent(String(publishedListingId))}`;
+            }
+            break;
+          }
+        }
+      }
     }
 
     return NextResponse.json({
@@ -410,6 +495,13 @@ export async function POST(req: Request) {
       offerDetails,
       offerDetailsAttempted,
       offerPayload,
+
+      didPublishSucceed,
+      publishStatus,
+      publishedListingId,
+      publishedListingUrl,
+      rawPublishResponse,
+      publishAttempts,
     });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "Unknown error" }, { status: 500 });
