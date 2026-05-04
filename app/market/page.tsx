@@ -360,7 +360,7 @@ export default function MarketPage() {
       },
       body: JSON.stringify({
         cardId: card.id,
-        listingType: "auction",
+        listingType: "fixed",
         auctionDurationDays: 7,
       }),
     });
